@@ -1,0 +1,81 @@
+#pragma once
+#include "VkUtil.h"
+
+namespace QZL
+{
+	struct SystemMasters;
+	namespace Game {
+		class GameMaster;
+	}
+	namespace Graphics {
+		enum class ElementBufferTypes {
+			STATIC
+		};
+
+		enum class RendererTypes {
+			STATIC, TERRAIN
+		};
+
+		struct EnvironmentArgs {
+			int numObjectsX;
+			int numObjectsY;
+			int numObjectsZ;
+		};
+
+		struct DeviceSwapChainDetails;
+		class PhysicalDevice;
+		class LogicDevice;
+		class CommandPool;
+		class GraphicsComponent;
+		class RendererBase;
+		struct BasicMesh;
+
+		class GraphicsMaster;
+		class Validation;
+
+		struct GraphicsSystemDetails {
+			GLFWwindow* window = nullptr;
+			VkSurfaceKHR surface = VK_NULL_HANDLE;
+			VkInstance instance = VK_NULL_HANDLE;
+
+			PhysicalDevice* physicalDevice = nullptr;
+			LogicDevice* logicDevice = nullptr;
+			GraphicsMaster* master = nullptr;
+		};
+
+		class GraphicsMaster final {
+			friend class System;
+			friend class Game::GameMaster;
+		public:
+			void registerComponent(GraphicsComponent* component);
+			void setRenderer(RendererTypes type, RendererBase* renderer);
+			const glm::mat4& getViewMatrix() {
+				return viewMatrix_;
+			}
+		private:
+			GraphicsMaster(const SystemMasters& masters);
+			~GraphicsMaster();
+
+			void initGlfw(std::vector<const char*>& extensions);
+			void initInstance(const std::vector<const char*>& extensions, uint32_t& enabledLayerCount,
+				const char* const*& enabledLayerNames);
+			void initDevices(uint32_t& enabledLayerCount, const char* const*& enabledLayerNames);
+
+			void preframeSetup();
+
+			void loop();
+
+			GraphicsSystemDetails details_;
+			Validation* validation_;
+
+			std::unordered_map<RendererTypes, RendererBase*> renderers_;
+
+			glm::mat4 viewMatrix_;
+
+			const SystemMasters& masters_;
+
+			static const int kDefaultWidth = 800;
+			static const int kDefaultHeight = 600;
+		};
+	}
+}
