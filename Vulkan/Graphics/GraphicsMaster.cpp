@@ -18,9 +18,8 @@ EnvironmentArgs environmentArgs;
 void GraphicsMaster::registerComponent(GraphicsComponent* component)
 {
 	auto renderer = component->getRendererType();
-	renderers_[renderer]->addMesh(component->getMeshName(), masters_.assetManager->meshLoader->loadMesh(
+	renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
 		component->getMeshName(), *renderers_[renderer]->getElementBuffer()));
-	renderers_[renderer]->registerComponent(component);
 }
 
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)

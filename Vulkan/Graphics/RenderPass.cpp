@@ -12,6 +12,8 @@
 #include "ElementBuffer.h"
 #include "MeshLoader.h"
 #include "GraphicsMaster.h"
+#include "../Assets/AssetManager.h"
+#include "../System.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -175,7 +177,7 @@ VkFormat RenderPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChain
 
 void RenderPass::createRenderers()
 {
-	texturedRenderer_ = new TexturedRenderer(logicDevice_, renderPass_, swapChainDetails_.extent, descriptor_, "TexturedVert", "TexturedFrag", 1);
+	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, "TexturedVert", "TexturedFrag", 1);
 	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
 
 	

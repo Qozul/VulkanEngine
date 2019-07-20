@@ -9,7 +9,7 @@ namespace QZL
 
 		class TextureSampler {
 		public:
-			TextureSampler(const LogicDevice* logicDevice, Image2D* texture, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode,
+			TextureSampler(const LogicDevice* logicDevice, const std::string& name, Image2D* texture, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode,
 				float anisotropy, uint32_t binding);
 			~TextureSampler();
 			operator VkSampler() {
@@ -17,6 +17,9 @@ namespace QZL
 			}
 			const VkDescriptorSetLayoutBinding& getBinding();
 			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set);
+			const std::string& getName() const {
+				return name_;
+			}
 		private:
 			const LogicDevice* logicDevice_;
 			Image2D* texture_;
@@ -24,6 +27,7 @@ namespace QZL
 			VkDescriptorSetLayoutBinding binding_;
 			VkDescriptorImageInfo imageInfo_;
 			uint32_t bindingIdx_;
+			const std::string name_;
 		};
 	}
 }

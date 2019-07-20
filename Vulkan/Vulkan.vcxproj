@@ -51,6 +51,7 @@
     <ClInclude Include="Graphics\RenderPass.h" />
     <ClInclude Include="Graphics\RenderStorage.h" />
     <ClInclude Include="Graphics\Shader.h" />
+    <ClInclude Include="Graphics\StaticRenderStorage.h" />
     <ClInclude Include="Graphics\StaticShaderParams.h" />
     <ClInclude Include="Graphics\StorageBuffer.h" />
     <ClInclude Include="Graphics\SwapChain.h" />
@@ -88,7 +89,7 @@
     <ClCompile Include="Graphics\RenderPass.cpp" />
     <ClCompile Include="Graphics\RenderStorage.cpp" />
     <ClCompile Include="Graphics\Shader.cpp" />
-    <ClCompile Include="Graphics\StaticShaderParams.cpp" />
+    <ClCompile Include="Graphics\StaticRenderStorage.cpp" />
     <ClCompile Include="Graphics\StorageBuffer.cpp" />
     <ClCompile Include="Graphics\SwapChain.cpp" />
     <ClCompile Include="Graphics\TexturedRenderer.cpp" />

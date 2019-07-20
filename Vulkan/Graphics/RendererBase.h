@@ -20,21 +20,17 @@ namespace QZL
 		class RendererBase {
 		public:
 			RendererBase(DeviceMemory* deviceMemory) 
-				: pipeline_(nullptr), renderStorage_(new RenderStorage(deviceMemory)) {
-				//if (Shared::kProjectionMatrix[1][1] >= 0)
-				//	Shared::kProjectionMatrix[1][1] *= -1;
-			}
+				: pipeline_(nullptr), renderStorage_(new RenderStorage(deviceMemory)) { }
+			RendererBase(RenderStorage* renderStorage)
+				: pipeline_(nullptr), renderStorage_(renderStorage) { }
 			virtual ~RendererBase();
 			virtual void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
 			virtual void recordCompute(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer);
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 			virtual void initialise(const glm::mat4& viewMatrix) = 0;
 
-			void addMesh(const std::string& meshName, BasicMesh* mesh) {
-				renderStorage_->addMesh(meshName, mesh);
-			}
-			void registerComponent(GraphicsComponent* component) {
-				renderStorage_->addInstance(component->getMeshName(), component);
+			void registerComponent(GraphicsComponent* component, BasicMesh* mesh) {
+				renderStorage_->addMesh(component, mesh);
 			}
 			ElementBuffer* getElementBuffer() {
 				return renderStorage_->buf();

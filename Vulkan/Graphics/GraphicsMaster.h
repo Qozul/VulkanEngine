@@ -52,6 +52,9 @@ namespace QZL
 			const glm::mat4& getViewMatrix() {
 				return viewMatrix_;
 			}
+			const SystemMasters& getMasters() {
+				return masters_;
+			}
 		private:
 			GraphicsMaster(const SystemMasters& masters);
 			~GraphicsMaster();

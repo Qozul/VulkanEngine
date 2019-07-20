@@ -9,14 +9,15 @@
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
 #include "StaticShaderParams.h"
+#include "StaticRenderStorage.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-TexturedRenderer::TexturedRenderer(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
+TexturedRenderer::TexturedRenderer(const LogicDevice* logicDevice, TextureLoader*& textureLoader, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount)
-	: RendererBase(logicDevice->getDeviceMemory()), descriptor_(descriptor)
+	: RendererBase(new StaticRenderStorage(textureLoader, logicDevice)), descriptor_(descriptor)
 {
 	if (entityCount > 0) {
 		StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
@@ -82,14 +83,16 @@ void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 
 	renderStorage_->buf()->bind(cmdBuffer);
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
+		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		const StaticShaderParams* params = (*renderStorage_->instanceData() + drawElementCmd.baseInstance)->getShaderParams().ssp;
+
+		auto srs = static_cast<StaticRenderStorage*>(renderStorage_);
 		std::vector<VkWriteDescriptorSet> descWrites;
-		const StaticShaderParams* params = (*renderStorage_->instanceData())->getShaderParams().ssp;
-		descWrites.push_back(params->diffuse_->descriptorWrite(descriptorSets_[idx]));
-		descWrites.push_back(params->normalMap_->descriptorWrite(descriptorSets_[idx]));
+		descWrites.push_back(srs->getDiffuseTexture(i)->descriptorWrite(descriptorSets_[idx]));
+		descWrites.push_back(srs->getNormalMap(i)->descriptorWrite(descriptorSets_[idx]));
 		descriptor_->updateDescriptorSets(descWrites);
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[idx], 0, nullptr);
 
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.indexCount, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 }

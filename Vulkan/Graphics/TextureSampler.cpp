@@ -6,9 +6,9 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-TextureSampler::TextureSampler(const LogicDevice* logicDevice, Image2D* texture, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode,
+TextureSampler::TextureSampler(const LogicDevice* logicDevice, const std::string& name, Image2D* texture, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode,
 	float anisotropy, uint32_t binding)
-	: logicDevice_(logicDevice), texture_(texture), sampler_(VK_NULL_HANDLE), bindingIdx_(binding)
+	: logicDevice_(logicDevice), name_(name), texture_(texture), sampler_(VK_NULL_HANDLE), bindingIdx_(binding)
 {
 	VkSamplerCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

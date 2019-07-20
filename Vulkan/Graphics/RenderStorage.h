@@ -13,14 +13,12 @@ namespace QZL
 		class RenderStorage {
 		public:
 			RenderStorage(DeviceMemory* deviceMemory);
-			~RenderStorage();
+			virtual ~RenderStorage();
 
-			void addMesh(const std::string& name, BasicMesh* mesh);
-			void addInstance(const std::string& name, GraphicsComponent* instance);
-			//void addInstance(const std::string& name, TexturedMeshInstance* instance);
+			// Mesh must be added with one instance
+			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh);
 
-			void modifyInstance(const std::string& name, const size_t instanceIndex, GraphicsComponent* instance);
-			//void modifyInstance(const std::string& name, const size_t instanceIndex, TexturedMeshInstance* instance);
+			//virtual void modifyInstance(DrawElementsCommand& cmd, const size_t instanceIndex, GraphicsComponent* instance);
 
 			DrawElementsCommand* meshData();
 			GraphicsComponent** instanceData();
@@ -29,12 +27,13 @@ namespace QZL
 
 			ElementBuffer* buf();
 
-		private:
+		protected:
+			virtual void addInstance(DrawElementsCommand& cmd, GraphicsComponent* instance, uint32_t index);
+
 			ElementBuffer* buf_;
-			std::unordered_map<std::string, size_t> dataMap_;
+			std::unordered_map<std::string, size_t> dataMap_; // Mesh name to offset in to meshes_
 
 			std::vector<DrawElementsCommand> meshes_;
-			// instances_ and textureData_ should always be an equal size IF textures are being used
 			std::vector<GraphicsComponent*> instances_;
 		};
 	}
