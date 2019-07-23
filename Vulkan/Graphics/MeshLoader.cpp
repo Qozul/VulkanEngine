@@ -11,14 +11,28 @@ using namespace QZL::Graphics;
 const std::string MeshLoader::kPath = "../Data/Meshes/";
 const std::string MeshLoader::kExt = ".obj";
 
-BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBuffer& eleBuf)
+BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBuffer& eleBuf, MeshLoaderFunction loadFunc)
 {
 	ASSERT(!eleBuf.isCommitted());
-	if (!eleBuf.contains(meshName))
-		loadMeshFromFile(meshName, eleBuf);
-
-	DEBUG_LOG("Loaded instance of Vulkan BasicMesh " << kPath << meshName << kExt);
+	if (!eleBuf.contains(meshName)) {
+		if (loadFunc == nullptr) {
+			loadMeshFromFile(meshName, eleBuf);
+		}
+		else {
+			std::vector<IndexType> indices;
+			std::vector<Vertex> vertices;
+			loadFunc(indices, vertices);
+			placeMeshInBuffer(meshName, eleBuf, indices, vertices);
+		}
+	}
 	return eleBuf.meshes_[meshName];
+}
+
+void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBuffer& eleBuf, std::vector<IndexType>& indices, std::vector<Vertex>& vertices)
+{
+	auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
+	auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size());
+	eleBuf.emplaceMesh(meshName, indices.size(), indexOffset, vertexOffset);
 }
 
 void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBuffer& eleBuf)
@@ -35,7 +49,7 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBuffer& el
 	if (!err.empty())
 		std::cout << err << std::endl;
 
-	std::vector<uint16_t> indices;
+	std::vector<IndexType> indices;
 	std::vector<Vertex> verts;
 	// TODO: remove duplicate vertices
 	for (const auto& shape : shapes) {
@@ -54,7 +68,5 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBuffer& el
 			indices.push_back(indices.size());
 		}
 	}
-	auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
-	auto vertexOffset = eleBuf.addVertices(verts.data(), verts.size());
-	eleBuf.emplaceMesh(meshName, indices.size(), indexOffset, vertexOffset);
+	placeMeshInBuffer(meshName, eleBuf, indices, verts);
 }

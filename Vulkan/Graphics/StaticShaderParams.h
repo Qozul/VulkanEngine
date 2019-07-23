@@ -6,10 +6,6 @@ namespace QZL {
 		class GameMaster;
 	}
 	namespace Graphics {
-		class TextureSampler;
-		class LogicDevice;
-		class TextureLoader;
-
 		class StaticShaderParams {
 			friend class GraphicsComponent;
 			friend class TexturedRenderer;
@@ -23,7 +19,7 @@ namespace QZL {
 				return normalMap_;
 			}
 		private:
-			StaticShaderParams(TextureLoader* textureLoader, LogicDevice* logicDevice, const std::string& diffuseName, const std::string& normalMapName)
+			StaticShaderParams(const std::string& diffuseName, const std::string& normalMapName)
 				: diffuse_(diffuseName), normalMap_(normalMapName) {}
 
 			const std::string diffuse_;

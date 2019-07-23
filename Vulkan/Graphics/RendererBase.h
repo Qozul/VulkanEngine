@@ -41,7 +41,7 @@ namespace QZL
 			}
 		protected:
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				const std::string& vertexShader, const std::string& fragmentShader);
+				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader = "", const std::string& tessEvalShader = "");
 			void beginFrame(VkCommandBuffer cmdBuffer);
 
 			RendererPipeline* pipeline_;
@@ -71,9 +71,14 @@ namespace QZL
 		}
 
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
-			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader)
+			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader)
 		{
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader);
+			if (tessCtrlShader == "" || tessEvalShader == "") {
+				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader);
+			}
+			else {
+				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader);
+			}
 		}
 
 		inline void RendererBase::beginFrame(VkCommandBuffer cmdBuffer)

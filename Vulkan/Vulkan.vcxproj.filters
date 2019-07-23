@@ -49,6 +49,9 @@
     <Filter Include="Header Files\Graphics\Renderers\Static">
       <UniqueIdentifier>{27d16142-50af-4310-94bb-eba6db1f61b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\Renderers\Terrain">
+      <UniqueIdentifier>{ed55afb5-7ad4-44ea-a2f2-f10c8f4e6023}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\RenderStorage.h">
@@ -165,9 +168,6 @@
     <ClInclude Include="Game\GameMaster.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\TerrainRenderer.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\TexturedRenderer.h">
       <Filter>Header Files\Graphics\Renderers\Static</Filter>
     </ClInclude>
@@ -176,6 +176,21 @@
     </ClInclude>
     <ClInclude Include="Graphics\StaticRenderStorage.h">
       <Filter>Header Files\Graphics\Renderers\Static</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Camera.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TerrainRenderer.h">
+      <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TerrainShaderParams.h">
+      <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Terrain.h">
+      <Filter>Header Files\Assets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -269,8 +284,17 @@
     <ClCompile Include="Graphics\GraphicsComponent.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Camera.cpp">
+      <Filter>Source Files\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Graphics\StaticRenderStorage.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TerrainRenderer.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Assets\Terrain.cpp">
+      <Filter>Source Files\Assets</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

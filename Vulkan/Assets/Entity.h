@@ -24,7 +24,8 @@ namespace QZL {
 		class Entity {
 			friend class AssetManager;
 		public:
-			void setGraphicsComponent(const Graphics::RendererTypes rtype, const std::string& meshName, Graphics::ShaderParams shaderParams);
+			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams shaderParams, const std::string& meshName, 
+				Graphics::MeshLoaderFunction meshLoaderFunc = nullptr);
 			Graphics::GraphicsComponent* getGraphicsComponent() {
 				return graphicsComponent_;
 			}
@@ -43,7 +44,7 @@ namespace QZL {
 			// Only the game script and rigidbody will change the transform and graphics uniform constants. 
 			// Therefore, some optimisations can be made.
 			bool isStatic() const;
-		private:
+		protected:
 			Entity();
 			virtual ~Entity();
 

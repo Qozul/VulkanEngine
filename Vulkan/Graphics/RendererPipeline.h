@@ -10,6 +10,8 @@ namespace QZL
 		public:
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				const std::string& vertexShader, const std::string& fragmentShader);
+			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
+				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader);
 			~RendererPipeline();
 
 			VkPipeline getPipeline();
@@ -19,6 +21,10 @@ namespace QZL
 			VkPipeline pipeline_;
 			VkPipelineLayout layout_;
 			const LogicDevice* logicDevice_;
+		private:
+			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
+				VkPipelineShaderStageCreateInfo shaderStagesInfo[]);
+			VkPipelineShaderStageCreateInfo createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage);
 		};
 	}
 }

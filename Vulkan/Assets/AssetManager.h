@@ -17,7 +17,8 @@ namespace QZL {
 		class AssetManager final {
 			friend class System;
 		public:
-			// Allocates and creates a new entity model, with components created depending on the flags.
+			Entity* createEntity();
+			template<typename T>
 			Entity* createEntity();
 
 			Graphics::MeshLoader* meshLoader;
@@ -27,5 +28,13 @@ namespace QZL {
 			~AssetManager();
 			std::vector<Entity*> entities_;
 		};
+
+		template<typename T>
+		Entity* AssetManager::createEntity()
+		{
+			Entity* entity = new T();
+			entities_.push_back(entity);
+			return entity;
+		}
 	}
 }

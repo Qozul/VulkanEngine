@@ -7,5 +7,5 @@ using namespace Graphics;
 GraphicsComponent::~GraphicsComponent()
 {
 	if (rtype_ == Graphics::RendererTypes::STATIC)
-		delete shaderParameters_.ssp;
+		delete shaderParameters_.staticSP;
 }

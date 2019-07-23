@@ -3,6 +3,8 @@
 #include "Game/GameMaster.h"
 #include "Assets/AssetManager.h"
 #include "Graphics/TextureLoader.h"
+#include "Graphics/LogicDevice.h"
+#include "InputManager.h"
 
 using namespace QZL;
 
@@ -18,6 +20,7 @@ System::System()
 	masters_.assetManager = new Assets::AssetManager();
 
 	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
+	inputManager_ = new InputManager(masters_.graphicsMaster->details_.window);
 	masters_.physicsMaster = nullptr;
 
 	// Graphics master must be created before texture loader for logic device, and texture loader must be created before game master
@@ -37,5 +40,15 @@ System::~System()
 
 void System::loop()
 {
-	masters_.graphicsMaster->loop();
+	masters_.graphicsMaster->preframeSetup();
+	Shared::PerfMeasurer perfMeasurer;
+	while (!glfwWindowShouldClose(masters_.graphicsMaster->details_.window)) {
+		glfwPollEvents();
+		perfMeasurer.startTime();
+		masters_.graphicsMaster->loop();
+
+		perfMeasurer.endTime();
+	}
+	std::cout << "Vulkan perf: " << perfMeasurer.getAverageTime().count() << std::endl;
+	vkDeviceWaitIdle(*masters_.graphicsMaster->details_.logicDevice);
 }

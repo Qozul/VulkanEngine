@@ -19,39 +19,35 @@ TexturedRenderer::TexturedRenderer(const LogicDevice* logicDevice, TextureLoader
 	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount)
 	: RendererBase(new StaticRenderStorage(textureLoader, logicDevice)), descriptor_(descriptor)
 {
-	if (entityCount > 0) {
-		StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
-			sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT);
+	ASSERT(entityCount > 0);
+	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
+		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT);
 
-		VkDescriptorSetLayoutBinding diffuseBinding = {};
-		diffuseBinding.binding = 1;
-		diffuseBinding.descriptorCount = 1;
-		diffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		diffuseBinding.pImmutableSamplers = nullptr;
-		diffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	VkDescriptorSetLayoutBinding diffuseBinding = {};
+	diffuseBinding.binding = 1;
+	diffuseBinding.descriptorCount = 1;
+	diffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	diffuseBinding.pImmutableSamplers = nullptr;
+	diffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		VkDescriptorSetLayoutBinding normalMapBinding = {};
-		normalMapBinding.binding = 3;
-		normalMapBinding.descriptorCount = 1;
-		normalMapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		normalMapBinding.pImmutableSamplers = nullptr;
-		normalMapBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	VkDescriptorSetLayoutBinding normalMapBinding = {};
+	normalMapBinding.binding = 3;
+	normalMapBinding.descriptorCount = 1;
+	normalMapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	normalMapBinding.pImmutableSamplers = nullptr;
+	normalMapBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		auto layout = descriptor->makeLayout({ mvpBuf->getBinding(), diffuseBinding, normalMapBinding });
-		storageBuffers_.push_back(mvpBuf);
-		size_t idx = descriptor->createSets({ layout, layout, layout });
-		std::vector<VkWriteDescriptorSet> descWrites;
-		for (int i = 0; i < 3; ++i) {
-			descriptorSets_.push_back(descriptor->getSet(idx + i));
-			descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
-		}
-		descriptor->updateDescriptorSets(descWrites);
-
-		createPipeline(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(storageBuffers_.size(), &layout), vertexShader, fragmentShader);
+	auto layout = descriptor->makeLayout({ mvpBuf->getBinding(), diffuseBinding, normalMapBinding });
+	storageBuffers_.push_back(mvpBuf);
+	size_t idx = descriptor->createSets({ layout, layout, layout });
+	std::vector<VkWriteDescriptorSet> descWrites;
+	for (int i = 0; i < 3; ++i) {
+		descriptorSets_.push_back(descriptor->getSet(idx + i));
+		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
 	}
-	else {
-		createPipeline(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(0, nullptr), vertexShader, fragmentShader);
-	}
+	descriptor->updateDescriptorSets(descWrites);
+
+	createPipeline(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(storageBuffers_.size(), &layout), vertexShader, fragmentShader);
 }
 
 TexturedRenderer::~TexturedRenderer()
@@ -84,7 +80,7 @@ void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	renderStorage_->buf()->bind(cmdBuffer);
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		const StaticShaderParams* params = (*renderStorage_->instanceData() + drawElementCmd.baseInstance)->getShaderParams().ssp;
+		const StaticShaderParams* params = (*renderStorage_->instanceData() + drawElementCmd.baseInstance)->getShaderParams().staticSP;
 
 		auto srs = static_cast<StaticRenderStorage*>(renderStorage_);
 		std::vector<VkWriteDescriptorSet> descWrites;

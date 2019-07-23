@@ -12,21 +12,57 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
 	Shader fragmentModule = { *logicDevice_, fragmentShader };
+	VkPipelineShaderStageCreateInfo shaderStagesInfo[] = { 
+		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
+		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
+	};
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo);
+}
 
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
-	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vertShaderStageInfo.module = vertexModule.getModule();
-	vertShaderStageInfo.pName = "main";
+RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
+	const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader)
+{
+	Shader vertexModule = { *logicDevice_, vertexShader };
+	Shader tessCtrlModule = { *logicDevice_, tessCtrlShader };
+	Shader tessEvalModule = { *logicDevice_, tessEvalShader };
+	Shader fragmentModule = { *logicDevice_, fragmentShader };
+	VkPipelineShaderStageCreateInfo shaderStagesInfo[] = {
+		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
+		createShaderInfo(tessCtrlModule.getModule(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT),
+		createShaderInfo(tessEvalModule.getModule(), VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT),
+		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
+	};
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo);
+}
 
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fragShaderStageInfo.module = fragmentModule.getModule();
-	fragShaderStageInfo.pName = "main";
+RendererPipeline::~RendererPipeline()
+{
+	vkDestroyPipeline(*logicDevice_, pipeline_, nullptr);
+	vkDestroyPipelineLayout(*logicDevice_, layout_, nullptr);
+}
 
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+VkPipeline RendererPipeline::getPipeline()
+{
+	return pipeline_;
+}
 
+VkPipelineLayout RendererPipeline::getLayout()
+{
+	return layout_;
+}
+
+VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts)
+{
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = layoutCount;
+	pipelineLayoutInfo.pSetLayouts = layouts;
+	return pipelineLayoutInfo;
+}
+
+void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
+	VkPipelineShaderStageCreateInfo shaderStagesInfo[])
+{
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
@@ -105,7 +141,7 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pStages = shaderStagesInfo;
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
@@ -121,27 +157,12 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline_));
 }
 
-RendererPipeline::~RendererPipeline()
+VkPipelineShaderStageCreateInfo RendererPipeline::createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage)
 {
-	vkDestroyPipeline(*logicDevice_, pipeline_, nullptr);
-	vkDestroyPipelineLayout(*logicDevice_, layout_, nullptr);
-}
-
-VkPipeline RendererPipeline::getPipeline()
-{
-	return pipeline_;
-}
-
-VkPipelineLayout RendererPipeline::getLayout()
-{
-	return layout_;
-}
-
-VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts)
-{
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = layoutCount;
-	pipelineLayoutInfo.pSetLayouts = layouts;
-	return pipelineLayoutInfo;
+	VkPipelineShaderStageCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	info.stage = stage;
+	info.module = module;
+	info.pName = "main";
+	return info;
 }

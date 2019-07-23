@@ -15,7 +15,7 @@ StaticRenderStorage::StaticRenderStorage(TextureLoader*& textureLoader, const Lo
 
 void StaticRenderStorage::addMesh(GraphicsComponent* instance, BasicMesh* mesh)
 {
-	auto params = instance->getShaderParams().ssp;
+	auto params = instance->getShaderParams().staticSP;
 	auto fullName = std::make_tuple(params->getDiffuseName(), params->getNormalMapName(), instance->getMeshName());
 	auto keyIt = texturedDataMap_.find(fullName);
 	if (keyIt != texturedDataMap_.end()) {

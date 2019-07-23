@@ -4,9 +4,10 @@
 using namespace QZL;
 using namespace QZL::Assets;
 
-void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, const std::string& meshName, Graphics::ShaderParams shaderParams)
+void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams shaderParams, const std::string& meshName, 
+	Graphics::MeshLoaderFunction meshLoaderFunc)
 {
-	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, meshName, shaderParams);
+	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, shaderParams, meshName, meshLoaderFunc);
 }
 
 bool Entity::isStatic() const

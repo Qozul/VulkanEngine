@@ -19,7 +19,7 @@ void GraphicsMaster::registerComponent(GraphicsComponent* component)
 {
 	auto renderer = component->getRendererType();
 	renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-		component->getMeshName(), *renderers_[renderer]->getElementBuffer()));
+		component->getMeshName(), *renderers_[renderer]->getElementBuffer(), component->getLoadFunc()));
 }
 
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
@@ -49,7 +49,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	for (auto ext : extensions)
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
 
-	viewMatrix_ = glm::lookAt(glm::vec3(25.0f, 0.0f, 50.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(25.0f, 0.0f, 50.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
@@ -66,6 +66,7 @@ GraphicsMaster::~GraphicsMaster()
 
 	SAFE_DELETE(details_.physicalDevice);
 	SAFE_DELETE(validation_);
+	SAFE_DELETE(viewMatrix_);
 
 	vkDestroySurfaceKHR(details_.instance, details_.surface, nullptr);
 	vkDestroyInstance(details_.instance, nullptr);
@@ -137,20 +138,11 @@ void GraphicsMaster::initDevices(uint32_t& enabledLayerCount, const char* const*
 void GraphicsMaster::preframeSetup()
 {
 	for (auto renderer : renderers_) {
-		renderer.second->preframeSetup(viewMatrix_);
+		renderer.second->preframeSetup(*viewMatrix_);
 	}
 }
 
 void GraphicsMaster::loop()
 {
-	preframeSetup();
-	Shared::PerfMeasurer perfMeasurer;
-	while (!glfwWindowShouldClose(details_.window)) {
-		glfwPollEvents();
-		perfMeasurer.startTime();
-		details_.logicDevice->swapChain_->loop();
-		perfMeasurer.endTime();
-	}
-	std::cout << "Vulkan perf: " << perfMeasurer.getAverageTime().count() << std::endl;
-	vkDeviceWaitIdle(*details_.logicDevice);
+	details_.logicDevice->swapChain_->loop();
 }

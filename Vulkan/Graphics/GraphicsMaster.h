@@ -49,8 +49,11 @@ namespace QZL
 		public:
 			void registerComponent(GraphicsComponent* component);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
-			const glm::mat4& getViewMatrix() {
+			glm::mat4* getViewMatrixPtr() {
 				return viewMatrix_;
+			}
+			const glm::mat4& getViewMatrix() {
+				return *viewMatrix_;
 			}
 			const SystemMasters& getMasters() {
 				return masters_;
@@ -73,7 +76,7 @@ namespace QZL
 
 			std::unordered_map<RendererTypes, RendererBase*> renderers_;
 
-			glm::mat4 viewMatrix_;
+			glm::mat4* viewMatrix_;
 
 			const SystemMasters& masters_;
 

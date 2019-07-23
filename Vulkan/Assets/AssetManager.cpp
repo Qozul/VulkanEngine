@@ -22,9 +22,7 @@ AssetManager::~AssetManager()
 	}
 }
 
-Entity* AssetManager::createEntity()
+Entity* AssetManager::createEntity() 
 {
-	Entity* entity = new Entity();
-	entities_.push_back(entity);
-	return entity;
+	return createEntity<Entity>();
 }

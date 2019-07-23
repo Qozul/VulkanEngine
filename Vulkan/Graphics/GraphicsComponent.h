@@ -1,6 +1,7 @@
 #pragma once
 #include "VkUtil.h"
 #include "GraphicsMaster.h"
+#include "../Graphics/MeshLoader.h"
 
 namespace QZL {
 	namespace Assets {
@@ -8,15 +9,17 @@ namespace QZL {
 	}
 	namespace Graphics {
 		class StaticShaderParams;
+		class TerrainShaderParams;
 
 		union ShaderParams {
-			StaticShaderParams* ssp;
+			StaticShaderParams* staticSP;
+			TerrainShaderParams* terrainSP;
 		};
 
 		class GraphicsComponent {
 		public:
-			GraphicsComponent(Assets::Entity* owner, Graphics::RendererTypes type, const std::string& meshName, ShaderParams shaderParams)
-				: rtype_(type), owningEntity_(owner), meshName_(meshName), shaderParameters_(shaderParams) { }
+			GraphicsComponent(Assets::Entity* owner, Graphics::RendererTypes type, ShaderParams shaderParams, const std::string& meshName, MeshLoaderFunction loadFunc)
+				: rtype_(type), owningEntity_(owner), shaderParameters_(shaderParams), meshName_(meshName), loadFunc_(loadFunc) { }
 			~GraphicsComponent();
 			const std::string& getMeshName() const {
 				return meshName_;
@@ -30,10 +33,14 @@ namespace QZL {
 			const RendererTypes getRendererType() {
 				return rtype_;
 			}
+			MeshLoaderFunction getLoadFunc() {
+				return loadFunc_;
+			}
 		private:
 			Assets::Entity* owningEntity_; // does not own this object
 			RendererTypes rtype_;
 			const std::string meshName_;
+			MeshLoaderFunction loadFunc_;
 
 			ShaderParams shaderParameters_;
 		};

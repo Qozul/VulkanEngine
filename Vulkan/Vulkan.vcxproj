@@ -26,7 +26,9 @@
   <ItemGroup>
     <ClInclude Include="Assets\AssetManager.h" />
     <ClInclude Include="Assets\Entity.h" />
+    <ClInclude Include="Assets\Terrain.h" />
     <ClInclude Include="Assets\Transform.h" />
+    <ClInclude Include="Game\Camera.h" />
     <ClInclude Include="Game\GameMaster.h" />
     <ClInclude Include="Game\GameScript.h" />
     <ClInclude Include="Graphics\BasicRenderer.h" />
@@ -56,6 +58,7 @@
     <ClInclude Include="Graphics\StorageBuffer.h" />
     <ClInclude Include="Graphics\SwapChain.h" />
     <ClInclude Include="Graphics\TerrainRenderer.h" />
+    <ClInclude Include="Graphics\TerrainShaderParams.h" />
     <ClInclude Include="Graphics\TexturedRenderer.h" />
     <ClInclude Include="Graphics\TextureLoader.h" />
     <ClInclude Include="Graphics\TextureSampler.h" />
@@ -63,6 +66,7 @@
     <ClInclude Include="Graphics\Vertex.h" />
     <ClInclude Include="Graphics\VkUtil.h" />
     <ClInclude Include="Graphics\vk_mem_alloc.h" />
+    <ClInclude Include="InputManager.h" />
     <ClInclude Include="Physics\CollisionVolume.h" />
     <ClInclude Include="Physics\RigidBody.h" />
     <ClInclude Include="System.h" />
@@ -70,6 +74,8 @@
   <ItemGroup>
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
+    <ClCompile Include="Assets\Terrain.cpp" />
+    <ClCompile Include="Game\Camera.cpp" />
     <ClCompile Include="Game\GameMaster.cpp" />
     <ClCompile Include="Graphics\BasicRenderer.cpp" />
     <ClCompile Include="Graphics\ComputeFetchRenderer.cpp" />
@@ -92,6 +98,7 @@
     <ClCompile Include="Graphics\StaticRenderStorage.cpp" />
     <ClCompile Include="Graphics\StorageBuffer.cpp" />
     <ClCompile Include="Graphics\SwapChain.cpp" />
+    <ClCompile Include="Graphics\TerrainRenderer.cpp" />
     <ClCompile Include="Graphics\TexturedRenderer.cpp" />
     <ClCompile Include="Graphics\TextureLoader.cpp" />
     <ClCompile Include="Graphics\TextureSampler.cpp" />

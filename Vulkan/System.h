@@ -22,7 +22,7 @@ namespace QZL {
 	namespace Game {
 		class GameMaster;
 	}
-
+	class InputManager;
 	struct SystemMasters {
 		Game::GameMaster* gameMaster;
 		Physics::PhysicsMaster* physicsMaster;
@@ -41,5 +41,6 @@ namespace QZL {
 		}
 	private:
 		SystemMasters masters_;
+		InputManager* inputManager_;
 	};
 }
