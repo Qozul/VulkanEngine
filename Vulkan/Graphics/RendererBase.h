@@ -65,8 +65,9 @@ namespace QZL
 		inline std::vector<VkWriteDescriptorSet> RendererBase::getDescriptorWrites(uint32_t frameIdx)
 		{
 			std::vector<VkWriteDescriptorSet> writes;
-			for (auto& buf : storageBuffers_)
+			for (auto& buf : storageBuffers_) {
 				writes.push_back(buf->descriptorWrite(descriptorSets_[frameIdx]));
+			}
 			return writes;
 		}
 

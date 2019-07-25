@@ -1,6 +1,6 @@
 #pragma once
 #include "VkUtil.h"
-#include "GraphicsMaster.h"
+#include "ShaderParams.h"
 #include "../Graphics/MeshLoader.h"
 
 namespace QZL {
@@ -8,18 +8,13 @@ namespace QZL {
 		class Entity;
 	}
 	namespace Graphics {
-		class StaticShaderParams;
-		class TerrainShaderParams;
-
-		union ShaderParams {
-			StaticShaderParams* staticSP;
-			TerrainShaderParams* terrainSP;
-		};
-
 		class GraphicsComponent {
 		public:
-			GraphicsComponent(Assets::Entity* owner, Graphics::RendererTypes type, ShaderParams shaderParams, const std::string& meshName, MeshLoaderFunction loadFunc)
-				: rtype_(type), owningEntity_(owner), shaderParameters_(shaderParams), meshName_(meshName), loadFunc_(loadFunc) { }
+			GraphicsComponent(Assets::Entity* owner, Graphics::RendererTypes type, ShaderParams* shaderParams, const std::string& meshName, MeshLoaderFunction loadFunc)
+				: rtype_(type), owningEntity_(owner), shaderParameters_(shaderParams), meshName_(meshName), loadFunc_(loadFunc) {
+				// Component renderer and shader params must agree for valid type casting by the graphics system
+				ASSERT(type == shaderParams->getRendererType());
+			}
 			~GraphicsComponent();
 			const std::string& getMeshName() const {
 				return meshName_;
@@ -27,7 +22,7 @@ namespace QZL {
 			Assets::Entity* getEntity() const {
 				return owningEntity_;
 			}
-			const ShaderParams& getShaderParams() {
+			const ShaderParams* getShaderParams() {
 				return shaderParameters_;
 			}
 			const RendererTypes getRendererType() {
@@ -41,8 +36,7 @@ namespace QZL {
 			RendererTypes rtype_;
 			const std::string meshName_;
 			MeshLoaderFunction loadFunc_;
-
-			ShaderParams shaderParameters_;
+			ShaderParams* shaderParameters_;
 		};
 	}
 }

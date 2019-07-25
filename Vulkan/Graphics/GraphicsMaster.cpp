@@ -13,6 +13,8 @@ using namespace QZL::Graphics;
 
 constexpr auto kHoldConsole = false;
 
+glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+
 EnvironmentArgs environmentArgs;
 
 void GraphicsMaster::registerComponent(GraphicsComponent* component)
@@ -30,6 +32,7 @@ void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	: masters_(masters)
 {
+	kProjectionMatrix[1][1] *= -1;
 	details_.master = this;
 	environmentArgs.numObjectsX = 10;
 	environmentArgs.numObjectsY = 10;
@@ -50,6 +53,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
 
 	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(25.0f, 0.0f, 50.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));

@@ -38,32 +38,3 @@ void RenderStorage::addInstance(DrawElementsCommand& cmd, GraphicsComponent* ins
 	instances_.insert(instances_.begin() + index, instance);
 	cmd.instanceCount++;
 }
-
-/*void RenderStorage::modifyInstance(DrawElementsCommand& cmd, const size_t instanceIndex, GraphicsComponent* instance)
-{
-	instances_[cmd.baseInstance + instanceIndex] = instance;
-}*/
-
-DrawElementsCommand* RenderStorage::meshData()
-{
-	return meshes_.data();
-}
-GraphicsComponent** RenderStorage::instanceData()
-{
-	return instances_.data();
-}
-
-size_t RenderStorage::meshCount()
-{
-	return meshes_.size();
-}
-
-size_t RenderStorage::instanceCount()
-{
-	return instances_.size();
-}
-
-ElementBuffer* RenderStorage::buf()
-{
-	return buf_;
-}

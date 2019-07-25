@@ -14,18 +14,24 @@ namespace QZL
 		public:
 			RenderStorage(DeviceMemory* deviceMemory);
 			virtual ~RenderStorage();
-
 			// Mesh must be added with one instance
 			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh);
-
-			//virtual void modifyInstance(DrawElementsCommand& cmd, const size_t instanceIndex, GraphicsComponent* instance);
-
-			DrawElementsCommand* meshData();
-			GraphicsComponent** instanceData();
-			size_t meshCount();
-			size_t instanceCount();
-
-			ElementBuffer* buf();
+			
+			DrawElementsCommand* meshData() {
+				return meshes_.data();
+			}
+			GraphicsComponent** instanceData() {
+				return instances_.data();
+			}
+			size_t meshCount() {
+				return meshes_.size();
+			}
+			size_t instanceCount() {
+				return instances_.size();
+			}
+			ElementBuffer* buf() {
+				return buf_;
+			}
 
 		protected:
 			virtual void addInstance(DrawElementsCommand& cmd, GraphicsComponent* instance, uint32_t index);

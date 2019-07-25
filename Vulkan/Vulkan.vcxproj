@@ -52,12 +52,15 @@
     <ClInclude Include="Graphics\RendererPipeline.h" />
     <ClInclude Include="Graphics\RenderPass.h" />
     <ClInclude Include="Graphics\RenderStorage.h" />
+    <ClInclude Include="Graphics\RenderStorageMeshParams.h" />
     <ClInclude Include="Graphics\Shader.h" />
+    <ClInclude Include="Graphics\ShaderParams.h" />
     <ClInclude Include="Graphics\StaticRenderStorage.h" />
     <ClInclude Include="Graphics\StaticShaderParams.h" />
     <ClInclude Include="Graphics\StorageBuffer.h" />
     <ClInclude Include="Graphics\SwapChain.h" />
     <ClInclude Include="Graphics\TerrainRenderer.h" />
+    <ClInclude Include="Graphics\TerrainRenderStorage.h" />
     <ClInclude Include="Graphics\TerrainShaderParams.h" />
     <ClInclude Include="Graphics\TexturedRenderer.h" />
     <ClInclude Include="Graphics\TextureLoader.h" />
@@ -99,6 +102,7 @@
     <ClCompile Include="Graphics\StorageBuffer.cpp" />
     <ClCompile Include="Graphics\SwapChain.cpp" />
     <ClCompile Include="Graphics\TerrainRenderer.cpp" />
+    <ClCompile Include="Graphics\TerrainRenderStorage.cpp" />
     <ClCompile Include="Graphics\TexturedRenderer.cpp" />
     <ClCompile Include="Graphics\TextureLoader.cpp" />
     <ClCompile Include="Graphics\TextureSampler.cpp" />

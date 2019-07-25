@@ -88,8 +88,6 @@ void ComputeRenderer::initialise(const glm::mat4& viewMatrix)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
-	if (Shared::kProjectionMatrix[1][1] >= 0)
-		Shared::kProjectionMatrix[1][1] *= -1;
 	Transform* data = static_cast<Transform*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
@@ -105,7 +103,7 @@ void ComputeRenderer::recordCompute(const glm::mat4& viewMatrix, const uint32_t 
 	vkCmdPipelineBarrier(cmdBuffer, VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_COMPUTE_BIT, 0, 0, nullptr, 1, &bufMemoryBarrier2_, 0, nullptr);
 	vkCmdPipelineBarrier(cmdBuffer, VK_SHADER_STAGE_COMPUTE_BIT, VK_SHADER_STAGE_COMPUTE_BIT, 0, 0, nullptr, 1, &transBufMemoryBarrier_, 0, nullptr);
 
-	std::array<glm::mat4, 2U> pushConstantValue = { viewMatrix, Shared::kProjectionMatrix };
+	std::array<glm::mat4, 2U> pushConstantValue = { viewMatrix, GraphicsMaster::kProjectionMatrix };
 	vkCmdPushConstants(cmdBuffer, computePipeline_->getLayout(), VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(glm::mat4) * 2, pushConstantValue.data());
 	vkCmdPipelineBarrier(cmdBuffer, VK_SHADER_STAGE_COMPUTE_BIT, VK_SHADER_STAGE_COMPUTE_BIT, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantBarrier_, 0, nullptr, 0, nullptr);
 	vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline_->getPipeline());

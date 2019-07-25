@@ -35,8 +35,8 @@ LoopRenderer::LoopRenderer(const LogicDevice* logicDevice, VkRenderPass renderPa
 
 void LoopRenderer::initialise(const glm::mat4& viewMatrix)
 {
-	if (Shared::kProjectionMatrix[1][1] >= 0)
-		Shared::kProjectionMatrix[1][1] *= -1;
+	if (GraphicsMaster::kProjectionMatrix[1][1] >= 0)
+		GraphicsMaster::kProjectionMatrix[1][1] *= -1;
 }
 
 void LoopRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
@@ -53,7 +53,7 @@ void LoopRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, 
 		(*(instPtr + i))->getEntity()->getTransform()->angle += 0.1f;
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
 		eleDataPtr[i] = {
-			model, Shared::kProjectionMatrix * viewMatrix * model
+			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
 		};
 	}
 	storageBuffers_[0]->unbindRange();

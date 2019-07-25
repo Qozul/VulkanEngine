@@ -58,14 +58,12 @@ void TexturedRenderer::initialise(const glm::mat4& viewMatrix)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
-	if (Shared::kProjectionMatrix[1][1] >= 0)
-		Shared::kProjectionMatrix[1][1] *= -1;
 	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
 		eleDataPtr[i] = {
-			model, Shared::kProjectionMatrix * viewMatrix * model
+			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
 		};
 	}
 	storageBuffers_[0]->unbindRange();
@@ -80,12 +78,11 @@ void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	renderStorage_->buf()->bind(cmdBuffer);
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		const StaticShaderParams* params = (*renderStorage_->instanceData() + drawElementCmd.baseInstance)->getShaderParams().staticSP;
 
 		auto srs = static_cast<StaticRenderStorage*>(renderStorage_);
 		std::vector<VkWriteDescriptorSet> descWrites;
-		descWrites.push_back(srs->getDiffuseTexture(i)->descriptorWrite(descriptorSets_[idx]));
-		descWrites.push_back(srs->getNormalMap(i)->descriptorWrite(descriptorSets_[idx]));
+		descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx]));
+		descWrites.push_back(srs->getParamData(i).normalMap->descriptorWrite(descriptorSets_[idx]));
 		descriptor_->updateDescriptorSets(descWrites);
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[idx], 0, nullptr);
 

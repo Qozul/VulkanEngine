@@ -58,6 +58,7 @@ namespace QZL
 			const SystemMasters& getMasters() {
 				return masters_;
 			}
+			static glm::mat4 kProjectionMatrix;
 		private:
 			GraphicsMaster(const SystemMasters& masters);
 			~GraphicsMaster();

@@ -9,15 +9,16 @@
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
 #include "TerrainShaderParams.h"
+#include "TerrainRenderStorage.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace Graphics;
 
-TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor, 
+TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, TextureLoader*& textureLoader, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 	const uint32_t entityCount)
-	: RendererBase(logicDevice->getDeviceMemory()), descriptor_(descriptor)
+	: RendererBase(new TerrainRenderStorage(textureLoader, logicDevice)), descriptor_(descriptor)
 {
 	ASSERT(entityCount > 0);
 	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
@@ -50,14 +51,42 @@ TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, VkRenderPass re
 	createPipeline(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(storageBuffers_.size(), &layout), vertexShader, fragmentShader);
 }
 
-QZL::Graphics::TerrainRenderer::~TerrainRenderer()
+TerrainRenderer::~TerrainRenderer()
 {
 }
 
-void QZL::Graphics::TerrainRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void TerrainRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
+	if (renderStorage_->instanceCount() == 0)
+		return;
+	beginFrame(cmdBuffer);
+
+	renderStorage_->buf()->bind(cmdBuffer);
+	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
+		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+
+		auto trs = static_cast<TerrainRenderStorage*>(renderStorage_);
+		std::vector<VkWriteDescriptorSet> descWrites;
+		descWrites.push_back(trs->getParamData(i).heightMap->descriptorWrite(descriptorSets_[idx]));
+		descWrites.push_back(trs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx]));
+		descriptor_->updateDescriptorSets(descWrites);
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[idx], 0, nullptr);
+
+		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.indexCount, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+	}
 }
 
-void QZL::Graphics::TerrainRenderer::initialise(const glm::mat4& viewMatrix)
+void TerrainRenderer::initialise(const glm::mat4& viewMatrix)
 {
+	if (renderStorage_->instanceCount() == 0)
+		return;
+	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
+	auto instPtr = renderStorage_->instanceData();
+	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
+		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
+		eleDataPtr[i] = {
+			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
+		};
+	}
+	storageBuffers_[0]->unbindRange();
 }

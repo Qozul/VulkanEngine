@@ -61,8 +61,6 @@ namespace QZL
 
 		constexpr float kFoV = 45.0f;
 
-		static glm::mat4 kProjectionMatrix = glm::perspective(glm::radians(kFoV), -4.0f/3.0f, 0.1f, 100.0f);
-
 		static std::vector<std::string> kMeshNames = { "Teapot", "Teapot2", "Teapot3" };
 		static std::vector<std::pair<std::string, std::string>> kTextureNames = { 
 			{ "101", "102" }, { "grass_01b", "grass_01_rough" }, { "ground_04", "ground_04_nrm" },

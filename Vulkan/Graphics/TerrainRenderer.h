@@ -10,7 +10,7 @@ namespace QZL
 
 		class TerrainRenderer : public RendererBase {
 		public:
-			TerrainRenderer(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
+			TerrainRenderer(const LogicDevice* logicDevice, TextureLoader*& textureLoader, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 				const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 				const uint32_t entityCount);
 			~TerrainRenderer();

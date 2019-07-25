@@ -1,17 +1,24 @@
 #pragma once
-#include "VkUtil.h"
+#include "ShaderParams.h"
 
 namespace QZL {
 	namespace Game {
 		class GameMaster;
 	}
 	namespace Graphics {
-		class StaticShaderParams {
+		class StaticShaderParams : public ShaderParams {
 			friend class GraphicsComponent;
 			friend class TexturedRenderer;
-			friend class Game::GameMaster;
-			friend class StaticRenderStorage;
 		public:
+			StaticShaderParams(const std::string& diffuseName, const std::string& normalMapName)
+				: diffuse_(diffuseName), normalMap_(normalMapName) {}
+
+			const RendererTypes getRendererType() const override {
+				return RendererTypes::STATIC;
+			}
+			const std::string getParamsId() const override {
+				return diffuse_ + "." + normalMap_;
+			}
 			const std::string& getDiffuseName() const {
 				return diffuse_;
 			}
@@ -19,9 +26,6 @@ namespace QZL {
 				return normalMap_;
 			}
 		private:
-			StaticShaderParams(const std::string& diffuseName, const std::string& normalMapName)
-				: diffuse_(diffuseName), normalMap_(normalMapName) {}
-
 			const std::string diffuse_;
 			const std::string normalMap_;
 		};

@@ -52,11 +52,11 @@
     <Filter Include="Header Files\Graphics\Renderers\Terrain">
       <UniqueIdentifier>{ed55afb5-7ad4-44ea-a2f2-f10c8f4e6023}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\RenderStorage">
+      <UniqueIdentifier>{27982c88-3cbf-441f-9c55-10afdb96712f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Graphics\RenderStorage.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\Shader.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
@@ -174,9 +174,6 @@
     <ClInclude Include="Graphics\StaticShaderParams.h">
       <Filter>Header Files\Graphics\Renderers\Static</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\StaticRenderStorage.h">
-      <Filter>Header Files\Graphics\Renderers\Static</Filter>
-    </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
@@ -191,6 +188,21 @@
     </ClInclude>
     <ClInclude Include="Assets\Terrain.h">
       <Filter>Header Files\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ShaderParams.h">
+      <Filter>Header Files\Graphics\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RenderStorage.h">
+      <Filter>Header Files\Graphics\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\StaticRenderStorage.h">
+      <Filter>Header Files\Graphics\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TerrainRenderStorage.h">
+      <Filter>Header Files\Graphics\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RenderStorageMeshParams.h">
+      <Filter>Header Files\Graphics\RenderStorage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -295,6 +307,9 @@
     </ClCompile>
     <ClCompile Include="Assets\Terrain.cpp">
       <Filter>Source Files\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TerrainRenderStorage.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

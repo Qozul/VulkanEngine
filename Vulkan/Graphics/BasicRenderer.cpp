@@ -43,7 +43,7 @@ void BasicRenderer::initialise(const glm::mat4& viewMatrix)
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
 		eleDataPtr[i] = {
-			model, Shared::kProjectionMatrix * viewMatrix * model
+			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
 		};
 	}
 	storageBuffers_[0]->unbindRange();

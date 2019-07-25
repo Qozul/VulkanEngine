@@ -4,7 +4,7 @@
 using namespace QZL;
 using namespace QZL::Assets;
 
-void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams shaderParams, const std::string& meshName, 
+void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
 	Graphics::MeshLoaderFunction meshLoaderFunc)
 {
 	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, shaderParams, meshName, meshLoaderFunc);

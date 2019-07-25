@@ -24,7 +24,7 @@ namespace QZL {
 		class Entity {
 			friend class AssetManager;
 		public:
-			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams shaderParams, const std::string& meshName, 
+			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
 				Graphics::MeshLoaderFunction meshLoaderFunc = nullptr);
 			Graphics::GraphicsComponent* getGraphicsComponent() {
 				return graphicsComponent_;
