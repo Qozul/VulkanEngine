@@ -8,7 +8,7 @@ namespace QZL
 		class StorageBuffer {
 		public:
 			StorageBuffer(const LogicDevice* logicDevice, MemoryAllocationPattern pattern, uint32_t binding, VkBufferUsageFlags flags, VkDeviceSize maxSize,
-				VkShaderStageFlags stageFlags);
+				VkShaderStageFlags stageFlags, bool uniform = false);
 			~StorageBuffer();
 			const VkDescriptorSetLayoutBinding& getBinding();
 			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set);
@@ -26,6 +26,7 @@ namespace QZL
 			VkDescriptorSetLayoutBinding binding_;
 			VkDescriptorBufferInfo bufferInfo_;
 			const LogicDevice* logicDevice_;
+			const bool uniform_;
 		};
 
 		template<typename DataType>

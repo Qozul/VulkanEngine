@@ -4,19 +4,16 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-Descriptor::Descriptor(const LogicDevice* logicDevice, const uint32_t maxSets)
+Descriptor::Descriptor(const LogicDevice* logicDevice, const uint32_t maxSets, std::vector<std::pair<VkDescriptorType, uint32_t>> types)
 	: logicDevice_(logicDevice)
 {
 	std::vector<VkDescriptorPoolSize> poolSizes;
-	VkDescriptorPoolSize uniformPoolSize = {};
-	uniformPoolSize.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	uniformPoolSize.descriptorCount = maxSets;
-	poolSizes.push_back(uniformPoolSize);
-
-	VkDescriptorPoolSize samplerPoolSize = {};
-	samplerPoolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerPoolSize.descriptorCount = maxSets;
-	poolSizes.push_back(samplerPoolSize);
+	for (auto type : types) {
+		VkDescriptorPoolSize poolSize = {};
+		poolSize.type = type.first;
+		poolSize.descriptorCount = type.second;
+		poolSizes.push_back(poolSize);
+	}
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

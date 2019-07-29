@@ -1,5 +1,6 @@
 #include "Entity.h"
 #include "Transform.h"
+#include "../Game/GameScript.h"
 
 using namespace QZL;
 using namespace QZL::Assets;
@@ -8,6 +9,11 @@ void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics:
 	Graphics::MeshLoaderFunction meshLoaderFunc)
 {
 	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, shaderParams, meshName, meshLoaderFunc);
+}
+
+void Entity::setGameScript(Game::GameScript* script)
+{
+	gameScript_ = script;
 }
 
 bool Entity::isStatic() const

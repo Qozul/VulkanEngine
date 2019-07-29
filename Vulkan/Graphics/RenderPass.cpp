@@ -3,15 +3,13 @@
 #include "LogicDevice.h"
 #include "Image2D.h"
 #include "Descriptor.h"
-#include "BasicRenderer.h"
-#include "LoopRenderer.h"
 #include "TexturedRenderer.h"
-#include "ComputeRenderer.h"
-#include "ComputeFetchRenderer.h"
+#include "TerrainRenderer.h"
 #include "GraphicsMaster.h"
 #include "ElementBuffer.h"
 #include "MeshLoader.h"
 #include "GraphicsMaster.h"
+#include "StorageBuffer.h"
 #include "../Assets/AssetManager.h"
 #include "../System.h"
 
@@ -19,6 +17,8 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 extern EnvironmentArgs environmentArgs;
+
+const glm::vec3 RenderPass::kAmbientColour = glm::vec3(0.2f, 0.2f, 0.2f);
 
 RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
 	: logicDevice_(logicDevice), swapChainDetails_(swapChainDetails), graphicsMaster_(master)
@@ -83,11 +83,28 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 
 	createFramebuffers(logicDevice, swapChainDetails);
 
-	descriptor_ = new Descriptor(logicDevice, kMaxRenderers * swapChainDetails.imageViews.size());
+	descriptor_ = new Descriptor(logicDevice, kMaxRenderers * swapChainDetails.imageViews.size() + swapChainDetails.imageViews.size(), {
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 }, 
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6 },
+		{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 }
+	});
+
+	// Create the global lighting uniform buffer
+	globalRenderData_ = new GlobalRenderData;
+	globalRenderData_->globalDataDescriptor = descriptor_;
+	lightingUbo_ = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings::LIGHTING, 0,
+		sizeof(LightingData), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, true);
+	globalRenderData_->lightingDataLayout = descriptor_->makeLayout({ lightingUbo_->getBinding() });
+	globalRenderData_->lightingDataSetsIdx = descriptor_->createSets({ globalRenderData_->lightingDataLayout, globalRenderData_->lightingDataLayout, globalRenderData_->lightingDataLayout });
+	descriptor_->updateDescriptorSets({ lightingUbo_->descriptorWrite(descriptor_->getSet(globalRenderData_->lightingDataSetsIdx)),
+		lightingUbo_->descriptorWrite(descriptor_->getSet(globalRenderData_->lightingDataSetsIdx + 1)), lightingUbo_->descriptorWrite(descriptor_->getSet(globalRenderData_->lightingDataSetsIdx + 2)) });
+
 	createRenderers();
 }
 RenderPass::~RenderPass()
 {
+	SAFE_DELETE(globalRenderData_);
+	SAFE_DELETE(lightingUbo_);
 	SAFE_DELETE(descriptor_);
 	SAFE_DELETE(depthBuffer_);
 	SAFE_DELETE(backBuffer_);
@@ -101,9 +118,6 @@ RenderPass::~RenderPass()
 
 void RenderPass::doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
-#if defined(COMPUTE_RUN) || defined(COMPUTE_READBACK_RUN)
-	CURRENT_RENDERER->recordCompute(viewMatrix_, idx, cmdBuffer);
-#endif
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = renderPass_;
@@ -120,8 +134,10 @@ void RenderPass::doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 
 	vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	//terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
-	texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	updateGlobalDescriptors(idx, cmdBuffer);
+
+	terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -159,7 +175,7 @@ VkFormat RenderPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChain
 {
 	ImageParameters params = { VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
-	VkFormat imageFormat;
+	VkFormat imageFormat = VkFormat::VK_FORMAT_UNDEFINED;
 	for (VkFormat format : { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }) {
 		VkFormatProperties properties;
 		vkGetPhysicalDeviceFormatProperties(logicDevice->getPhysicalDevice(), format, &properties);
@@ -177,8 +193,19 @@ VkFormat RenderPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChain
 
 void RenderPass::createRenderers()
 {
-	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, "TexturedVert", "TexturedFrag", 1);
-	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
+	//texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, "TexturedVert", "TexturedFrag", 1);
+	//graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
 
-	
+	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, 
+		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
+	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
+}
+
+void RenderPass::updateGlobalDescriptors(const uint32_t idx, VkCommandBuffer cmdBuffer)
+{
+	LightingData* lightingPtr = static_cast<LightingData*>(lightingUbo_->bindRange());
+	*lightingPtr = {
+		glm::vec4(graphicsMaster_->getCamPos(), 0.0), glm::vec4(kAmbientColour, 0.0), glm::vec4(1000.0, 500.0, -1000.0, 0.0)
+	};
+	lightingUbo_->unbindRange();
 }

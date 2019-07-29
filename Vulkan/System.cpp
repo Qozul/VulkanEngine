@@ -5,14 +5,18 @@
 #include "Graphics/TextureLoader.h"
 #include "Graphics/LogicDevice.h"
 #include "InputManager.h"
+#include <chrono>
 
 using namespace QZL;
+using Clock = std::chrono::high_resolution_clock;
 
 int main(int argc, char** argv) {
 	System system;
 	system.loop();
 	return 0;
 }
+
+float System::deltaTime = 0.0f;
 
 System::System()
 {
@@ -21,13 +25,14 @@ System::System()
 
 	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
 	inputManager_ = new InputManager(masters_.graphicsMaster->details_.window);
+	masters_.system = this;
+	masters_.inputManager = inputManager_;
 	masters_.physicsMaster = nullptr;
 
 	// Graphics master must be created before texture loader for logic device, and texture loader must be created before game master
 	masters_.assetManager->textureLoader = new Graphics::TextureLoader(masters_.graphicsMaster->details_.logicDevice);
 
 	masters_.gameMaster = new Game::GameMaster(masters_);
-	masters_.gameMaster->loadGame();
 }
 
 System::~System()
@@ -40,13 +45,22 @@ System::~System()
 
 void System::loop()
 {
+	masters_.gameMaster->loadGame();
 	masters_.graphicsMaster->preframeSetup();
 	Shared::PerfMeasurer perfMeasurer;
-	while (!glfwWindowShouldClose(masters_.graphicsMaster->details_.window)) {
+	Clock::time_point lastTime = Clock::now();
+	while (!glfwWindowShouldClose(masters_.graphicsMaster->details_.window) 
+		&& !glfwGetKey(masters_.graphicsMaster->details_.window, GLFW_KEY_ESCAPE)) {
+		auto measuredTime = Clock::now();
+		std::chrono::duration<float, std::milli> diff = (measuredTime - lastTime);
+		deltaTime = diff.count();
+		lastTime = measuredTime;
+
 		glfwPollEvents();
+		inputManager_->checkInput();
+		masters_.gameMaster->update(deltaTime);
 		perfMeasurer.startTime();
 		masters_.graphicsMaster->loop();
-
 		perfMeasurer.endTime();
 	}
 	std::cout << "Vulkan perf: " << perfMeasurer.getAverageTime().count() << std::endl;

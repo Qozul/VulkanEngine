@@ -17,12 +17,20 @@ namespace QZL
 			glm::mat4 mvpMatrix;
 		};
 
+		struct GlobalRenderData {
+			Descriptor* globalDataDescriptor;
+			size_t lightingDataSetsIdx;
+			VkDescriptorSetLayout lightingDataLayout;
+		};
+
 		class RendererBase {
 		public:
-			RendererBase(DeviceMemory* deviceMemory) 
-				: pipeline_(nullptr), renderStorage_(new RenderStorage(deviceMemory)) { }
+			RendererBase(DeviceMemory* deviceMemory)
+				: pipeline_(nullptr), renderStorage_(new RenderStorage(deviceMemory)) {
+			}
 			RendererBase(RenderStorage* renderStorage)
-				: pipeline_(nullptr), renderStorage_(renderStorage) { }
+				: pipeline_(nullptr), renderStorage_(renderStorage) {
+			}
 			virtual ~RendererBase();
 			virtual void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
 			virtual void recordCompute(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer);
@@ -47,6 +55,7 @@ namespace QZL
 			RendererPipeline* pipeline_;
 			RenderStorage* renderStorage_;
 			std::vector<StorageBuffer*> storageBuffers_;
+			std::vector<VkDescriptorSetLayout> pipelineLayouts_;
 			std::vector<VkDescriptorSet> descriptorSets_;
 		};
 
@@ -78,7 +87,7 @@ namespace QZL
 				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader);
 			}
 			else {
-				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader);
+				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader, tessCtrlShader, tessEvalShader);
 			}
 		}
 

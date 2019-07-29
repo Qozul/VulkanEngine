@@ -22,9 +22,11 @@ namespace QZL
 			VkPipelineLayout layout_;
 			const LogicDevice* logicDevice_;
 		private:
-			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
-				VkPipelineShaderStageCreateInfo shaderStagesInfo[]);
+			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
+				std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo);
 			VkPipelineShaderStageCreateInfo createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage);
+			VkPipelineInputAssemblyStateCreateInfo createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart);
+			VkPipelineTessellationStateCreateInfo createTessellationStateInfo(uint32_t patchPointCount);
 		};
 	}
 }

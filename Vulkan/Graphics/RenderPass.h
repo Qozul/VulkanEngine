@@ -12,9 +12,18 @@ namespace QZL
 		struct SwapChainDetails;
 		class ElementBuffer;
 		class GraphicsMaster;
+		struct GlobalRenderData;
+		class StorageBuffer;
 
 		class RenderPass {
 			friend class SwapChain;
+
+			static const size_t kMaxLights = 1;
+			struct LightingData {
+				glm::vec4 cameraPosition;
+				glm::vec4 ambientColour;
+				std::array<glm::vec4, kMaxLights> lightPositions;
+			};
 		public:
 			void doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer);
 		private:
@@ -25,6 +34,8 @@ namespace QZL
 			void createBackBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 			VkFormat createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 			void createRenderers();
+
+			void updateGlobalDescriptors(const uint32_t idx, VkCommandBuffer cmdBuffer);
 
 			VkRenderPass renderPass_;
 			std::vector<VkFramebuffer> framebuffers_;
@@ -40,7 +51,11 @@ namespace QZL
 			Image2D* backBuffer_;
 			Image2D* depthBuffer_;
 
+			GlobalRenderData* globalRenderData_;
+			StorageBuffer* lightingUbo_;
+
 			static const size_t kMaxRenderers = 1;
+			static const glm::vec3 kAmbientColour;
 		};
 	}
 }

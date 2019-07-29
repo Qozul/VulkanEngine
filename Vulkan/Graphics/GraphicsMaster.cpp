@@ -13,7 +13,7 @@ using namespace QZL::Graphics;
 
 constexpr auto kHoldConsole = false;
 
-glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 
 EnvironmentArgs environmentArgs;
 
@@ -52,13 +52,13 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	for (auto ext : extensions)
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
 
-	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(25.0f, 0.0f, 50.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-
+	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(0.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	camPosition_ = new glm::vec3(0.0f, 10.0f, 0.0f);
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
 
-	validation_ = new Validation(details_.instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT);
+	validation_ = new Validation(details_.instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT);
 	ASSERT(validation_ != nullptr);
 
 	initDevices(enabledLayerCount, enabledLayerNames);
@@ -71,6 +71,7 @@ GraphicsMaster::~GraphicsMaster()
 	SAFE_DELETE(details_.physicalDevice);
 	SAFE_DELETE(validation_);
 	SAFE_DELETE(viewMatrix_);
+	SAFE_DELETE(camPosition_);
 
 	vkDestroySurfaceKHR(details_.instance, details_.surface, nullptr);
 	vkDestroyInstance(details_.instance, nullptr);
@@ -90,6 +91,7 @@ void GraphicsMaster::initGlfw(std::vector<const char*>& extensions)
 	
 	glfwSetWindowUserPointer(details_.window, this);
 	// TODO glfwSetFramebufferSizeCallback(details_.window, framebuffer_resize_callback);
+	glfwSetInputMode(details_.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// Add the glfw extensions to the required ones
 	uint32_t extensionCount = 0;

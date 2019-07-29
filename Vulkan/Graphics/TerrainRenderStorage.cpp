@@ -19,7 +19,7 @@ TerrainRenderStorage::~TerrainRenderStorage()
 	}
 }
 
-TerrainParamData QZL::Graphics::TerrainRenderStorage::resolveParams(GraphicsComponent* instance)
+TerrainParamData TerrainRenderStorage::resolveParams(GraphicsComponent* instance)
 {
 	auto params = static_cast<const TerrainShaderParams*>(instance->getShaderParams());
 	return { new TextureSampler(logicDevice_, params->getHeightmapName(), textureLoader_->loadTexture(params->getHeightmapName()),

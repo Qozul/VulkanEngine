@@ -12,27 +12,29 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
 	Shader fragmentModule = { *logicDevice_, fragmentShader };
-	VkPipelineShaderStageCreateInfo shaderStagesInfo[] = { 
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo = {
 		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
 		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
 	};
-	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo);
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE), nullptr);
 }
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 	const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader)
+	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
 	Shader tessCtrlModule = { *logicDevice_, tessCtrlShader };
 	Shader tessEvalModule = { *logicDevice_, tessEvalShader };
 	Shader fragmentModule = { *logicDevice_, fragmentShader };
-	VkPipelineShaderStageCreateInfo shaderStagesInfo[] = {
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo = {
 		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
+		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT),
 		createShaderInfo(tessCtrlModule.getModule(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT),
-		createShaderInfo(tessEvalModule.getModule(), VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT),
-		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
+		createShaderInfo(tessEvalModule.getModule(), VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
 	};
-	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo);
+	auto tessellationInfo = createTessellationStateInfo(4);
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_FALSE), &tessellationInfo);
 }
 
 RendererPipeline::~RendererPipeline()
@@ -61,7 +63,7 @@ VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layou
 }
 
 void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
-	VkPipelineShaderStageCreateInfo shaderStagesInfo[])
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo)
 {
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -73,12 +75,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
+	
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
@@ -140,8 +137,8 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStagesInfo;
+	pipelineInfo.stageCount = shaderStagesInfo.size();
+	pipelineInfo.pStages = shaderStagesInfo.data();
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
@@ -154,6 +151,10 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
+	if (inputAssembly.topology == VK_PRIMITIVE_TOPOLOGY_PATCH_LIST && tessellationInfo != nullptr) {
+		pipelineInfo.pTessellationState = tessellationInfo;
+	}
+
 	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline_));
 }
 
@@ -165,4 +166,21 @@ VkPipelineShaderStageCreateInfo RendererPipeline::createShaderInfo(VkShaderModul
 	info.module = module;
 	info.pName = "main";
 	return info;
+}
+
+VkPipelineInputAssemblyStateCreateInfo RendererPipeline::createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart)
+{
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
+	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssembly.topology = topology;
+	inputAssembly.primitiveRestartEnable = enablePrimitiveRestart;
+	return inputAssembly;
+}
+
+VkPipelineTessellationStateCreateInfo RendererPipeline::createTessellationStateInfo(uint32_t patchPointCount)
+{
+	VkPipelineTessellationStateCreateInfo tessellationInfo = {};
+	tessellationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+	tessellationInfo.patchControlPoints = patchPointCount;
+	return tessellationInfo;
 }

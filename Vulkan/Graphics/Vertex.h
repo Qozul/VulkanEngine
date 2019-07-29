@@ -16,6 +16,9 @@ namespace QZL
 			float u, v;
 			float nx, ny, nz;
 
+			Vertex(float x = 0.0f, float y = 0.0f, float z = 0.0f, float u = 0.0f, float v = 0.0f, float nx = 0.0f, float ny = 0.0f, float nz = 0.0f)
+				: x(x), y(y), z(z), u(u), v(v), nx(nx), ny(ny), nz(nz) {}
+
 			static VkVertexInputBindingDescription getBindDesc(uint32_t binding, VkVertexInputRate inputRate)
 			{
 				// Describes at which rate to load data from memory (instance/vertex) and number of bytes between data entries

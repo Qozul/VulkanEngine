@@ -22,8 +22,11 @@ namespace QZL {
 	namespace Game {
 		class GameMaster;
 	}
+	class System;
 	class InputManager;
 	struct SystemMasters {
+		System* system;
+		InputManager* inputManager;
 		Game::GameMaster* gameMaster;
 		Physics::PhysicsMaster* physicsMaster;
 		Graphics::GraphicsMaster* graphicsMaster;
@@ -39,6 +42,7 @@ namespace QZL {
 		const SystemMasters& getMasters() {
 			return masters_;
 		}
+		static float deltaTime;
 	private:
 		SystemMasters masters_;
 		InputManager* inputManager_;

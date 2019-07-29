@@ -26,6 +26,7 @@ namespace QZL {
 		public:
 			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
 				Graphics::MeshLoaderFunction meshLoaderFunc = nullptr);
+			void setGameScript(Game::GameScript* script);
 			Graphics::GraphicsComponent* getGraphicsComponent() {
 				return graphicsComponent_;
 			}

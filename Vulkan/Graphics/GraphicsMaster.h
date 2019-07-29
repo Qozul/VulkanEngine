@@ -52,8 +52,14 @@ namespace QZL
 			glm::mat4* getViewMatrixPtr() {
 				return viewMatrix_;
 			}
+			glm::vec3* getCamPosPtr() {
+				return camPosition_;
+			}
 			const glm::mat4& getViewMatrix() {
 				return *viewMatrix_;
+			}
+			const glm::vec3& getCamPos() {
+				return *camPosition_;
 			}
 			const SystemMasters& getMasters() {
 				return masters_;
@@ -78,6 +84,7 @@ namespace QZL
 			std::unordered_map<RendererTypes, RendererBase*> renderers_;
 
 			glm::mat4* viewMatrix_;
+			glm::vec3* camPosition_;
 
 			const SystemMasters& masters_;
 
