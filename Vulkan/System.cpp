@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
 }
 
 float System::deltaTime = 0.0f;
+float System::deltaTimeSeconds = 0.0f;
 
 System::System()
 {
@@ -54,6 +55,7 @@ void System::loop()
 		auto measuredTime = Clock::now();
 		std::chrono::duration<float, std::milli> diff = (measuredTime - lastTime);
 		deltaTime = diff.count();
+		deltaTimeSeconds = deltaTime / 1000.0f;
 		lastTime = measuredTime;
 
 		glfwPollEvents();

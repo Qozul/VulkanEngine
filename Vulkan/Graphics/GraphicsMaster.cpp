@@ -66,6 +66,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 
 GraphicsMaster::~GraphicsMaster()
 {
+	masters_.inputManager->removeProfile("graphicsdebug");
 	SAFE_DELETE(details_.logicDevice);
 
 	SAFE_DELETE(details_.physicalDevice);
@@ -143,9 +144,16 @@ void GraphicsMaster::initDevices(uint32_t& enabledLayerCount, const char* const*
 
 void GraphicsMaster::preframeSetup()
 {
+	// Setup special input, all renderers should have been created by this point
+	// NOTE that since the are renderers are stored in no order then it may not be the same key each time
+	inputProfile_.enabled = true;
+	int i = 0;
 	for (auto renderer : renderers_) {
 		renderer.second->preframeSetup(*viewMatrix_);
+		inputProfile_.profileBindings[{ GLFW_KEY_1 + i }] = std::bind(&RendererBase::toggleWiremeshMode, renderer.second);
+		++i;
 	}
+	masters_.inputManager->addProfile("graphicsdebug", &inputProfile_);
 }
 
 void GraphicsMaster::loop()

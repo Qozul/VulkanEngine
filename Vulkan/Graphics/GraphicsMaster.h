@@ -1,5 +1,6 @@
 #pragma once
 #include "VkUtil.h"
+#include "../InputManager.h"
 
 namespace QZL
 {
@@ -85,6 +86,8 @@ namespace QZL
 
 			glm::mat4* viewMatrix_;
 			glm::vec3* camPosition_;
+
+			InputProfile inputProfile_;
 
 			const SystemMasters& masters_;
 

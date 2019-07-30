@@ -8,6 +8,7 @@ namespace QZL {
 		class Camera : public GameScript {
 		public:
 			Camera(const GameScriptInitialiser& initialiser);
+			~Camera();
 		protected:
 			void start() override;
 			void update(float dt) override;
@@ -17,6 +18,10 @@ namespace QZL {
 			void moveRight();
 			void moveForwards();
 			void moveBackwards();
+			void moveUp();
+			void moveDown();
+			void increaseSpeed();
+			void decreaseSpeed();
 			void updatePosition();
 
 			glm::mat4* viewMatrixPtr_;
@@ -25,6 +30,10 @@ namespace QZL {
 			float yaw_;
 			float pitch_;
 			InputProfile inputProfile_;
+			float speed_;
+
+			static const int MAX_SPEED = 100;
+			static const int MIN_SPEED = 1;
 
 			static const float SPEED;
 			static const float MOUSE_SENSITIVITY;

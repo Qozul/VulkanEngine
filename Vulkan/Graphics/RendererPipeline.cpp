@@ -41,16 +41,33 @@ RendererPipeline::~RendererPipeline()
 {
 	vkDestroyPipeline(*logicDevice_, pipeline_, nullptr);
 	vkDestroyPipelineLayout(*logicDevice_, layout_, nullptr);
+	vkDestroyPipeline(*logicDevice_, wiremeshPipeline_, nullptr);
+	vkDestroyPipelineLayout(*logicDevice_, wiremeshLayout_, nullptr);
+}
+
+void RendererPipeline::switchMode()
+{
+	wiremeshMode_ = !wiremeshMode_;
 }
 
 VkPipeline RendererPipeline::getPipeline()
 {
-	return pipeline_;
+	if (wiremeshMode_) {
+		return wiremeshPipeline_;
+	}
+	else {
+		return pipeline_;
+	}
 }
 
 VkPipelineLayout RendererPipeline::getLayout()
 {
-	return layout_;
+	if (wiremeshMode_) {
+		return wiremeshLayout_;
+	}
+	else {
+		return layout_;
+	}
 }
 
 VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts)
@@ -65,6 +82,8 @@ VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layou
 void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo)
 {
+	wiremeshMode_ = false;
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
@@ -156,6 +175,11 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	}
 
 	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline_));
+
+	// Wiremesh mode for debugging
+	rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &wiremeshLayout_));
+	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &wiremeshPipeline_));
 }
 
 VkPipelineShaderStageCreateInfo RendererPipeline::createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage)

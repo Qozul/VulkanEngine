@@ -43,6 +43,7 @@ namespace QZL {
 			return masters_;
 		}
 		static float deltaTime;
+		static float deltaTimeSeconds;
 	private:
 		SystemMasters masters_;
 		InputManager* inputManager_;

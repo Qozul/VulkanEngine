@@ -47,6 +47,9 @@ namespace QZL
 				renderStorage_->buf()->commit();
 				initialise(viewMatrix);
 			}
+			void toggleWiremeshMode() {
+				pipeline_->switchMode();
+			}
 		protected:
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader = "", const std::string& tessEvalShader = "");

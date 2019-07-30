@@ -19,6 +19,9 @@ namespace QZL {
 		void addProfile(std::string name, InputProfile* profile) {
 			profiles_[name] = profile;
 		}
+		void removeProfile(std::string name) {
+			profiles_.erase(name);
+		}
 		void checkInput() {
 			// Mouse
 			previousMousePos_ = currentMousePos_;
