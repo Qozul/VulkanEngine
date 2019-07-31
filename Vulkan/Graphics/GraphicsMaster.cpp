@@ -29,6 +29,11 @@ void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 	renderers_[type] = renderer;
 }
 
+const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)
+{
+	return details_.physicalDevice->optionalExtensionsEnabled_[ext];
+}
+
 GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	: masters_(masters)
 {
@@ -49,8 +54,9 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	std::vector<const char*> availableExtNames;
 	std::transform(availableExts.begin(), availableExts.end(), std::back_inserter(availableExtNames),
 		[](const VkExtensionProperties& prop) { return prop.extensionName; });
-	for (auto ext : extensions)
+	for (auto ext : extensions) {
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
+	}
 
 	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(0.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 	camPosition_ = new glm::vec3(0.0f, 10.0f, 0.0f);

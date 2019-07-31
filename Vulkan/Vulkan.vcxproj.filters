@@ -204,6 +204,9 @@
     <ClInclude Include="Graphics\RenderStorageMeshParams.h">
       <Filter>Header Files\Graphics\RenderStorage</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\OptionalExtentions.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\TexturedRenderer.cpp">

@@ -47,6 +47,7 @@
     <ClInclude Include="Graphics\MemoryAllocation.h" />
     <ClInclude Include="Graphics\Mesh.h" />
     <ClInclude Include="Graphics\MeshLoader.h" />
+    <ClInclude Include="Graphics\OptionalExtentions.h" />
     <ClInclude Include="Graphics\PhysicalDevice.h" />
     <ClInclude Include="Graphics\RendererBase.h" />
     <ClInclude Include="Graphics\RendererPipeline.h" />
