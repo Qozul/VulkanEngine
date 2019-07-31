@@ -26,12 +26,12 @@ void GameMaster::loadGame()
 	camera->setGameScript(new Camera(cameraInit));
 	gameScripts_.push_back(camera->getGameScript());
 
-	/*Assets::Entity* testEntity = masters_.assetManager->createEntity();
+	Assets::Entity* testEntity = masters_.assetManager->createEntity();
 	testEntity->setGraphicsComponent(Graphics::RendererTypes::STATIC, new Graphics::StaticShaderParams("101", "102"), "Teapot");
-	masters_.graphicsMaster->registerComponent(testEntity->getGraphicsComponent());*/
+	masters_.graphicsMaster->registerComponent(testEntity->getGraphicsComponent());
 
-	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
-	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
+	//Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
+	//masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
 }
 
 void GameMaster::update(float dt)

@@ -136,8 +136,8 @@ void RenderPass::doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 
 	updateGlobalDescriptors(idx, cmdBuffer);
 
-	terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
-	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	//terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -193,12 +193,12 @@ VkFormat RenderPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChain
 
 void RenderPass::createRenderers()
 {
-	//texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, "TexturedVert", "TexturedFrag", 1);
-	//graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
+	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, "StaticVert", "StaticFrag", 1, globalRenderData_);
+	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
 
-	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, 
-		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
-	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
+	//terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureLoader, renderPass_, swapChainDetails_.extent, descriptor_, 
+	//	"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
+	//graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
 }
 
 void RenderPass::updateGlobalDescriptors(const uint32_t idx, VkCommandBuffer cmdBuffer)

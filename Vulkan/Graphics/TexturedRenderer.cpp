@@ -95,10 +95,10 @@ void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 
 		auto srs = static_cast<StaticRenderStorage*>(renderStorage_);
 		std::vector<VkWriteDescriptorSet> descWrites;
-		descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx]));
-		descWrites.push_back(srs->getParamData(i).normalMap->descriptorWrite(descriptorSets_[idx]));
+		descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx * 2]));
+		descWrites.push_back(srs->getParamData(i).normalMap->descriptorWrite(descriptorSets_[idx * 2]));
 		descriptor_->updateDescriptorSets(descWrites);
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx], 0, nullptr);
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx * 2], 0, nullptr);
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.indexCount, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
