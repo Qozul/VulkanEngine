@@ -50,11 +50,12 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 	if (optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING]) {
 		VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures = {};
 		descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-		descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = true;
-		descriptorIndexingFeatures.descriptorBindingPartiallyBound = true;
-		descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = true;
-		descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending = true;
-		descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind = true;
+		descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+		descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
 		deviceCreateInfo.pNext = &descriptorIndexingFeatures;
 	}
 
@@ -110,8 +111,8 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 	auto test = false;
 	for (auto& ext : availableExts) {
 		// Optional extensions
-		if (!strcmp(ext.extensionName, "VK_EXT_descriptor_indexing")) {
-			deviceExtensions_.push_back("VK_EXT_descriptor_indexing");
+		if (!strcmp(ext.extensionName, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) {
+			deviceExtensions_.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 			optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = true;
 		}
 		else {

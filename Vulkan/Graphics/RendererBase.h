@@ -19,8 +19,8 @@ namespace QZL
 
 		struct GlobalRenderData {
 			Descriptor* globalDataDescriptor;
-			size_t lightingDataSetsIdx;
-			VkDescriptorSetLayout lightingDataLayout;
+			size_t setIdx;
+			VkDescriptorSetLayout layout;
 		};
 
 		class RendererBase {

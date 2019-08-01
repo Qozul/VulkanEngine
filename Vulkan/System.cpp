@@ -24,15 +24,12 @@ System::System()
 	// Asset manager must be created before graphics master
 	masters_.assetManager = new Assets::AssetManager();
 
+	// Graphics initialisation also initialises assetManager->textureManager
 	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
 	inputManager_ = new InputManager(masters_.graphicsMaster->details_.window);
 	masters_.system = this;
 	masters_.inputManager = inputManager_;
 	masters_.physicsMaster = nullptr;
-
-	// Graphics master must be created before texture loader for logic device, and texture loader must be created before game master
-	masters_.assetManager->textureLoader = new Graphics::TextureLoader(masters_.graphicsMaster->details_.logicDevice);
-
 	masters_.gameMaster = new Game::GameMaster(masters_);
 }
 

@@ -15,16 +15,15 @@ namespace QZL
 			operator VkSampler() {
 				return sampler_;
 			}
-			const VkDescriptorSetLayoutBinding& getBinding();
 			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set);
 			const std::string& getName() const {
 				return name_;
 			}
+			VkDescriptorImageInfo getImageInfo();
 		private:
 			const LogicDevice* logicDevice_;
 			Image2D* texture_;
 			VkSampler sampler_;
-			VkDescriptorSetLayoutBinding binding_;
 			VkDescriptorImageInfo imageInfo_;
 			uint32_t bindingIdx_;
 			const std::string name_;

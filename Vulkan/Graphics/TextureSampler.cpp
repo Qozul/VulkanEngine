@@ -28,23 +28,11 @@ TextureSampler::TextureSampler(const LogicDevice* logicDevice, const std::string
 	createInfo.minLod = 0.0f;
 	createInfo.maxLod = 0.0f;
 	CHECK_VKRESULT(vkCreateSampler(*logicDevice, &createInfo, nullptr, &sampler_));
-
-	binding_ = {};
-	binding_.binding = binding;
-	binding_.descriptorCount = 1;
-	binding_.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	binding_.pImmutableSamplers = nullptr;
-	binding_.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 }
 
 TextureSampler::~TextureSampler()
 {
 	vkDestroySampler(*logicDevice_, sampler_, nullptr);
-}
-
-const VkDescriptorSetLayoutBinding& TextureSampler::getBinding()
-{
-	return binding_;
 }
 
 VkWriteDescriptorSet TextureSampler::descriptorWrite(VkDescriptorSet set)
@@ -64,4 +52,9 @@ VkWriteDescriptorSet TextureSampler::descriptorWrite(VkDescriptorSet set)
 	descriptorWrite.pImageInfo = &imageInfo_;
 
 	return descriptorWrite;
+}
+
+VkDescriptorImageInfo TextureSampler::getImageInfo()
+{
+	return imageInfo_;
 }

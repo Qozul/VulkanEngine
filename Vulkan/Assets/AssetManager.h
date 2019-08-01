@@ -12,6 +12,7 @@ namespace QZL {
 	namespace Graphics {
 		class MeshLoader;
 		class TextureLoader;
+		class TextureManager;
 	}
 	namespace Assets {
 		class AssetManager final {
@@ -22,7 +23,7 @@ namespace QZL {
 			Entity* createEntity();
 
 			Graphics::MeshLoader* meshLoader;
-			Graphics::TextureLoader* textureLoader;
+			Graphics::TextureManager* textureManager;
 		private:
 			AssetManager();
 			~AssetManager();

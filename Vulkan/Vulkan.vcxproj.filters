@@ -55,6 +55,9 @@
     <Filter Include="Header Files\Graphics\RenderStorage">
       <UniqueIdentifier>{27982c88-3cbf-441f-9c55-10afdb96712f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\Textures">
+      <UniqueIdentifier>{383d9e9f-9b09-4c50-aec8-5011adbe5b40}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Shader.h">
@@ -64,12 +67,6 @@
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\SwapChain.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\TextureLoader.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\TextureSampler.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Validation.h">
@@ -207,6 +204,15 @@
     <ClInclude Include="Graphics\OptionalExtentions.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\TextureSampler.h">
+      <Filter>Header Files\Graphics\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TextureLoader.h">
+      <Filter>Header Files\Graphics\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TextureManager.h">
+      <Filter>Header Files\Graphics\Textures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\TexturedRenderer.cpp">
@@ -313,6 +319,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\TerrainRenderStorage.cpp">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TextureManager.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

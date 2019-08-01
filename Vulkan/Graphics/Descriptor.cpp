@@ -52,12 +52,13 @@ const VkDescriptorSet Descriptor::getSet(size_t idx)
 	return sets_[idx];
 }
 
-VkDescriptorSetLayout Descriptor::makeLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings)
+VkDescriptorSetLayout Descriptor::makeLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings, const void* pNext)
 {
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = bindings.size();
 	layoutInfo.pBindings = bindings.data();
+	layoutInfo.pNext = pNext;
 	VkDescriptorSetLayout layout;
 	CHECK_VKRESULT(vkCreateDescriptorSetLayout(*logicDevice_, &layoutInfo, nullptr, &layout));
 	layouts_.push_back(layout);

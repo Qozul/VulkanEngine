@@ -65,6 +65,7 @@
     <ClInclude Include="Graphics\TerrainShaderParams.h" />
     <ClInclude Include="Graphics\TexturedRenderer.h" />
     <ClInclude Include="Graphics\TextureLoader.h" />
+    <ClInclude Include="Graphics\TextureManager.h" />
     <ClInclude Include="Graphics\TextureSampler.h" />
     <ClInclude Include="Graphics\Validation.h" />
     <ClInclude Include="Graphics\Vertex.h" />
@@ -106,6 +107,7 @@
     <ClCompile Include="Graphics\TerrainRenderStorage.cpp" />
     <ClCompile Include="Graphics\TexturedRenderer.cpp" />
     <ClCompile Include="Graphics\TextureLoader.cpp" />
+    <ClCompile Include="Graphics\TextureManager.cpp" />
     <ClCompile Include="Graphics\TextureSampler.cpp" />
     <ClCompile Include="Graphics\Validation.cpp" />
     <ClCompile Include="Graphics\Vertex.cpp" />

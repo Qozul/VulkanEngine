@@ -14,7 +14,7 @@ const float kSpecularExponent = 0.5;
 layout(binding = 2) uniform sampler2D texSampler;
 layout(binding = 3) uniform sampler2D texSampler2;
 
-layout(set = 1, binding = 1) uniform LightingData
+layout(set = 1, binding = 0) uniform LightingData
 {
 	vec4 cameraPosition;
 	vec4 ambientColour;

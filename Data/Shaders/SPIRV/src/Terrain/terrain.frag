@@ -11,7 +11,7 @@ const vec3 kDiffuseColour = vec3(1.0, 1.0, 1.0);
 const vec3 kSpecularColour = vec3(1.0, 1.0, 1.0);
 const float kSpecularExponent = 0.0;
 
-layout(set = 1, binding = 1) uniform LightingData
+layout(set = 1, binding = 0) uniform LightingData
 {
 	vec4 cameraPosition;
 	vec4 ambientColour;

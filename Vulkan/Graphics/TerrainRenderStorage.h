@@ -3,7 +3,7 @@
 
 namespace QZL {
 	namespace Graphics {
-		class TextureLoader;
+		class TextureManager;
 		class TextureSampler;
 		class LogicDevice;
 
@@ -13,13 +13,13 @@ namespace QZL {
 		};
 		class TerrainRenderStorage : public RenderStorageMeshParams<TerrainParamData> {
 		public:
-			TerrainRenderStorage(TextureLoader*& textureLoader, const LogicDevice* logicDevice);
+			TerrainRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice);
 			~TerrainRenderStorage();
 		protected:
 			TerrainParamData resolveParams(GraphicsComponent* instance) override;
 		private:
 			const LogicDevice* logicDevice_;
-			TextureLoader*& textureLoader_;
+			TextureManager* textureManager_;
 		};
 	}
 }

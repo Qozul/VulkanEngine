@@ -4,7 +4,7 @@
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "TextureSampler.h"
-#include "TextureLoader.h"
+#include "TextureManager.h"
 #include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
@@ -15,25 +15,25 @@
 using namespace QZL;
 using namespace Graphics;
 
-TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, TextureLoader*& textureLoader, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
+TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 	const uint32_t entityCount, const GlobalRenderData* globalRenderData)
-	: RendererBase(new TerrainRenderStorage(textureLoader, logicDevice)), descriptor_(descriptor)
+	: RendererBase(new TerrainRenderStorage(textureManager, logicDevice)), descriptor_(descriptor)
 {
 	ASSERT(entityCount > 0);
-	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings::PER_ENTITY_DATA, 0,
+	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
 		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 	storageBuffers_.push_back(mvpBuf);
 
 	VkDescriptorSetLayoutBinding heightmapBinding = {};
-	heightmapBinding.binding = (uint32_t)ReservedGraphicsBindings::TEXTURE_0;
+	heightmapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
 	heightmapBinding.descriptorCount = 1;
 	heightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	heightmapBinding.pImmutableSamplers = nullptr;
 	heightmapBinding.stageFlags = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 
 	VkDescriptorSetLayoutBinding debugDiffuseBinding = {};
-	debugDiffuseBinding.binding = (uint32_t)ReservedGraphicsBindings::TEXTURE_1;
+	debugDiffuseBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_1;
 	debugDiffuseBinding.descriptorCount = 1;
 	debugDiffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	debugDiffuseBinding.pImmutableSamplers = nullptr;
@@ -41,13 +41,13 @@ TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, TextureLoader*&
 
 	auto layout = descriptor->makeLayout({ mvpBuf->getBinding(), heightmapBinding, debugDiffuseBinding });
 	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(globalRenderData->lightingDataLayout);
+	pipelineLayouts_.push_back(globalRenderData->layout);
 
 	size_t idx = descriptor->createSets({ layout, layout, layout });
 	std::vector<VkWriteDescriptorSet> descWrites;
 	for (int i = 0; i < 3; ++i) {
 		descriptorSets_.push_back(descriptor->getSet(idx + i));
-		descriptorSets_.push_back(globalRenderData->globalDataDescriptor->getSet(globalRenderData->lightingDataSetsIdx + i));
+		descriptorSets_.push_back(globalRenderData->globalDataDescriptor->getSet(globalRenderData->setIdx + i));
 		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
 	}
 	descriptor->updateDescriptorSets(descWrites);
