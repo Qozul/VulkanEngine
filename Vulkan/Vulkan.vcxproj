@@ -31,10 +31,7 @@
     <ClInclude Include="Game\Camera.h" />
     <ClInclude Include="Game\GameMaster.h" />
     <ClInclude Include="Game\GameScript.h" />
-    <ClInclude Include="Graphics\BasicRenderer.h" />
-    <ClInclude Include="Graphics\ComputeFetchRenderer.h" />
     <ClInclude Include="Graphics\ComputePipeline.h" />
-    <ClInclude Include="Graphics\ComputeRenderer.h" />
     <ClInclude Include="Graphics\Descriptor.h" />
     <ClInclude Include="Graphics\DeviceMemory.h" />
     <ClInclude Include="Graphics\DrawElementsCommand.h" />
@@ -43,7 +40,7 @@
     <ClInclude Include="Graphics\GraphicsMaster.h" />
     <ClInclude Include="Graphics\Image2D.h" />
     <ClInclude Include="Graphics\LogicDevice.h" />
-    <ClInclude Include="Graphics\LoopRenderer.h" />
+    <ClInclude Include="Graphics\Material.h" />
     <ClInclude Include="Graphics\MemoryAllocation.h" />
     <ClInclude Include="Graphics\Mesh.h" />
     <ClInclude Include="Graphics\MeshLoader.h" />
@@ -82,10 +79,7 @@
     <ClCompile Include="Assets\Terrain.cpp" />
     <ClCompile Include="Game\Camera.cpp" />
     <ClCompile Include="Game\GameMaster.cpp" />
-    <ClCompile Include="Graphics\BasicRenderer.cpp" />
-    <ClCompile Include="Graphics\ComputeFetchRenderer.cpp" />
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
-    <ClCompile Include="Graphics\ComputeRenderer.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />
     <ClCompile Include="Graphics\DeviceMemory.cpp" />
     <ClCompile Include="Graphics\ElementBuffer.cpp" />
@@ -93,7 +87,6 @@
     <ClCompile Include="Graphics\GraphicsMaster.cpp" />
     <ClCompile Include="Graphics\Image2D.cpp" />
     <ClCompile Include="Graphics\LogicDevice.cpp" />
-    <ClCompile Include="Graphics\LoopRenderer.cpp" />
     <ClCompile Include="Graphics\MeshLoader.cpp" />
     <ClCompile Include="Graphics\PhysicalDevice.cpp" />
     <ClCompile Include="Graphics\RendererPipeline.cpp" />

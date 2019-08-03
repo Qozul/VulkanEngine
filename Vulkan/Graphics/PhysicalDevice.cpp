@@ -108,23 +108,21 @@ bool PhysicalDevice::hasRequiredQueueFamilies()
 bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCapabilities, VkSurfaceKHR& surface)
 {
 	auto availableExts = obtainVkData<VkExtensionProperties>(vkEnumerateDeviceExtensionProperties, device_, nullptr);
-	auto test = false;
+	auto hasSwapchain = false;
+	optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = false;
 	for (auto& ext : availableExts) {
 		// Optional extensions
 		if (!strcmp(ext.extensionName, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) {
 			deviceExtensions_.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 			optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = true;
-		}
-		else {
-			optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = false;
+			DEBUG_LOG("Descriptor indexing is enabled.");
 		}
 		// Required
 		if (!strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) {
-			test = true;
-			break;
+			hasSwapchain = true;
 		}
 	}
-	if (test) {
+	if (hasSwapchain) {
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_, surface, &surfaceCapabilities.capabilities);
 		surfaceCapabilities.formats = obtainVkData<VkSurfaceFormatKHR>(vkGetPhysicalDeviceSurfaceFormatsKHR, device_, surface);
 		surfaceCapabilities.presentModes = obtainVkData<VkPresentModeKHR>(vkGetPhysicalDeviceSurfacePresentModesKHR, device_, surface);

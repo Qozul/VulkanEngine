@@ -14,7 +14,7 @@ layout (location = 1) out vec3 normal;
 layout (location = 2) out vec3 worldPos;
 
 layout(set = 0, binding = 0) buffer UniformBufferObject {
-    ElementData[] uElementData;
+    ElementData uElementData;
 } ubo;
 
 layout(set = 0, binding = 2) uniform sampler2D heightmap;
@@ -32,8 +32,8 @@ void main(void)
 	vec4 position = mix(pos1, pos2, gl_TessCoord.y);
 	position.y -= textureLod(heightmap, texUV, 0.0).r * maxHeight;
 	
-	gl_Position = ubo.uElementData[0].mvp * position;
-	worldPos = (ubo.uElementData[0].model * position).xyz;
+	gl_Position = ubo.uElementData.mvp * position;
+	worldPos = (ubo.uElementData.model * position).xyz;
 	
 	normal = vec3(0,1,0);
 }

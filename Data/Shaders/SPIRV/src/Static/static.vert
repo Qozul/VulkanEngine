@@ -13,6 +13,7 @@ layout(location = 2) in vec3 iNormal;
 layout (location = 0) out vec2 texUV;
 layout (location = 1) out vec3 normal;
 layout (location = 2) out vec3 worldPos;
+layout (location = 3) flat out int instanceIndex;
 
 out gl_PerVertex {
 	vec4 gl_Position;
@@ -23,6 +24,7 @@ layout(set = 0, binding = 0) buffer UniformBufferObject {
 } ubo;
 
 void main() {
+	instanceIndex = gl_InstanceIndex;
 	gl_Position = ubo.uElementData[gl_InstanceIndex].mvp * vec4(iPosition, 1.0);
 	texUV = iTextureCoord;
 	worldPos = (ubo.uElementData[gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;

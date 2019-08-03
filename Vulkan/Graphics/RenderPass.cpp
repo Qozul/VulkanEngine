@@ -87,7 +87,7 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 	descriptor_ = new Descriptor(logicDevice, kMaxRenderers * swapChainDetails.imageViews.size() + swapChainDetails.imageViews.size(), {
 		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 }, 
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6 },
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3 }
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 }
 	});
 
 	// Create the global lighting uniform buffer
@@ -100,8 +100,7 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 	};
 	setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
-	master->getMasters().assetManager->textureManager = new Graphics::TextureManager(logicDevice, descriptor_, 2);
-	//master->getMasters().assetManager->textureManager = new Graphics::TextureManager(logicDevice, descriptor_, 2, graphicsMaster_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING));
+	master->getMasters().assetManager->textureManager = new Graphics::TextureManager(logicDevice, descriptor_, 2, graphicsMaster_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING));
 
 	globalRenderData_ = new GlobalRenderData;
 	globalRenderData_->globalDataDescriptor = descriptor_;
@@ -114,6 +113,7 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 		globalRenderData_->layout = descriptor_->makeLayout({ lightingUbo_->getBinding() });
 	}
 	globalRenderData_->setIdx = descriptor_->createSets({ globalRenderData_->layout }); // Only 1 set rather than 1 per frame, data is constant
+	master->getMasters().assetManager->textureManager->setDescriptorSetIdx(globalRenderData_->setIdx);
 	descriptor_->updateDescriptorSets({ lightingUbo_->descriptorWrite(descriptor_->getSet(globalRenderData_->setIdx)) });
 
 	createRenderers();
@@ -153,8 +153,8 @@ void RenderPass::doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 
 	updateGlobalDescriptors(idx, cmdBuffer);
 
-	//terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
-	texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -210,12 +210,13 @@ VkFormat RenderPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChain
 
 void RenderPass::createRenderers()
 {
-	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, "StaticVert", "StaticFrag", 1, globalRenderData_);
-	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
+	/*std::string fragName = logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING) ? "StaticFrag_DI" : "StaticFrag";
+	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, "StaticVert", fragName, 1, globalRenderData_);
+	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);*/
 
-	//terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, 
-	//	"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
-	//graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
+	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, 
+		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
+	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
 }
 
 void RenderPass::updateGlobalDescriptors(const uint32_t idx, VkCommandBuffer cmdBuffer)

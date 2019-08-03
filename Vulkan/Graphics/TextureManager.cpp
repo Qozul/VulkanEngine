@@ -73,9 +73,9 @@ VkWriteDescriptorSet TextureManager::makeDescriptorWrite(VkDescriptorImageInfo i
 	VkWriteDescriptorSet write = {};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write.dstBinding = (uint32_t)ReservedGraphicsBindings1::TEXTURE_ARRAY_BINDING;
-	write.dstArrayElement = 0;
+	write.dstArrayElement = idx;
 	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	write.descriptorCount = maxTextures_;
+	write.descriptorCount = count;
 	write.pBufferInfo = 0;
 	write.dstSet = descriptor_->getSet(descriptorSetIdx_);
 	write.pImageInfo = &imageInfo;

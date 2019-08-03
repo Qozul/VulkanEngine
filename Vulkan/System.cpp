@@ -37,7 +37,7 @@ System::~System()
 {
 	SAFE_DELETE(masters_.assetManager);
 	SAFE_DELETE(masters_.gameMaster);
-	SAFE_DELETE(masters_.physicsMaster);
+	//SAFE_DELETE(masters_.physicsMaster);
 	SAFE_DELETE(masters_.graphicsMaster);
 }
 

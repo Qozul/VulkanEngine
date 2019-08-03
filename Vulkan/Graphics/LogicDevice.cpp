@@ -78,3 +78,8 @@ VkQueue LogicDevice::getQueueHandle(QueueFamilyType type) const
 	EXPECTS(type != QueueFamilyType::kNumQueueFamilyTypes);
 	return queueHandles_[static_cast<size_t>(type)];
 }
+
+const bool LogicDevice::supportsOptionalExtension(OptionalExtensions ext)
+{
+	return physicalDevice_->optionalExtensionsEnabled_[ext];
+}

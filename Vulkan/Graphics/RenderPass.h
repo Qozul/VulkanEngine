@@ -40,7 +40,7 @@ namespace QZL
 			VkRenderPass renderPass_;
 			std::vector<VkFramebuffer> framebuffers_;
 			const SwapChainDetails& swapChainDetails_;
-			const LogicDevice* logicDevice_;
+			LogicDevice* logicDevice_;
 			GraphicsMaster* graphicsMaster_;
 
 			Descriptor* descriptor_;

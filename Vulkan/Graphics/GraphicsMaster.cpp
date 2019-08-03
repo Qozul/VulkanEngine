@@ -64,7 +64,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
 
-	validation_ = new Validation(details_.instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT);
+	validation_ = new Validation(details_.instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT);
 	ASSERT(validation_ != nullptr);
 
 	initDevices(enabledLayerCount, enabledLayerNames);

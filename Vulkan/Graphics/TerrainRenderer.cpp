@@ -10,21 +10,27 @@
 #include "GraphicsComponent.h"
 #include "TerrainShaderParams.h"
 #include "TerrainRenderStorage.h"
+#include "SwapChain.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace Graphics;
 
-TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
+TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 	const uint32_t entityCount, const GlobalRenderData* globalRenderData)
-	: RendererBase(new TerrainRenderStorage(textureManager, logicDevice)), descriptor_(descriptor)
+	: RendererBase(logicDevice), descriptor_(descriptor)
 {
 	ASSERT(entityCount > 0);
-	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
-		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
-	storageBuffers_.push_back(mvpBuf);
+	renderStorage_ = new TerrainRenderStorage(textureManager, logicDevice);
 
+	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
+		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+	StorageBuffer* matBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
+		sizeof(MaterialStatic) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
+	storageBuffers_.push_back(mvpBuf);
+	storageBuffers_.push_back(matBuf);
+	VkDescriptorSetLayout layout;
 	VkDescriptorSetLayoutBinding heightmapBinding = {};
 	heightmapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
 	heightmapBinding.descriptorCount = 1;
@@ -38,8 +44,8 @@ TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, TextureManager*
 	debugDiffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	debugDiffuseBinding.pImmutableSamplers = nullptr;
 	debugDiffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), heightmapBinding, debugDiffuseBinding });
 
-	auto layout = descriptor->makeLayout({ mvpBuf->getBinding(), heightmapBinding, debugDiffuseBinding });
 	pipelineLayouts_.push_back(layout);
 	pipelineLayouts_.push_back(globalRenderData->layout);
 
@@ -47,8 +53,9 @@ TerrainRenderer::TerrainRenderer(const LogicDevice* logicDevice, TextureManager*
 	std::vector<VkWriteDescriptorSet> descWrites;
 	for (int i = 0; i < 3; ++i) {
 		descriptorSets_.push_back(descriptor->getSet(idx + i));
-		descriptorSets_.push_back(globalRenderData->globalDataDescriptor->getSet(globalRenderData->setIdx + i));
+		descriptorSets_.push_back(globalRenderData->globalDataDescriptor->getSet(globalRenderData->setIdx));
 		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
+		descWrites.push_back(matBuf->descriptorWrite(descriptor->getSet(idx + i)));
 	}
 	descriptor->updateDescriptorSets(descWrites);
 
@@ -94,12 +101,18 @@ void TerrainRenderer::initialise(const glm::mat4& viewMatrix)
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
+	MaterialStatic* matDataPtr = static_cast<MaterialStatic*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
-	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
-		eleDataPtr[i] = {
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+		matDataPtr[i] = static_cast<TerrainShaderParams*>((*(instPtr))->getShaderParams())->getMaterial();
+	}
+	glm::mat4 model = (*(instPtr))->getEntity()->getTransform()->toModelMatrix();
+	ElementData data = {
 			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
-		};
+	};
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+		eleDataPtr[i] = data;
 	}
 	storageBuffers_[0]->unbindRange();
+	storageBuffers_[1]->unbindRange();
 }

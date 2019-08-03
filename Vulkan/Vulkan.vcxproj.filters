@@ -114,9 +114,6 @@
     <ClInclude Include="Graphics\PhysicalDevice.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\RendererBase.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\RendererPipeline.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
@@ -149,18 +146,6 @@
     </ClInclude>
     <ClInclude Include="Graphics\GraphicsComponent.h">
       <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\BasicRenderer.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ComputeFetchRenderer.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ComputeRenderer.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\LoopRenderer.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
     </ClInclude>
     <ClInclude Include="Game\GameMaster.h">
       <Filter>Header Files\Game</Filter>
@@ -212,6 +197,12 @@
     </ClInclude>
     <ClInclude Include="Graphics\TextureManager.h">
       <Filter>Header Files\Graphics\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Material.h">
+      <Filter>Header Files\Graphics\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RendererBase.h">
+      <Filter>Header Files\Graphics\Renderers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

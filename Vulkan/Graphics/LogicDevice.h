@@ -1,5 +1,6 @@
 #pragma once
 #include "VkUtil.h"
+#include "OptionalExtentions.h"
 
 namespace QZL
 {
@@ -34,6 +35,7 @@ namespace QZL
 			const uint32_t getFamilyIndex(QueueFamilyType type) const;
 			const std::vector<uint32_t>& getAllIndices() const;
 			VkQueue getQueueHandle(QueueFamilyType type) const;
+			const bool supportsOptionalExtension(OptionalExtensions ext);
 
 			operator VkDevice() const {
 				return device_;

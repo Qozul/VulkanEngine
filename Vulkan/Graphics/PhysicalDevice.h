@@ -14,6 +14,7 @@ namespace QZL
 		/// Deals with Queue Families, Memory heap, and Memory types
 		class PhysicalDevice {
 			friend class GraphicsMaster;
+			friend class LogicDevice;
 		public:
 			bool isValid(DeviceSurfaceCapabilities& swapChainDetails, VkSurfaceKHR& surface);
 			LogicDevice* createLogicDevice(const GraphicsSystemDetails& sysDetails, DeviceSurfaceCapabilities& surfaceCapabilities,

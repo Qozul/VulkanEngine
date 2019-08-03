@@ -10,8 +10,8 @@ namespace QZL {
 			friend class GraphicsComponent;
 			friend class TexturedRenderer;
 		public:
-			StaticShaderParams(const std::string& diffuseName, const std::string& normalMapName)
-				: diffuse_(diffuseName), normalMap_(normalMapName) {}
+			StaticShaderParams(const std::string& diffuseName, const std::string& normalMapName, MaterialStatic material)
+				: diffuse_(diffuseName), normalMap_(normalMapName), material_(material) { }
 
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::STATIC;
@@ -25,9 +25,13 @@ namespace QZL {
 			const std::string& getNormalMapName() const {
 				return normalMap_;
 			}
+			MaterialStatic& getMaterial() {
+				return material_;
+			}
 		private:
 			const std::string diffuse_;
 			const std::string normalMap_;
+			MaterialStatic material_;
 		};
 	}
 }

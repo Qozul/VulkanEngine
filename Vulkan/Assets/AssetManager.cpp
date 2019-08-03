@@ -5,6 +5,7 @@
 #include "../Game/GameScript.h"
 #include "../Graphics/MeshLoader.h"
 #include "../Graphics/TextureManager.h"
+#include "../Graphics/LogicDevice.h"
 
 using namespace QZL::Assets;
 

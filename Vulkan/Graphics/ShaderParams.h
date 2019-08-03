@@ -1,5 +1,6 @@
 #pragma once
 #include "GraphicsMaster.h"
+#include "Material.h"
 
 namespace QZL {
 	namespace Graphics {

@@ -28,6 +28,11 @@ TextureSampler::TextureSampler(const LogicDevice* logicDevice, const std::string
 	createInfo.minLod = 0.0f;
 	createInfo.maxLod = 0.0f;
 	CHECK_VKRESULT(vkCreateSampler(*logicDevice, &createInfo, nullptr, &sampler_));
+
+	imageInfo_ = {};
+	imageInfo_.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo_.imageView = texture_->getImageView();
+	imageInfo_.sampler = sampler_;
 }
 
 TextureSampler::~TextureSampler()
@@ -37,11 +42,6 @@ TextureSampler::~TextureSampler()
 
 VkWriteDescriptorSet TextureSampler::descriptorWrite(VkDescriptorSet set)
 {
-	imageInfo_ = {};
-	imageInfo_.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo_.imageView = texture_->getImageView();
-	imageInfo_.sampler = sampler_;
-
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = set;
