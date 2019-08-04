@@ -56,7 +56,7 @@ void System::loop()
 		lastTime = measuredTime;
 
 		glfwPollEvents();
-		inputManager_->checkInput();
+		inputManager_->checkInput(deltaTimeSeconds);
 		masters_.gameMaster->update(deltaTime);
 		perfMeasurer.startTime();
 		masters_.graphicsMaster->loop();
