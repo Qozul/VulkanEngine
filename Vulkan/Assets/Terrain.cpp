@@ -1,5 +1,8 @@
 #include "Terrain.h"
 #include "../Graphics/TerrainShaderParams.h"
+#include "../Graphics/Material.h"
+#include "../Graphics/LogicDevice.h"
+#include "../Graphics/TextureManager.h"
 
 using namespace QZL;
 using namespace Assets;
@@ -7,7 +10,8 @@ using namespace Graphics;
 
 Terrain::Terrain()
 {
-	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new Graphics::TerrainShaderParams("heightmaps/Windermere", "ground_04"), "terrain", loadFunction);
+	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new Graphics::TerrainShaderParams("heightmaps/Windermere", "ground_04",
+		Graphics::MaterialStatic(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f)), "terrain", loadFunction);
 }
 
 void Terrain::loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::Vertex>& vertices)

@@ -29,12 +29,10 @@ TextureSampler::TextureSampler(const LogicDevice* logicDevice, const std::string
 	createInfo.maxLod = 0.0f;
 	CHECK_VKRESULT(vkCreateSampler(*logicDevice, &createInfo, nullptr, &sampler_));
 
-	binding_ = {};
-	binding_.binding = binding;
-	binding_.descriptorCount = 1;
-	binding_.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	binding_.pImmutableSamplers = nullptr;
-	binding_.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	imageInfo_ = {};
+	imageInfo_.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo_.imageView = texture_->getImageView();
+	imageInfo_.sampler = sampler_;
 }
 
 TextureSampler::~TextureSampler()
@@ -42,18 +40,8 @@ TextureSampler::~TextureSampler()
 	vkDestroySampler(*logicDevice_, sampler_, nullptr);
 }
 
-const VkDescriptorSetLayoutBinding& TextureSampler::getBinding()
-{
-	return binding_;
-}
-
 VkWriteDescriptorSet TextureSampler::descriptorWrite(VkDescriptorSet set)
 {
-	imageInfo_ = {};
-	imageInfo_.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo_.imageView = texture_->getImageView();
-	imageInfo_.sampler = sampler_;
-
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = set;
@@ -64,4 +52,9 @@ VkWriteDescriptorSet TextureSampler::descriptorWrite(VkDescriptorSet set)
 	descriptorWrite.pImageInfo = &imageInfo_;
 
 	return descriptorWrite;
+}
+
+VkDescriptorImageInfo TextureSampler::getImageInfo()
+{
+	return imageInfo_;
 }

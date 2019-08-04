@@ -1,5 +1,6 @@
 #pragma once
 #include "VkUtil.h"
+#include "OptionalExtentions.h"
 
 namespace QZL
 {
@@ -13,6 +14,7 @@ namespace QZL
 		/// Deals with Queue Families, Memory heap, and Memory types
 		class PhysicalDevice {
 			friend class GraphicsMaster;
+			friend class LogicDevice;
 		public:
 			bool isValid(DeviceSurfaceCapabilities& swapChainDetails, VkSurfaceKHR& surface);
 			LogicDevice* createLogicDevice(const GraphicsSystemDetails& sysDetails, DeviceSurfaceCapabilities& surfaceCapabilities,
@@ -24,7 +26,7 @@ namespace QZL
 
 			bool findIndices(VkPhysicalDevice& device, VkSurfaceKHR& surface);
 			bool hasRequiredQueueFamilies();
-			bool hasRequiredSwapchain(DeviceSurfaceCapabilities& surfaceCapabilities, VkSurfaceKHR& surface);
+			bool hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCapabilities, VkSurfaceKHR& surface);
 
 			std::vector<VkDeviceQueueCreateInfo> getCreateQueueInfos(const float* queue_priority);
 			VkQueue createQueueHandles(VkDevice logicDevice, QueueFamilyType type);
@@ -33,6 +35,9 @@ namespace QZL
 			VkPhysicalDevice device_;
 			VkPhysicalDeviceFeatures features_;
 			VkPhysicalDeviceProperties properties_;
+
+			std::vector<const char*> deviceExtensions_;
+			std::unordered_map<OptionalExtensions, bool> optionalExtensionsEnabled_;
 
 			// Queue families, use QueueFamilyType to index these
 			std::vector<uint32_t> queueFamilyIndices_;

@@ -29,6 +29,11 @@ void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 	renderers_[type] = renderer;
 }
 
+const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)
+{
+	return details_.physicalDevice->optionalExtensionsEnabled_[ext];
+}
+
 GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	: masters_(masters)
 {
@@ -49,8 +54,9 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	std::vector<const char*> availableExtNames;
 	std::transform(availableExts.begin(), availableExts.end(), std::back_inserter(availableExtNames),
 		[](const VkExtensionProperties& prop) { return prop.extensionName; });
-	for (auto ext : extensions)
+	for (auto ext : extensions) {
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
+	}
 
 	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(0.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 	camPosition_ = new glm::vec3(0.0f, 10.0f, 0.0f);
@@ -58,7 +64,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
 
-	validation_ = new Validation(details_.instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT);
+	validation_ = new Validation(details_.instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT);
 	ASSERT(validation_ != nullptr);
 
 	initDevices(enabledLayerCount, enabledLayerNames);
@@ -146,11 +152,10 @@ void GraphicsMaster::preframeSetup()
 {
 	// Setup special input, all renderers should have been created by this point
 	// NOTE that since the are renderers are stored in no order then it may not be the same key each time
-	inputProfile_.enabled = true;
 	int i = 0;
 	for (auto renderer : renderers_) {
 		renderer.second->preframeSetup(*viewMatrix_);
-		inputProfile_.profileBindings[{ GLFW_KEY_1 + i }] = std::bind(&RendererBase::toggleWiremeshMode, renderer.second);
+		inputProfile_.profileBindings.push_back({ { GLFW_KEY_1 + i }, std::bind(&RendererBase::toggleWiremeshMode, renderer.second), 1.0f });
 		++i;
 	}
 	masters_.inputManager->addProfile("graphicsdebug", &inputProfile_);

@@ -17,17 +17,11 @@ TextureLoader::TextureLoader(const LogicDevice* logicDevice)
 
 TextureLoader::~TextureLoader()
 {
-	for (auto it : textures_) {
-		SAFE_DELETE(it.second);
-	}
 }
 
 // adapted from https://vulkan-tutorial.com/Texture_mapping/Images
 Image2D* TextureLoader::loadTexture(const std::string& fileName)
 {
-	if (textures_.count(fileName))
-		return textures_[fileName];
-
 	DEBUG_LOG("Loading texture " << fileName);
 	nv_dds::CDDSImage image;
 	image.load(kPath + fileName + kExt, false);
@@ -40,18 +34,18 @@ Image2D* TextureLoader::loadTexture(const std::string& fileName)
 	deviceMemory_->unmapMemory(stagingBuffer.id);
 
 	// make Image2D and transfer the data from the staging buffer
-	textures_[fileName] = new Image2D(logicDevice_, deviceMemory_, Image2D::makeImageCreateInfo(image.get_width(), image.get_height(), 1,
+	auto texture = new Image2D(logicDevice_, deviceMemory_, Image2D::makeImageCreateInfo(image.get_width(), image.get_height(), 1,
 		VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), MemoryAllocationPattern::kStaticResource,
 		{ VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL });
 
-	deviceMemory_->transferMemory(stagingBuffer.buffer, textures_[fileName]->getImage(), 0, image.get_width(), image.get_height());
+	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), 0, image.get_width(), image.get_height());
 
-	textures_[fileName]->changeLayout({ VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+	texture->changeLayout({ VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
 
 	deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
 	image.clear();
 
-	return textures_[fileName];
+	return texture;
 }
 
 VkFormat TextureLoader::convertToVkFormat(unsigned int oldFormat)

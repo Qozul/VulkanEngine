@@ -1,6 +1,7 @@
 #pragma once
 #include "VkUtil.h"
 #include "../InputManager.h"
+#include "OptionalExtentions.h"
 
 namespace QZL
 {
@@ -65,6 +66,7 @@ namespace QZL
 			const SystemMasters& getMasters() {
 				return masters_;
 			}
+			const bool supportsOptionalExtension(OptionalExtensions ext);
 			static glm::mat4 kProjectionMatrix;
 		private:
 			GraphicsMaster(const SystemMasters& masters);

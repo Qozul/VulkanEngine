@@ -12,15 +12,14 @@ Camera::Camera(const GameScriptInitialiser& initialiser)
 	: GameScript(initialiser), viewMatrixPtr_(initialiser.system->getMasters().graphicsMaster->getViewMatrixPtr()),
 	position_(initialiser.system->getMasters().graphicsMaster->getCamPosPtr()), pitch_(0.0f), yaw_(0.0f), speed_(SPEED)
 {
-	inputProfile_.enabled = true;
-	inputProfile_.profileBindings[{ GLFW_KEY_W }] = std::bind(&Camera::moveForwards, this);
-	inputProfile_.profileBindings[{ GLFW_KEY_A }] = std::bind(&Camera::moveLeft, this);
-	inputProfile_.profileBindings[{ GLFW_KEY_S }] = std::bind(&Camera::moveBackwards, this);
-	inputProfile_.profileBindings[{ GLFW_KEY_D }] = std::bind(&Camera::moveRight, this);
-	inputProfile_.profileBindings[{ GLFW_KEY_Q }] = std::bind(&Camera::moveUp, this);
-	inputProfile_.profileBindings[{ GLFW_KEY_E }] = std::bind(&Camera::moveDown, this);
-	inputProfile_.profileBindings[{ GLFW_KEY_X }] = std::bind(&Camera::increaseSpeed, this);
-	inputProfile_.profileBindings[{ GLFW_KEY_Z }] = std::bind(&Camera::decreaseSpeed, this);
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_W }, std::bind(&Camera::moveForwards, this), 0.0f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_A }, std::bind(&Camera::moveLeft, this), 0.0f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_S }, std::bind(&Camera::moveBackwards, this), 0.0f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_D }, std::bind(&Camera::moveRight, this), 0.0f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_Q }, std::bind(&Camera::moveUp, this), 0.0f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_E }, std::bind(&Camera::moveDown, this), 0.0f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_X }, std::bind(&Camera::increaseSpeed, this), 0.2f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_Z }, std::bind(&Camera::decreaseSpeed, this), 0.2f });
 	inputManager_->addProfile("camera", &inputProfile_);
 	lookPoint_ = { 0.0f, 0.0f, 0.0f };
 }

@@ -3,6 +3,9 @@
 #include "../Graphics/MeshLoader.h"
 
 namespace QZL {
+	namespace Graphics {
+		class TextureManager;
+	}
 	namespace Assets {
 		class Terrain : public Entity {
 		public:

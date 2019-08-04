@@ -19,17 +19,20 @@ namespace QZL
 
 		struct GlobalRenderData {
 			Descriptor* globalDataDescriptor;
-			size_t lightingDataSetsIdx;
-			VkDescriptorSetLayout lightingDataLayout;
+			size_t setIdx;
+			VkDescriptorSetLayout layout;
 		};
 
 		class RendererBase {
 		public:
-			RendererBase(DeviceMemory* deviceMemory)
-				: pipeline_(nullptr), renderStorage_(new RenderStorage(deviceMemory)) {
+			RendererBase(LogicDevice* logicDevice, DeviceMemory* deviceMemory)
+				: pipeline_(nullptr), renderStorage_(new RenderStorage(deviceMemory)), logicDevice_(logicDevice) {
 			}
-			RendererBase(RenderStorage* renderStorage)
-				: pipeline_(nullptr), renderStorage_(renderStorage) {
+			RendererBase(LogicDevice* logicDevice, RenderStorage* renderStorage)
+				: pipeline_(nullptr), renderStorage_(renderStorage), logicDevice_(logicDevice) {
+			}
+			RendererBase(LogicDevice* logicDevice)
+				: pipeline_(nullptr), renderStorage_(nullptr), logicDevice_(logicDevice) {
 			}
 			virtual ~RendererBase();
 			virtual void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
@@ -55,6 +58,7 @@ namespace QZL
 				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader = "", const std::string& tessEvalShader = "");
 			void beginFrame(VkCommandBuffer cmdBuffer);
 
+			LogicDevice* logicDevice_;
 			RendererPipeline* pipeline_;
 			RenderStorage* renderStorage_;
 			std::vector<StorageBuffer*> storageBuffers_;

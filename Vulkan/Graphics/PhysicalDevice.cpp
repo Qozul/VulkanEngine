@@ -15,6 +15,8 @@ PhysicalDevice::PhysicalDevice(VkPhysicalDevice device, VkSurfaceKHR surface)
 	for (auto& index : queueFamilyIndices_)
 		index = kInvalidIndex;
 	ASSERT(findIndices(device, surface));
+
+	deviceExtensions_.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 }
 
 bool PhysicalDevice::isValid(DeviceSurfaceCapabilities& surfaceCapabilities, VkSurfaceKHR& surface)
@@ -23,7 +25,7 @@ bool PhysicalDevice::isValid(DeviceSurfaceCapabilities& surfaceCapabilities, VkS
 	vkGetPhysicalDeviceFeatures(device_, &features_);
 	// Can expand this to see if features contains certain things if needed
 	return properties_.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && 
-		hasRequiredSwapchain(surfaceCapabilities, surface) &&
+		hasRequiredExtensions(surfaceCapabilities, surface) &&
 		hasRequiredQueueFamilies() && features_.samplerAnisotropy;
 }
 
@@ -32,8 +34,6 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 {
 	const float queuePriority = 1.0f;
 	auto createInfos = getCreateQueueInfos(&queuePriority);
-
-	std::array<const char*, 1U> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
@@ -44,8 +44,20 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 	deviceCreateInfo.enabledLayerCount = enabledLayerCount;
 	deviceCreateInfo.ppEnabledLayerNames = ppEnabledLayerNames;
-	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-	deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions_.size());
+	deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions_.data();
+
+	if (optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING]) {
+		VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures = {};
+		descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+		descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+		descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingUpdateUnusedWhilePending = VK_TRUE;
+		descriptorIndexingFeatures.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+		deviceCreateInfo.pNext = &descriptorIndexingFeatures;
+	}
 
 	VkDevice logicDevice;
 	CHECK_VKRESULT(vkCreateDevice(device_, &deviceCreateInfo, nullptr, &logicDevice));
@@ -93,17 +105,24 @@ bool PhysicalDevice::hasRequiredQueueFamilies()
 	return true;
 }
 
-bool PhysicalDevice::hasRequiredSwapchain(DeviceSurfaceCapabilities& surfaceCapabilities, VkSurfaceKHR& surface)
+bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCapabilities, VkSurfaceKHR& surface)
 {
 	auto availableExts = obtainVkData<VkExtensionProperties>(vkEnumerateDeviceExtensionProperties, device_, nullptr);
-	auto test = false;
+	auto hasSwapchain = false;
+	optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = false;
 	for (auto& ext : availableExts) {
+		// Optional extensions
+		if (!strcmp(ext.extensionName, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) {
+			deviceExtensions_.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+			optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = true;
+			DEBUG_LOG("Descriptor indexing is enabled.");
+		}
+		// Required
 		if (!strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) {
-			test = true;
-			break;
+			hasSwapchain = true;
 		}
 	}
-	if (test) {
+	if (hasSwapchain) {
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_, surface, &surfaceCapabilities.capabilities);
 		surfaceCapabilities.formats = obtainVkData<VkSurfaceFormatKHR>(vkGetPhysicalDeviceSurfaceFormatsKHR, device_, surface);
 		surfaceCapabilities.presentModes = obtainVkData<VkPresentModeKHR>(vkGetPhysicalDeviceSurfacePresentModesKHR, device_, surface);

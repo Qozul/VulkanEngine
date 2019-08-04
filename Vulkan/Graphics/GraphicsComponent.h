@@ -22,7 +22,7 @@ namespace QZL {
 			Assets::Entity* getEntity() const {
 				return owningEntity_;
 			}
-			const ShaderParams* getShaderParams() {
+			ShaderParams* getShaderParams() {
 				return shaderParameters_;
 			}
 			const RendererTypes getRendererType() {

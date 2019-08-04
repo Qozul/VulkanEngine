@@ -3,7 +3,7 @@
 
 namespace QZL {
 	namespace Graphics {
-		class TextureLoader;
+		class TextureManager;
 		class TextureSampler;
 		class LogicDevice;
 		
@@ -13,13 +13,13 @@ namespace QZL {
 		};
 		class StaticRenderStorage : public RenderStorageMeshParams<StaticParamData> {
 		public:
-			StaticRenderStorage(TextureLoader*& textureLoader, const LogicDevice* logicDevice);
+			StaticRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice);
 			~StaticRenderStorage();
 		protected:
 			StaticParamData resolveParams(GraphicsComponent* instance) override;
 		private:
 			const LogicDevice* logicDevice_;
-			TextureLoader*& textureLoader_;
+			TextureManager* textureManager_;
 		};
 	}
 }

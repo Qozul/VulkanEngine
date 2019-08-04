@@ -17,7 +17,7 @@ layout (location = 0) out vec2 outTexUV[NUM_VERTS];
 const float maxWeight = 64.0;
 const float minWeight = 1.0;
 
-layout(set = 1, binding = 1) uniform LightingData
+layout(set = 1, binding = 0) uniform LightingData
 {
 	vec4 cameraPosition;
 	vec4 ambientColour;

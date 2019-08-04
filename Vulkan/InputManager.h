@@ -4,15 +4,24 @@
 namespace QZL {
 	using InputCallback = std::function<void(void)>;
 	using InputCombo = std::vector<int>;
-	struct InputProfile {
+	struct ProfileBinding {
 		bool enabled;
-		std::map<InputCombo, InputCallback> profileBindings;
+		InputCombo keyCombo;
+		InputCallback callback;
+		// int is delay before press is allowed to be detected again
+		const float delay;
+		float nextActivationTime;
+		ProfileBinding(InputCombo keyCombo, InputCallback callback, const float delay)
+			: enabled(true), keyCombo(keyCombo), callback(callback), delay(delay), nextActivationTime(0.0f) {}
+	};
+	struct InputProfile {
+		std::vector<ProfileBinding> profileBindings;
 	};
 
 	class InputManager final {
 	public:
 		InputManager(GLFWwindow* window) 
-			: window_(window) {
+			: window_(window), time_(0.0f) {
 			glfwGetCursorPos(window, &currentMousePos_.x, &currentMousePos_.y);
 			previousMousePos_ = currentMousePos_;
 		}
@@ -22,23 +31,26 @@ namespace QZL {
 		void removeProfile(std::string name) {
 			profiles_.erase(name);
 		}
-		void checkInput() {
+		void checkInput(float dt) {
 			// Mouse
 			previousMousePos_ = currentMousePos_;
 			glfwGetCursorPos(window_, &currentMousePos_.x, &currentMousePos_.y);
-
+			time_ += dt;
 			// Keyboard
 			for (auto& it : profiles_) {
 				auto& profile = it.second;
-				if (profile->enabled) {
-					for (auto& it2 : profile->profileBindings) {
+				for (auto& profileBinding : profile->profileBindings) {
+					if (profileBinding.enabled || profileBinding.nextActivationTime <= time_) {
+						profileBinding.enabled = true;
 						bool allKeysPressed = true;
-						for (int i : it2.first) {
+						for (int i : profileBinding.keyCombo) {
 							int state = glfwGetKey(window_, i);
 							allKeysPressed = allKeysPressed && state == GLFW_PRESS;
 						}
 						if (allKeysPressed) {
-							it2.second();
+							profileBinding.callback();
+							profileBinding.nextActivationTime = time_ + profileBinding.delay;
+							profileBinding.enabled = false;
 						}
 					}
 				}
@@ -53,5 +65,6 @@ namespace QZL {
 		std::map<std::string, InputProfile*> profiles_;
 		glm::dvec2 currentMousePos_;
 		glm::dvec2 previousMousePos_;
+		float time_;
 	};
 }

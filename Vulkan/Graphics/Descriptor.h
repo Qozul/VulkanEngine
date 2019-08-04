@@ -6,14 +6,18 @@ namespace QZL
 	namespace Graphics {
 		class LogicDevice;
 
-		enum class ReservedGraphicsBindings : uint32_t {
+		// Set = 0 (per renderer)
+		enum class ReservedGraphicsBindings0 : uint32_t {
 			PER_ENTITY_DATA = 0,
-			LIGHTING = 1,
+			MATERIAL_DATA = 1,
 			TEXTURE_0 = 2,
-			TEXTURE_1 = 3,
-			TEXTURE_2 = 4,
-			TEXTURE_3 = 5,
-			TEXTURE_4 = 6
+			TEXTURE_1 = 3
+		};
+
+		// Set = 1 (Global to renderers)
+		enum class ReservedGraphicsBindings1 : uint32_t {
+			LIGHTING = 0,
+			TEXTURE_ARRAY_BINDING = 1
 		};
 
 		class Descriptor {
@@ -25,7 +29,7 @@ namespace QZL
 			size_t createSets(const std::vector<VkDescriptorSetLayout>& layouts);
 			const VkDescriptorSet getSet(size_t idx);
 
-			VkDescriptorSetLayout makeLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings);
+			VkDescriptorSetLayout makeLayout(const std::vector<VkDescriptorSetLayoutBinding>& bindings, const void* pNext = nullptr);
 			void updateDescriptorSets(const std::vector<VkWriteDescriptorSet>& descriptorWrites);
 		private:
 			VkDescriptorPool pool_;

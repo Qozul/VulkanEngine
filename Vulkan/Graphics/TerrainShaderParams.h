@@ -23,11 +23,15 @@ namespace QZL {
 			const std::string& getDebugDiffuseName() const {
 				return debugDiffuseName_;
 			}
-			TerrainShaderParams(const std::string& heightmapName, const std::string& debugDiffuseName)
-				: heightmapName_(heightmapName), debugDiffuseName_(debugDiffuseName) {}
+			MaterialStatic& getMaterial() {
+				return material_;
+			}
+			TerrainShaderParams(const std::string& heightmapName, const std::string& debugDiffuseName, MaterialStatic material)
+				: heightmapName_(heightmapName), debugDiffuseName_(debugDiffuseName), material_(material) {}
 		private:
 			const std::string heightmapName_;
 			const std::string debugDiffuseName_;
+			MaterialStatic material_;
 		};
 	}
 }
