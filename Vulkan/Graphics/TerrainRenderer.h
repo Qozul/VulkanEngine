@@ -9,6 +9,13 @@ namespace QZL
 		class TextureManager;
 
 		class TerrainRenderer : public RendererBase {
+			struct TessControlInfo {
+				float distanceFarMinusClose;
+				float closeDistance;
+				float patchRadius;
+				float maxTessellationWeight;
+				std::array<glm::vec4, 6> frustumPlanes;
+			};
 		public:
 			TerrainRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 				const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
@@ -17,7 +24,11 @@ namespace QZL
 			void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
 			void initialise(const glm::mat4& viewMatrix) override;
 		private:
+			void updateBuffers(const glm::mat4& viewMatrix);
+			std::array<glm::vec4, 6> calculateFrustumPlanes(const glm::mat4 & mvp);
+
 			Descriptor* descriptor_;
+			TessControlInfo tessCtrlInfo_;
 		};
 	}
 }

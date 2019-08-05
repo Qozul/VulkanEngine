@@ -11,7 +11,8 @@ namespace QZL
 			PER_ENTITY_DATA = 0,
 			MATERIAL_DATA = 1,
 			TEXTURE_0 = 2,
-			TEXTURE_1 = 3
+			TEXTURE_1 = 3,
+			UNRESERVED = 4
 		};
 
 		// Set = 1 (Global to renderers)

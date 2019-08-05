@@ -1,13 +1,8 @@
+// Largely based on https://github.com/SaschaWillems/Vulkan/blob/master/data/shaders/terraintessellation/terrain.tesc but 
+// basing TL on distance of a side from the camera for LOD
 #version 450
 
-//     3
-//     0
-// 0 1   1 2
-//     0
-//     1
-
 #define NUM_VERTS 4
-#define NUM_DIST_BOUNDARIES 6
 
 layout(vertices = NUM_VERTS) out;
 
@@ -22,56 +17,76 @@ layout(set = 1, binding = 0) uniform LightingData
 	vec4 lightPositions[1];
 };
 
-const float maxWeight = 64.0;
-const float minWeight = 1.0;
-const float distanceBoundaries[NUM_DIST_BOUNDARIES] = float[](
-	500.0, 400.0, 300.0, 200.0, 100.0, 50.0
-);
-const float tessellationLevelAddition[NUM_DIST_BOUNDARIES] = float[](
-	1.0, 2.0, 4.0, 8.0, 16.0, 32.0
-);
+layout (set = 0, binding = 4) uniform TessellationInfo {
+	float distanceFarMinusClose;
+	float closeDistance;
+	float patchRadius;
+	float maxTessellationWeight;
+	vec4 frustumPlanes[6];
+};
 
-void main()
+layout(set = 0, binding = 2) uniform sampler2D heightmap;
+
+const float maxHeight = 100.0;
+const float minWeight = 1.0;
+
+float calculateTessLevel(float d0, float d1)
 {
-	// Old code
-	/*float dist0 = 1.0 / distance(cameraPosition.xyz, gl_in[0].gl_Position.xyz);
-	float dist1 = 1.0 / distance(cameraPosition.xyz, gl_in[1].gl_Position.xyz);
-	float dist2 = 1.0 / distance(cameraPosition.xyz, gl_in[2].gl_Position.xyz);
-	float dist3 = 1.0 / distance(cameraPosition.xyz, gl_in[3].gl_Position.xyz);
-	
-	gl_TessLevelOuter[0] = clamp(max(dist0, dist3) * maxWeight, minWeight, maxWeight);
-	gl_TessLevelOuter[1] = clamp(max(dist0, dist1) * maxWeight, minWeight, maxWeight);
-	gl_TessLevelOuter[2] = clamp(max(dist1, dist2) * maxWeight, minWeight, maxWeight);
-	gl_TessLevelOuter[3] = clamp(max(dist2, dist3) * maxWeight, minWeight, maxWeight);*/
-	
-	// New code. Places each level on a flat amount depending on the distance by adding
-	// together the levels for each lower distance band
-	float dist0 = distance(cameraPosition.xyz, gl_in[0].gl_Position.xyz);
-	float dist1 = distance(cameraPosition.xyz, gl_in[1].gl_Position.xyz);
-	float dist2 = distance(cameraPosition.xyz, gl_in[2].gl_Position.xyz);
-	float dist3 = distance(cameraPosition.xyz, gl_in[3].gl_Position.xyz);
-	
-	float dists[NUM_VERTS] = float[](
-		max(dist0, dist3),
-		max(dist0, dist1),
-		max(dist1, dist2),
-		max(dist2, dist3)
-	);
-	
-	gl_TessLevelOuter[0] = minWeight;
-	gl_TessLevelOuter[1] = minWeight;
-	gl_TessLevelOuter[2] = minWeight;
-	gl_TessLevelOuter[3] = minWeight;
-	
-	for (int i = 0; i < NUM_VERTS; ++i) {
-		for (int j = 0; j < NUM_DIST_BOUNDARIES; ++j) {
-			gl_TessLevelOuter[i] += step(dists[i], distanceBoundaries[j]) * tessellationLevelAddition[j];
+	// Get closest vertex on the side to the camera
+	float dist = min(d0, d1) - closeDistance;
+	// Calculate a continuous value between 0 and 1
+	float proportion = clamp(dist/distanceFarMinusClose, 0.0, 1.0);
+	return mix(maxTessellationWeight, minWeight, proportion);
+}
+
+bool checkCulling()
+{
+	vec4 pos = gl_in[gl_InvocationID].gl_Position;
+	pos.y -= textureLod(heightmap, iTexUV[0], 0.0).r * maxHeight;
+	for (int i = 0; i < 6; ++i) {
+		if (dot(pos, frustumPlanes[i]) + patchRadius < 0.0) {
+			return false;
 		}
 	}
-	
-	gl_TessLevelInner[0] = mix(gl_TessLevelOuter[0], gl_TessLevelOuter[3], 0.5);
-	gl_TessLevelInner[1] = mix(gl_TessLevelOuter[2], gl_TessLevelOuter[1], 0.5);
-	
+	return true;
+}
+
+vec3 getVertexPosition(int i)
+{
+	vec3 pos = gl_in[i].gl_Position.xyz;
+	pos.y -= textureLod(heightmap, iTexUV[i], 0.0).r * maxHeight;
+	return pos;
+}
+
+void main()
+{	
+	// Only calculate per-patch stuff (tess levels) once per patch
+	if (gl_InvocationID == 0) {
+		if (!checkCulling()) {
+			gl_TessLevelInner[0] = 0.0;
+			gl_TessLevelInner[1] = 0.0;
+			gl_TessLevelOuter[0] = 0.0;
+			gl_TessLevelOuter[1] = 0.0;
+			gl_TessLevelOuter[2] = 0.0;
+			gl_TessLevelOuter[3] = 0.0;
+		}
+		else {
+			float dists[NUM_VERTS] = float[](
+				distance(cameraPosition.xyz, getVertexPosition(0)),
+				distance(cameraPosition.xyz, getVertexPosition(1)),
+				distance(cameraPosition.xyz, getVertexPosition(2)),
+				distance(cameraPosition.xyz, getVertexPosition(3))
+			);
+			
+			gl_TessLevelOuter[0] = calculateTessLevel(dists[0], dists[3]);
+			gl_TessLevelOuter[1] = calculateTessLevel(dists[0], dists[1]);
+			gl_TessLevelOuter[2] = calculateTessLevel(dists[1], dists[2]);
+			gl_TessLevelOuter[3] = calculateTessLevel(dists[2], dists[3]);
+			
+			gl_TessLevelInner[0] = mix(gl_TessLevelOuter[0], gl_TessLevelOuter[3], 0.5);
+			gl_TessLevelInner[1] = mix(gl_TessLevelOuter[2], gl_TessLevelOuter[1], 0.5);
+		}
+	}
 	outTexUV[gl_InvocationID] = iTexUV[gl_InvocationID];
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }
