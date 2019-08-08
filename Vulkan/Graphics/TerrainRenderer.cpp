@@ -22,7 +22,7 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	: RendererBase(logicDevice), descriptor_(descriptor)
 {
 	ASSERT(entityCount > 0);
-	renderStorage_ = new TerrainRenderStorage(textureManager, logicDevice);
+	renderStorage_ = new TerrainRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
 
 	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
 		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
@@ -125,7 +125,7 @@ void TerrainRenderer::updateBuffers(const glm::mat4& viewMatrix)
 		eleDataPtr[i] = {
 			model, mvp
 		};
-		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 500.0f
+		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 500.0f+
 		tcPtr[i].closeDistance = 50.0f;
 		tcPtr[i].patchRadius = 40.0f;
 		tcPtr[i].maxTessellationWeight = 16.0f;

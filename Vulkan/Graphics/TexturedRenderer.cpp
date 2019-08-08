@@ -21,10 +21,10 @@ TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* tex
 {
 	ASSERT(entityCount > 0);
 	if (logicDevice->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		renderStorage_ = new RenderStorage(logicDevice->getDeviceMemory());
+		renderStorage_ = new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
 	}
 	else {
-		renderStorage_ = new StaticRenderStorage(textureManager, logicDevice);
+		renderStorage_ = new StaticRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
 	}
 
 	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,

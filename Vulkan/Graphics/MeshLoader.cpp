@@ -11,7 +11,7 @@ using namespace QZL::Graphics;
 const std::string MeshLoader::kPath = "../Data/Meshes/";
 const std::string MeshLoader::kExt = ".obj";
 
-BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBuffer& eleBuf, MeshLoaderFunction loadFunc)
+BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoaderFunction loadFunc)
 {
 	ASSERT(!eleBuf.isCommitted());
 	if (!eleBuf.contains(meshName)) {
@@ -25,17 +25,17 @@ BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBuffer& eleB
 			placeMeshInBuffer(meshName, eleBuf, indices, vertices);
 		}
 	}
-	return eleBuf.meshes_[meshName];
+	return eleBuf.getMesh(meshName);
 }
 
-void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBuffer& eleBuf, std::vector<IndexType>& indices, std::vector<Vertex>& vertices)
+void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBufferInterface& eleBuf, std::vector<IndexType>& indices, std::vector<Vertex>& vertices)
 {
 	auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
 	auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size());
 	eleBuf.emplaceMesh(meshName, indices.size(), indexOffset, vertexOffset);
 }
 
-void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBuffer& eleBuf)
+void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferInterface& eleBuf)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;

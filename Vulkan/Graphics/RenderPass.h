@@ -10,7 +10,6 @@ namespace QZL
 		class RendererBase;
 		class Descriptor;
 		struct SwapChainDetails;
-		class ElementBuffer;
 		class GraphicsMaster;
 		struct GlobalRenderData;
 		class StorageBuffer;

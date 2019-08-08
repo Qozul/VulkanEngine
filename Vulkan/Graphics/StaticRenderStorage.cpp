@@ -8,8 +8,8 @@
 using namespace QZL;
 using namespace Graphics;
 
-StaticRenderStorage::StaticRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice)
-	: RenderStorageMeshParams<StaticParamData>(logicDevice->getDeviceMemory()), logicDevice_(logicDevice), textureManager_(textureManager)
+StaticRenderStorage::StaticRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice, ElementBufferInterface* buffer)
+	: RenderStorageMeshParams<StaticParamData>(buffer), logicDevice_(logicDevice), textureManager_(textureManager)
 {
 }
 

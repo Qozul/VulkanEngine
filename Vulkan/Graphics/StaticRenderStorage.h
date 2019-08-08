@@ -13,7 +13,7 @@ namespace QZL {
 		};
 		class StaticRenderStorage : public RenderStorageMeshParams<StaticParamData> {
 		public:
-			StaticRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice);
+			StaticRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice, ElementBufferInterface* buffer);
 			~StaticRenderStorage();
 		protected:
 			StaticParamData resolveParams(GraphicsComponent* instance) override;

@@ -13,7 +13,7 @@ namespace QZL {
 		};
 		class TerrainRenderStorage : public RenderStorageMeshParams<TerrainParamData> {
 		public:
-			TerrainRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice);
+			TerrainRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice, ElementBufferInterface* buffer);
 			~TerrainRenderStorage();
 		protected:
 			TerrainParamData resolveParams(GraphicsComponent* instance) override;

@@ -25,9 +25,6 @@ namespace QZL
 
 		class RendererBase {
 		public:
-			RendererBase(LogicDevice* logicDevice, DeviceMemory* deviceMemory)
-				: pipeline_(nullptr), renderStorage_(new RenderStorage(deviceMemory)), logicDevice_(logicDevice) {
-			}
 			RendererBase(LogicDevice* logicDevice, RenderStorage* renderStorage)
 				: pipeline_(nullptr), renderStorage_(renderStorage), logicDevice_(logicDevice) {
 			}
@@ -43,7 +40,7 @@ namespace QZL
 			void registerComponent(GraphicsComponent* component, BasicMesh* mesh) {
 				renderStorage_->addMesh(component, mesh);
 			}
-			ElementBuffer* getElementBuffer() {
+			ElementBufferInterface* getElementBuffer() {
 				return renderStorage_->buf();
 			}
 			void preframeSetup(const glm::mat4& viewMatrix) {

@@ -12,10 +12,10 @@ namespace QZL
 
 		class MeshLoader {
 		public:
-			static BasicMesh* loadMesh(const std::string& meshName, ElementBuffer& eleBuf, MeshLoaderFunction loadFunc = nullptr);
+			static BasicMesh* loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoaderFunction loadFunc = nullptr);
 		private:
-			static void placeMeshInBuffer(const std::string& meshName, ElementBuffer& eleBuf, std::vector<IndexType>& indices, std::vector<Vertex>& vertices);
-			static void loadMeshFromFile(const std::string& meshName, ElementBuffer& eleBuf);
+			static void placeMeshInBuffer(const std::string& meshName, ElementBufferInterface& eleBuf, std::vector<IndexType>& indices, std::vector<Vertex>& vertices);
+			static void loadMeshFromFile(const std::string& meshName, ElementBufferInterface& eleBuf);
 			static const std::string kPath;
 			static const std::string kExt;
 		};

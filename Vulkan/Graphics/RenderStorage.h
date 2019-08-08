@@ -6,13 +6,12 @@
 namespace QZL
 {
 	namespace Graphics {
-		class ElementBuffer;
+		class ElementBufferInterface;
 		class GraphicsComponent;
-		class DeviceMemory;
 
 		class RenderStorage {
 		public:
-			RenderStorage(DeviceMemory* deviceMemory);
+			RenderStorage(ElementBufferInterface* buffer);
 			virtual ~RenderStorage();
 			// Mesh must be added with one instance
 			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh);
@@ -29,14 +28,14 @@ namespace QZL
 			size_t instanceCount() {
 				return instances_.size();
 			}
-			ElementBuffer* buf() {
+			ElementBufferInterface* buf() {
 				return buf_;
 			}
 
 		protected:
 			virtual void addInstance(DrawElementsCommand& cmd, GraphicsComponent* instance, uint32_t index);
 
-			ElementBuffer* buf_;
+			ElementBufferInterface* buf_;
 			std::unordered_map<std::string, size_t> dataMap_; // Mesh name to offset in to meshes_
 
 			std::vector<DrawElementsCommand> meshes_;

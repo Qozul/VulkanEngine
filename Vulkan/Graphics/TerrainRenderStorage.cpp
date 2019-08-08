@@ -7,8 +7,8 @@
 
 using namespace QZL::Graphics;
 
-TerrainRenderStorage::TerrainRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice)
-	: RenderStorageMeshParams<TerrainParamData>(logicDevice->getDeviceMemory()), textureManager_(textureManager), logicDevice_(logicDevice)
+TerrainRenderStorage::TerrainRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice, ElementBufferInterface* buffer)
+	: RenderStorageMeshParams<TerrainParamData>(buffer), textureManager_(textureManager), logicDevice_(logicDevice)
 {
 }
 

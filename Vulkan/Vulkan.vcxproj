@@ -25,7 +25,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assets\AssetManager.h" />
+    <ClInclude Include="Assets\Atmosphere.h" />
     <ClInclude Include="Assets\Entity.h" />
+    <ClInclude Include="Assets\Skysphere.h" />
     <ClInclude Include="Assets\Terrain.h" />
     <ClInclude Include="Assets\Transform.h" />
     <ClInclude Include="Game\Camera.h" />
@@ -36,6 +38,7 @@
     <ClInclude Include="Graphics\DeviceMemory.h" />
     <ClInclude Include="Graphics\DrawElementsCommand.h" />
     <ClInclude Include="Graphics\ElementBuffer.h" />
+    <ClInclude Include="Graphics\ElementBufferInterface.h" />
     <ClInclude Include="Graphics\GraphicsComponent.h" />
     <ClInclude Include="Graphics\GraphicsMaster.h" />
     <ClInclude Include="Graphics\Image2D.h" />
@@ -76,13 +79,13 @@
   <ItemGroup>
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
+    <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />
     <ClCompile Include="Game\Camera.cpp" />
     <ClCompile Include="Game\GameMaster.cpp" />
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />
     <ClCompile Include="Graphics\DeviceMemory.cpp" />
-    <ClCompile Include="Graphics\ElementBuffer.cpp" />
     <ClCompile Include="Graphics\GraphicsComponent.cpp" />
     <ClCompile Include="Graphics\GraphicsMaster.cpp" />
     <ClCompile Include="Graphics\Image2D.cpp" />

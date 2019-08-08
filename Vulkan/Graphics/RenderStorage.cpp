@@ -6,8 +6,8 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-RenderStorage::RenderStorage(DeviceMemory* deviceMemory) 
-	: buf_(new ElementBuffer(deviceMemory))
+RenderStorage::RenderStorage(ElementBufferInterface* buffer)
+	: buf_(buffer)
 {
 }
 

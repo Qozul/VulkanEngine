@@ -10,7 +10,7 @@ namespace QZL {
 		template <typename ParamData>
 		class RenderStorageMeshParams : public RenderStorage {
 		public:
-			RenderStorageMeshParams(DeviceMemory* deviceMemory);
+			RenderStorageMeshParams(ElementBufferInterface* buffer);
 
 			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh) override;
 
@@ -24,8 +24,8 @@ namespace QZL {
 			std::vector<ParamData> paramData_;
 		};
 		template<typename ParamData>
-		inline RenderStorageMeshParams<ParamData>::RenderStorageMeshParams(DeviceMemory* deviceMemory)
-			: RenderStorage(deviceMemory)
+		inline RenderStorageMeshParams<ParamData>::RenderStorageMeshParams(ElementBufferInterface* buffer)
+			: RenderStorage(buffer)
 		{
 		}
 		template<typename ParamData>
