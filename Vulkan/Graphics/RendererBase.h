@@ -51,8 +51,10 @@ namespace QZL
 				pipeline_->switchMode();
 			}
 		protected:
+			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader = "", const std::string& tessEvalShader = "");
+				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader = "", const std::string& tessEvalShader = "",
+				RendererPipeline::PrimitiveType patchVertexCount = RendererPipeline::PrimitiveType::NONE, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 			void beginFrame(VkCommandBuffer cmdBuffer);
 
 			LogicDevice* logicDevice_;
@@ -84,14 +86,19 @@ namespace QZL
 			return writes;
 		}
 
+		template<typename V>
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
-			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader)
+			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader,
+			RendererPipeline::PrimitiveType patchVertexCount, VkFrontFace frontFace)
 		{
-			if (tessCtrlShader == "" || tessEvalShader == "") {
-				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader);
+			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
+			auto attribDesc = V::getAttribDescs(0);
+			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
+			if (tessCtrlShader == "" || tessEvalShader == "" || (uint32_t)patchVertexCount == 0) {
+				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, frontFace);
 			}
 			else {
-				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, vertexShader, fragmentShader, tessCtrlShader, tessEvalShader);
+				pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, tessCtrlShader, tessEvalShader, patchVertexCount, frontFace);
 			}
 		}
 

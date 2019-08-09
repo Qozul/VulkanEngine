@@ -1,5 +1,6 @@
 #pragma once
 #include "VkUtil.h"
+#include "Vertex.h"
 
 namespace QZL
 {
@@ -8,16 +9,26 @@ namespace QZL
 
 		class RendererPipeline {
 		public:
+			enum class PrimitiveType : uint32_t {
+				NONE = 0,
+				TRIANGLES = 3,
+				QUADS = 4
+			};
+		public:
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				const std::string& vertexShader, const std::string& fragmentShader);
-			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader);
+				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, VkFrontFace frontFace);
+			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
+				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
+				const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace);
 			~RendererPipeline();
 
 			void switchMode();
 			VkPipeline getPipeline();
 			VkPipelineLayout getLayout();
 			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts);
+			template<typename V>
+			static VkPipelineVertexInputStateCreateInfo makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc,
+				typename std::result_of<decltype(&V::getAttribDescs)(uint32_t)>::type attribDescs);
 		protected:
 			VkPipeline pipeline_;
 			VkPipeline wiremeshPipeline_;
@@ -27,10 +38,24 @@ namespace QZL
 			bool wiremeshMode_;
 		private:
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo);
+				std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo,
+				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace);
 			VkPipelineShaderStageCreateInfo createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage);
 			VkPipelineInputAssemblyStateCreateInfo createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart);
-			VkPipelineTessellationStateCreateInfo createTessellationStateInfo(uint32_t patchPointCount);
+			VkPipelineTessellationStateCreateInfo createTessellationStateInfo(PrimitiveType patchPointCount);
 		};
+		template<typename V>
+		inline VkPipelineVertexInputStateCreateInfo RendererPipeline::makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc,
+			typename std::result_of<decltype(&V::getAttribDescs)(uint32_t)>::type attribDescs)
+		{
+			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+			vertexInputInfo.vertexBindingDescriptionCount = 1;
+			vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribDescs.size());
+			vertexInputInfo.pVertexBindingDescriptions = &bindingDesc;
+			vertexInputInfo.pVertexAttributeDescriptions = attribDescs.data();
+			return vertexInputInfo;
+		}
 	}
 }

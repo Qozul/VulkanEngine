@@ -12,6 +12,11 @@ namespace QZL
 			static void fillAttribDescs(VkVertexInputAttributeDescription& attribDesc, uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
 		};
 
+		enum class VertexType {
+			POSITION_ONLY,
+			POSITION_UV_NORMAL
+		};
+
 		struct Vertex {
 			float x, y, z;
 			float u, v;
@@ -35,25 +40,28 @@ namespace QZL
 				return attribDescs;
 			}
 		};
-
+#pragma pack(push, 1)
 		struct VertexOnlyPosition {
-			float x, y, z;
+			glm::vec3 pos;
 
 			VertexOnlyPosition(float x = 0.0f, float y = 0.0f, float z = 0.0f)
-				: x(x), y(y), z(z) {}
+				: pos(x, y, z) {}
+			VertexOnlyPosition(glm::vec3 p)
+				: pos(p) {}
 
 			static VkVertexInputBindingDescription getBindDesc(uint32_t binding, VkVertexInputRate inputRate)
 			{
 				// Describes at which rate to load data from memory (instance/vertex) and number of bytes between data entries
 				return VertexUtility::fillBindDesc(binding, sizeof(VertexOnlyPosition), inputRate);
 			}
-			static std::array<VkVertexInputAttributeDescription, 3> getAttribDescs(uint32_t binding)
+			static std::array<VkVertexInputAttributeDescription, 1> getAttribDescs(uint32_t binding)
 			{
 				// Describes how to extract a vertex attribute from a chunk of vertex data
-				std::array<VkVertexInputAttributeDescription, 3> attribDescs;
-				VertexUtility::fillAttribDescs(attribDescs[0], 0, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexOnlyPosition, x));
+				std::array<VkVertexInputAttributeDescription, 1> attribDescs;
+				VertexUtility::fillAttribDescs(attribDescs[0], 0, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexOnlyPosition, pos.x));
 				return attribDescs;
 			}
 		};
+#pragma pack(pop)
 	}
 }

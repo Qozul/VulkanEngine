@@ -46,6 +46,7 @@ namespace QZL
 
 			RendererBase* texturedRenderer_;
 			RendererBase* terrainRenderer_;
+			RendererBase* atmosphereRenderer_;
 
 			Image2D* backBuffer_;
 			Image2D* depthBuffer_;

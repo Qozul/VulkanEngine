@@ -28,7 +28,31 @@ BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterf
 	return eleBuf.getMesh(meshName);
 }
 
+BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoaderFunctionOnlyPos loadFunc)
+{
+	ASSERT(!eleBuf.isCommitted());
+	if (!eleBuf.contains(meshName)) {
+		if (loadFunc == nullptr) {
+			loadMeshFromFile(meshName, eleBuf);
+		}
+		else {
+			std::vector<IndexType> indices;
+			std::vector<VertexOnlyPosition> vertices;
+			loadFunc(indices, vertices);
+			placeMeshInBuffer(meshName, eleBuf, indices, vertices);
+		}
+	}
+	return eleBuf.getMesh(meshName);
+}
+
 void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBufferInterface& eleBuf, std::vector<IndexType>& indices, std::vector<Vertex>& vertices)
+{
+	auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
+	auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size());
+	eleBuf.emplaceMesh(meshName, indices.size(), indexOffset, vertexOffset);
+}
+
+void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBufferInterface& eleBuf, std::vector<IndexType>& indices, std::vector<VertexOnlyPosition>& vertices)
 {
 	auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
 	auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size());

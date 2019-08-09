@@ -15,7 +15,7 @@ namespace QZL
 		};
 
 		enum class RendererTypes {
-			STATIC, TERRAIN
+			STATIC, TERRAIN, ATMOSPHERE
 		};
 
 		struct EnvironmentArgs {

@@ -11,6 +11,12 @@ void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics:
 	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, shaderParams, meshName, meshLoaderFunc);
 }
 
+void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName,
+	Graphics::MeshLoaderFunctionOnlyPos meshLoaderFunc)
+{
+	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, shaderParams, meshName, meshLoaderFunc);
+}
+
 void Entity::setGameScript(Game::GameScript* script)
 {
 	gameScript_ = script;

@@ -5,6 +5,7 @@
 #include "Descriptor.h"
 #include "TexturedRenderer.h"
 #include "TerrainRenderer.h"
+#include "AtmosphereRenderer.h"
 #include "GraphicsMaster.h"
 #include "ElementBuffer.h"
 #include "MeshLoader.h"
@@ -130,6 +131,7 @@ RenderPass::~RenderPass()
 	}
 	SAFE_DELETE(terrainRenderer_);
 	SAFE_DELETE(texturedRenderer_);
+	SAFE_DELETE(atmosphereRenderer_);
 	vkDestroyRenderPass(*logicDevice_, renderPass_, nullptr);
 }
 
@@ -153,8 +155,9 @@ void RenderPass::doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 
 	updateGlobalDescriptors(idx, cmdBuffer);
 
-	terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	//terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	atmosphereRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -214,9 +217,13 @@ void RenderPass::createRenderers()
 	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, "StaticVert", fragName, 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);*/
 
-	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, 
+	/*terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, 
 		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
-	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);*/
+
+	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
+		"SkysphereVert", "SkysphereTESC", "SkysphereTESE", "SkysphereFrag", 1, globalRenderData_);
+	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
 }
 
 void RenderPass::updateGlobalDescriptors(const uint32_t idx, VkCommandBuffer cmdBuffer)

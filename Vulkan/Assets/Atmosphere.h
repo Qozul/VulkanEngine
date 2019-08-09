@@ -3,8 +3,13 @@
 namespace QZL {
 	namespace Assets {
 		class Atmosphere {
+			friend class Skysphere;
 		public: 
-			Atmosphere();
+			Atmosphere(float radius = 1.0f)
+				: radius_(radius) {}
+
+		private:
+			float radius_;
 		};
 	}
 }

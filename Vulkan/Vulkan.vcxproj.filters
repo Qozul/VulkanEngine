@@ -58,6 +58,9 @@
     <Filter Include="Header Files\Graphics\Textures">
       <UniqueIdentifier>{383d9e9f-9b09-4c50-aec8-5011adbe5b40}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\Renderers\Atmosphere">
+      <UniqueIdentifier>{0f352c18-9a20-438f-8500-bbaa7dcb1a47}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Shader.h">
@@ -213,6 +216,12 @@
     <ClInclude Include="Graphics\ElementBufferInterface.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\AtmosphereRenderer.h">
+      <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\AtmosphereShaderParams.h">
+      <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\TexturedRenderer.cpp">
@@ -309,6 +318,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Assets\Skysphere.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\AtmosphereRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

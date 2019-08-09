@@ -6,9 +6,11 @@
 #include "../Graphics/StaticShaderParams.h"
 #include "../Graphics/TerrainShaderParams.h"
 #include "../Assets/Terrain.h"
+#include "../Assets/Skysphere.h"
 #include "../Graphics/Material.h"
 #include "../Graphics/TextureManager.h"
 #include "Camera.h"
+#include "../Assets/Atmosphere.h"
 
 using namespace QZL;
 using namespace Game;
@@ -45,8 +47,10 @@ void GameMaster::loadGame()
 	}
 	masters_.graphicsMaster->registerComponent(testEntity->getGraphicsComponent());*/
 
-	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
-	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
+	//Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
+	//masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
+	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>(new Assets::Atmosphere(500.0f));
+	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
 }
 
 void GameMaster::update(float dt)

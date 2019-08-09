@@ -68,7 +68,7 @@ TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* tex
 	}
 	descriptor->updateDescriptorSets(descWrites);
 
-	createPipeline(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), vertexShader, fragmentShader);
+	createPipeline<Vertex>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), vertexShader, fragmentShader);
 }
 
 TexturedRenderer::~TexturedRenderer()

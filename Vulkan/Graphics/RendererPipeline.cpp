@@ -7,7 +7,8 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, 
-	VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader)
+	VkPipelineLayoutCreateInfo layoutInfo, VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, 
+	VkFrontFace frontFace)
 	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
@@ -16,11 +17,12 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
 		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
 	};
-	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE), nullptr);
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE), nullptr, vertexInputInfo, frontFace);
 }
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
-	const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader)
+	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
+	const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace)
 	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
@@ -33,8 +35,8 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 		createShaderInfo(tessCtrlModule.getModule(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT),
 		createShaderInfo(tessEvalModule.getModule(), VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
 	};
-	auto tessellationInfo = createTessellationStateInfo(4);
-	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_FALSE), &tessellationInfo);
+	auto tessellationInfo = createTessellationStateInfo(patchVertexCount);
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_FALSE), &tessellationInfo, vertexInputInfo, frontFace);
 }
 
 RendererPipeline::~RendererPipeline()
@@ -80,20 +82,10 @@ VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layou
 }
 
 void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo)
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo,
+	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace)
 {
 	wiremeshMode_ = false;
-
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-	auto bindingDescription = Vertex::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
-	auto attributeDescriptions = Vertex::getAttribDescs(0);
-
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 	
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
@@ -121,7 +113,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.frontFace = frontFace;
 	rasterizer.depthBiasEnable = VK_FALSE;
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
@@ -201,10 +193,10 @@ VkPipelineInputAssemblyStateCreateInfo RendererPipeline::createInputAssembly(VkP
 	return inputAssembly;
 }
 
-VkPipelineTessellationStateCreateInfo RendererPipeline::createTessellationStateInfo(uint32_t patchPointCount)
+VkPipelineTessellationStateCreateInfo RendererPipeline::createTessellationStateInfo(PrimitiveType patchPointCount)
 {
 	VkPipelineTessellationStateCreateInfo tessellationInfo = {};
 	tessellationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
-	tessellationInfo.patchControlPoints = patchPointCount;
+	tessellationInfo.patchControlPoints = (uint32_t)patchPointCount;
 	return tessellationInfo;
 }

@@ -20,8 +20,14 @@ EnvironmentArgs environmentArgs;
 void GraphicsMaster::registerComponent(GraphicsComponent* component)
 {
 	auto renderer = component->getRendererType();
-	renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-		component->getMeshName(), *renderers_[renderer]->getElementBuffer(), component->getLoadFunc()));
+	if (component->getVertexType() == VertexType::POSITION_UV_NORMAL) {
+		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
+			component->getMeshName(), *renderers_[renderer]->getElementBuffer(), component->getLoadFunc()));
+	}
+	else {
+		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
+			component->getMeshName(), *renderers_[renderer]->getElementBuffer(), component->getLoadFuncOnlyPos()));
+	}
 }
 
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
