@@ -1,0 +1,28 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "./definitions.glsl"
+#include "./functions.glsl"
+
+layout(local_size_x=SCATTERING_TEXTURE_WIDTH, local_size_y = SCATTERING_TEXTURE_HEIGHT,
+	local_size_z = SCATTERING_TEXTURE_DEPTH) in;
+	
+layout(binding = 0) uniform writeonly ScatteringDensityImage outScatteringDensityTexture;
+layout(binding = 1) uniform AtmosParamsBuffer {
+	AtmosphereParameters atmosphere;
+	mat3 luminance_from_radiance;
+	int scattering_order;
+} Params;
+layout(binding = 2) uniform TransmittanceTexture inTransmittanceTexture;
+layout(binding = 3) uniform ScatteringTexture inSingleRayleightScatterTexture;
+layout(binding = 4) uniform ScatteringTexture inSingleMieScatterTexture;
+layout(binding = 5) uniform ScatteringTexture inMultipleScatterTexture;
+layout(binding = 6) uniform IrradianceTexture inIrradianceTexture;
+
+void main(void)
+{
+	RadianceDensitySpectrum densityValue = ComputeScatteringDensityTexture(Params.atmosphere, inTransmittanceTexture, 
+			inSingleRayleightScatterTexture, inSingleMieScatterTexture, inMultipleScatterTexture,
+			inIrradianceTexture, gl_GlobalInvocationID.xyz, Params.scattering_order);
+	imageStore(outScatteringDensityTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(densityValue, 0.0));
+}

@@ -314,14 +314,17 @@
     <ClCompile Include="Graphics\TerrainRenderStorage.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\TextureManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Assets\Atmosphere.cpp">
+      <Filter>Source Files\Assets</Filter>
     </ClCompile>
     <ClCompile Include="Assets\Skysphere.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Assets</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\AtmosphereRenderer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TextureManager.cpp">
+      <Filter>Source Files\System</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

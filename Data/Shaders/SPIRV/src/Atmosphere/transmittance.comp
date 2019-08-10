@@ -1,0 +1,24 @@
+/*
+	Using Eric Bruneton's implementation, all credit to him: 
+	https://ebruneton.github.io/precomputed_atmospheric_scattering/atmosphere/functions.glsl.html#transmittance
+*/
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "./definitions.glsl"
+#include "./functions.glsl"
+
+layout(local_size_x = TRANSMITTANCE_TEXTURE_WIDTH, local_size_x = TRANSMITTANCE_TEXTURE_HEIGHT) in;
+
+layout(binding = 0) uniform writeonly TransmittanceImage outTransmittanceTexture;
+layout(binding = 1) uniform AtmosParamsBuffer {
+	AtmosphereParameters atmosphere;
+	mat3 luminance_from_radiance;
+} Params;
+
+void main(void)
+{
+	imageStore(outTransmittanceTexture, ivec2(gl_GlobalInvocationID.xy), 
+		vec4(ComputeTransmittanceToTopAtmosphereBoundaryTexture(Params.atmosphere, gl_GlobalInvocationID.xy),
+		0.0));
+}

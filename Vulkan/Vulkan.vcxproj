@@ -80,6 +80,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\AssetManager.cpp" />
+    <ClCompile Include="Assets\Atmosphere.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />

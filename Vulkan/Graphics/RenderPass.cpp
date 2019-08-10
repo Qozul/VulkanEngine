@@ -222,7 +222,7 @@ void RenderPass::createRenderers()
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);*/
 
 	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
-		"SkysphereVert", "SkysphereTESC", "SkysphereTESE", "SkysphereFrag", 1, globalRenderData_);
+		"AtmosphereVert", "AtmosphereTESC", "AtmosphereTESE", "AtmosphereFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
 }
 
