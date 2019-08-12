@@ -64,7 +64,7 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 
 	queueHandles_[static_cast<size_t>(QueueFamilyType::kGraphicsQueue)] = createQueueHandles(logicDevice, QueueFamilyType::kGraphicsQueue);
 	queueHandles_[static_cast<size_t>(QueueFamilyType::kPresentationQueue)] = createQueueHandles(logicDevice, QueueFamilyType::kPresentationQueue);
-	//queueHandles_[static_cast<size_t>(QueueFamilyType::kComputeQueue)] = createQueueHandles(logicDevice, QueueFamilyType::kComputeQueue);
+	queueHandles_[static_cast<size_t>(QueueFamilyType::kComputeQueue)] = createQueueHandles(logicDevice, QueueFamilyType::kComputeQueue);
 
 	return new LogicDevice(this, logicDevice, sysDetails, surfaceCapabilities, queueFamilyIndices_, queueHandles_);
 }
@@ -80,8 +80,13 @@ bool PhysicalDevice::findIndices(VkPhysicalDevice& device, VkSurfaceKHR& surface
 	auto queueFamilies = obtainVkData<VkQueueFamilyProperties>(vkGetPhysicalDeviceQueueFamilyProperties, device);
 	int i = 0;
 	for (const auto& queueFamily : queueFamilies) {
-		if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
+		if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
 			queueFamilyIndices_[static_cast<size_t>(QueueFamilyType::kGraphicsQueue)] = i;
+		}
+
+		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+			queueFamilyIndices_[static_cast<size_t>(QueueFamilyType::kComputeQueue)] = i;
+		}
 
 		VkBool32 hasPresent = false;
 		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &hasPresent);

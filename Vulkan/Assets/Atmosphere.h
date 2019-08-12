@@ -9,11 +9,9 @@
 namespace QZL {
 	namespace Graphics {
 		class LogicDevice;
-		class TextureManager;
 		class TextureSampler;
 		class ComputePipeline;
 		class Image;
-		class Descriptor;
 	}
 	namespace Assets {
 
@@ -216,11 +214,16 @@ namespace QZL {
 				// a function from altitude to dimensionless values between 0 (null density)
 				// and 1 (maximum density).
 				DensityProfile absorption_density;
+
+				// Inserted padding to make 16-byte aligned
+				float padding0, padding1;
 				// The extinction coefficient of molecules that absorb light (e.g. ozone) at
 				// the altitude where their density is maximum, as a function of wavelength.
 				// The extinction coefficient at altitude h is equal to
 				// 'absorption_extinction' times 'absorption_density' at this altitude.
 				ScatteringSpectrum absorption_extinction;
+
+				float padding2;
 				// The average albedo of the ground.
 				DimensionlessSpectrum ground_albedo;
 				// The cosine of the maximum Sun zenith angle for which atmospheric scattering
@@ -230,29 +233,29 @@ namespace QZL {
 				float mu_s_min;
 			};
 			struct PrecomputedTextures {
-				Graphics::Image* transmittanceImage;
-				Graphics::Image* scatteringImage;
-				Graphics::Image* irradianceImage;
-				Graphics::TextureSampler* transmittance;
-				Graphics::TextureSampler* scattering;
-				Graphics::TextureSampler* irradiance;
+				Graphics::Image* transmittanceImage = nullptr;
+				Graphics::Image* scatteringImage = nullptr;
+				Graphics::Image* irradianceImage = nullptr;
+				Graphics::TextureSampler* transmittance = nullptr;
+				Graphics::TextureSampler* scattering = nullptr;
+				Graphics::TextureSampler* irradiance = nullptr;
 			};
 
 			struct TempPrecomputationTextures {
-				Graphics::Image* directIrradianceImage;
-				Graphics::TextureSampler* directIrradianceTexture;
+				Graphics::Image* deltaIrradianceImage = nullptr;
+				Graphics::TextureSampler* deltaIrradianceTexture = nullptr;
 
-				Graphics::Image* deltaRayleighScatteringImage;
-				Graphics::TextureSampler* deltaRayleighScatteringTexture;
+				Graphics::Image* deltaRayleighScatteringImage = nullptr;
+				Graphics::TextureSampler* deltaRayleighScatteringTexture = nullptr;
 
-				Graphics::Image* deltaMieScatteringImage;
-				Graphics::TextureSampler* deltaMieScatteringTexture;
+				Graphics::Image* deltaMieScatteringImage = nullptr;
+				Graphics::TextureSampler* deltaMieScatteringTexture = nullptr;
 
-				Graphics::Image* deltaScatteringDensityImage;
-				Graphics::TextureSampler* deltaScatteringDensityTexture;
+				Graphics::Image* deltaScatteringDensityImage = nullptr;
+				Graphics::TextureSampler* deltaScatteringDensityTexture = nullptr;
 
-				Graphics::Image* deltaMultipleScatteringImage;
-				Graphics::TextureSampler* deltaMultipleScatteringTexture;
+				Graphics::Image* deltaMultipleScatteringImage = nullptr;
+				Graphics::TextureSampler* deltaMultipleScatteringTexture = nullptr;
 			};
 
 		public:
@@ -261,18 +264,30 @@ namespace QZL {
 				: parameters_(params), radius_(radius) {}
 			~Atmosphere();
 
-			void precalculateTextures(Graphics::LogicDevice* logicDevice, Graphics::Descriptor* descriptor);
+			void precalculateTextures(const Graphics::LogicDevice* logicDevice);
 			PrecomputedTextures& getTextures() {
 				return textures_;
 			}
 		private:
 			// Creates temporary textures, returned via reference argument. Also creates the member textures.
-			void initTextures(Graphics::LogicDevice* logicDevice, TempPrecomputationTextures& tempTextures, PrecomputedTextures& finalTextures);
+			void initTextures(const Graphics::LogicDevice* logicDevice, TempPrecomputationTextures& tempTextures, PrecomputedTextures& finalTextures);
 			VkDescriptorSetLayoutBinding makeLayoutBinding(const uint32_t binding, const VkSampler* immutableSamplers = nullptr);
+			void convertSpectrumToLinearSrgb(const std::vector<double>& wavelengths, const std::vector<double>& spectrum,
+				double& r, double& g, double& b);
+			double cieColorMatchingFunctionTableValue(double wavelength, int column);
+			double interpolate(const std::vector<double>& wavelengths, const std::vector<double>& wavelength_function, double wavelength);
+			void computeSpectralRadianceToLuminanceFactors( const std::vector<double>& wavelengths, const std::vector<double>& solar_irradiance,
+				double lambda_power, double& k_r, double& k_g, double& k_b);
 
 			float radius_;
 			AtmosphereParameters parameters_;
 			PrecomputedTextures textures_;
+
+			static constexpr int kLambdaMin = 360;
+			static constexpr int kLambdaMax = 830;
+			static constexpr double kLambdaR = 680.0;
+			static constexpr double kLambdaG = 550.0;
+			static constexpr double kLambdaB = 440.0;
 		};
 	}
 }

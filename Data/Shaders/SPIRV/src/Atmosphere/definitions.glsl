@@ -168,6 +168,11 @@ struct AtmosphereParameters {
   Number mu_s_min;
 };
 
+struct PrecomputationData {
+	AtmosphereParameters atmosphere;
+	mat3 luminance_from_radiance;
+};
+
 Number ClampCosine(Number mu) {
   return clamp(mu, Number(-1.0), Number(1.0));
 }

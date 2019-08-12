@@ -63,6 +63,9 @@ namespace QZL
 			const glm::vec3& getCamPos() {
 				return *camPosition_;
 			}
+			const LogicDevice* getLogicDevice() {
+				return details_.logicDevice;
+			}
 			const SystemMasters& getMasters() {
 				return masters_;
 			}

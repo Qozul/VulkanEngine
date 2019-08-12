@@ -8,12 +8,13 @@ namespace QZL
 		class DeviceMemory;
 		class PhysicalDevice;
 		class SwapChain;
+		class Descriptor;
 		struct GraphicsSystemDetails;
 
 		enum class QueueFamilyType : size_t {
 			kGraphicsQueue = 0,
 			kPresentationQueue,
-			//kComputeQueue,
+			kComputeQueue,
 			//kTransferQueue,
 			kNumQueueFamilyTypes // Do not index with this, this is the size
 		};
@@ -41,15 +42,20 @@ namespace QZL
 				return device_;
 			}
 
+			VkCommandBuffer getComputeCommandBuffer() const;
+			Descriptor* getPrimaryDescriptor() const;
+
 		private:
 			LogicDevice(PhysicalDevice* physicalDevice, VkDevice device, const GraphicsSystemDetails& sysDetails, DeviceSurfaceCapabilities& surfaceCapabilities,
 				std::vector<uint32_t> indices, std::vector<VkQueue> handles);
 			~LogicDevice();
-			void createCommandBuffers();
+			void createCommandBuffers(std::vector<VkCommandBuffer>& buffers, VkCommandPool pool, uint32_t count, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 			VkDevice device_;
 			VkCommandPool primaryCommandPool_;
+			VkCommandPool computeCommandPool_;
 			std::vector<VkCommandBuffer> commandBuffers_;
+			std::vector<VkCommandBuffer> computeCommandBuffers_;
 
 			PhysicalDevice* physicalDevice_; // Hold physical device so only logic device needs to be passed around
 			SwapChain* swapChain_;
@@ -57,6 +63,8 @@ namespace QZL
 
 			std::vector<uint32_t> queueFamilyIndices_;
 			std::vector<VkQueue> queueHandles_;
+
+			Descriptor* primaryDescriptor_;
 		};
 	}
 }

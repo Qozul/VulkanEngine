@@ -7,14 +7,13 @@
 layout(local_size_x=SCATTERING_TEXTURE_WIDTH, local_size_y = SCATTERING_TEXTURE_HEIGHT,
 	local_size_z = SCATTERING_TEXTURE_DEPTH) in;
 
-layout(binding = 0) uniform writeonly ScatteringImage outScatteringTexture;
+layout(binding = 0) uniform TransmittanceTexture inTransmittanceTexture;
 layout(binding = 1) uniform AtmosParamsBuffer {
-	AtmosphereParameters atmosphere;
-	mat3 luminance_from_radiance;
-} Params;
-layout(binding = 2) uniform writeonly ScatteringImage outMieTexture;
-layout(binding = 3) uniform writeonly ScatteringImage outRayleighTexture;
-layout(binding = 4) uniform TransmittanceTexture inTransmittanceTexture;
+	PrecomputationData Params;
+};
+layout(binding = 3) uniform writeonly ScatteringImage outScatteringTexture;
+layout(binding = 5) uniform writeonly ScatteringImage outRayleighTexture;
+layout(binding = 6) uniform writeonly ScatteringImage outMieTexture;
 
 void main(void)
 {

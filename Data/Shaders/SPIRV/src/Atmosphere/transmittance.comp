@@ -12,9 +12,8 @@ layout(local_size_x = TRANSMITTANCE_TEXTURE_WIDTH, local_size_x = TRANSMITTANCE_
 
 layout(binding = 0) uniform writeonly TransmittanceImage outTransmittanceTexture;
 layout(binding = 1) uniform AtmosParamsBuffer {
-	AtmosphereParameters atmosphere;
-	mat3 luminance_from_radiance;
-} Params;
+	PrecomputationData Params;
+};
 
 void main(void)
 {

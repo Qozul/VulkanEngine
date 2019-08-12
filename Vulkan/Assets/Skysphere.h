@@ -6,7 +6,7 @@ namespace QZL {
 		class Atmosphere;
 		class Skysphere : public Entity {
 		public:
-			Skysphere(Atmosphere* atmosphere);
+			Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere);
 			~Skysphere();
 		private:
 			Atmosphere* atmos_;

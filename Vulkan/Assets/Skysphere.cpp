@@ -5,9 +5,10 @@
 using namespace QZL;
 using namespace Assets;
 
-Skysphere::Skysphere(Atmosphere* atmosphere)
+Skysphere::Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere)
 	: atmos_(atmosphere)
 {
+	//atmosphere->precalculateTextures(logicDevice);
 	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(), "skysphere", loadFunction);
 	if (atmosphere != nullptr) {
 		transform_->scale = glm::vec3(atmosphere->radius_);

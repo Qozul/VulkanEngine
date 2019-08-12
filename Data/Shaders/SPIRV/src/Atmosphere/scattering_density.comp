@@ -7,22 +7,24 @@
 layout(local_size_x=SCATTERING_TEXTURE_WIDTH, local_size_y = SCATTERING_TEXTURE_HEIGHT,
 	local_size_z = SCATTERING_TEXTURE_DEPTH) in;
 	
-layout(binding = 0) uniform writeonly ScatteringDensityImage outScatteringDensityTexture;
+layout(binding = 0) uniform TransmittanceTexture inTransmittanceTexture;
 layout(binding = 1) uniform AtmosParamsBuffer {
-	AtmosphereParameters atmosphere;
-	mat3 luminance_from_radiance;
+	PrecomputationData Params;
+};
+layout(binding = 2) uniform IrradianceTexture inIrradianceTexture;
+layout(binding = 5) uniform ScatteringTexture inSingleRayleightScatterTexture;
+layout(binding = 6) uniform ScatteringTexture inSingleMieScatterTexture;
+layout(binding = 7) uniform writeonly ScatteringDensityImage outScatteringDensityTexture;
+layout(binding = 8) uniform ScatteringTexture inMultipleScatterTexture;
+
+layout(push_constant) uniform ScatteringOrder {
 	int scattering_order;
-} Params;
-layout(binding = 2) uniform TransmittanceTexture inTransmittanceTexture;
-layout(binding = 3) uniform ScatteringTexture inSingleRayleightScatterTexture;
-layout(binding = 4) uniform ScatteringTexture inSingleMieScatterTexture;
-layout(binding = 5) uniform ScatteringTexture inMultipleScatterTexture;
-layout(binding = 6) uniform IrradianceTexture inIrradianceTexture;
+};
 
 void main(void)
 {
 	RadianceDensitySpectrum densityValue = ComputeScatteringDensityTexture(Params.atmosphere, inTransmittanceTexture, 
 			inSingleRayleightScatterTexture, inSingleMieScatterTexture, inMultipleScatterTexture,
-			inIrradianceTexture, gl_GlobalInvocationID.xyz, Params.scattering_order);
+			inIrradianceTexture, gl_GlobalInvocationID.xyz, scattering_order);
 	imageStore(outScatteringDensityTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(densityValue, 0.0));
 }
