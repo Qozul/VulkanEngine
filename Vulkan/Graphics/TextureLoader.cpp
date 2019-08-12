@@ -1,6 +1,6 @@
 #include "TextureLoader.h"
 #include "../../Shared/nv_dds.h"
-#include "Image2D.h"
+#include "Image.h"
 #include "LogicDevice.h"
 #include "DeviceMemory.h"
 
@@ -20,7 +20,7 @@ TextureLoader::~TextureLoader()
 }
 
 // adapted from https://vulkan-tutorial.com/Texture_mapping/Images
-Image2D* TextureLoader::loadTexture(const std::string& fileName)
+Image* TextureLoader::loadTexture(const std::string& fileName)
 {
 	DEBUG_LOG("Loading texture " << fileName);
 	nv_dds::CDDSImage image;
@@ -34,13 +34,13 @@ Image2D* TextureLoader::loadTexture(const std::string& fileName)
 	deviceMemory_->unmapMemory(stagingBuffer.id);
 
 	// make Image2D and transfer the data from the staging buffer
-	auto texture = new Image2D(logicDevice_, deviceMemory_, Image2D::makeImageCreateInfo(image.get_width(), image.get_height(), 1,
-		VK_SAMPLE_COUNT_1_BIT, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT), MemoryAllocationPattern::kStaticResource,
-		{ VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL });
+	auto texture = new Image(logicDevice_, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, format, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_UNDEFINED, image.get_width(), image.get_height()),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL });
 
 	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), 0, image.get_width(), image.get_height());
 
-	texture->changeLayout({ VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+	texture->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
 
 	deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
 	image.clear();

@@ -3,7 +3,7 @@
 
 namespace QZL {
 	namespace Graphics {
-		class Image2D;
+		class Image;
 		class LogicDevice;
 		class TextureSampler;
 		class Descriptor;
@@ -19,7 +19,7 @@ namespace QZL {
 
 			// Returns a texture sampler and passes ownership of the sampler to the caller, which is expected to destroy the resource prior to this class
 			// destructor being called.
-			TextureSampler* requestTextureSeparate(const std::string& name, uint32_t binding, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR,
+			TextureSampler* requestTextureSeparate(const std::string& name, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR,
 				VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT, float anisotropy = 8);
 			
 			VkDescriptorSetLayoutBinding getSetlayoutBinding() {
@@ -40,8 +40,9 @@ namespace QZL {
 			Descriptor* descriptor_;
 			uint32_t descriptorSetIdx_;
 			VkDescriptorSetLayoutBinding setLayoutBinding_;
-			std::unordered_map<std::string, Image2D*> textures_;
-			std::unordered_map<std::string, std::pair<TextureSampler*, uint32_t>> textureSamplers_;
+			std::unordered_map<std::string, Image*> textures_;
+			std::unordered_map<std::string, TextureSampler*> texturesSamplers_;
+			std::unordered_map<std::string, std::pair<TextureSampler*, uint32_t>> textureSamplersDI_;
 			std::queue<uint32_t> freeDescriptors_;
 		};
 	}

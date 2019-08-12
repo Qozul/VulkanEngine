@@ -24,8 +24,8 @@ TerrainParamData TerrainRenderStorage::resolveParams(GraphicsComponent* instance
 {
 	auto params = static_cast<const TerrainShaderParams*>(instance->getShaderParams());
 	return {
-		textureManager_->requestTextureSeparate(params->getHeightmapName(), (uint32_t)ReservedGraphicsBindings0::TEXTURE_0, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8),
-		textureManager_->requestTextureSeparate(params->getDebugDiffuseName(), (uint32_t)ReservedGraphicsBindings0::TEXTURE_1, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8)
+		textureManager_->requestTextureSeparate(params->getHeightmapName(), VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8),
+		textureManager_->requestTextureSeparate(params->getDebugDiffuseName(), VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8)
 	};
 }
 

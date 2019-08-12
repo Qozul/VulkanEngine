@@ -2,7 +2,7 @@
 #include "Descriptor.h"
 #include "TextureLoader.h"
 #include "TextureSampler.h"
-#include "Image2D.h"
+#include "Image.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -29,7 +29,7 @@ TextureManager::~TextureManager()
 	for (auto it : textures_) {
 		SAFE_DELETE(it.second);
 	}
-	for (auto it : textureSamplers_) {
+	for (auto it : textureSamplersDI_) {
 		SAFE_DELETE(it.second.first);
 	}
 }
@@ -38,33 +38,33 @@ uint32_t TextureManager::requestTexture(const std::string& name, VkFilter magFil
 {
 	ASSERT(descriptorIndexingActive_);
 	// Reuse sampler if it already exists
-	if (textureSamplers_.count(name)) {
-		return textureSamplers_[name].second;
+	if (textureSamplersDI_.count(name)) {
+		return textureSamplersDI_[name].second;
 	}
 	else {
-		auto sampler = requestTextureSeparate(name, (uint32_t)ReservedGraphicsBindings1::TEXTURE_ARRAY_BINDING, magFilter, minFilter, addressMode, anisotropy);
-		textureSamplers_[name].first = sampler;
+		auto sampler = requestTextureSeparate(name, magFilter, minFilter, addressMode, anisotropy);
+		textureSamplersDI_[name].first = sampler;
 
 		uint32_t arrayIdx = freeDescriptors_.front();
 		freeDescriptors_.pop();
 
 		descriptor_->updateDescriptorSets({ makeDescriptorWrite(sampler->getImageInfo(), arrayIdx, 1) });
 
-		textureSamplers_[name].second = arrayIdx;
+		textureSamplersDI_[name].second = arrayIdx;
 		return arrayIdx;
 	}
 }
 
-TextureSampler* TextureManager::requestTextureSeparate(const std::string& name, uint32_t binding, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy)
+TextureSampler* TextureManager::requestTextureSeparate(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy)
 {
 	// Always make a new sampler, but reuse image if it exists
 	if (textures_.count(name)) {
-		return new TextureSampler(logicDevice_, name, textures_[name], magFilter, minFilter, addressMode, anisotropy, binding);
+		return textures_[name]->createTextureSampler(name, magFilter, minFilter, addressMode, anisotropy);
 	}
 	else {
 		auto image = textureLoader_->loadTexture(name);
 		textures_[name] = image;
-		return new TextureSampler(logicDevice_, name, image, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8, binding);
+		return image->createTextureSampler(name, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8);
 	}
 }
 

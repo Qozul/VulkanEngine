@@ -47,8 +47,8 @@ void GameMaster::loadGame()
 	}
 	masters_.graphicsMaster->registerComponent(testEntity->getGraphicsComponent());*/
 
-	//Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
-	//masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
+	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
+	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
 	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>(new Assets::Atmosphere(500.0f));
 	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
 }

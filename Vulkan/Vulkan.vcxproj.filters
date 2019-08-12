@@ -222,6 +222,9 @@
     <ClInclude Include="Graphics\AtmosphereShaderParams.h">
       <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Image.h">
+      <Filter>Header Files\Graphics\Textures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\TexturedRenderer.cpp">
@@ -325,6 +328,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\TextureManager.cpp">
       <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Image.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

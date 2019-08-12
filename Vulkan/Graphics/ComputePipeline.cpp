@@ -44,18 +44,13 @@ VkPipelineLayout ComputePipeline::getLayout()
 	return layout_;
 }
 
-VkPipelineLayoutCreateInfo ComputePipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts)
+VkPipelineLayoutCreateInfo ComputePipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, std::vector<VkPushConstantRange> pushConstantRanges)
 {
-	VkPushConstantRange pushConstantRange = {};
-	pushConstantRange.size = sizeof(glm::mat4) * 2;
-	pushConstantRange.offset = 0;
-	pushConstantRange.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = layoutCount;
 	pipelineLayoutInfo.pSetLayouts = layouts;
-	pipelineLayoutInfo.pushConstantRangeCount = 1;
-	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+	pipelineLayoutInfo.pushConstantRangeCount = pushConstantRanges.size();
+	pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
 	return pipelineLayoutInfo;
 }

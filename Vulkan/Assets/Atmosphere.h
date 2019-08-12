@@ -4,29 +4,19 @@
 	This is a port to Vulkan and this engine and so directly uses code (including comments) from Bruneton's implementation with small modifications.
 */
 #pragma once
+#include "../Graphics/VkUtil.h"
 
-#define Length float
-#define Wavelength float
-#define Angle float
-#define SolidAngle float
-#define Power float
-#define LuminousPower float
-#define Number float
-#define InverseLength float
-#define Area float
-#define Volume float
-#define NumberDensity float
-#define Irradiance float
-#define Radiance float
-#define SpectralPower float
-#define SpectralIrradiance float
-#define SpectralRadiance float
-#define SpectralRadianceDensity float
-#define ScatteringCoefficient float
-#define InverseSolidAngle float
-#define LuminousIntensity float
-#define Luminance float
-#define Illuminance float
+namespace QZL {
+	namespace Graphics {
+		class LogicDevice;
+		class TextureManager;
+		class TextureSampler;
+		class ComputePipeline;
+		class Image;
+		class Descriptor;
+	}
+	namespace Assets {
+
 #define AbstractSpectrum glm::vec3
 #define DimensionlessSpectrum glm::vec3
 #define PowerSpectrum glm::vec3
@@ -34,16 +24,10 @@
 #define RadianceSpectrum glm::vec3
 #define RadianceDensitySpectrum glm::vec3
 #define ScatteringSpectrum glm::vec3
-#define Position glm::vec3
 #define Direction glm::vec3
 #define Luminance3 glm::vec3
 #define Illuminance3 glm::vec3
 
-namespace QZL {
-	namespace Graphics {
-		class LogicDevice;
-	}
-	namespace Assets {
 		constexpr int TRANSMITTANCE_TEXTURE_WIDTH = 256;
 		constexpr int TRANSMITTANCE_TEXTURE_HEIGHT = 64;
 
@@ -174,15 +158,16 @@ namespace QZL {
 
 		class Atmosphere {
 			friend class Skysphere;
+		public:
 			// An atmosphere layer of width 'width', and whose density is defined as
 			//   'exp_term' * exp('exp_scale' * h) + 'linear_term' * h + 'constant_term',
 			// clamped to [0,1], and where h is the altitude.
 			struct DensityProfileLayer {
-				Length width;
-				Number exp_term;
-				InverseLength exp_scale;
-				InverseLength linear_term;
-				Number constant_term;
+				float width;
+				float exp_term;
+				float exp_scale;
+				float linear_term;
+				float constant_term;
 			};
 
 			// An atmosphere density profile made of several layers on top of each other
@@ -198,11 +183,11 @@ namespace QZL {
 				IrradianceSpectrum solar_irradiance;
 				// The sun's angular radius. Warning: the implementation uses approximations
 				// that are valid only if this angle is smaller than 0.1 radians.
-				Angle sun_angular_radius;
+				float sun_angular_radius;
 				// The distance between the planet center and the bottom of the atmosphere.
-				Length bottom_radius;
+				float bottom_radius;
 				// The distance between the planet center and the top of the atmosphere.
-				Length top_radius;
+				float top_radius;
 				// The density profile of air molecules, i.e. a function from altitude to
 				// dimensionless values between 0 (null density) and 1 (maximum density).
 				DensityProfile rayleigh_density;
@@ -226,7 +211,7 @@ namespace QZL {
 				ScatteringSpectrum mie_extinction;
 				// The asymetry parameter for the Cornette-Shanks phase function for the
 				// aerosols.
-				Number mie_phase_function_g;
+				float mie_phase_function_g;
 				// The density profile of air molecules that absorb light (e.g. ozone), i.e.
 				// a function from altitude to dimensionless values between 0 (null density)
 				// and 1 (maximum density).
@@ -242,17 +227,52 @@ namespace QZL {
 				// must be precomputed (for maximum precision, use the smallest Sun zenith
 				// angle yielding negligible sky light radiance values. For instance, for the
 				// Earth case, 102 degrees is a good choice - yielding mu_s_min = -0.2).
-				Number mu_s_min;
+				float mu_s_min;
 			};
-		public:
-			Atmosphere(float radius = 1.0f)
-				: radius_(radius) {}
+			struct PrecomputedTextures {
+				Graphics::Image* transmittanceImage;
+				Graphics::Image* scatteringImage;
+				Graphics::Image* irradianceImage;
+				Graphics::TextureSampler* transmittance;
+				Graphics::TextureSampler* scattering;
+				Graphics::TextureSampler* irradiance;
+			};
 
-			void precalculateTextures(Graphics::LogicDevice* logicDevice);
+			struct TempPrecomputationTextures {
+				Graphics::Image* directIrradianceImage;
+				Graphics::TextureSampler* directIrradianceTexture;
+
+				Graphics::Image* deltaRayleighScatteringImage;
+				Graphics::TextureSampler* deltaRayleighScatteringTexture;
+
+				Graphics::Image* deltaMieScatteringImage;
+				Graphics::TextureSampler* deltaMieScatteringTexture;
+
+				Graphics::Image* deltaScatteringDensityImage;
+				Graphics::TextureSampler* deltaScatteringDensityTexture;
+
+				Graphics::Image* deltaMultipleScatteringImage;
+				Graphics::TextureSampler* deltaMultipleScatteringTexture;
+			};
+
+		public:
+			Atmosphere(float radius) : radius_(radius) {}
+			Atmosphere(AtmosphereParameters params, float radius = 1.0f)
+				: parameters_(params), radius_(radius) {}
+			~Atmosphere();
+
+			void precalculateTextures(Graphics::LogicDevice* logicDevice, Graphics::Descriptor* descriptor);
+			PrecomputedTextures& getTextures() {
+				return textures_;
+			}
 		private:
+			// Creates temporary textures, returned via reference argument. Also creates the member textures.
+			void initTextures(Graphics::LogicDevice* logicDevice, TempPrecomputationTextures& tempTextures, PrecomputedTextures& finalTextures);
+			VkDescriptorSetLayoutBinding makeLayoutBinding(const uint32_t binding, const VkSampler* immutableSamplers = nullptr);
+
 			float radius_;
 			AtmosphereParameters parameters_;
-
+			PrecomputedTextures textures_;
 		};
 	}
 }

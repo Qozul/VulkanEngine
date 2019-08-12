@@ -87,7 +87,7 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 
 	descriptor_ = new Descriptor(logicDevice, kMaxRenderers * swapChainDetails.imageViews.size() + swapChainDetails.imageViews.size(), {
 		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 }, 
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 14 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 }
 	});
 

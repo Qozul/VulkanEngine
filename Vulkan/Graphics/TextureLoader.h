@@ -4,7 +4,7 @@
 namespace QZL
 {
 	namespace Graphics {
-		class Image2D;
+		class Image;
 		class LogicDevice;
 		class DeviceMemory;
 
@@ -12,7 +12,7 @@ namespace QZL
 		public:
 			TextureLoader(const LogicDevice* logicDevice);
 			~TextureLoader();
-			Image2D* loadTexture(const std::string& fileName);
+			Image* loadTexture(const std::string& fileName);
 
 		private:
 			VkFormat convertToVkFormat(unsigned int oldFormat);
