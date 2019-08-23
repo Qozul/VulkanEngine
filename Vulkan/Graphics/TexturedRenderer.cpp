@@ -15,6 +15,11 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
+DescriptorRequirementMap TexturedRenderer::getDescriptorRequirements()
+{
+	return DescriptorRequirementMap();
+}
+
 TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData)
 	: RendererBase(logicDevice), descriptor_(descriptor)
@@ -27,9 +32,9 @@ TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* tex
 		renderStorage_ = new StaticRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
 	}
 
-	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
+	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
 		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT);
-	StorageBuffer* matBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
+	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
 		sizeof(MaterialStatic) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);

@@ -72,12 +72,14 @@ VkPipelineLayout RendererPipeline::getLayout()
 	}
 }
 
-VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts)
+VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, const VkPushConstantRange* pushConstantRange)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = layoutCount;
 	pipelineLayoutInfo.pSetLayouts = layouts;
+	pipelineLayoutInfo.pushConstantRangeCount = pushConstantRange != nullptr ? 1 : 0;
+	pipelineLayoutInfo.pPushConstantRanges = pushConstantRange;
 	return pipelineLayoutInfo;
 }
 

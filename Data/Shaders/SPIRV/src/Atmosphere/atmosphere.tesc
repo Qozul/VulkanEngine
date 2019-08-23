@@ -3,6 +3,8 @@
 #define NUM_VERTS 3
 
 layout(vertices = NUM_VERTS) out;
+layout(location = 0) in vec2 uvcoords[];
+layout(location = 0) out vec2 oUvcoords[NUM_VERTS];
 /*
 layout (set = 0, binding = 4) uniform TessellationInfo {
 	float patchRadius;
@@ -28,17 +30,14 @@ void main()
 {	
 	if (gl_InvocationID == 0) {
 		//if (!checkCulling()) {
-			gl_TessLevelInner[0] = 0.0;
-			gl_TessLevelOuter[0] = 0.0;
-			gl_TessLevelOuter[1] = 0.0;
-			gl_TessLevelOuter[2] = 0.0;
 		//}
 		//else {
-			gl_TessLevelInner[0] = 1;
-			gl_TessLevelOuter[0] = 1;
-			gl_TessLevelOuter[1] = 1;
-			gl_TessLevelOuter[2] = 1;
+			gl_TessLevelInner[0] = 8.0;
+			gl_TessLevelOuter[0] = 8.0;
+			gl_TessLevelOuter[1] = 8.0;
+			gl_TessLevelOuter[2] = 8.0;
 		//}
 	}
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+	oUvcoords[gl_InvocationID] = uvcoords[gl_InvocationID];
 }

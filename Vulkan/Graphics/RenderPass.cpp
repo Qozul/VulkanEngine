@@ -101,8 +101,8 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 
 	globalRenderData_ = new GlobalRenderData;
 	globalRenderData_->globalDataDescriptor = descriptor_;
-	lightingUbo_ = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings1::LIGHTING, 0,
-		sizeof(LightingData), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, true);
+	lightingUbo_ = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings1::LIGHTING, 0,
+		sizeof(LightingData), VK_SHADER_STAGE_ALL);
 	if (master->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
 		globalRenderData_->layout = descriptor_->makeLayout({ lightingUbo_->getBinding(), master->getMasters().assetManager->textureManager->getSetlayoutBinding() }, &setLayoutBindingFlags);
 	}
@@ -218,7 +218,7 @@ void RenderPass::createRenderers()
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);*/
 
 	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
-		"AtmosphereVert", "AtmosphereTESC", "AtmosphereTESE", "AtmosphereFrag", 1, globalRenderData_);
+		"AtmosphereVert", "AtmosphereTESC", "AtmosphereAltTESE", "AtmosphereAltFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
 }
 

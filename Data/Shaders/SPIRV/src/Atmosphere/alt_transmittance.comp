@@ -1,0 +1,63 @@
+#version 450
+#extension GL_GOOGLE_include_directive : enable
+#include "./alt_functions.glsl"
+
+#define TOTAL_INVOCATIONS vec2(64.0, 256.0)
+#define SAMPLE_COUNT 500
+
+layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_size_z = 1) in;
+
+layout(binding = 0) uniform Params {
+	AtmosphereParameters atmosphere;
+};
+layout(binding = 1, rgba32f) uniform restrict writeonly image2D transmittanceTexture;
+
+// Produces transmittance between integral point and atmosphere
+void main()
+{	
+	float height = UhToHeight(gl_GlobalInvocationID.x / TOTAL_INVOCATIONS.x, atmosphere.Hatm);
+	float Cv = UvToCv(gl_GlobalInvocationID.y / TOTAL_INVOCATIONS.y, height, atmosphere.planetRadius);
+
+	vec2 Pa = vec2(0.0, height + atmosphere.planetRadius);
+	
+	vec2 v = getRay(Cv);
+	
+	if (!isinf(distanceToCircle(Pa, v, atmosphere.planetRadius, true))) {
+        imageStore(transmittanceTexture, ivec2(gl_GlobalInvocationID.xy), vec4(0.0, 0.0, 0.0, 1.0));
+        return;
+    }
+    float t = distanceToCircle(Pa, v, atmosphere.planetRadius + atmosphere.Hatm, false);
+    if (isinf(t)) {
+        imageStore(transmittanceTexture, ivec2(gl_GlobalInvocationID.xy), vec4(1.0, 1.0, 1.0, 1.0));
+        return;
+    }
+	
+    vec2 Pb = Pa + t * v;
+	
+	float mieDensitySum = 0.0;
+	float rayleighDensitySum = 0.0;
+	float ozoneDensitySum = 0.0;
+	float previousMieDensity = 0.0;
+	float previousRayleighDensity = 0.0;
+	float previousOzoneDensity = 0.0;
+	// Integrate along viewing ray from corresponding height
+	float stepSize = distance(Pa, Pb) / float(SAMPLE_COUNT);
+	// For each integration step, calculate the particle density of Mie and Rayleigh
+	for (int s = 0; s < SAMPLE_COUNT; ++s) {
+		vec2 P = Pa + stepSize * s * v; // Integration point
+		float h = getHeight(P, atmosphere.planetRadius);
+		float mieDensity = getDensity(h, atmosphere.mieScaleHeight);
+		float rayleighDensity = getDensity(h, atmosphere.rayleighScaleHeight);
+		float ozoneDensity = 6e-7 * rayleighDensity;
+		mieDensitySum += (mieDensity + previousMieDensity) / 2.0 * stepSize;
+		rayleighDensitySum += (rayleighDensity + previousMieDensity) / 2.0 * stepSize;
+		ozoneDensitySum += (ozoneDensity + previousOzoneDensity) / 2.0 * stepSize;
+		previousMieDensity = mieDensity;
+		previousRayleighDensity = rayleighDensity;
+		previousOzoneDensity = ozoneDensity;
+	}
+	vec3 result = exp(-(atmosphere.betaRay * rayleighDensitySum + 
+		atmosphere.betaMieExt * mieDensitySum + atmosphere.betaOzoneExt * ozoneDensitySum ));
+	
+	imageStore(transmittanceTexture, ivec2(gl_GlobalInvocationID.xy), vec4(result, 1.0));
+}

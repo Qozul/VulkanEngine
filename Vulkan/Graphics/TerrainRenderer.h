@@ -17,6 +17,9 @@ namespace QZL
 				std::array<glm::vec4, 6> frustumPlanes;
 			};
 		public:
+			static DescriptorRequirementMap getDescriptorRequirements();
+			static constexpr uint32_t MAX_ENTITIES = 1;
+
 			TerrainRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 				const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 				const uint32_t entityCount, const GlobalRenderData* globalRenderData);

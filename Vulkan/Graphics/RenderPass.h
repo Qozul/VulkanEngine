@@ -12,7 +12,7 @@ namespace QZL
 		struct SwapChainDetails;
 		class GraphicsMaster;
 		struct GlobalRenderData;
-		class StorageBuffer;
+		class DescriptorBuffer;
 
 		class RenderPass {
 			friend class SwapChain;
@@ -52,7 +52,7 @@ namespace QZL
 			Image2D* depthBuffer_;
 
 			GlobalRenderData* globalRenderData_;
-			StorageBuffer* lightingUbo_;
+			DescriptorBuffer* lightingUbo_;
 
 			static const size_t kMaxRenderers = 1;
 			static const glm::vec3 kAmbientColour;

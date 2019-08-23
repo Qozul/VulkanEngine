@@ -38,7 +38,7 @@ LogicDevice::LogicDevice(PhysicalDevice* physicalDevice, VkDevice device, const 
 	std::vector<std::pair<VkDescriptorType, uint32_t>> descriptorTypes = {
 			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 14 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6 },
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 8 }
 	};
 	primaryDescriptor_ = new Descriptor(this, (uint32_t)6, descriptorTypes);

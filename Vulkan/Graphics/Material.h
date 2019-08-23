@@ -1,5 +1,6 @@
 #pragma once
 #include "VkUtil.h"
+#include "../Assets/AtmosphereParameters.h"
 
 namespace QZL {
 	namespace Graphics {
@@ -21,6 +22,19 @@ namespace QZL {
 				: diffuseX(diffuseColour.x), diffuseY(diffuseColour.y), diffuseZ(diffuseColour.z), alpha(alpha),
 				specularX(specularColour.x), specularY(specularColour.y), specularZ(specularColour.z), specularExponent(specExponent),
 				diffuseTextureIndex(diffuseIndex), normalMapIndex(normalMapIndex), padding0(0.0f), padding1(0.0f) { }
+		};
+		struct MaterialAtmosphere {
+			glm::vec3 betaRay;
+			float betaMie;
+
+			glm::vec3 cameraPosition;
+			float planetRadius;
+
+			glm::vec3 sunDirection;
+			float Hatm;
+
+			glm::vec3 sunIntensity;
+			float g;
 		};
 	}
 }

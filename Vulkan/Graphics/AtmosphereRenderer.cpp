@@ -8,13 +8,20 @@
 #include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
-#include "TerrainShaderParams.h"
-#include "TerrainRenderStorage.h"
 #include "SwapChain.h"
+#include "AtmosphereShaderParams.h"
+#include "../Assets/AltAtmosphere.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace Graphics;
+
+using PushConstants = MaterialAtmosphere;
+
+DescriptorRequirementMap AtmosphereRenderer::getDescriptorRequirements()
+{
+	return { {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1} };
+}
 
 AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader,
@@ -24,47 +31,32 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	ASSERT(entityCount > 0);
 	renderStorage_ = new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()));
 
-	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
-		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_VERTEX_BIT, true);
-	//StorageBuffer* matBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
-	//	sizeof(MaterialStatic) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
-	//StorageBuffer* tessBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::UNRESERVED, 0,
-	//	sizeof(TessControlInfo) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, true);
+	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
+		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 	storageBuffers_.push_back(mvpBuf);
-	//storageBuffers_.push_back(matBuf);
-	//storageBuffers_.push_back(tessBuf);
-	VkDescriptorSetLayout layout;
-	/*VkDescriptorSetLayoutBinding heightmapBinding = {};
-	heightmapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
-	heightmapBinding.descriptorCount = 1;
-	heightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	heightmapBinding.pImmutableSamplers = nullptr;
-	heightmapBinding.stageFlags = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 
-	VkDescriptorSetLayoutBinding debugDiffuseBinding = {};
-	debugDiffuseBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_1;
-	debugDiffuseBinding.descriptorCount = 1;
-	debugDiffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	debugDiffuseBinding.pImmutableSamplers = nullptr;
-	debugDiffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;*/
-	layout = descriptor->makeLayout({ mvpBuf->getBinding() });
+	VkDescriptorSetLayoutBinding scatteringBinding = {};
+	scatteringBinding.binding = 1;
+	scatteringBinding.descriptorCount = 1;
+	scatteringBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	scatteringBinding.pImmutableSamplers = nullptr;
+	scatteringBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayout layout = descriptor->makeLayout({ mvpBuf->getBinding(), scatteringBinding });
 
 	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(globalRenderData->layout);
 
 	size_t idx = descriptor->createSets({ layout, layout, layout });
 	std::vector<VkWriteDescriptorSet> descWrites;
 	for (int i = 0; i < 3; ++i) {
 		descriptorSets_.push_back(descriptor->getSet(idx + i));
-		descriptorSets_.push_back(globalRenderData->globalDataDescriptor->getSet(globalRenderData->setIdx));
 		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
-		//descWrites.push_back(matBuf->descriptorWrite(descriptor->getSet(idx + i)));
-		//descWrites.push_back(tessBuf->descriptorWrite(descriptor->getSet(idx + i)));
 	}
 	descriptor->updateDescriptorSets(descWrites);
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), vertexShader, fragmentShader, 
-		tessCtrlShader, tessEvalShader, RendererPipeline::PrimitiveType::TRIANGLES, VK_FRONT_FACE_CLOCKWISE);
+	auto pushConstantRange = setupPushConstantRange<PushConstants>(VK_SHADER_STAGE_FRAGMENT_BIT);
+	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 
+		&pushConstantRange), vertexShader, fragmentShader, tessCtrlShader, tessEvalShader, RendererPipeline::PrimitiveType::TRIANGLES, VK_FRONT_FACE_CLOCKWISE);
 }
 
 AtmosphereRenderer::~AtmosphereRenderer()
@@ -78,16 +70,19 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 	beginFrame(cmdBuffer);
 	renderStorage_->buf()->bind(cmdBuffer);
 
-	initialise(viewMatrix);
+	updateBuffers(viewMatrix);
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		auto params = static_cast<AtmosphereShaderParams*>((*(renderStorage_->instanceData()) + i)->getShaderParams());
+		auto material = params->material;
+		material.cameraPosition = glm::vec3(0.0f, 10.0f, 0.0f);
+		material.sunDirection = glm::vec3(1.0f, 1.0f, 0.0f);
+		material.sunIntensity = glm::vec3(10.0f);
 
-		//std::vector<VkWriteDescriptorSet> descWrites;
-		//descWrites.push_back(srs->getParamData(i).heightMap->descriptorWrite(descriptorSets_[idx * 2]));
-		//descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx * 2]));
-		//descriptor_->updateDescriptorSets(descWrites);
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx * 2], 0, nullptr);
+		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[idx], 0, nullptr);
+		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfo_.stages, 0, pushConstantInfo_.size, &material);
+		vkCmdPipelineBarrier(cmdBuffer, pushConstantInfo_.stages, pushConstantInfo_.stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfo_.barrier, 0, nullptr, 0, nullptr);
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.indexCount, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 }
@@ -96,12 +91,16 @@ void AtmosphereRenderer::initialise(const glm::mat4& viewMatrix)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
-	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
-	//MaterialStatic* matDataPtr = static_cast<MaterialStatic*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
-	//for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-	//	matDataPtr[i] = static_cast<TerrainShaderParams*>((*(instPtr))->getShaderParams())->getMaterial();
-	//}
+	auto params = static_cast<AtmosphereShaderParams*>((*(instPtr))->getShaderParams()); 
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(params->textures.scatteringSum->descriptorWrite(descriptorSets_[0], 1));
+	descWrites.push_back(params->textures.scatteringSum->descriptorWrite(descriptorSets_[1], 1));
+	descWrites.push_back(params->textures.scatteringSum->descriptorWrite(descriptorSets_[2], 1));
+	descriptor_->updateDescriptorSets(descWrites);
+
+	// Initialise the dynamic material and matrices
+	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
 	glm::mat4 model = (*(instPtr))->getEntity()->getTransform()->toModelMatrix();
 	ElementData data = {
 			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
@@ -110,29 +109,21 @@ void AtmosphereRenderer::initialise(const glm::mat4& viewMatrix)
 		eleDataPtr[i] = data;
 	}
 	storageBuffers_[0]->unbindRange();
-	//storageBuffers_[1]->unbindRange();
 }
 
 void AtmosphereRenderer::updateBuffers(const glm::mat4& viewMatrix)
 {
-	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
-	TessControlInfo* tcPtr = static_cast<TessControlInfo*>(storageBuffers_[2]->bindRange());
-
 	auto instPtr = renderStorage_->instanceData();
-	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
-		glm::mat4 mvp = GraphicsMaster::kProjectionMatrix * viewMatrix * model;
-		eleDataPtr[i] = {
-			model, mvp
-		};
-		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 500.0f+
-		tcPtr[i].closeDistance = 50.0f;
-		tcPtr[i].patchRadius = 40.0f;
-		tcPtr[i].maxTessellationWeight = 16.0f;
-		tcPtr[i].frustumPlanes = calculateFrustumPlanes(mvp);
-	}
+	auto params = static_cast<AtmosphereShaderParams*>((*(instPtr))->getShaderParams());
 
-	storageBuffers_[2]->unbindRange();
+	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
+	glm::mat4 model = (*(instPtr))->getEntity()->getTransform()->toModelMatrix();
+	ElementData data = {
+			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
+	};
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+		eleDataPtr[i] = data;
+	}
 	storageBuffers_[0]->unbindRange();
 }
 

@@ -23,6 +23,15 @@ namespace QZL
 			VkDescriptorSetLayout layout;
 		};
 
+		struct PushConstantInfo {
+			size_t size;
+			VkShaderStageFlagBits stages;
+			VkMemoryBarrier barrier;
+		};
+
+		using DescriptorRequirementMap = std::map<VkDescriptorType, uint32_t>;
+		constexpr size_t MAX_PUSH_CONSTANT_SIZE = 128;
+
 		class RendererBase {
 		public:
 			RendererBase(LogicDevice* logicDevice, RenderStorage* renderStorage)
@@ -50,6 +59,21 @@ namespace QZL
 			void toggleWiremeshMode() {
 				pipeline_->switchMode();
 			}
+
+			template<typename PC>
+			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages) {
+				static_assert(sizeof(PC) <= MAX_PUSH_CONSTANT_SIZE, "Push constant size is potentially beyond the limit.");
+				VkPushConstantRange pushConstantRange = {};
+				pushConstantRange.size = sizeof(PC);
+				pushConstantRange.offset = 0;
+				pushConstantRange.stageFlags = stages;
+
+				pushConstantInfo_.size = sizeof(PC);
+				pushConstantInfo_.stages = stages;
+				pushConstantInfo_.barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+				pushConstantInfo_.barrier.pNext = NULL;
+				return pushConstantRange;
+			}
 		protected:
 			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
@@ -60,9 +84,10 @@ namespace QZL
 			LogicDevice* logicDevice_;
 			RendererPipeline* pipeline_;
 			RenderStorage* renderStorage_;
-			std::vector<StorageBuffer*> storageBuffers_;
+			std::vector<DescriptorBuffer*> storageBuffers_;
 			std::vector<VkDescriptorSetLayout> pipelineLayouts_;
 			std::vector<VkDescriptorSet> descriptorSets_;
+			PushConstantInfo pushConstantInfo_;
 		};
 
 		inline RendererBase::~RendererBase() {

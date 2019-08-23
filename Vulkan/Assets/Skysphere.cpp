@@ -1,17 +1,23 @@
 #include "Skysphere.h"
 #include "../Graphics/AtmosphereShaderParams.h"
-#include "Atmosphere.h"
+#include "AltAtmosphere.h"
+#include "../Graphics/Vertex.h"
 
 using namespace QZL;
 using namespace Assets;
+using Vertex = QZL::Graphics::Vertex;
 
 Skysphere::Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere)
 	: atmos_(atmosphere)
 {
-	//atmosphere->precalculateTextures(logicDevice);
-	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(), "skysphere", loadFunction);
+	atmosphere->precalculateTextures(logicDevice);
+	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(atmosphere->textures_, atmosphere->material_), "skysphere", loadFunction);
 	if (atmosphere != nullptr) {
-		transform_->scale = glm::vec3(atmosphere->radius_);
+		//transform_->position = glm::vec3(0.0f, -10.0f, 0.0f);
+		//transform_->scale = glm::vec3(32.0f, 128.0f, 1.0f);
+		transform_->scale = glm::vec3(80000.0f);
+		//transform_->rotation = glm::vec3(1.0f, 0.0f, 0.0f);
+		//transform_->angle = 180.0f;
 	}
 }
 
@@ -22,15 +28,19 @@ Skysphere::~Skysphere()
 
 void Skysphere::loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::VertexOnlyPosition>& vertices)
 {
+	//vertices = { Vertex(), Vertex(0.0f, 1.0f, 0.0f, 0.0f, 1.0f), Vertex(1.0f, 1.0f, 0.0, 1.0f, 1.0f), Vertex(1.0f, 0.0f, 0.0f, 1.0f, 0.0f) };
+	//indices = { 0, 1, 2, 2, 3, 0 };
 	// Generate a unit icosphere
 	const float cullingTheta = 20.0f; // TODO All patches below this angle beneath the horizon are removed
-	const int subdivisionCount = 1; // Just get a general sphere shape, don't need to much accuracy because it will be tessellated at runtime
+	const int subdivisionCount = 0; // Just get a general sphere shape, don't need to much accuracy because it will be tessellated at runtime
 
 	// Based on http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
 	createIscosahedron(indices, vertices);
 	for (int i = 0; i < subdivisionCount; ++i) {
 		subdivideIcosahredon(indices, vertices);
 	}
+
+	// Create a quad on the view frustum far plane
 }
 
 void Skysphere::createIscosahedron(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::VertexOnlyPosition>& vertices)

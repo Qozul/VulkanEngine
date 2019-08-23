@@ -1,0 +1,73 @@
+#version 450
+#extension GL_GOOGLE_include_directive : enable
+#include "./alt_functions.glsl"
+
+#define TOTAL_INVOCATIONS vec3(32.0, 128.0, 64.0)
+
+layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_size_z = INVOCATION_SIZE) in;
+
+layout(binding = 0) uniform Params {
+	AtmosphereParameters atmosphere;
+};
+layout(binding = 1) uniform sampler2D transmittanceTexture;
+layout(binding = 2) uniform restrict writeonly image3D scatteringTexture;
+layout(binding = 5, rgba16f) uniform restrict image3D scatteringSumTexture;
+
+void main()
+{
+	float height = UhToHeight(gl_GlobalInvocationID.x / TOTAL_INVOCATIONS.x, atmosphere.Hatm);
+	float Uv = gl_GlobalInvocationID.y / TOTAL_INVOCATIONS.y;
+	float Cv = UvToCv(Uv, height, atmosphere.planetRadius);
+	float Cs = UsToCs(gl_GlobalInvocationID.z / TOTAL_INVOCATIONS.z);
+
+	vec2 Pa = vec2(height + atmosphere.planetRadius, 0.0);
+	vec2 v = getRay(Cv); // View direction
+	vec2 l = getRay(Cs); // Incident light direction
+	
+    vec2 Pb = intersection(Pa, v, atmosphere.planetRadius, atmosphere.Hatm);
+	
+	float mieDensitySum = 0.0;
+	float rayleighDensitySum = 0.0;
+	float previousMieDensity = 0.0;
+	float previousRayleighDensity = 0.0;
+	
+	vec3 transmittance = vec3(0.0);
+	float currentInscatteringMie = 0.0;
+	vec3 currentInscatteringRayleigh = vec3(0.0);
+	float previousInscatteringMie = 0.0;
+	vec3 previousInscatteringRayleigh = vec3(0.0);
+	float totalInscatteringMie = 0.0;
+	vec3 totalInscatteringRayleigh = vec3(0.0);
+	float stepSize = distance(Pa, Pb) / INTEGRATION_STEPS;
+	for (int s = 0; s < INTEGRATION_STEPS; ++s) {
+		vec2 P = Pa + stepSize * s * v; // Integration point
+		vec2 z = vec2(1.0, 0.0);//normalize(P);
+		float h = getHeight(P, atmosphere.planetRadius);
+		
+		float mieDensity = getDensity(h, atmosphere.mieScaleHeight);
+		float rayleighDensity = getDensity(h, atmosphere.rayleighScaleHeight);
+		
+		mieDensitySum += (mieDensity + previousMieDensity) / 2.0 * stepSize;
+		rayleighDensitySum += (rayleighDensity + previousRayleighDensity) / 2.0 * stepSize;
+		
+		previousMieDensity = mieDensity;
+		previousRayleighDensity = rayleighDensity;
+		
+		transmittance = exp(-(rayleighDensitySum * atmosphere.betaRay.rgb + mieDensitySum * atmosphere.betaMieExt));
+		transmittance *= texture(transmittanceTexture, vec2(heightToUh(h, atmosphere.Hatm), CvToUv(dot(l, z), h, atmosphere.planetRadius))).rgb;
+		
+		currentInscatteringMie = mieDensity * transmittance.r;
+		currentInscatteringRayleigh = rayleighDensity * transmittance;
+		
+		totalInscatteringMie += (currentInscatteringMie + previousInscatteringMie) / 2.0 * stepSize;
+		totalInscatteringRayleigh += (currentInscatteringRayleigh + previousInscatteringRayleigh) / 2.0 * stepSize;
+		
+		previousInscatteringMie = currentInscatteringMie;
+		previousInscatteringRayleigh = currentInscatteringRayleigh;
+	}
+	totalInscatteringMie *= atmosphere.betaMie / (4.0 * PI);
+	totalInscatteringRayleigh *= atmosphere.betaRay / (4.0 * PI);
+	
+	imageStore(scatteringTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(totalInscatteringRayleigh.rgb, totalInscatteringMie));
+	imageStore(scatteringSumTexture, ivec3(gl_GlobalInvocationID.xyz), vec4(totalInscatteringRayleigh.rgb, totalInscatteringMie));
+}

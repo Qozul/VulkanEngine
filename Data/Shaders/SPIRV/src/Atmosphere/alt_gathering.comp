@@ -1,0 +1,32 @@
+#version 450
+#extension GL_GOOGLE_include_directive : enable
+#include "./alt_functions.glsl"
+
+#define TOTAL_INVOCATIONS vec2(32.0, 32.0)
+#define NUM_SAMPLES 100
+
+layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_size_z = 1) in;
+
+layout(binding = 0) uniform Params {
+	AtmosphereParameters atmosphere;
+};
+layout(binding = 2) uniform sampler3D scatteringTexture;
+layout(binding = 3) uniform restrict writeonly image2D gatheringLUTOrder;
+layout(binding = 4, rgba16f) uniform restrict image2D gatheringLUTSum;
+
+void main()
+{
+	float Uh = gl_GlobalInvocationID.x / TOTAL_INVOCATIONS.x;
+	float Us = gl_GlobalInvocationID.y / TOTAL_INVOCATIONS.y;
+	float height = UhToHeight(Uh, atmosphere.Hatm);
+	
+	vec4 gathered = vec4(0.0);
+	for (float thetaV = 0.0; thetaV < 2.0 * PI; thetaV += ((2.0 * PI) / NUM_SAMPLES)) {
+		gathered += texture(scatteringTexture, vec3(Uh, CvToUv(cos(thetaV), height, atmosphere.planetRadius), Us));
+	}
+	gathered *= (4.0 * PI) / NUM_SAMPLES;
+	imageStore(gatheringLUTOrder, ivec2(gl_GlobalInvocationID.xy), gathered);
+	
+	vec4 currentGatheringSum = imageLoad(gatheringLUTSum, ivec2(gl_GlobalInvocationID.xy));
+	imageStore(gatheringLUTSum, ivec2(gl_GlobalInvocationID.xy), currentGatheringSum + gathered);
+}

@@ -210,9 +210,6 @@
     <ClInclude Include="Assets\Skysphere.h">
       <Filter>Header Files\Assets</Filter>
     </ClInclude>
-    <ClInclude Include="Assets\Atmosphere.h">
-      <Filter>Header Files\Assets</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\ElementBufferInterface.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
@@ -224,6 +221,12 @@
     </ClInclude>
     <ClInclude Include="Graphics\Image.h">
       <Filter>Header Files\Graphics\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\AtmosphereParameters.h">
+      <Filter>Header Files\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\AltAtmosphere.h">
+      <Filter>Header Files\Assets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -317,9 +320,6 @@
     <ClCompile Include="Graphics\TerrainRenderStorage.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Assets\Atmosphere.cpp">
-      <Filter>Source Files\Assets</Filter>
-    </ClCompile>
     <ClCompile Include="Assets\Skysphere.cpp">
       <Filter>Source Files\Assets</Filter>
     </ClCompile>
@@ -331,6 +331,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Image.cpp">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Assets\AltAtmosphere.cpp">
+      <Filter>Source Files\Assets</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

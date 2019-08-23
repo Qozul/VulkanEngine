@@ -24,8 +24,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Assets\AltAtmosphere.h" />
     <ClInclude Include="Assets\AssetManager.h" />
-    <ClInclude Include="Assets\Atmosphere.h" />
+    <ClInclude Include="Assets\AtmosphereParameters.h" />
     <ClInclude Include="Assets\Entity.h" />
     <ClInclude Include="Assets\Skysphere.h" />
     <ClInclude Include="Assets\Terrain.h" />
@@ -80,8 +81,8 @@
     <ClInclude Include="System.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Assets\AltAtmosphere.cpp" />
     <ClCompile Include="Assets\AssetManager.cpp" />
-    <ClCompile Include="Assets\Atmosphere.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />

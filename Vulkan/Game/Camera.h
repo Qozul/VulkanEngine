@@ -37,6 +37,7 @@ namespace QZL {
 
 			static const float SPEED;
 			static const float MOUSE_SENSITIVITY;
+			static const float MAX_ROTATION_DT;
 		};
 	}
 }

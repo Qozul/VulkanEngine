@@ -25,7 +25,7 @@ namespace QZL
 			void switchMode();
 			VkPipeline getPipeline();
 			VkPipelineLayout getLayout();
-			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts);
+			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, const VkPushConstantRange* pushConstantRange = nullptr);
 			template<typename V>
 			static VkPipelineVertexInputStateCreateInfo makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc,
 				typename std::result_of<decltype(&V::getAttribDescs)(uint32_t)>::type attribDescs);

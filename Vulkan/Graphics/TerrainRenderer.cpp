@@ -16,6 +16,11 @@
 using namespace QZL;
 using namespace Graphics;
 
+DescriptorRequirementMap TerrainRenderer::getDescriptorRequirements()
+{
+	return DescriptorRequirementMap();
+}
+
 TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 	const uint32_t entityCount, const GlobalRenderData* globalRenderData)
@@ -24,12 +29,12 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	ASSERT(entityCount > 0);
 	renderStorage_ = new TerrainRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
 
-	StorageBuffer* mvpBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
+	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
 		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
-	StorageBuffer* matBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
+	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
 		sizeof(MaterialStatic) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
-	StorageBuffer* tessBuf = new StorageBuffer(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::UNRESERVED, 0,
-		sizeof(TessControlInfo) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, true);
+	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::UNRESERVED, 0,
+		sizeof(TessControlInfo) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);
 	storageBuffers_.push_back(tessBuf);

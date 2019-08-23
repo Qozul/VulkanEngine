@@ -24,7 +24,7 @@ Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo,
 
 	CHECK_VKRESULT(vkCreateImageView(*logicDevice, &viewInfo, nullptr, &imageView_));
 
-	if (imageParameters.newLayout != VK_IMAGE_LAYOUT_MAX_ENUM) {
+	if (imageParameters.newLayout != VK_IMAGE_LAYOUT_MAX_ENUM && imageParameters.oldLayout != imageParameters.newLayout) {
 		changeLayout(imageParameters);
 	}
 }

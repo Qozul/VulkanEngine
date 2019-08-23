@@ -10,7 +10,7 @@
 #include "../Graphics/Material.h"
 #include "../Graphics/TextureManager.h"
 #include "Camera.h"
-#include "../Assets/Atmosphere.h"
+#include "../Assets/AltAtmosphere.h"
 
 using namespace QZL;
 using namespace Game;
@@ -49,7 +49,7 @@ void GameMaster::loadGame()
 
 	/*Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
 	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());*/
-	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>(masters_.graphicsMaster->getLogicDevice(), new Assets::Atmosphere(500.0f));
+	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>(masters_.graphicsMaster->getLogicDevice(), new Assets::Atmosphere());
 	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
 }
 
