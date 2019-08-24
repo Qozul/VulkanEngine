@@ -8,7 +8,7 @@ using namespace QZL::Graphics;
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, 
 	VkPipelineLayoutCreateInfo layoutInfo, VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, 
-	VkFrontFace frontFace)
+	VkPrimitiveTopology topology, VkFrontFace frontFace)
 	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
@@ -17,7 +17,7 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
 		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
 	};
-	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE), nullptr, vertexInputInfo, frontFace);
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(topology, VK_FALSE), nullptr, vertexInputInfo, frontFace);
 }
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
@@ -72,13 +72,14 @@ VkPipelineLayout RendererPipeline::getLayout()
 	}
 }
 
-VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, const VkPushConstantRange* pushConstantRange)
+VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts,
+	const uint32_t pushConstantCount, const VkPushConstantRange* pushConstantRange)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = layoutCount;
 	pipelineLayoutInfo.pSetLayouts = layouts;
-	pipelineLayoutInfo.pushConstantRangeCount = pushConstantRange != nullptr ? 1 : 0;
+	pipelineLayoutInfo.pushConstantRangeCount = pushConstantCount;
 	pipelineLayoutInfo.pPushConstantRanges = pushConstantRange;
 	return pipelineLayoutInfo;
 }

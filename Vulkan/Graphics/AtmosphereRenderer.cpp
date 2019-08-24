@@ -16,7 +16,14 @@
 using namespace QZL;
 using namespace Graphics;
 
-using PushConstants = MaterialAtmosphere;
+using PushConstantParams = MaterialAtmosphere;
+
+struct PushConstantExtent {
+	//glm::vec2 extent;
+	//glm::vec2 padding;
+	glm::mat4 inverseViewProj;
+	MaterialAtmosphere mat;
+};
 
 DescriptorRequirementMap AtmosphereRenderer::getDescriptorRequirements()
 {
@@ -31,10 +38,6 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	ASSERT(entityCount > 0);
 	renderStorage_ = new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()));
 
-	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
-		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
-	storageBuffers_.push_back(mvpBuf);
-
 	VkDescriptorSetLayoutBinding scatteringBinding = {};
 	scatteringBinding.binding = 1;
 	scatteringBinding.descriptorCount = 1;
@@ -42,7 +45,7 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	scatteringBinding.pImmutableSamplers = nullptr;
 	scatteringBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	VkDescriptorSetLayout layout = descriptor->makeLayout({ mvpBuf->getBinding(), scatteringBinding });
+	VkDescriptorSetLayout layout = descriptor->makeLayout({ scatteringBinding });
 
 	pipelineLayouts_.push_back(layout);
 
@@ -50,13 +53,13 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	std::vector<VkWriteDescriptorSet> descWrites;
 	for (int i = 0; i < 3; ++i) {
 		descriptorSets_.push_back(descriptor->getSet(idx + i));
-		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
 	}
 	descriptor->updateDescriptorSets(descWrites);
 
-	auto pushConstantRange = setupPushConstantRange<PushConstants>(VK_SHADER_STAGE_FRAGMENT_BIT);
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 
-		&pushConstantRange), vertexShader, fragmentShader, tessCtrlShader, tessEvalShader, RendererPipeline::PrimitiveType::TRIANGLES, VK_FRONT_FACE_CLOCKWISE);
+	std::vector<VkPushConstantRange> pushConstantRanges;
+	pushConstantRanges.push_back(setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT));
+	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), pushConstantRanges.size(),
+		pushConstantRanges.data()), vertexShader, fragmentShader, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
 }
 
 AtmosphereRenderer::~AtmosphereRenderer()
@@ -70,8 +73,6 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 	beginFrame(cmdBuffer);
 	renderStorage_->buf()->bind(cmdBuffer);
 
-	updateBuffers(viewMatrix);
-
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		auto params = static_cast<AtmosphereShaderParams*>((*(renderStorage_->instanceData()) + i)->getShaderParams());
 		auto material = params->material;
@@ -79,10 +80,18 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 		material.sunDirection = glm::vec3(1.0f, 1.0f, 0.0f);
 		material.sunIntensity = glm::vec3(10.0f);
 
+		PushConstantExtent pce;
+		//pce.extent = glm::vec2(800.0f, 600.0f);
+		pce.mat = material;
+		pce.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * viewMatrix);
+
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[idx], 0, nullptr);
-		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfo_.stages, 0, pushConstantInfo_.size, &material);
-		vkCmdPipelineBarrier(cmdBuffer, pushConstantInfo_.stages, pushConstantInfo_.stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfo_.barrier, 0, nullptr, 0, nullptr);
+
+		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pce);
+		vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[0].stages, pushConstantInfos_[0].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[0].barrier, 0, nullptr, 0, nullptr);
+		//vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[1].stages, pushConstantInfos_[1].offset, pushConstantInfos_[1].size, &material);
+		//vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[1].stages, pushConstantInfos_[1].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[1].barrier, 0, nullptr, 0, nullptr);
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.indexCount, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 }
@@ -100,7 +109,7 @@ void AtmosphereRenderer::initialise(const glm::mat4& viewMatrix)
 	descriptor_->updateDescriptorSets(descWrites);
 
 	// Initialise the dynamic material and matrices
-	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
+	/*ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
 	glm::mat4 model = (*(instPtr))->getEntity()->getTransform()->toModelMatrix();
 	ElementData data = {
 			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
@@ -108,7 +117,7 @@ void AtmosphereRenderer::initialise(const glm::mat4& viewMatrix)
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		eleDataPtr[i] = data;
 	}
-	storageBuffers_[0]->unbindRange();
+	storageBuffers_[0]->unbindRange();*/
 }
 
 void AtmosphereRenderer::updateBuffers(const glm::mat4& viewMatrix)

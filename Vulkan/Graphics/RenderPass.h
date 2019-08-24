@@ -23,6 +23,12 @@ namespace QZL
 				glm::vec4 ambientColour;
 				std::array<glm::vec4, kMaxLights> lightPositions;
 			};
+
+			enum class SubPass : uint32_t {
+				ATMOSPHERE,
+				GENERAL,
+				SUBPASS_COUNT
+			};
 		public:
 			void doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer);
 		private:

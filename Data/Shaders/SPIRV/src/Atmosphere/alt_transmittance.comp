@@ -14,7 +14,7 @@ layout(binding = 1, rgba32f) uniform restrict writeonly image2D transmittanceTex
 
 // Produces transmittance between integral point and atmosphere
 void main()
-{	
+{
 	float height = UhToHeight(gl_GlobalInvocationID.x / TOTAL_INVOCATIONS.x, atmosphere.Hatm);
 	float Cv = UvToCv(gl_GlobalInvocationID.y / TOTAL_INVOCATIONS.y, height, atmosphere.planetRadius);
 

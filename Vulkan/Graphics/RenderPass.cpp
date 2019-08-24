@@ -57,29 +57,56 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 	depthAttachmentRef.attachment = 1;
 	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+	std::vector<VkSubpassDescription> subpasses;
+	std::vector<VkSubpassDependency> dependencies;
 
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	// Setup atmosphere subpass, normal but without depth test. Atmosphere is drawn to a full screen quad.
+
+	VkSubpassDescription atmosphereSubpass = {};
+	atmosphereSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	atmosphereSubpass.colorAttachmentCount = 1;
+	atmosphereSubpass.pColorAttachments = &colorAttachmentRef;
+	atmosphereSubpass.pDepthStencilAttachment = nullptr;
+
+	VkSubpassDependency atmosphereDependency = {};
+	atmosphereDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	atmosphereDependency.dstSubpass = (uint32_t)SubPass::ATMOSPHERE;
+	atmosphereDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	atmosphereDependency.srcAccessMask = 0;
+	atmosphereDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	atmosphereDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	subpasses.push_back(atmosphereSubpass);
+	dependencies.push_back(atmosphereDependency);
+
+	// Setup general subpass. Drawn over the top of the atmosphere.
+	
+	VkSubpassDescription generalSubpass = {};
+	generalSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	generalSubpass.colorAttachmentCount = 1;
+	generalSubpass.pColorAttachments = &colorAttachmentRef;
+	generalSubpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+	VkSubpassDependency generalDependency = {};
+	generalDependency.srcSubpass = (uint32_t)SubPass::ATMOSPHERE;
+	generalDependency.dstSubpass = (uint32_t)SubPass::GENERAL;
+	generalDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	generalDependency.srcAccessMask = atmosphereDependency.dstAccessMask;
+	generalDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	generalDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	subpasses.push_back(generalSubpass);
+	dependencies.push_back(generalDependency);
 
 	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 	renderPassInfo.pAttachments = attachments.data();
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
+	renderPassInfo.subpassCount = static_cast<uint32_t>(subpasses.size());
+	renderPassInfo.pSubpasses = subpasses.data();
+	renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
+	renderPassInfo.pDependencies = dependencies.data();
 
 	CHECK_VKRESULT(vkCreateRenderPass(*logicDevice, &renderPassInfo, nullptr, &renderPass_));
 
@@ -151,9 +178,12 @@ void RenderPass::doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 
 	updateGlobalDescriptors(idx, cmdBuffer);
 
+	atmosphereRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+
+	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
 	//terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
-	atmosphereRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }

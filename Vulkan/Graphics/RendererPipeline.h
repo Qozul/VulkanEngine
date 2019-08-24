@@ -16,7 +16,7 @@ namespace QZL
 			};
 		public:
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, VkFrontFace frontFace);
+				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, VkFrontFace frontFace);
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
 				const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace);
@@ -25,7 +25,8 @@ namespace QZL
 			void switchMode();
 			VkPipeline getPipeline();
 			VkPipelineLayout getLayout();
-			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, const VkPushConstantRange* pushConstantRange = nullptr);
+			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, 
+				const uint32_t pushConstantCount = 0, const VkPushConstantRange* pushConstantRange = nullptr);
 			template<typename V>
 			static VkPipelineVertexInputStateCreateInfo makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc,
 				typename std::result_of<decltype(&V::getAttribDescs)(uint32_t)>::type attribDescs);

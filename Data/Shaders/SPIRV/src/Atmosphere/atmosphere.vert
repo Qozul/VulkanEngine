@@ -1,21 +1,22 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+// Unit square in 2d xy
 layout(location = 0) in vec3 iPosition;
-//layout(location = 1) in vec2 uvcoords;
-layout(location = 0) out vec2 oUvcoords;
+layout(location = 0) out vec2 pos;
 
 out gl_PerVertex {
 	vec4 gl_Position;
 };
+/*
+layout(push_constant) uniform ScreenExtent {
+	mat4 inverseViewProj;
+} PC;*/
 
-layout(set = 0, binding = 0) uniform UniformBufferObject {
-	mat4 model;
-    mat4 mvp;
-} ubo;
+const vec2 extent = vec2(800.0, 600.0);
 
 void main() {
-	gl_Position = vec4(iPosition, 1.0);
-	//oUvcoords = uvcoords;
-	oUvcoords = vec2(0.0);
+	pos =  iPosition.xy * extent;
+	gl_Position = vec4(pos, 1.0, 1.0);
+	//viewDirection = vec3(0.0, 1.0, 0.0);//normalize((PC.inverseViewProj * pos).xyz);
 }
