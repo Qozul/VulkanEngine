@@ -9,15 +9,24 @@
 #include "../Assets/Skysphere.h"
 #include "../Graphics/Material.h"
 #include "../Graphics/TextureManager.h"
-#include "Camera.h"
 #include "../Assets/AltAtmosphere.h"
+#include "Camera.h"
+#include "Scene.h"
 
 using namespace QZL;
 using namespace Game;
 
 GameMaster::GameMaster(const SystemMasters& masters) 
-	: masters_(masters)
+	: masters_(masters), activeSceneIdx_(0)
 {
+	scenes_.push_back(new Scene()); // Default scene
+}
+
+GameMaster::~GameMaster()
+{
+	for (auto i = 0; i < scenes_.size(); ++i) {
+		SAFE_DELETE(scenes_[i]);
+	}
 }
 
 void GameMaster::loadGame()
@@ -28,7 +37,7 @@ void GameMaster::loadGame()
 	cameraInit.inputManager = masters_.inputManager;
 	cameraInit.system = masters_.system;
 	camera->setGameScript(new Camera(cameraInit));
-	gameScripts_.push_back(camera->getGameScript());
+	scenes_[activeSceneIdx_]->addEntity(camera);
 
 	/*Assets::Entity* testEntity = masters_.assetManager->createEntity();
 	if (masters_.graphicsMaster->supportsOptionalExtension(Graphics::OptionalExtensions::DESCRIPTOR_INDEXING)) {
@@ -55,7 +64,5 @@ void GameMaster::loadGame()
 
 void GameMaster::update(float dt)
 {
-	for (auto script : gameScripts_) {
-		script->update(dt);
-	}
+	scenes_[activeSceneIdx_]->update(dt);
 }

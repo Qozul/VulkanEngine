@@ -6,9 +6,11 @@ Manage entities, textures, and models.
 */
 #pragma once
 #include "../../Shared/Utility.h"
+#include "../SystemMasters.h"
 #include "Entity.h"
 
 namespace QZL {
+	struct SystemMasters;
 	namespace Graphics {
 		class MeshLoader;
 		class TextureLoader;
@@ -23,12 +25,19 @@ namespace QZL {
 			template<typename T, typename... Args>
 			Entity* createEntity(Args&& ... args);
 
+			void deleteEntity(Assets::Entity* entity);
+
 			Graphics::MeshLoader* meshLoader;
 			Graphics::TextureManager* textureManager;
 		private:
-			AssetManager();
+			AssetManager(const SystemMasters& masters);
 			~AssetManager();
 			std::vector<Entity*> entities_;
+
+			// Only uses masters to reference the game master to clean up scene correctly when deleting an entity
+			// With this assumption, no nullptr checks are needed as entities are only added once the game master is
+			// created.
+			const SystemMasters& masters_;
 		};
 
 		template<typename T, typename... Args>

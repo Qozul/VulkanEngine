@@ -14,6 +14,7 @@ namespace QZL {
 		};
 		class GameScript {
 			friend class GameMaster;
+			friend class Assets::Entity;
 		protected:
 			GameScript(const GameScriptInitialiser& initialiser)
 				: owningEntity_(initialiser.owner), inputManager_(initialiser.inputManager) { }

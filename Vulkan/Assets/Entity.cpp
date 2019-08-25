@@ -5,7 +5,14 @@
 using namespace QZL;
 using namespace QZL::Assets;
 
-void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
+void Entity::update(float dt)
+{
+	if (gameScript_ != nullptr) {
+		gameScript_->update(dt);
+	}
+}
+
+void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName,
 	Graphics::MeshLoaderFunction meshLoaderFunc)
 {
 	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, shaderParams, meshName, meshLoaderFunc);
@@ -27,8 +34,9 @@ bool Entity::isStatic() const
 	return rigidBody_ == nullptr && gameScript_ == nullptr;
 }
 
-Entity::Entity() : graphicsComponent_(nullptr), rigidBody_(nullptr),
-	gameScript_(nullptr), transform_(new Transform()), collisionVolume_(nullptr)
+Entity::Entity() 
+	: graphicsComponent_(nullptr), rigidBody_(nullptr), gameScript_(nullptr), transform_(new Transform()), 
+	  collisionVolume_(nullptr), sceneNode_(nullptr), preserveChildrenOnDelete_(true)
 {
 }
 

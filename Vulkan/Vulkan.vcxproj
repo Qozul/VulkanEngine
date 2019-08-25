@@ -34,6 +34,7 @@
     <ClInclude Include="Game\Camera.h" />
     <ClInclude Include="Game\GameMaster.h" />
     <ClInclude Include="Game\GameScript.h" />
+    <ClInclude Include="Game\Scene.h" />
     <ClInclude Include="Graphics\AtmosphereRenderer.h" />
     <ClInclude Include="Graphics\AtmosphereShaderParams.h" />
     <ClInclude Include="Graphics\ComputePipeline.h" />
@@ -79,6 +80,7 @@
     <ClInclude Include="Physics\CollisionVolume.h" />
     <ClInclude Include="Physics\RigidBody.h" />
     <ClInclude Include="System.h" />
+    <ClInclude Include="SystemMasters.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\AltAtmosphere.cpp" />
@@ -88,6 +90,7 @@
     <ClCompile Include="Assets\Terrain.cpp" />
     <ClCompile Include="Game\Camera.cpp" />
     <ClCompile Include="Game\GameMaster.cpp" />
+    <ClCompile Include="Game\Scene.cpp" />
     <ClCompile Include="Graphics\AtmosphereRenderer.cpp" />
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />

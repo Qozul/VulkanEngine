@@ -18,7 +18,11 @@ using namespace Graphics;
 
 DescriptorRequirementMap TerrainRenderer::getDescriptorRequirements()
 {
-	return DescriptorRequirementMap();
+	return  { 
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * MAX_FRAMES_IN_FLIGHT }, 
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2 * MAX_FRAMES_IN_FLIGHT }, 
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * MAX_FRAMES_IN_FLIGHT } 
+	};
 }
 
 TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,

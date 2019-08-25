@@ -17,7 +17,10 @@ using namespace QZL::Graphics;
 
 DescriptorRequirementMap TexturedRenderer::getDescriptorRequirements()
 {
-	return DescriptorRequirementMap();
+	return  {
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * 3 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2 * 3 }
+	};
 }
 
 TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,

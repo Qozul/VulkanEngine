@@ -22,7 +22,7 @@ float System::deltaTimeSeconds = 0.0f;
 System::System()
 {
 	// Asset manager must be created before graphics master
-	masters_.assetManager = new Assets::AssetManager();
+	masters_.assetManager = new Assets::AssetManager(masters_);
 
 	// Graphics initialisation also initialises assetManager->textureManager
 	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
@@ -35,8 +35,8 @@ System::System()
 
 System::~System()
 {
-	SAFE_DELETE(masters_.assetManager);
 	SAFE_DELETE(masters_.gameMaster);
+	SAFE_DELETE(masters_.assetManager);
 	//SAFE_DELETE(masters_.physicsMaster);
 	SAFE_DELETE(masters_.graphicsMaster);
 }

@@ -19,11 +19,14 @@ namespace QZL {
 	}
 	namespace Game {
 		class GameScript;
+		struct SceneHeirarchyNode;
 	}
 	namespace Assets {
 		class Entity {
 			friend class AssetManager;
 		public:
+			void update(float dt);
+
 			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
 				Graphics::MeshLoaderFunction meshLoaderFunc = nullptr);
 			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName,
@@ -44,6 +47,18 @@ namespace QZL {
 			Transform* getTransform() {
 				return transform_;
 			}
+			glm::mat4 getModelMatrix() {
+				return modelMatrix_;
+			}
+			void setModelMatrix(glm::mat4& m) {
+				modelMatrix_ = m;
+			}
+			void setSceneNode(Game::SceneHeirarchyNode* node) {
+				sceneNode_ = node;
+			}
+			Game::SceneHeirarchyNode* getSceneNode() {
+				return sceneNode_;
+			}
 			// Only the game script and rigidbody will change the transform and graphics uniform constants. 
 			// Therefore, some optimisations can be made.
 			bool isStatic() const;
@@ -56,6 +71,9 @@ namespace QZL {
 			Game::GameScript* gameScript_;
 			Graphics::GraphicsComponent* graphicsComponent_;
 			Transform* transform_;
+			Game::SceneHeirarchyNode* sceneNode_;
+			glm::mat4 modelMatrix_;
+			bool preserveChildrenOnDelete_;
 		};
 	}
 }
