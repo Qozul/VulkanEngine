@@ -66,7 +66,7 @@ RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 	atmosphereSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	atmosphereSubpass.colorAttachmentCount = 1;
 	atmosphereSubpass.pColorAttachments = &colorAttachmentRef;
-	atmosphereSubpass.pDepthStencilAttachment = nullptr;
+	atmosphereSubpass.pDepthStencilAttachment = &depthAttachmentRef;
 
 	VkSubpassDependency atmosphereDependency = {};
 	atmosphereDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -182,7 +182,7 @@ void RenderPass::doFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 
 	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
-	//terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
+	terrainRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
@@ -243,9 +243,9 @@ void RenderPass::createRenderers()
 	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, "StaticVert", fragName, 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);*/
 
-	/*terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, 
+	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, 
 		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
-	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);*/
+	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
 
 	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
 		"AtmosphereVert", "AtmosphereTESC", "AtmosphereAltTESE", "AtmosphereAltFrag", 1, globalRenderData_);

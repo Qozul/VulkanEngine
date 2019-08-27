@@ -7,11 +7,11 @@ using namespace QZL;
 using namespace Assets;
 using Vertex = QZL::Graphics::Vertex;
 
-Skysphere::Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere)
+Skysphere::Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere, Game::SunScript* sun)
 	: atmos_(atmosphere)
 {
 	atmosphere->precalculateTextures(logicDevice);
-	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(atmosphere->textures_, atmosphere->material_), "skysphere", loadFunction);
+	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(atmosphere->textures_, atmosphere->material_, sun), "skysphere", loadFunction);
 }
 
 Skysphere::~Skysphere()

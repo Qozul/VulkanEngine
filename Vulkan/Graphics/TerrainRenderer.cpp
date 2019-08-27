@@ -16,15 +16,6 @@
 using namespace QZL;
 using namespace Graphics;
 
-DescriptorRequirementMap TerrainRenderer::getDescriptorRequirements()
-{
-	return  { 
-		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 * MAX_FRAMES_IN_FLIGHT }, 
-		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2 * MAX_FRAMES_IN_FLIGHT }, 
-		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 * MAX_FRAMES_IN_FLIGHT } 
-	};
-}
-
 TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 	const uint32_t entityCount, const GlobalRenderData* globalRenderData)
@@ -138,7 +129,7 @@ void TerrainRenderer::updateBuffers(const glm::mat4& viewMatrix)
 		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 500.0f+
 		tcPtr[i].closeDistance = 50.0f;
 		tcPtr[i].patchRadius = 40.0f;
-		tcPtr[i].maxTessellationWeight = 16.0f;
+		tcPtr[i].maxTessellationWeight = 4.0f;
 		tcPtr[i].frustumPlanes = calculateFrustumPlanes(mvp);
 	}
 

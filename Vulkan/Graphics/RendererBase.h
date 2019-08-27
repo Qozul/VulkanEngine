@@ -29,8 +29,6 @@ namespace QZL
 			VkMemoryBarrier barrier;
 			uint32_t offset;
 		};
-
-		using DescriptorRequirementMap = std::map<VkDescriptorType, uint32_t>;
 		constexpr size_t MAX_PUSH_CONSTANT_SIZE = 128;
 
 		class RendererBase {
@@ -85,10 +83,10 @@ namespace QZL
 			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader,
-				RendererPipeline::PrimitiveType patchVertexCount, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
+				RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
+				const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 			void beginFrame(VkCommandBuffer cmdBuffer);
 
 			LogicDevice* logicDevice_;
@@ -125,22 +123,23 @@ namespace QZL
 		template<typename V>
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
 			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader,
-			RendererPipeline::PrimitiveType patchVertexCount, VkFrontFace frontFace)
+			RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest, VkFrontFace frontFace)
 		{
 			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
 			auto attribDesc = V::getAttribDescs(0);
 			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, tessCtrlShader, tessEvalShader, patchVertexCount, frontFace);
+			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, tessCtrlShader, tessEvalShader, 
+				patchVertexCount, frontFace, enableDepthTest);
 		}
 
 		template<typename V>
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
-			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, VkFrontFace frontFace)
+			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, bool enableDepthTest, VkFrontFace frontFace)
 		{
 			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
 			auto attribDesc = V::getAttribDescs(0);
 			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, topology, frontFace);
+			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, topology, frontFace, enableDepthTest);
 		}
 
 		inline void RendererBase::beginFrame(VkCommandBuffer cmdBuffer)

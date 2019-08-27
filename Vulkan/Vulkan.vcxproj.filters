@@ -61,6 +61,12 @@
     <Filter Include="Header Files\Graphics\Renderers\Atmosphere">
       <UniqueIdentifier>{0f352c18-9a20-438f-8500-bbaa7dcb1a47}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Game\Scripts">
+      <UniqueIdentifier>{a0844ff3-9432-4010-8dbb-0a422bd69453}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game\Scripts">
+      <UniqueIdentifier>{1aecc6ef-3646-41cb-98c7-5d7f64045594}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Shader.h">
@@ -162,9 +168,6 @@
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Camera.h">
-      <Filter>Header Files\Game</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\TerrainRenderer.h">
       <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
     </ClInclude>
@@ -233,6 +236,15 @@
     </ClInclude>
     <ClInclude Include="SystemMasters.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Camera.h">
+      <Filter>Header Files\Game\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\SunScript.h">
+      <Filter>Header Files\Game\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\AtmosphereScript.h">
+      <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -311,9 +323,6 @@
     <ClCompile Include="Graphics\GraphicsComponent.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Camera.cpp">
-      <Filter>Source Files\Game</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\StaticRenderStorage.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
@@ -342,6 +351,18 @@
       <Filter>Source Files\Assets</Filter>
     </ClCompile>
     <ClCompile Include="Game\Scene.cpp">
+      <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\AtmosphereScript.cpp">
+      <Filter>Source Files\Game\Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Camera.cpp">
+      <Filter>Source Files\Game\Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\SunScript.cpp">
+      <Filter>Source Files\Game\Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameScript.cpp">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
   </ItemGroup>

@@ -26,7 +26,7 @@ float miePhase(float ctheta, float g)
 {
 	float g2 = g * g;
 	float cos2Theta = ctheta * ctheta;
-	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + cos2Theta) / pow(1.0 + g2 - 2.0 * g * cos2Theta, 1.5));
+	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta, 1.5));
 }
 
 void main() 

@@ -1,4 +1,5 @@
 #pragma once
+#include "../Assets/Transform.h"
 
 namespace QZL {
 	class InputManager;
@@ -21,6 +22,7 @@ namespace QZL {
 
 			virtual void start() = 0;
 			virtual void update(float dt) = 0;
+			Transform* transform();
 
 			Assets::Entity* owningEntity_;
 			InputManager* inputManager_;

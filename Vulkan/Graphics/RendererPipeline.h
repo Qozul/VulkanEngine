@@ -16,10 +16,11 @@ namespace QZL
 			};
 		public:
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, VkFrontFace frontFace);
+				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, 
+				VkFrontFace frontFace, bool enableDepthTest);
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
-				const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace);
+				const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace, bool enableDepthTest);
 			~RendererPipeline();
 
 			void switchMode();
@@ -40,7 +41,7 @@ namespace QZL
 		private:
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo,
-				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace);
+				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace, bool enableDepthTest);
 			VkPipelineShaderStageCreateInfo createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage);
 			VkPipelineInputAssemblyStateCreateInfo createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart);
 			VkPipelineTessellationStateCreateInfo createTessellationStateInfo(PrimitiveType patchPointCount);

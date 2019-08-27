@@ -8,7 +8,7 @@ using namespace QZL::Graphics;
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, 
 	VkPipelineLayoutCreateInfo layoutInfo, VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, 
-	VkPrimitiveTopology topology, VkFrontFace frontFace)
+	VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest)
 	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
@@ -17,12 +17,13 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
 		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
 	};
-	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(topology, VK_FALSE), nullptr, vertexInputInfo, frontFace);
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(topology, VK_FALSE), nullptr, 
+		vertexInputInfo, frontFace, enableDepthTest);
 }
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
-	const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace)
+	const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace, bool enableDepthTest)
 	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
@@ -36,7 +37,8 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 		createShaderInfo(tessEvalModule.getModule(), VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
 	};
 	auto tessellationInfo = createTessellationStateInfo(patchVertexCount);
-	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_FALSE), &tessellationInfo, vertexInputInfo, frontFace);
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_FALSE), 
+		&tessellationInfo, vertexInputInfo, frontFace, enableDepthTest);
 }
 
 RendererPipeline::~RendererPipeline()
@@ -86,8 +88,9 @@ VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layou
 
 void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo,
-	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace)
+	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace, bool enableDepthTest)
 {
+	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	wiremeshMode_ = false;
 	
 	VkViewport viewport = {};
@@ -126,11 +129,20 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_TRUE;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-	depthStencil.depthBoundsTestEnable = VK_FALSE;
-	depthStencil.stencilTestEnable = VK_FALSE;
+	if (enableDepthTest) {
+		depthStencil.depthTestEnable = VK_TRUE;
+		depthStencil.depthWriteEnable = VK_TRUE;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.stencilTestEnable = VK_FALSE;
+	}
+	else {
+		depthStencil.depthTestEnable = VK_FALSE;
+		depthStencil.depthWriteEnable = VK_FALSE;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.stencilTestEnable = VK_FALSE;
+	}
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -149,7 +161,6 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &layout_));
 
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = shaderStagesInfo.size();
 	pipelineInfo.pStages = shaderStagesInfo.data();
@@ -158,8 +169,8 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.layout = layout_;
 	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = 0;

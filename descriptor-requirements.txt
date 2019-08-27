@@ -1,0 +1,44 @@
+# Syntax: # symbol denotes a comment. Values are a three integers:
+# the number for VkDescriptorType, the number of that type required, and the number of sets required.
+# When the descriptor types are combined in to a single set, just give the total sets on one tuple and
+# zero for the others.
+
+# See the VkDescriptorType values below for reference
+#    VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+#    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+#    VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+#    VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+#    VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+#    VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+#    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+#    VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+#    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+#    VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+#    VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
+#    VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK_EXT = 1000138000,
+#    VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV = 1000165000,
+#    VK_DESCRIPTOR_TYPE_MAX_ENUM = 0x7FFFFFFF
+
+# -------------- Renderers --------------
+
+# Render Pass global lighting info
+6 1 1
+
+# Atmosphere Renderer: 1 combined image sampler
+1 1 1
+
+# Terrain Renderer: 6 combined image samplers, 6 storage buffers, and 3 uniform buffers
+1 6 3
+7 6 0
+6 3 0
+
+# Static Renderer: 6 combined image samplers and 6 storage buffers
+1 6 3
+7 6 0
+
+
+
+# --------------- Assets ----------------
+
+# Atmosphere: 5 storage images
+3 5 1

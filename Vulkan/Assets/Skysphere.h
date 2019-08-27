@@ -2,11 +2,14 @@
 #include "Entity.h"
 
 namespace QZL {
+	namespace Game {
+		class SunScript;
+	}
 	namespace Assets {
 		class Atmosphere;
 		class Skysphere : public Entity {
 		public:
-			Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere);
+			Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere, Game::SunScript* sun);
 			~Skysphere();
 		private:
 			Atmosphere* atmos_;

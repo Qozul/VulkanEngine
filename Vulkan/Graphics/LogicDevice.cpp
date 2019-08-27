@@ -4,6 +4,9 @@
 #include "PhysicalDevice.h"
 #include "DeviceMemory.h"
 #include "Descriptor.h"
+#include <fstream>
+#include <sstream>
+
 using namespace QZL;
 using namespace QZL::Graphics;
 
@@ -35,13 +38,25 @@ LogicDevice::LogicDevice(PhysicalDevice* physicalDevice, VkDevice device, const 
 	createCommandBuffers(commandBuffers_, primaryCommandPool_, 4);
 	createCommandBuffers(computeCommandBuffers_, computeCommandPool_, 1);
 
-	std::vector<std::pair<VkDescriptorType, uint32_t>> descriptorTypes = {
-			{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 14 },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6 },
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 8 }
-	};
-	primaryDescriptor_ = new Descriptor(this, (uint32_t)6, descriptorTypes);
+	std::vector<std::pair<VkDescriptorType, uint32_t>> descriptorTypes;
+
+	int setCountTotal = 0;
+	std::ifstream requirementsFile("../descriptor-requirements.txt");
+	ASSERT(requirementsFile.is_open());
+	std::string line;
+	while (std::getline(requirementsFile, line)) {
+		// Ignore comments
+		if (line != "" && line.at(0) != '#') {
+			std::istringstream iss(line);
+			int descriptorType, count, setCount;
+			ASSERT(iss >> descriptorType >> count >> setCount);
+			setCountTotal += setCount;
+			descriptorTypes.emplace_back(static_cast<VkDescriptorType>(descriptorType), static_cast<uint32_t>(count));
+		}
+	}
+	requirementsFile.close();
+
+	primaryDescriptor_ = new Descriptor(this, static_cast<uint32_t>(setCountTotal), descriptorTypes);
 
 	// Need device memory before swap chain
 	deviceMemory_ = new DeviceMemory(physicalDevice, this, commandBuffers_[0], getQueueHandle(QueueFamilyType::kGraphicsQueue)); // TODO change to transfer queue
