@@ -25,6 +25,9 @@ namespace QZL {
 			const VkImageLayout& getLayout();
 			TextureSampler* createTextureSampler(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy);
 
+			static VkImageMemoryBarrier makeMemoryBarrier(VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout,
+				uint32_t srcQueueIndex, uint32_t dstQueueIndex, VkImage img, VkImageSubresourceRange subresourceRange);
+			
 			static VkImageCreateInfo makeCreateInfo(VkImageType type, uint32_t mipLevels, uint32_t arrayLayers, VkFormat format,
 				VkImageTiling tiling, VkImageUsageFlags usage, VkSampleCountFlagBits samples, VkImageLayout initialLayout, uint32_t width, uint32_t height, uint32_t depth = 1) {
 				VkImageCreateInfo createInfo = {};
@@ -42,6 +45,15 @@ namespace QZL {
 				createInfo.samples = samples;
 				createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 				return createInfo;
+			}
+			static VkDescriptorSetLayoutBinding makeBinding(uint32_t b, VkShaderStageFlags flags, VkSampler* immutableSampler = nullptr) {
+				VkDescriptorSetLayoutBinding binding = {};
+				binding.binding = b;
+				binding.descriptorCount = 1;
+				binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+				binding.pImmutableSamplers = immutableSampler;
+				binding.stageFlags = flags;
+				return binding;
 			}
 		private:
 			MemoryAllocationDetails imageDetails_;

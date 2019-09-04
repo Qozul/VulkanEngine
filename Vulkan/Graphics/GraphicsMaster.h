@@ -2,21 +2,16 @@
 #include "VkUtil.h"
 #include "../InputManager.h"
 #include "OptionalExtentions.h"
+#include "GraphicsTypes.h"
 
 namespace QZL
 {
 	struct SystemMasters;
 	namespace Game {
 		class GameMaster;
+		class AtmosphereScript;
 	}
 	namespace Graphics {
-		enum class ElementBufferTypes {
-			STATIC
-		};
-
-		enum class RendererTypes {
-			STATIC, TERRAIN, ATMOSPHERE
-		};
 
 		struct EnvironmentArgs {
 			int numObjectsX;
@@ -31,9 +26,10 @@ namespace QZL
 		class GraphicsComponent;
 		class RendererBase;
 		struct BasicMesh;
-
+		struct DeviceSurfaceCapabilities;
 		class GraphicsMaster;
 		class Validation;
+		class SwapChain;
 
 		struct GraphicsSystemDetails {
 			GLFWwindow* window = nullptr;
@@ -49,8 +45,12 @@ namespace QZL
 			friend class System;
 			friend class Game::GameMaster;
 		public:
+			static constexpr float NEAR_PLANE_Z = 0.1f;
+			static constexpr float FAR_PLANE_Z = 1000.0f;
+
 			void registerComponent(GraphicsComponent* component);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
+			void attachPostProcessScript(Game::AtmosphereScript* script);
 			glm::mat4* getViewMatrixPtr() {
 				return viewMatrix_;
 			}
@@ -78,7 +78,7 @@ namespace QZL
 			void initGlfw(std::vector<const char*>& extensions);
 			void initInstance(const std::vector<const char*>& extensions, uint32_t& enabledLayerCount,
 				const char* const*& enabledLayerNames);
-			void initDevices(uint32_t& enabledLayerCount, const char* const*& enabledLayerNames);
+			void initDevices(DeviceSurfaceCapabilities& surfaceCapabilitie, uint32_t& enabledLayerCount, const char* const*& enabledLayerNames);
 
 			void preframeSetup();
 
@@ -86,6 +86,8 @@ namespace QZL
 
 			GraphicsSystemDetails details_;
 			Validation* validation_;
+
+			SwapChain* swapChain_;
 
 			std::unordered_map<RendererTypes, RendererBase*> renderers_;
 
@@ -98,6 +100,7 @@ namespace QZL
 
 			static const int kDefaultWidth = 800;
 			static const int kDefaultHeight = 600;
+			static const int MAX_DESCRIPTOR_INDEXED_TEXTURES = 2;
 		};
 	}
 }

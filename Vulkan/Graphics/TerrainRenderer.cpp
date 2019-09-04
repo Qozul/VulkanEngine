@@ -50,13 +50,13 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding(), heightmapBinding, debugDiffuseBinding });
 
 	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(globalRenderData->layout);
+	pipelineLayouts_.push_back(globalRenderData->getLayout());
 
 	size_t idx = descriptor->createSets({ layout, layout, layout });
 	std::vector<VkWriteDescriptorSet> descWrites;
 	for (int i = 0; i < 3; ++i) {
 		descriptorSets_.push_back(descriptor->getSet(idx + i));
-		descriptorSets_.push_back(globalRenderData->globalDataDescriptor->getSet(globalRenderData->setIdx));
+		descriptorSets_.push_back(globalRenderData->getSet());
 		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
 		descWrites.push_back(matBuf->descriptorWrite(descriptor->getSet(idx + i)));
 		descWrites.push_back(tessBuf->descriptorWrite(descriptor->getSet(idx + i)));

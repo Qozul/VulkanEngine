@@ -2,21 +2,24 @@
 #include "../Graphics/AtmosphereShaderParams.h"
 #include "AltAtmosphere.h"
 #include "../Graphics/Vertex.h"
+#include "../Game/GameScript.h"
+#include "../Game/AtmosphereScript.h"
 
 using namespace QZL;
 using namespace Assets;
+using namespace QZL::Game;
 using Vertex = QZL::Graphics::Vertex;
 
-Skysphere::Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere, Game::SunScript* sun)
-	: atmos_(atmosphere)
+Skysphere::Skysphere(const Graphics::LogicDevice* logicDevice, Game::SunScript* sun, GameScriptInitialiser initialiser)
 {
-	atmosphere->precalculateTextures(logicDevice);
-	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(atmosphere->textures_, atmosphere->material_, sun), "skysphere", loadFunction);
+	initialiser.owner = this;
+	setGameScript(new AtmosphereScript(initialiser));
+	auto script = static_cast<AtmosphereScript*>(getGameScript());
+	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(script->getTextures(), script->getMaterial(), sun), "skysphere", loadFunction);
 }
 
 Skysphere::~Skysphere()
 {
-	SAFE_DELETE(atmos_);
 }
 
 void Skysphere::loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::VertexOnlyPosition>& vertices)

@@ -1,6 +1,12 @@
 #include "SwapChain.h"
 #include "LogicDevice.h"
-#include "RenderPass.h"
+#include "GeneralPass.h"
+#include "PostProcessPass.h"
+#include "RendererBase.h"
+#include "GlobalRenderData.h"
+#include "../SystemMasters.h"
+#include "../Assets/AssetManager.h"
+#include "TextureManager.h"
 #include "GraphicsMaster.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
@@ -8,7 +14,7 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-void SwapChain::loop()
+void SwapChain::loop(const glm::mat4& viewMatrix)
 {
 	const uint32_t imgIdx = aquireImage();
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
@@ -19,7 +25,8 @@ void SwapChain::loop()
 
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
-	renderPass_->doFrame(imgIdx, commandBuffers_[imgIdx]);
+	renderPasses_[0]->doFrame(viewMatrix, imgIdx, commandBuffers_[imgIdx]);
+	renderPasses_[1]->doFrame(viewMatrix, imgIdx, commandBuffers_[imgIdx]);
 
 	CHECK_VKRESULT(vkEndCommandBuffer(commandBuffers_[imgIdx]));
 
@@ -34,13 +41,26 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	initSwapChain(window, surfaceCapabilities);
 	initSwapChainImages(window, surface, surfaceCapabilities);
 	initImageViews();
-	renderPass_ = new RenderPass(master, logicDevice, details_);
+	if (master->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
+		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().assetManager->textureManager->getSetlayoutBinding());
+	}
+	else {
+		globalRenderData_ = new GlobalRenderData(logicDevice);
+	}
+	LightingData lightingData = { glm::vec4(master->getCamPos(), 0.0f), glm::vec4(glm::vec3(0.2f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
+	globalRenderData_->updateData(0, lightingData);
+	renderPasses_.push_back(new GeometryPass(master, logicDevice, details_, globalRenderData_));
+	renderPasses_.push_back(new PostProcessPass(master, logicDevice, details_, globalRenderData_));
+	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
 	createSyncObjects(); 
 }
 
 SwapChain::~SwapChain()
 {
-	SAFE_DELETE(renderPass_);
+	SAFE_DELETE(globalRenderData_);
+	for (size_t i = 0; i < renderPasses_.size(); ++i) {
+		SAFE_DELETE(renderPasses_[i]);
+	}
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(*logicDevice_, renderFinishedSemaphores_[i], nullptr);
 		vkDestroySemaphore(*logicDevice_, imageAvailableSemaphores_[i], nullptr);

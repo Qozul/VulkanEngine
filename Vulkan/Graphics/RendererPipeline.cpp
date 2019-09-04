@@ -8,34 +8,55 @@ using namespace QZL::Graphics;
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, 
 	VkPipelineLayoutCreateInfo layoutInfo, VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, 
-	VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest)
+	VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 2>* specConstants)
 	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
 	Shader fragmentModule = { *logicDevice_, fragmentShader };
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo = {
-		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
-		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT)
-	};
+	
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo;
+	if (specConstants != nullptr) {
+		shaderStagesInfo = {
+			vertexModule.getCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, &specConstants->at(0)),
+			fragmentModule.getCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants->at(1))
+		};
+	}
+	else {
+		shaderStagesInfo = {
+			vertexModule.getCreateInfo(VK_SHADER_STAGE_VERTEX_BIT),
+			fragmentModule.getCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT)
+		};
+	}
 	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(topology, VK_FALSE), nullptr, 
 		vertexInputInfo, frontFace, enableDepthTest);
 }
 
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
-	const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace, bool enableDepthTest)
+	const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 4>* specConstants)
 	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
 {
 	Shader vertexModule = { *logicDevice_, vertexShader };
 	Shader tessCtrlModule = { *logicDevice_, tessCtrlShader };
 	Shader tessEvalModule = { *logicDevice_, tessEvalShader };
 	Shader fragmentModule = { *logicDevice_, fragmentShader };
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo = {
-		createShaderInfo(vertexModule.getModule(), VK_SHADER_STAGE_VERTEX_BIT),
-		createShaderInfo(fragmentModule.getModule(), VK_SHADER_STAGE_FRAGMENT_BIT),
-		createShaderInfo(tessCtrlModule.getModule(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT),
-		createShaderInfo(tessEvalModule.getModule(), VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
-	};
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo;
+	if (specConstants != nullptr) {
+		shaderStagesInfo = {
+			vertexModule.getCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, &specConstants->at(0)),
+			tessCtrlModule.getCreateInfo(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &specConstants->at(1)),
+			tessEvalModule.getCreateInfo(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &specConstants->at(2)),
+			fragmentModule.getCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants->at(3))
+		};
+	}
+	else {
+		shaderStagesInfo = {
+			vertexModule.getCreateInfo(VK_SHADER_STAGE_VERTEX_BIT),
+			tessCtrlModule.getCreateInfo(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT),
+			tessEvalModule.getCreateInfo(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT),
+			fragmentModule.getCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT)
+		};
+	}
 	auto tessellationInfo = createTessellationStateInfo(patchVertexCount);
 	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, VK_FALSE), 
 		&tessellationInfo, vertexInputInfo, frontFace, enableDepthTest);
@@ -160,7 +181,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	colorBlending.blendConstants[3] = 0.0f;
 
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &layout_));
-
+	
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = shaderStagesInfo.size();
 	pipelineInfo.pStages = shaderStagesInfo.data();

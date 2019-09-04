@@ -47,6 +47,9 @@ namespace QZL {
 			Assets::AtmosphereParameters& getParameters() {
 				return params_;
 			}
+			Graphics::MaterialAtmosphere& getMaterial() {
+				return material_;
+			}
 		protected:
 			void start() override;
 			void update(float dt) override { }

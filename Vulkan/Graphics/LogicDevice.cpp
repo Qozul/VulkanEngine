@@ -60,13 +60,11 @@ LogicDevice::LogicDevice(PhysicalDevice* physicalDevice, VkDevice device, const 
 
 	// Need device memory before swap chain
 	deviceMemory_ = new DeviceMemory(physicalDevice, this, commandBuffers_[0], getQueueHandle(QueueFamilyType::kGraphicsQueue)); // TODO change to transfer queue
-	swapChain_ = new SwapChain(sysDetails.master, sysDetails.window, sysDetails.surface, this, surfaceCapabilities);
-	swapChain_->setCommandBuffers(std::vector<VkCommandBuffer>(commandBuffers_.begin() + 1, commandBuffers_.end()));
 }
 
 LogicDevice::~LogicDevice()
 {
-	SAFE_DELETE(swapChain_);
+	SAFE_DELETE(primaryDescriptor_);
 	SAFE_DELETE(deviceMemory_);
 	vkFreeCommandBuffers(device_, primaryCommandPool_, static_cast<uint32_t>(commandBuffers_.size()), commandBuffers_.data());
 	vkDestroyCommandPool(device_, primaryCommandPool_, nullptr);

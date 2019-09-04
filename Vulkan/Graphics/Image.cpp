@@ -60,3 +60,19 @@ TextureSampler* Image::createTextureSampler(const std::string& name, VkFilter ma
 {
 	return new TextureSampler(logicDevice_, name, this, magFilter, minFilter, addressMode, anisotropy);
 }
+
+VkImageMemoryBarrier Image::makeMemoryBarrier(VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout, 
+	uint32_t srcQueueIndex, uint32_t dstQueueIndex, VkImage img, VkImageSubresourceRange subresourceRange)
+{
+	VkImageMemoryBarrier barrier = {};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.srcAccessMask = srcAccessMask;
+	barrier.dstAccessMask = dstAccessMask;
+	barrier.oldLayout = oldLayout;
+	barrier.newLayout = newLayout;
+	barrier.srcQueueFamilyIndex = srcQueueIndex;
+	barrier.dstQueueFamilyIndex = dstQueueIndex;
+	barrier.image = img;
+	barrier.subresourceRange = subresourceRange;
+	return barrier;
+}

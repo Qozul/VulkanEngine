@@ -19,6 +19,8 @@ namespace QZL {
 			// Calls update on every entity in the scene hierarchy, giving a combined model matrix such that
 			// parents are the spatial root of their children.
 			void update(float dt);
+
+			void start();
 			/*  
 				Add an entity to the scene heirarchy with a given parent entity. Parent must exist in the scene heirarchy
 				or be nullptr for the root node. The entity to add must not be nullptr and must not already exist in the heirarchy.
@@ -43,8 +45,9 @@ namespace QZL {
 			SceneHeirarchyNode* findEntityNodeRecursively(Assets::Entity* entity, SceneHeirarchyNode* node);
 			// Deletes the given node and all of its children
 			void deleteHeirarchyRecursively(SceneHeirarchyNode* node);
-			// Recursive update helper function
+
 			void updateRecursively(SceneHeirarchyNode* node, glm::mat4 modelMatrix, float dt);
+			void startRecursively(SceneHeirarchyNode* node);
 
 			SceneHeirarchyNode* rootNode_;
 		};

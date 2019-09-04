@@ -58,7 +58,6 @@ namespace QZL
 			std::vector<VkCommandBuffer> computeCommandBuffers_;
 
 			PhysicalDevice* physicalDevice_; // Hold physical device so only logic device needs to be passed around
-			SwapChain* swapChain_;
 			DeviceMemory* deviceMemory_;
 
 			std::vector<uint32_t> queueFamilyIndices_;

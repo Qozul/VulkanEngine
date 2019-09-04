@@ -1,5 +1,6 @@
 #pragma once
 #include "../Assets/Transform.h"
+#include "../SystemMasters.h"
 
 namespace QZL {
 	class InputManager;
@@ -17,8 +18,8 @@ namespace QZL {
 			friend class GameMaster;
 			friend class Assets::Entity;
 		protected:
-			GameScript(const GameScriptInitialiser& initialiser)
-				: owningEntity_(initialiser.owner), inputManager_(initialiser.inputManager) { }
+			GameScript(const GameScriptInitialiser& initialiser);
+			virtual ~GameScript() { }
 
 			virtual void start() = 0;
 			virtual void update(float dt) = 0;
@@ -26,6 +27,7 @@ namespace QZL {
 
 			Assets::Entity* owningEntity_;
 			InputManager* inputManager_;
+			const SystemMasters* sysMasters_;
 		};
 	}
 }

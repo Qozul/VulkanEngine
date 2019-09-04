@@ -26,7 +26,7 @@ Shader::~Shader()
 	vkDestroyShaderModule(logicDevice_, module_, nullptr);
 }
 
-VkPipelineShaderStageCreateInfo Shader::getCreateInfo(VkShaderStageFlagBits stageFlagBit) const noexcept
+VkPipelineShaderStageCreateInfo Shader::getCreateInfo(VkShaderStageFlagBits stageFlagBit, VkSpecializationInfo* specConstants) const noexcept
 {
 	/* https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPipelineShaderStageCreateInfo.html */
 	VkPipelineShaderStageCreateInfo createInfo = {};
@@ -36,7 +36,7 @@ VkPipelineShaderStageCreateInfo Shader::getCreateInfo(VkShaderStageFlagBits stag
 	createInfo.stage = stageFlagBit;
 	createInfo.module = module_;
 	createInfo.pName = kInsertionName;
-	createInfo.pSpecializationInfo = NULL;
+	createInfo.pSpecializationInfo = specConstants;
 	return createInfo;
 }
 

@@ -12,6 +12,7 @@
 #include "../Assets/AltAtmosphere.h"
 #include "Camera.h"
 #include "SunScript.h"
+#include "AtmosphereScript.h"
 #include "Scene.h"
 
 using namespace QZL;
@@ -32,13 +33,13 @@ GameMaster::~GameMaster()
 
 void GameMaster::loadGame()
 {
-	Assets::Entity* camera = masters_.assetManager->createEntity();
 	GameScriptInitialiser scriptInit;
-	scriptInit.owner = camera;
 	scriptInit.inputManager = masters_.inputManager;
 	scriptInit.system = masters_.system;
+
+	Assets::Entity* camera = masters_.assetManager->createEntity();
+	scriptInit.owner = camera;
 	camera->setGameScript(new Camera(scriptInit));
-	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 
 	/*Assets::Entity* testEntity = masters_.assetManager->createEntity();
 	if (masters_.graphicsMaster->supportsOptionalExtension(Graphics::OptionalExtensions::DESCRIPTOR_INDEXING)) {
@@ -58,18 +59,23 @@ void GameMaster::loadGame()
 	masters_.graphicsMaster->registerComponent(testEntity->getGraphicsComponent());*/
 
 	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>();
-	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
 	scenes_[activeSceneIdx_]->addEntity(terrain);
 
 	Assets::Entity* sun = masters_.assetManager->createEntity();
 	scriptInit.owner = sun;
 	auto sunScript = new SunScript(scriptInit);
 	sun->setGameScript(sunScript);
-	scenes_[activeSceneIdx_]->addEntity(sun);// , camera, cameraNode);
 
-	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>(masters_.graphicsMaster->getLogicDevice(), new Assets::Atmosphere(), sunScript);
-	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
+	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>(masters_.graphicsMaster->getLogicDevice(), sunScript, scriptInit);
+
+	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
+	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
+
+	scenes_[activeSceneIdx_]->start();
+
+	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
+	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
 }
 
 void GameMaster::update(float dt)

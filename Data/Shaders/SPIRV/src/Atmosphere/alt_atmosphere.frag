@@ -11,23 +11,9 @@ layout(push_constant) uniform Params {
 	vec4 betaRay; // .w = float betaMie	
 	vec4 cameraPosition; // .w = float planetRadius
 	vec4 sunDirection; // .w = float Hatm
-	vec4 sunIntensity; // .w float g
+	vec4 sunIntensity; // .w = float g
 } PC;
 layout(set = 0, binding = 1) uniform sampler3D scatteringTexture;
-
-// theta is the angle between the direction of the incident light and the direction of the scattered light
-float rayleighPhase(float ctheta)
-{
-	return 0.8 * (1.4 + 0.5 * ctheta);
-}
-
-// g is in range [-1, 1]
-float miePhase(float ctheta, float g)
-{
-	float g2 = g * g;
-	float cos2Theta = ctheta * ctheta;
-	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta, 1.5));
-}
 
 void main() 
 {
@@ -53,5 +39,4 @@ void main()
 	color = vec4(rayleigh + mie, 1.0) * vec4(PC.sunIntensity.xyz, 1.0);
 	color = color / (color + vec4(1.0, 1.0, 1.0, 0.0));
 	color.rgb = pow(color.rgb, vec3(1.0/2.2));
-	//color = vec4(0.5);
 }

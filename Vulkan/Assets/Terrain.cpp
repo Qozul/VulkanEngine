@@ -10,14 +10,14 @@ using namespace Graphics;
 
 Terrain::Terrain()
 {
-	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new Graphics::TerrainShaderParams("heightmaps/Windermere", "ground_04",
+	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new Graphics::TerrainShaderParams("heightmaps/hmap2", "ground_04",
 		Graphics::MaterialStatic(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f)), "terrain", loadFunction);
 }
 
 void Terrain::loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::Vertex>& vertices)
 {
-	const int gridSize = 512;
-	const int numSubGrids = 20;
+	const int gridSize = 1024;
+	const int numSubGrids = 100;
 	const int subGridSize = gridSize / numSubGrids;
 
 	// Vertex grid

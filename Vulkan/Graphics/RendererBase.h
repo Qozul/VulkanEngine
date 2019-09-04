@@ -5,6 +5,7 @@
 #include "RenderStorage.h"
 #include "GraphicsComponent.h"
 #include "ElementBuffer.h"
+#include "GlobalRenderData.h"
 
 namespace QZL
 {
@@ -15,12 +16,6 @@ namespace QZL
 		struct ElementData {
 			glm::mat4 modelMatrix;
 			glm::mat4 mvpMatrix;
-		};
-
-		struct GlobalRenderData {
-			Descriptor* globalDataDescriptor;
-			size_t setIdx;
-			VkDescriptorSetLayout layout;
 		};
 
 		struct PushConstantInfo {
@@ -61,10 +56,18 @@ namespace QZL
 
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages) {
+				auto pcr = createPushConstantRange<PC>(stages, pushConstantOffset_);
+				pushConstantInfos_.push_back(pcr.second);
+				pushConstantOffset_ += sizeof(PC);
+				return pcr.first;
+			}
+
+			template<typename PC>
+			static const std::pair<VkPushConstantRange, PushConstantInfo> createPushConstantRange(VkShaderStageFlagBits stages, uint32_t offset) {
 				static_assert(sizeof(PC) <= MAX_PUSH_CONSTANT_SIZE, "Push constant size is potentially beyond the limit.");
 				VkPushConstantRange pushConstantRange = {};
 				pushConstantRange.size = sizeof(PC);
-				pushConstantRange.offset = pushConstantOffset_;
+				pushConstantRange.offset = offset;
 				pushConstantRange.stageFlags = stages;
 
 				PushConstantInfo pinfo;
@@ -72,21 +75,20 @@ namespace QZL
 				pinfo.stages = stages;
 				pinfo.barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 				pinfo.barrier.pNext = NULL;
-				pinfo.offset = pushConstantOffset_;
-				pushConstantInfos_.push_back(pinfo);
+				pinfo.offset = offset;
 
-				pushConstantOffset_ += sizeof(PC);
-
-				return pushConstantRange;
+				return { pushConstantRange, pinfo };
 			}
 		protected:
 			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader,
-				RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
+				RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, 
+				std::array<VkSpecializationInfo, 4>* specConstants = nullptr);
 			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
-				const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE);
+				const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+				std::array<VkSpecializationInfo, 2>* specConstants = nullptr);
 			void beginFrame(VkCommandBuffer cmdBuffer);
 
 			LogicDevice* logicDevice_;
@@ -123,23 +125,24 @@ namespace QZL
 		template<typename V>
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
 			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader,
-			RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest, VkFrontFace frontFace)
+			RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest, VkFrontFace frontFace, std::array<VkSpecializationInfo, 4>* specConstants)
 		{
 			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
 			auto attribDesc = V::getAttribDescs(0);
 			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, tessCtrlShader, tessEvalShader, 
-				patchVertexCount, frontFace, enableDepthTest);
+			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, tessCtrlShader, tessEvalShader,
+				patchVertexCount, frontFace, enableDepthTest, specConstants);
 		}
 
 		template<typename V>
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
-			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, bool enableDepthTest, VkFrontFace frontFace)
+			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, bool enableDepthTest, VkFrontFace frontFace,
+			std::array<VkSpecializationInfo, 2>* specConstants)
 		{
 			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
 			auto attribDesc = V::getAttribDescs(0);
 			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, topology, frontFace, enableDepthTest);
+			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, topology, frontFace, enableDepthTest, specConstants);
 		}
 
 		inline void RendererBase::beginFrame(VkCommandBuffer cmdBuffer)

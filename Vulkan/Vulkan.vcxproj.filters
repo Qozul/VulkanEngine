@@ -67,6 +67,9 @@
     <Filter Include="Source Files\Game\Scripts">
       <UniqueIdentifier>{1aecc6ef-3646-41cb-98c7-5d7f64045594}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\RenderPasses">
+      <UniqueIdentifier>{eae44390-ffdf-4547-b43b-1b57afde13fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Shader.h">
@@ -124,9 +127,6 @@
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\RendererPipeline.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\RenderPass.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Assets\Transform.h">
@@ -246,6 +246,24 @@
     <ClInclude Include="Game\AtmosphereScript.h">
       <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\RenderPass.h">
+      <Filter>Header Files\Graphics\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GlobalRenderData.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GeneralPass.h">
+      <Filter>Header Files\Graphics\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\PostProcessPass.h">
+      <Filter>Header Files\Graphics\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\PostProcessRenderer.h">
+      <Filter>Header Files\Graphics\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsTypes.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\TexturedRenderer.cpp">
@@ -364,6 +382,15 @@
     </ClCompile>
     <ClCompile Include="Game\GameScript.cpp">
       <Filter>Source Files\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\GeneralPass.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\PostProcessRenderer.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\PostProcessPass.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

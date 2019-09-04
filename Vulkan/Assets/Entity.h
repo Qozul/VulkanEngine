@@ -26,6 +26,7 @@ namespace QZL {
 			friend class AssetManager;
 		public:
 			void update(float dt);
+			void start();
 
 			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
 				Graphics::MeshLoaderFunction meshLoaderFunc = nullptr);

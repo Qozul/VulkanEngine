@@ -10,9 +10,9 @@
 #include "GraphicsComponent.h"
 #include "SwapChain.h"
 #include "AtmosphereShaderParams.h"
-#include "../Assets/AltAtmosphere.h"
 #include "../Assets/Entity.h"
 #include "../Game/SunScript.h"
+#include "../Game/AtmosphereScript.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -20,8 +20,6 @@ using namespace Graphics;
 using PushConstantParams = MaterialAtmosphere;
 
 struct PushConstantExtent {
-	//glm::vec2 extent;
-	//glm::vec2 padding;
 	glm::mat4 inverseViewProj;
 	MaterialAtmosphere mat;
 };
@@ -46,8 +44,6 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	pipelineLayouts_.push_back(layout);
 
 	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descriptor->updateDescriptorSets(descWrites);
 
 	std::vector<VkPushConstantRange> pushConstantRanges;
 	pushConstantRanges.push_back(setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT));

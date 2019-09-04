@@ -23,7 +23,7 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser)
 	logicDevice_ = initialiser.system->getMasters().graphicsMaster->getLogicDevice();
 
 	params_.betaRay = glm::vec3(6.55e-6f, 1.73e-5f, 2.30e-5f);
-	params_.betaMie = 2.2e-5f;
+	params_.betaMie = 2.2e-6f;
 	params_.betaMieExt = params_.betaMie / 0.9f;
 	params_.planetRadius = 6371e3f;
 	params_.Hatm = 80000.0f;
@@ -138,6 +138,8 @@ void AtmosphereScript::start()
 	textures_.scatteringImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });*/
 
 	SAFE_DELETE(buffer);
+
+	sysMasters_->graphicsMaster->attachPostProcessScript(this);
 }
 
 void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedTextures& finalTextures)

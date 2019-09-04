@@ -45,8 +45,11 @@
     <ClInclude Include="Graphics\DrawElementsCommand.h" />
     <ClInclude Include="Graphics\ElementBuffer.h" />
     <ClInclude Include="Graphics\ElementBufferInterface.h" />
+    <ClInclude Include="Graphics\GeneralPass.h" />
+    <ClInclude Include="Graphics\GlobalRenderData.h" />
     <ClInclude Include="Graphics\GraphicsComponent.h" />
     <ClInclude Include="Graphics\GraphicsMaster.h" />
+    <ClInclude Include="Graphics\GraphicsTypes.h" />
     <ClInclude Include="Graphics\Image.h" />
     <ClInclude Include="Graphics\Image2D.h" />
     <ClInclude Include="Graphics\LogicDevice.h" />
@@ -56,6 +59,8 @@
     <ClInclude Include="Graphics\MeshLoader.h" />
     <ClInclude Include="Graphics\OptionalExtentions.h" />
     <ClInclude Include="Graphics\PhysicalDevice.h" />
+    <ClInclude Include="Graphics\PostProcessPass.h" />
+    <ClInclude Include="Graphics\PostProcessRenderer.h" />
     <ClInclude Include="Graphics\RendererBase.h" />
     <ClInclude Include="Graphics\RendererPipeline.h" />
     <ClInclude Include="Graphics\RenderPass.h" />
@@ -100,6 +105,7 @@
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />
     <ClCompile Include="Graphics\DeviceMemory.cpp" />
+    <ClCompile Include="Graphics\GeneralPass.cpp" />
     <ClCompile Include="Graphics\GraphicsComponent.cpp" />
     <ClCompile Include="Graphics\GraphicsMaster.cpp" />
     <ClCompile Include="Graphics\Image.cpp" />
@@ -107,6 +113,8 @@
     <ClCompile Include="Graphics\LogicDevice.cpp" />
     <ClCompile Include="Graphics\MeshLoader.cpp" />
     <ClCompile Include="Graphics\PhysicalDevice.cpp" />
+    <ClCompile Include="Graphics\PostProcessPass.cpp" />
+    <ClCompile Include="Graphics\PostProcessRenderer.cpp" />
     <ClCompile Include="Graphics\RendererPipeline.cpp" />
     <ClCompile Include="Graphics\RenderPass.cpp" />
     <ClCompile Include="Graphics\RenderStorage.cpp" />

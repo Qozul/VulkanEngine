@@ -1,5 +1,6 @@
 #pragma once
 #include "VkUtil.h"
+#include "GraphicsTypes.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -9,6 +10,7 @@ namespace QZL
 		class LogicDevice;
 		class RenderPass;
 		struct DeviceSurfaceCapabilities;
+		class GlobalRenderData;
 		class GraphicsMaster;
 
 		struct SwapChainDetails {
@@ -21,12 +23,16 @@ namespace QZL
 		};
 
 		class SwapChain {
-			friend class LogicDevice;
+			friend class GraphicsMaster;
 		public:
-			void loop();
+			void loop(const glm::mat4& viewMatrix);
 		private:
 			SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities);
 			~SwapChain();
+
+			RenderPass* getRenderPass(RenderPassTypes type) {
+				return renderPasses_[(size_t)type];
+			}
 
 			// Heavily similar to tutorial code
 			void initSwapChain(GLFWwindow* window, DeviceSurfaceCapabilities& surfaceCapabilities);
@@ -45,8 +51,10 @@ namespace QZL
 			void submitQueue(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 
+			GlobalRenderData* globalRenderData_;
+
 			std::vector<VkCommandBuffer> commandBuffers_;
-			RenderPass* renderPass_;
+			std::vector<RenderPass*> renderPasses_;
 
 			SwapChainDetails details_;
 			LogicDevice* logicDevice_;

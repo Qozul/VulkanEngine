@@ -17,7 +17,7 @@ using namespace Graphics;
 Atmosphere::Atmosphere()
 {
 	params_.betaRay = glm::vec3(6.55e-6f, 1.73e-5f, 2.30e-5f);
-	params_.betaMie = 2.2e-5f;
+	params_.betaMie = 2.2e-6f;
 	params_.betaMieExt = params_.betaMie / 0.9f;
 	params_.planetRadius = 6371e3f;
 	params_.Hatm = 80000.0f;

@@ -4,12 +4,13 @@
 namespace QZL {
 	namespace Game {
 		class SunScript;
+		struct GameScriptInitialiser;
 	}
 	namespace Assets {
 		class Atmosphere;
 		class Skysphere : public Entity {
 		public:
-			Skysphere(const Graphics::LogicDevice* logicDevice, Atmosphere* atmosphere, Game::SunScript* sun);
+			Skysphere(const Graphics::LogicDevice* logicDevice, Game::SunScript* sun, Game::GameScriptInitialiser initialiser);
 			~Skysphere();
 		private:
 			Atmosphere* atmos_;

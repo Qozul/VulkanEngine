@@ -15,12 +15,6 @@ namespace QZL
 			UNRESERVED = 4
 		};
 
-		// Set = 1 (Global to renderers)
-		enum class ReservedGraphicsBindings1 : uint32_t {
-			LIGHTING = 0,
-			TEXTURE_ARRAY_BINDING = 1
-		};
-
 		class Descriptor {
 		public:
 			Descriptor(const LogicDevice* logicDevice, const uint32_t maxSets, std::vector<std::pair<VkDescriptorType, uint32_t>> types);

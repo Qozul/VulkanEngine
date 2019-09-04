@@ -23,6 +23,13 @@ void Scene::update(float dt)
 	}
 }
 
+void Scene::start()
+{
+	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
+		startRecursively(rootNode_->childNodes[i]);
+	}
+}
+
 SceneHeirarchyNode* Scene::addEntity(Assets::Entity* entity, Assets::Entity* parent, SceneHeirarchyNode* hintNode)
 {
 	ASSERT(entity != nullptr);
@@ -114,5 +121,13 @@ void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4 modelMatrix, f
 	node->entity->setModelMatrix(m);
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
 		updateRecursively(node->childNodes[i], m, dt);
+	}
+}
+
+void Scene::startRecursively(SceneHeirarchyNode* node)
+{
+	node->entity->start();
+	for (size_t i = 0; i < node->childNodes.size(); ++i) {
+		startRecursively(node->childNodes[i]);
 	}
 }

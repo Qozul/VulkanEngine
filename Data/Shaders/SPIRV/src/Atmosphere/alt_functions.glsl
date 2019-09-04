@@ -104,3 +104,27 @@ vec3 extractMieFromScattering(in vec4 scattering, in float betaMie, in vec3 beta
 {
 	return scattering.rgb * (scattering.a / scattering.r) * (betaRay.r / betaMie) * (betaMie / betaRay);
 }
+
+// theta is the angle between the direction of the incident light and the direction of the scattered light
+float rayleighPhase(float ctheta)
+{
+	return 0.8 * (1.4 + 0.5 * ctheta * ctheta);
+}
+
+// g is in range [-1, 1]
+float miePhase(float ctheta, float g)
+{
+	float g2 = g * g;
+	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta, 1.5));
+}
+
+vec3 getNearPlaneWorldPosition(in vec2 uv, in mat4 invViewProj)
+{
+	// Clip space is in range -1 to 1. z = -1.0 puts it on the near plane.
+	vec4 clipCoords = vec4(uv * 2.0 - 1.0, -1.0, 1.0);
+	// Use inverseViewProj to go from clip to world position
+	vec4 pos = (invViewProj * clipCoords);
+	// Perspective division
+	pos /= pos.w;
+	return pos.xyz;
+}

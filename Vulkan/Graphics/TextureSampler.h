@@ -12,6 +12,9 @@ namespace QZL
 			TextureSampler(const LogicDevice* logicDevice, const std::string& name, Image* texture, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, 
 				float anisotropy);
 			~TextureSampler();
+			VkSampler* getSampler() {
+				return &sampler_;
+			}
 			operator VkSampler() {
 				return sampler_;
 			}
@@ -20,6 +23,16 @@ namespace QZL
 				return name_;
 			}
 			VkDescriptorImageInfo getImageInfo();
+
+			static VkDescriptorSetLayoutBinding makeBinding(uint32_t b, VkShaderStageFlags flags, VkSampler* immutableSampler = nullptr) {
+				VkDescriptorSetLayoutBinding binding = {};
+				binding.binding = b;
+				binding.descriptorCount = 1;
+				binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				binding.pImmutableSamplers = immutableSampler;
+				binding.stageFlags = flags;
+				return binding;
+			}
 		private:
 			const LogicDevice* logicDevice_;
 			Image* texture_;

@@ -23,7 +23,7 @@ namespace QZL
 			Shader operator=(Shader&& move_) noexcept = delete;
 
 			/// Fills a create info struct and returns it for use in pipeline creation.
-			VkPipelineShaderStageCreateInfo getCreateInfo(VkShaderStageFlagBits stageFlagBit) const noexcept;
+			VkPipelineShaderStageCreateInfo getCreateInfo(VkShaderStageFlagBits stageFlagBit, VkSpecializationInfo* specConstants = NULL) const noexcept;
 
 			VkShaderModule getModule() const noexcept;
 

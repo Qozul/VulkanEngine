@@ -12,6 +12,13 @@ void Entity::update(float dt)
 	}
 }
 
+void Entity::start()
+{
+	if (gameScript_ != nullptr) {
+		gameScript_->start();
+	}
+}
+
 void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName,
 	Graphics::MeshLoaderFunction meshLoaderFunc)
 {

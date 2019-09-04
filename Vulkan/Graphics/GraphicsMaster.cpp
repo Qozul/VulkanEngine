@@ -4,16 +4,18 @@
 #include "LogicDevice.h"
 #include "SwapChain.h"
 #include "RendererBase.h"
+#include "TextureManager.h"
 #include "../System.h"
 #include "../Assets/AssetManager.h"
-#include "../Graphics/MeshLoader.h"
+#include "MeshLoader.h"
+#include "PostProcessPass.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
 constexpr auto kHoldConsole = false;
 
-glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 81000.0f);
+glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, NEAR_PLANE_Z, FAR_PLANE_Z);
 
 EnvironmentArgs environmentArgs;
 
@@ -33,6 +35,12 @@ void GraphicsMaster::registerComponent(GraphicsComponent* component)
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 {
 	renderers_[type] = renderer;
+}
+
+void GraphicsMaster::attachPostProcessScript(Game::AtmosphereScript* script)
+{
+	auto pass = static_cast<PostProcessPass*>(swapChain_->getRenderPass(RenderPassTypes::POST_PROCESS));
+	pass->attachAtmosphereScript(script);
 }
 
 const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)
@@ -73,12 +81,20 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	validation_ = new Validation(details_.instance, VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT);
 	ASSERT(validation_ != nullptr);
 
-	initDevices(enabledLayerCount, enabledLayerNames);
+	DeviceSurfaceCapabilities surfaceCapabilities;
+	initDevices(surfaceCapabilities, enabledLayerCount, enabledLayerNames);
+
+	masters.assetManager->textureManager = new Graphics::TextureManager(details_.logicDevice, details_.logicDevice->getPrimaryDescriptor(),
+		MAX_DESCRIPTOR_INDEXED_TEXTURES, supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING));
+
+	swapChain_ = new SwapChain(this, details_.window, details_.surface, details_.logicDevice, surfaceCapabilities);
+	swapChain_->setCommandBuffers(std::vector<VkCommandBuffer>(details_.logicDevice->commandBuffers_.begin() + 1, details_.logicDevice->commandBuffers_.end()));
 }
 
 GraphicsMaster::~GraphicsMaster()
 {
 	masters_.inputManager->removeProfile("graphicsdebug");
+	SAFE_DELETE(swapChain_);
 	SAFE_DELETE(details_.logicDevice);
 
 	SAFE_DELETE(details_.physicalDevice);
@@ -139,9 +155,8 @@ void GraphicsMaster::initInstance(const std::vector<const char*>& extensions, ui
 	CHECK_VKRESULT(vkCreateInstance(&createInfo, nullptr, &details_.instance));
 }
 
-void GraphicsMaster::initDevices(uint32_t& enabledLayerCount, const char* const*& enabledLayerNames)
+void GraphicsMaster::initDevices(DeviceSurfaceCapabilities& surfaceCapabilities, uint32_t& enabledLayerCount, const char* const*& enabledLayerNames)
 {
-	DeviceSurfaceCapabilities surfaceCapabilities;
 	auto physicalDeviceHandles = obtainVkData<VkPhysicalDevice>(vkEnumeratePhysicalDevices, details_.instance);
 	for (VkPhysicalDevice& handle : physicalDeviceHandles) {
 		PhysicalDevice device(handle, details_.surface);
@@ -169,5 +184,5 @@ void GraphicsMaster::preframeSetup()
 
 void GraphicsMaster::loop()
 {
-	details_.logicDevice->swapChain_->loop();
+	swapChain_->loop(getViewMatrix());
 }
