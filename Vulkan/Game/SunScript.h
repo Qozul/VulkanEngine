@@ -24,7 +24,7 @@ namespace QZL {
 			float angle_;
 
 			static constexpr float TWO_PI = std::_Pi * 2.0f;
-			static constexpr float SPEED = 0.0001f;
+			static constexpr float SPEED = 0.00001f;
 			static constexpr float DISTANCE_PER_SECOND = SPEED * TWO_PI;
 			static constexpr float RADIUS = 81000.0f;
 			static constexpr float DAWN_DUSK_OFFSET = -0.1f;

@@ -12,6 +12,7 @@ namespace QZL {
 			Terrain();
 		private:
 			static void loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::Vertex>& vertices);
+			static constexpr float maxHeight = 100.0f;
 		};
 	}
 }

@@ -11,5 +11,5 @@ out gl_PerVertex {
 
 void main() {
 	pos = iPosition.xy;
-	gl_Position = vec4(pos, 1.0, 1.0);
+	gl_Position = vec4(pos * 2.0 - 1.0, 1.0, 1.0);
 }

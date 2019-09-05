@@ -30,19 +30,19 @@ GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 
 	// Atmosphere and general subpasses
 	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef));
-	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef));
+	//createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef));
 	
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL, 
-		(uint32_t)SubPass::ATMOSPHERE, 
+		(uint32_t)SubPass::GENERAL,
 		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	);
-	createInfo.dependencies.push_back(makeSubpassDependency(
+	/*createInfo.dependencies.push_back(makeSubpassDependency(
 		(uint32_t)SubPass::ATMOSPHERE, 
 		(uint32_t)SubPass::GENERAL, 
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT));
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT));*/
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		(uint32_t)SubPass::GENERAL, 
 		VK_SUBPASS_EXTERNAL, 
@@ -60,7 +60,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(terrainRenderer_);
 	SAFE_DELETE(texturedRenderer_);
-	SAFE_DELETE(atmosphereRenderer_);
+	//SAFE_DELETE(atmosphereRenderer_);
 }
 
 void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
@@ -74,8 +74,6 @@ void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkC
 	bi.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
-	atmosphereRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
-	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
 	terrainRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 	vkCmdEndRenderPass(cmdBuffer);
@@ -89,9 +87,9 @@ void GeometryPass::createRenderers()
 	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
 		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
-	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
+	/*atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
 		"AtmosphereVert", "AtmosphereTESC", "AtmosphereAltTESE", "AtmosphereAltFrag", 1, globalRenderData_);
-	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);*/
 }
 
 void GeometryPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

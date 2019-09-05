@@ -40,7 +40,7 @@ namespace QZL {
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
 			void attachAtmosphereScript(Game::AtmosphereScript* script) {
 				atmosphereScript_ = script;
-				createComputePipelines();
+				//createComputePipelines();
 			}
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
@@ -49,6 +49,7 @@ namespace QZL {
 			ComputePipeline* apScatteringPipeline_;
 			ComputePipeline* apTransmittancePipeline_;
 			RendererBase* postProcessRenderer_;
+			RendererBase* atmosphereRenderer_;
 
 			PushConstantInfo pushConstantInfo_;
 			ComputePushConstants pushConstants_;

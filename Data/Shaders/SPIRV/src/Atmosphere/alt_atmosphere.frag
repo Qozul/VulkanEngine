@@ -13,15 +13,17 @@ layout(push_constant) uniform Params {
 	vec4 sunDirection; // .w = float Hatm
 	vec4 sunIntensity; // .w = float g
 } PC;
-layout(set = 0, binding = 1) uniform sampler3D scatteringTexture;
+layout(set = 0, binding = 0) uniform sampler3D scatteringTexture;
+layout(binding = 1) uniform sampler2D geometryColourBuffer;
+layout(binding = 2) uniform sampler2D geometryDepthBuffer;
 
 void main() 
 {
 	//vec3 zenith = normalize(cameraPosition.xyz);
 	vec3 Z = vec3(0.0, 1.0, 0.0);
-	vec3 V = normalize((PC.inverseViewProj * vec4(pos, 1.0, 1.0)).xyz);
+	vec3 V = normalize((PC.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0)).xyz);
 	vec3 L = normalize(PC.sunDirection.xyz);
-	float height = clamp(length(PC.cameraPosition.xyz), 0.0, PC.sunDirection.w);
+	float height = clamp(PC.cameraPosition.y, 0.0, PC.sunDirection.w);
 	float Cv = dot(V, Z);
 	float Cs = dot(L, Z);
 	// Fetch rayleigh and mie scattered light
@@ -39,4 +41,6 @@ void main()
 	color = vec4(rayleigh + mie, 1.0) * vec4(PC.sunIntensity.xyz, 1.0);
 	color = color / (color + vec4(1.0, 1.0, 1.0, 0.0));
 	color.rgb = pow(color.rgb, vec3(1.0/2.2));
+	
+	color += texture(geometryColourBuffer, pos);
 }

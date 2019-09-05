@@ -7,7 +7,6 @@ namespace QZL {
 		class GeometryPass : public RenderPass {
 			friend class SwapChain;
 			enum class SubPass : uint32_t {
-				ATMOSPHERE,
 				GENERAL,
 				SUBPASS_COUNT
 			};
@@ -24,7 +23,6 @@ namespace QZL {
 
 			RendererBase* texturedRenderer_;
 			RendererBase* terrainRenderer_;
-			RendererBase* atmosphereRenderer_;
 
 			Image* colourBuffer_;
 			Image* depthBuffer_;

@@ -25,25 +25,26 @@ struct PushConstantExtent {
 };
 
 AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader,
-	const uint32_t entityCount, const GlobalRenderData* globalRenderData)
-	: RendererBase(logicDevice), descriptor_(descriptor)
+	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData, 
+	TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
+	: RendererBase(logicDevice), descriptor_(descriptor), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
 {
 	ASSERT(entityCount > 0);
 	renderStorage_ = new RenderStorageNoInstances(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()));
 
-	VkDescriptorSetLayoutBinding scatteringBinding = {};
-	scatteringBinding.binding = 1;
-	scatteringBinding.descriptorCount = 1;
-	scatteringBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	scatteringBinding.pImmutableSamplers = nullptr;
-	scatteringBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	auto scatteringBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
+	auto gcbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	auto gdbBinding = TextureSampler::makeBinding(2, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	VkDescriptorSetLayout layout = descriptor->makeLayout({ scatteringBinding });
+	VkDescriptorSetLayout layout = descriptor->makeLayout({ scatteringBinding, gcbBinding, gdbBinding });
 
 	pipelineLayouts_.push_back(layout);
-
 	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
+
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(geometryColourBuffer->descriptorWrite(descriptorSets_[0], 1));
+	descWrites.push_back(geometryDepthBuffer->descriptorWrite(descriptorSets_[0], 2));
+	descriptor_->updateDescriptorSets(descWrites);
 
 	std::vector<VkPushConstantRange> pushConstantRanges;
 	pushConstantRanges.push_back(setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT));
@@ -66,8 +67,8 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 		auto params = static_cast<AtmosphereShaderParams*>((*(renderStorage_->instanceData()) + i)->getShaderParams());
 		auto material = params->material;
 		material.cameraPosition = glm::vec3(0.0f, 1.0f, 0.0f);
-		material.sunDirection = params->sunScript->getSunDirection();// glm::vec3(1.0f, 0.0f, 0.0f);
-		material.sunIntensity = params->sunScript->getSunIntensity();// glm::vec3(0.1f);
+		material.sunDirection = params->sunScript->getSunDirection();
+		material.sunIntensity = params->sunScript->getSunIntensity();
 
 		PushConstantExtent pce;
 		pce.mat = material;
@@ -90,6 +91,6 @@ void AtmosphereRenderer::initialise(const glm::mat4& viewMatrix)
 	auto instPtr = renderStorage_->instanceData();
 	auto params = static_cast<AtmosphereShaderParams*>((*(instPtr))->getShaderParams()); 
 	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(params->textures.scatteringSum->descriptorWrite(descriptorSets_[0], 1));
+	descWrites.push_back(params->textures.scatteringSum->descriptorWrite(descriptorSets_[0], 0));
 	descriptor_->updateDescriptorSets(descWrites);
 }

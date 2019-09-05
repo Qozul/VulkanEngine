@@ -72,7 +72,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
 	}
 
-	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(0.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 	camPosition_ = new glm::vec3(0.0f, 10.0f, 0.0f);
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);

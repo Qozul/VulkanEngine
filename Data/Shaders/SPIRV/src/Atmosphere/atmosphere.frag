@@ -1,198 +1,142 @@
+/*#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "./alt_functions.glsl"
+layout (constant_id = 0) const float SC_NEAR_Z = 0.1;
+layout (constant_id = 1) const float SC_FAR_Z = 1000.0;
+
+layout(location = 0) out vec4 color;
+layout(location = 0) in vec2 pos;
+layout(push_constant) uniform Params {
+	mat4 inverseViewProj;
+	vec4 betaRay; // .w = float betaMie	
+	vec4 cameraPosition; // .w = float planetRadius
+	vec4 sunDirection; // .w = float Hatm
+	vec4 sunIntensity; // .w = float g
+} PC;
+layout(set = 0, binding = 1) uniform sampler3D scatteringTexture;
+layout(binding = 1) uniform sampler2D geometryColourBuffer;
+layout(binding = 2) uniform sampler2D geometryDepthBuffer;
+
+float linearizeDepth(float depth)
+{
+  return (2.0 * SC_NEAR_Z) / (SC_FAR_Z + SC_NEAR_Z - depth * (SC_FAR_Z - SC_NEAR_Z));
+}*/
+
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
-#include "./definitions.glsl"
-#include "./functions.glsl"
+#include "./alt_functions.glsl"
 
-#define CUSTOM_BINDING_0 0 //CUSTOM_SET_1
-#define CUSTOM_BINDING_1 1 //CUSTOM_SET_1
-#define CUSTOM_BINDING_2 2 //CUSTOM_SET_1
-#define CUSTOM_BINDING_3 3 //CUSTOM_SET_1
-#define CUSTOM_BINDING_4 2 //CUSTOM_SET_0
-#define CUSTOM_SET_0 0
-#define CUSTOM_SET_1 2
+layout (constant_id = 0) const float SC_NEAR_Z = 0.1;
+layout (constant_id = 1) const float SC_FAR_Z = 1000.0;
 
-#include "./runtime_functions.glsl"
+const float AP_HEIGHT_ANGLE_OFFSET = 0.3;
 
-layout(location = 0) out vec4 color;
-layout(location = 0) in vec3 view_ray;
-layout(location = 1) in vec2 uvCoords;
+layout(location = 0) out vec4 colour;
+layout(location = 0) in vec2 pos;
+layout(push_constant) uniform Params {
+	mat4 inverseViewProj;
+	vec4 betaRay; // .w = float betaMie	
+	vec4 cameraPosition; // .w = float planetRadius
+	vec4 sunDirection; // .w = float Hatm
+	vec4 sunIntensity; // .w = float g
+} PC;
+layout(binding = 0) uniform sampler3D scatteringTexture;
+layout(binding = 1) uniform sampler2D geometryColourBuffer;
+layout(binding = 2) uniform sampler2D geometryDepthBuffer;
 
-layout(set = 1, binding = 0) uniform LightingData
+float linearizeDepth(float depth)
 {
-	vec4 cameraPosition;
-	vec4 ambientColour;
-	vec4 lightPositions[1];
-};
-
-float GetSunVisibility(vec3 point, vec3 sun_direction) {
-  vec3 p = point - kSphereCenter;
-  float p_dot_v = dot(p, sun_direction);
-  float p_dot_p = dot(p, p);
-  float ray_sphere_center_squared_distance = p_dot_p - p_dot_v * p_dot_v;
-  float distance_to_intersection = -p_dot_v - sqrt(
-      kSphereRadius * kSphereRadius - ray_sphere_center_squared_distance);
-  if (distance_to_intersection > 0.0) {
-    // Compute the distance between the view ray and the sphere, and the
-    // corresponding (tangent of the) subtended angle. Finally, use this to
-    // compute an approximate sun visibility.
-    float ray_sphere_distance =
-        kSphereRadius - sqrt(ray_sphere_center_squared_distance);
-    float ray_sphere_angular_distance = -ray_sphere_distance / p_dot_v;
-    return smoothstep(1.0, 0.0, ray_sphere_angular_distance / Params.sun_size.x);
-  }
-  return 1.0;
+  return (2.0 * SC_NEAR_Z) / (SC_FAR_Z + SC_NEAR_Z - depth * (SC_FAR_Z - SC_NEAR_Z));
 }
 
-float GetSkyVisibility(vec3 point) {
-  vec3 p = point - kSphereCenter;
-  float p_dot_p = dot(p, p);
-  return
-      1.0 + p.z / sqrt(p_dot_p) * kSphereRadius * kSphereRadius / p_dot_p;
+// theta is the angle between the direction of the incident light and the direction of the scattered light
+float rayleighPhase(float ctheta)
+{
+	return 0.8 * (1.4 + 0.5 * ctheta * ctheta);
 }
 
-void GetSphereShadowInOut(vec3 view_direction, vec3 sun_direction,
-    out float d_in, out float d_out) {
-  vec3 pos = cameraPosition.xyz - kSphereCenter;
-  float pos_dot_sun = dot(pos, sun_direction);
-  float view_dot_sun = dot(view_direction, sun_direction);
-  float k = Params.sun_size.x;
-  float l = 1.0 + k * k;
-  float a = 1.0 - l * view_dot_sun * view_dot_sun;
-  float b = dot(pos, view_direction) - l * pos_dot_sun * view_dot_sun -
-      k * kSphereRadius * view_dot_sun;
-  float c = dot(pos, pos) - l * pos_dot_sun * pos_dot_sun -
-      2.0 * k * kSphereRadius * pos_dot_sun - kSphereRadius * kSphereRadius;
-  float discriminant = b * b - a * c;
-  if (discriminant > 0.0) {
-    d_in = max(0.0, (-b - sqrt(discriminant)) / a);
-    d_out = (-b + sqrt(discriminant)) / a;
-    // The values of d for which delta is equal to 0 and kSphereRadius / k.
-    float d_base = -pos_dot_sun / view_dot_sun;
-    float d_apex = -(pos_dot_sun + kSphereRadius / k) / view_dot_sun;
-    if (view_dot_sun > 0.0) {
-      d_in = max(d_in, d_apex);
-      d_out = a > 0.0 ? min(d_out, d_base) : d_base;
-    } else {
-      d_in = a > 0.0 ? max(d_in, d_base) : d_base;
-      d_out = min(d_out, d_apex);
-    }
-  } else {
-    d_in = 0.0;
-    d_out = 0.0;
-  }
+// g is in range [-1, 1]
+float miePhase(float ctheta, float g)
+{
+	float g2 = g * g;
+	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta, 1.5));
 }
 
+// theta is the angle between the direction of the incident light and the direction of the scattered light
+vec3 apRayleighPhase(float ctheta)
+{
+	return (3.0 / (16.0 * PI)) * PC.betaRay.xyz * (1.0 + ctheta * ctheta);
+}
+
+// g is in range [-1, 1]
+float apMiePhase(float ctheta, float g)
+{
+	float g2 = g * g;
+	return (1.0 / (4.0 * PI)) * PC.betaRay.w * pow(pow(1.0 - g, 2.0) / (1.0 + g2 - 2.0 * g * ctheta), 1.5);
+}
+
+void calculateRayleighAndMie(in vec3 V, in vec3 L, in vec3 Z, out vec3 rayleigh, out vec3 mie) 
+{
+	float height = clamp(length(PC.cameraPosition.xyz), 0.0, PC.sunDirection.w);
+	float Cv = dot(V, Z);
+	float Cs = dot(L, Z);
+	// Fetch rayleigh and mie scattered light
+	vec4 scattering = texture(scatteringTexture, vec3(heightToUh(height, PC.sunDirection.w), 
+		CvToUv(Cv, height, PC.cameraPosition.w), CsToUs(Cs)));
+	rayleigh = scattering.rgb;
+	
+	mie = extractMieFromScattering(scattering, PC.betaRay.w, PC.betaRay.xyz);
+	
+	// Apply phase functions
+	float ctheta = dot(V, L);
+	rayleigh *= rayleighPhase(ctheta);
+	mie *= miePhase(ctheta, PC.sunIntensity.w);
+}
+
+vec3 rotateVectorYZ(vec3 v, float ctheta, float stheta)
+{
+	return vec3(ctheta * v.x - stheta * v.z, v.y, stheta * v.x + ctheta * v.z);
+}
+
+// For areas of the screen where there is no terrain or other things blocking the view ray, calculate the
+// colour of the atmosphere. NOTE: this is only intended for use inside the atmosphere.
+// Any fragment with depth < 1.0 must have some geometry covering it. Just take the colour of the sky passing through
+// it and mix with geometry colour based on the depth.
 void main() 
-{  
-  // Normalized view direction vector.
- /* vec3 view_direction = normalize(view_ray);
-  
-  // Tangent of the angle subtended by this fragment.
-  float fragment_angular_size =
-      length(dFdx(view_ray) + dFdy(view_ray)) / length(view_ray);
-
-  float shadow_in;
-  float shadow_out;
-  GetSphereShadowInOut(view_direction, sun_direction, shadow_in, shadow_out);
-
-  // Hack to fade out light shafts when the Sun is very close to the horizon.
-  float lightshaft_fadein_hack = smoothstep(
-      0.02, 0.04, dot(normalize(cameraPosition.xyz - earth_center), sun_direction));
-	  
-  // Compute the distance between the view ray line and the sphere center,
-  // and the distance between the camera and the intersection of the view
-  // ray with the sphere (or NaN if there is no intersection).
-  vec3 p = cameraPosition.xyz - kSphereCenter;
-  float p_dot_v = dot(p, view_direction);
-  float p_dot_p = dot(p, p);
-  float ray_sphere_center_squared_distance = p_dot_p - p_dot_v * p_dot_v;
-  float distance_to_intersection = -p_dot_v - sqrt(
-      kSphereRadius * kSphereRadius - ray_sphere_center_squared_distance);
-
-  // Compute the radiance reflected by the sphere, if the ray intersects it.
-  float sphere_alpha = 0.0;
-  vec3 sphere_radiance = vec3(0.0);
-  if (distance_to_intersection > 0.0) {
-	// Compute the distance between the view ray and the sphere, and the
-	// corresponding (tangent of the) subtended angle. Finally, use this to
-	// compute the approximate analytic antialiasing factor sphere_alpha.
-	float ray_sphere_distance =
-		kSphereRadius - sqrt(ray_sphere_center_squared_distance);
-	float ray_sphere_angular_distance = -ray_sphere_distance / p_dot_v;
-	sphere_alpha =
-		min(ray_sphere_angular_distance / fragment_angular_size, 1.0);
+{
+	float depth = texture(geometryDepthBuffer, pos).r;
+	depth = clamp(linearizeDepth(depth), 0.0, 1.0);
+	
+	vec3 Z = vec3(0.0, 1.0, 0.0);
+	vec3 L = normalize(PC.sunDirection.xyz);
+	
+	if (depth < 1.0) {
+		vec3 V = normalize((PC.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0)).xyz);
+		float c = dot(V, Z);
+		// Some view rays to the terrain look below the sky where there is no colour (occluded by planet).
+		// Inverting the y component makes it always sample above the horizon for its colour.
+		V.y = c < 0.0 ? -V.y : V.y;
+		// The horizon ring gives a bad colour to the terrain near it, so force it to only sample colours above.
+		c = clamp(c, 0.0, 1.0);
+		vec3 rayleigh;
+		vec3 mie;
+		calculateRayleighAndMie(V, L, Z, rayleigh, mie);
+		vec4 apColour = vec4((rayleigh + mie) * PC.sunIntensity.xyz, 1.0);
+		colour = texture(geometryColourBuffer, pos);
+		colour = mix(colour, apColour, depth * depth);
+	}
+	else {
+		//vec3 zenith = normalize(cameraPosition.xyz);
+		vec3 V = normalize((PC.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0)).xyz);
+		vec3 rayleigh;
+		vec3 mie;
+		calculateRayleighAndMie(V, L, Z, rayleigh, mie);
 		
-	vec3 point = cameraPosition.xyz + view_direction * distance_to_intersection;
-	vec3 normal = normalize(point - kSphereCenter);
-
-	// Compute the radiance reflected by the sphere.
-	vec3 sky_irradiance;
-	vec3 sun_irradiance = GetSunAndSkyIrradiance(
-		point - earth_center, normal, sun_direction, sky_irradiance);
-	sphere_radiance =
-		kSphereAlbedo * (1.0 / PI) * (sun_irradiance + sky_irradiance);
-		
-	float shadow_length =
-		max(0.0, min(shadow_out, distance_to_intersection) - shadow_in) *
-		lightshaft_fadein_hack;
-	vec3 transmittance;
-	vec3 in_scatter = GetSkyRadianceToPoint(cameraPosition.xyz - earth_center,
-		point - earth_center, shadow_length, sun_direction, transmittance);
-	sphere_radiance = sphere_radiance * transmittance + in_scatter;
-  }
-  // Compute the distance between the view ray line and the Earth center,
-  // and the distance between the camera and the intersection of the view
-  // ray with the ground (or NaN if there is no intersection).
-  p = cameraPosition.xyz - earth_center;
-  p_dot_v = dot(p, view_direction);
-  p_dot_p = dot(p, p);
-  float ray_earth_center_squared_distance = p_dot_p - p_dot_v * p_dot_v;
-  distance_to_intersection = -p_dot_v - sqrt(
-      earth_center.z * earth_center.z - ray_earth_center_squared_distance);
-
-  // Compute the radiance reflected by the ground, if the ray intersects it.
-  float ground_alpha = 0.0;
-  vec3 ground_radiance = vec3(0.0);
-  if (distance_to_intersection > 0.0) {
-    vec3 point = cameraPosition.xyz + view_direction * distance_to_intersection;
-    vec3 normal = normalize(point - earth_center);
-
-    // Compute the radiance reflected by the ground.
-    vec3 sky_irradiance;
-    vec3 sun_irradiance = GetSunAndSkyIrradiance(
-        point - earth_center, normal, sun_direction, sky_irradiance);
-    ground_radiance = kGroundAlbedo * (1.0 / PI) * (
-        sun_irradiance * GetSunVisibility(point, sun_direction) +
-        sky_irradiance * GetSkyVisibility(point));
-
-    float shadow_length =
-        max(0.0, min(shadow_out, distance_to_intersection) - shadow_in) *
-        lightshaft_fadein_hack;
-    vec3 transmittance;
-    vec3 in_scatter = GetSkyRadianceToPoint(cameraPosition.xyz - earth_center,
-        point - earth_center, shadow_length, sun_direction, transmittance);
-    ground_radiance = ground_radiance * transmittance + in_scatter;
-    ground_alpha = 1.0;
-  }
-   // Compute the radiance of the sky.
-  float shadow_length = max(0.0, shadow_out - shadow_in) *
-      lightshaft_fadein_hack;
-  vec3 transmittance;
-  vec3 radiance = GetSkyRadiance(
-      cameraPosition.xyz - earth_center, view_direction, shadow_length, sun_direction,
-      transmittance);
-
-  // If the view ray intersects the Sun, add the Sun radiance.
-  if (dot(view_direction, sun_direction) > Params.sun_size.y) {
-    radiance = radiance + transmittance * GetSolarRadiance();
-  }
-  radiance = mix(radiance, ground_radiance, ground_alpha);
-  radiance = mix(radiance, sphere_radiance, sphere_alpha);
-  color.rgb = 
-      pow(vec3(1.0) - exp(-radiance / Params.white_point * exposure), vec3(1.0 / 2.2));
-  color.a = 1.0;*/
-  
-  color = texture(transmittance_texture, uvCoords);
-  //color = vec4(1.0);
+		colour = vec4(rayleigh + mie, 1.0) * vec4(PC.sunIntensity.xyz, 1.0);
+		colour = colour / (colour + vec4(1.0, 1.0, 1.0, 0.0));
+		colour.rgb = pow(colour.rgb, vec3(1.0/2.2));
+	}
 }

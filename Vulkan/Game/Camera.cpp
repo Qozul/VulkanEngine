@@ -5,7 +5,7 @@
 using namespace QZL;
 using namespace Game;
 
-const float Camera::SPEED = 10.0f;
+const float Camera::SPEED = 20.0f;
 const float Camera::MOUSE_SENSITIVITY = 2.0f;
 const float Camera::MAX_ROTATION_DT = 0.5f;
 

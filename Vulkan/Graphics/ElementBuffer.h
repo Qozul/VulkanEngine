@@ -60,12 +60,16 @@ namespace QZL
 		template<typename V>
 		inline void ElementBuffer<V>::commit()
 		{
-			if (isCommitted_)
+			if (isCommitted_) {
 				return;
+			}
 
 			size_t size = indices_.size() * sizeof(uint16_t);
 			size_t size2 = vertices_.size() * sizeof(V);
 			size_t largestSize = size > size2 ? size : size2;
+			if (largestSize == 0) {
+				return;
+			}
 			MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer(MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, largestSize);
 
 			void* data = deviceMemory_->mapMemory(stagingBuffer.id);

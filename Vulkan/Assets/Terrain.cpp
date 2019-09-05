@@ -12,6 +12,7 @@ Terrain::Terrain()
 {
 	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new Graphics::TerrainShaderParams("heightmaps/hmap2", "ground_04",
 		Graphics::MaterialStatic(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f)), "terrain", loadFunction);
+	transform_->position.y = 100.0f;
 }
 
 void Terrain::loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::Vertex>& vertices)
