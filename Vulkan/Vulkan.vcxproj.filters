@@ -70,6 +70,12 @@
     <Filter Include="Header Files\Graphics\RenderPasses">
       <UniqueIdentifier>{eae44390-ffdf-4547-b43b-1b57afde13fa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\Renderers\Particles">
+      <UniqueIdentifier>{ee73189d-8a04-455a-b22b-0a6954f3accc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Assets\Specialised Entities">
+      <UniqueIdentifier>{f2562f84-fb97-4d7f-bc60-873ed9400c7c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Shader.h">
@@ -174,9 +180,6 @@
     <ClInclude Include="Graphics\TerrainShaderParams.h">
       <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
     </ClInclude>
-    <ClInclude Include="Assets\Terrain.h">
-      <Filter>Header Files\Assets</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\ShaderParams.h">
       <Filter>Header Files\Graphics\Renderers</Filter>
     </ClInclude>
@@ -209,9 +212,6 @@
     </ClInclude>
     <ClInclude Include="Graphics\RendererBase.h">
       <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Assets\Skysphere.h">
-      <Filter>Header Files\Assets</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\ElementBufferInterface.h">
       <Filter>Header Files\Graphics</Filter>
@@ -263,6 +263,18 @@
     </ClInclude>
     <ClInclude Include="Graphics\GraphicsTypes.h">
       <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ParticleRenderer.h">
+      <Filter>Header Files\Graphics\Renderers\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\ParticleSystem.h">
+      <Filter>Header Files\Assets\Specialised Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Terrain.h">
+      <Filter>Header Files\Assets\Specialised Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Skysphere.h">
+      <Filter>Header Files\Assets</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -391,6 +403,12 @@
     </ClCompile>
     <ClCompile Include="Graphics\PostProcessPass.cpp">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ParticleRenderer.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Assets\ParticleSystem.cpp">
+      <Filter>Source Files\Assets</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

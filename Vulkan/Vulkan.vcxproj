@@ -28,6 +28,7 @@
     <ClInclude Include="Assets\AssetManager.h" />
     <ClInclude Include="Assets\AtmosphereParameters.h" />
     <ClInclude Include="Assets\Entity.h" />
+    <ClInclude Include="Assets\ParticleSystem.h" />
     <ClInclude Include="Assets\Skysphere.h" />
     <ClInclude Include="Assets\Terrain.h" />
     <ClInclude Include="Assets\Transform.h" />
@@ -58,6 +59,7 @@
     <ClInclude Include="Graphics\Mesh.h" />
     <ClInclude Include="Graphics\MeshLoader.h" />
     <ClInclude Include="Graphics\OptionalExtentions.h" />
+    <ClInclude Include="Graphics\ParticleRenderer.h" />
     <ClInclude Include="Graphics\PhysicalDevice.h" />
     <ClInclude Include="Graphics\PostProcessPass.h" />
     <ClInclude Include="Graphics\PostProcessRenderer.h" />
@@ -93,6 +95,7 @@
     <ClCompile Include="Assets\AltAtmosphere.cpp" />
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
+    <ClCompile Include="Assets\ParticleSystem.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />
     <ClCompile Include="Game\AtmosphereScript.cpp" />
@@ -112,6 +115,7 @@
     <ClCompile Include="Graphics\Image2D.cpp" />
     <ClCompile Include="Graphics\LogicDevice.cpp" />
     <ClCompile Include="Graphics\MeshLoader.cpp" />
+    <ClCompile Include="Graphics\ParticleRenderer.cpp" />
     <ClCompile Include="Graphics\PhysicalDevice.cpp" />
     <ClCompile Include="Graphics\PostProcessPass.cpp" />
     <ClCompile Include="Graphics\PostProcessRenderer.cpp" />
