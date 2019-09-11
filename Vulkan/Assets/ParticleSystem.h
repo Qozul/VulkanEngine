@@ -1,5 +1,7 @@
 #pragma once
 #include "Entity.h"
+#include "../Graphics/Vertex.h"
+#include "../Graphics/Material.h"
 #include <stack>
 
 namespace QZL {
@@ -8,17 +10,6 @@ namespace QZL {
 		// Individual particles are grouped in to a ParticleSystem which defines some behaviour and tracks all of its particles lifetime.
 		// To avoid having a model matrix for every individual particle, the system will have only one, and the particles' positions (points)
 		// will be defined relative to that point. Each individual particle positions is just a vertex of the particle system, in a dynamic element buffer.
-
-		struct ParticleVertex {
-			glm::vec3 position;
-			float scale;
-			glm::vec2 textureOffset;
-		};
-
-		struct ParticleMaterial {
-			float textureTileLength;
-			glm::vec4 tint;
-		};
 
 		// A 'Particle' only needs to know its index inside the system's vertex range, how long its been alive for, and its velocity.
 		struct Particle {
@@ -40,10 +31,10 @@ namespace QZL {
 			void update(float dt) override;
 		protected:
 			// Number of tiles on xy is identical for x and y, as textures must be square.
-			ParticleSystem(size_t maxParticles, float particleLifetime, float updateInterval, float textureTileLength);
+			ParticleSystem(size_t maxParticles, float particleLifetime, float updateInterval, float textureTileLength, const std::string& textureName);
 			virtual ~ParticleSystem();
 			virtual void particleCreation(float dt, size_t expiredCount) = 0;
-			virtual void updateParticle(ParticleVertex vertex) = 0;
+			virtual void updateParticle(Graphics::ParticleVertex vertex) = 0;
 
 			// Tiles in the texture must be arranged left to right, top to bottom.
 			void nextTextureTile(glm::vec2& currentOffset);
@@ -54,7 +45,7 @@ namespace QZL {
 			Particle allocateParticle();
 			void freeParticle();
 
-			ParticleMaterial material_;
+			Graphics::MaterialParticle material_;
 			// The particles are not necessarily updated every frame, but after a specified time interval in seconds. An interval of 0 will
 			// cause it to update once per frame.
 			float updateInterval_;
@@ -64,7 +55,7 @@ namespace QZL {
 			std::stack<Particle, std::deque<Particle>> freeParticles_;
 			// For simplicity, all particles must have the same lifetime and are therefore removed first in first out
 			std::deque<Particle> activeParticles_;
-			std::vector<ParticleVertex> vertices_;
+			std::vector<Graphics::ParticleVertex> vertices_;
 		};
 	}
 }

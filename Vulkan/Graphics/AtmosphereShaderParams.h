@@ -2,9 +2,6 @@
 #include "ShaderParams.h"
 
 namespace QZL {
-	/*namespace Assets {
-		struct PrecomputedTextures;
-	}*/
 	namespace Game {
 		class SunScript;
 		struct PrecomputedTextures;

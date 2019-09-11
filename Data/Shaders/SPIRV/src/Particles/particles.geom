@@ -11,7 +11,7 @@ layout(location = 0) out vec2 outUvCoords;
 
 layout(push_constant) uniform PushConstants {
 	mat4 mvp;
-	vec3 cameraPosition;
+	vec3 billboardPoint;
 	float tileLength;
 } PC;
 
@@ -27,7 +27,7 @@ void createVertex(vec3 right, vec2 uv, float r, float u)
 
 void main()
 {
-	vec3 right = cross(normalize(inPosition[0] - PC.cameraPosition), UP);
+	vec3 right = cross(normalize(inPosition[0] - PC.billboardPoint), UP);
 	
 	createVertex(right, inTexOffset[0],	-0.5, -0.5);
 	createVertex(right, vec2(inTexOffset[0].x, inTexOffset[0].y + PC.tileLength), -0.5,  0.5);

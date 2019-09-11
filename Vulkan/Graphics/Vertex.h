@@ -63,5 +63,10 @@ namespace QZL
 			}
 		};
 #pragma pack(pop)
+		struct ParticleVertex {
+			glm::vec3 position;
+			float scale;
+			glm::vec2 textureOffset;
+		};
 	}
 }

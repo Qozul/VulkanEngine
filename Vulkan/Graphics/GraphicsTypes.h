@@ -3,7 +3,7 @@
 namespace QZL {
 	namespace Graphics {
 		enum class RendererTypes {
-			STATIC, TERRAIN, ATMOSPHERE
+			STATIC, TERRAIN, ATMOSPHERE, PARTICLE
 		};
 
 		enum class RenderPassTypes : size_t {

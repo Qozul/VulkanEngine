@@ -21,16 +21,17 @@ DeviceMemory::~DeviceMemory()
 	vmaDestroyAllocator(allocator_);
 }
 
-const MemoryAllocationDetails DeviceMemory::createBuffer(MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size)
+const MemoryAllocationDetails DeviceMemory::createBuffer(MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size, MemoryAccessType accessType)
 {
 	MemoryAllocationDetails allocationDetails = {};
 	allocationDetails.size = size;
 	allocationDetails.id = availableId_++;
+	allocationDetails.access = accessType;
 
 	VkBufferCreateInfo bufferCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
 	bufferCreateInfo.size = allocationDetails.size;
 	bufferCreateInfo.usage = bufferUsage;
-
+	
 	VmaAllocationCreateInfo allocCreateInfo = makeVmaCreateInfo(pattern, allocationDetails.access);
 	VmaAllocationInfo allocInfo;
 

@@ -12,5 +12,5 @@ layout(push_constant) uniform PushConstants {
 
 void main()
 {
-	colour = texture(tex, inUvCoords) + PC.tint;
+	colour = texture(tex, inUvCoords);// + PC.tint;
 }

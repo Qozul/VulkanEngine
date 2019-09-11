@@ -43,6 +43,7 @@ namespace QZL {
 			const VertexType getVertexType() const {
 				return vertexType_;
 			}
+			glm::mat4 getModelmatrix();
 		private:
 			Assets::Entity* owningEntity_; // does not own this object
 			RendererTypes rtype_;

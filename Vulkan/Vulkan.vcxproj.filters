@@ -276,6 +276,12 @@
     <ClInclude Include="Assets\Skysphere.h">
       <Filter>Header Files\Assets</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\ParticleShaderParams.h">
+      <Filter>Header Files\Graphics\Renderers\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DynamicVertexBuffer.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\TexturedRenderer.cpp">

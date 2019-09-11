@@ -40,6 +40,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 {
 	initSwapChain(window, surfaceCapabilities);
 	initSwapChainImages(window, surface, surfaceCapabilities);
+	numSwapChainImages = details_.images.size();
 	initImageViews();
 	if (master->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
 		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().assetManager->textureManager->getSetlayoutBinding());
@@ -52,7 +53,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	renderPasses_.push_back(new GeometryPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_.push_back(new PostProcessPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
-	createSyncObjects(); 
+	createSyncObjects();
 }
 
 SwapChain::~SwapChain()

@@ -33,9 +33,11 @@ void ParticleSystem::update(float dt)
 	}
 }
 
-ParticleSystem::ParticleSystem(size_t maxParticles, float particleLifetime, float updateInterval, float textureTileLength)
+ParticleSystem::ParticleSystem(size_t maxParticles, float particleLifetime, float updateInterval, float textureTileLength, const std::string& textureName)
 	: particleLifetime_(particleLifetime), updateInterval_(updateInterval), elapsedUpdateTime_(0.0f)
 {
+	// TODO: load texture with textureName from manager
+
 	material_.textureTileLength = textureTileLength;
 	for (size_t i = 0; i < maxParticles; ++i) {
 		freeParticles_.emplace(i);

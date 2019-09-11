@@ -13,7 +13,7 @@ namespace QZL
 		class DeviceMemory {
 			friend class LogicDevice;
 		public:
-			const MemoryAllocationDetails createBuffer(MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size);
+			const MemoryAllocationDetails createBuffer(MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size, MemoryAccessType accessType = MemoryAccessType::kDirect);
 			const MemoryAllocationDetails createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo);
 			void deleteAllocation(AllocationID id, VkBuffer buffer);
 			void deleteAllocation(AllocationID id, VkImage image);

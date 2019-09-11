@@ -60,7 +60,6 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(terrainRenderer_);
 	SAFE_DELETE(texturedRenderer_);
-	//SAFE_DELETE(atmosphereRenderer_);
 }
 
 void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
@@ -87,9 +86,6 @@ void GeometryPass::createRenderers()
 	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
 		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
-	/*atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
-		"AtmosphereVert", "AtmosphereTESC", "AtmosphereAltTESE", "AtmosphereAltFrag", 1, globalRenderData_);
-	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);*/
 }
 
 void GeometryPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

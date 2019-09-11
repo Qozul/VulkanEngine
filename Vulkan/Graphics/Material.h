@@ -36,5 +36,10 @@ namespace QZL {
 			glm::vec3 sunIntensity;
 			float g;
 		};
+		struct MaterialParticle {
+			float textureTileLength;
+			glm::vec4 tint;
+			TextureSampler* texture;
+		};
 	}
 }
