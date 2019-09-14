@@ -41,7 +41,7 @@ namespace QZL {
 			else {
 				dataMap_[fullName] = meshes_.size();
 				auto index = instances_.size();
-				meshes_.emplace_back(mesh->indexCount, 0, mesh->indexOffset, mesh->vertexOffset, index);
+				meshes_.emplace_back(mesh->count, 0, mesh->indexOffset, mesh->vertexOffset, index);
 				paramData_.push_back(resolveParams(instance));
 				addInstance(meshes_[dataMap_[fullName]], instance, index);
 			}

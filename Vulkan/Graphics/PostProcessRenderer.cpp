@@ -46,10 +46,11 @@ PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass 
 	
 	std::vector<Graphics::VertexOnlyPosition> vertices = { glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, -1.0f, 0.0f) };
 	std::vector<uint16_t> indices = { 0, 1, 3, 2 };
-	auto voffset = renderStorage_->buf()->addVertices(vertices.data(), vertices.size());
-	auto ioffset = renderStorage_->buf()->addIndices(indices.data(), indices.size());
-	renderStorage_->buf()->emplaceMesh("FullscreenQuad", indices.size(), ioffset, voffset);
-	renderStorage_->addMesh(nullptr, renderStorage_->buf()->getMesh("FullscreenQuad"));
+	auto buf = static_cast<ElementBufferInterface*>(renderStorage_->buf());
+	auto voffset = buf->addVertices(vertices.data(), vertices.size());
+	auto ioffset = buf->addIndices(indices.data(), indices.size());
+	buf->emplaceMesh("FullscreenQuad", indices.size(), ioffset, voffset);
+	renderStorage_->addMesh(nullptr, buf->getMesh("FullscreenQuad"));
 
 	std::array<VkSpecializationMapEntry, 2> specConstantEntries;
 	specConstantEntries[0].constantID = 0;
@@ -84,10 +85,10 @@ void PostProcessRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_
 {
 	ASSERT_DEBUG(renderStorage_->meshCount() > 0);
 	beginFrame(cmdBuffer);
-	renderStorage_->buf()->bind(cmdBuffer);
+	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer);
 	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
 	auto cmd = *renderStorage_->meshData();
-	vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.baseVertex, cmd.baseInstance);
+	vkCmdDrawIndexed(cmdBuffer, cmd.count, cmd.instanceCount, cmd.firstIndex, cmd.baseVertex, cmd.baseInstance);
 }
 
 void PostProcessRenderer::initialise(const glm::mat4& viewMatrix)

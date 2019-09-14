@@ -1,5 +1,5 @@
 #include "ParticleRenderer.h"
-#include "ElementBuffer.h"
+#include "DynamicVertexBuffer.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
@@ -50,16 +50,16 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	renderStorage_->buf()->bind(cmdBuffer);
+	static_cast<VertexBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer);
 
 	// TODO move mvp matrix to uniform buffer so that instances can be used
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		auto comp = (*(renderStorage_->instanceData()) + i);
-		auto params = static_cast<ParticleShaderParams*>(comp->getShaderParams());
+		auto component = (*(renderStorage_->instanceData()) + i);
+		auto params = static_cast<ParticleShaderParams*>(component->getShaderParams());
 		auto material = params->material;
 
 		PushConstantGeometry pcg;
-		pcg.mvp = GraphicsMaster::kProjectionMatrix * viewMatrix * comp->getModelmatrix();
+		pcg.mvp = GraphicsMaster::kProjectionMatrix * viewMatrix * component->getModelmatrix();
 		pcg.billboardPoint = *billboardPoint_;
 		pcg.tileLength = material.textureTileLength;
 
@@ -72,7 +72,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);
 		vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[0].stages, pushConstantInfos_[0].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[0].barrier, 0, nullptr, 0, nullptr);
 
-		vkCmdDraw(cmdBuffer, [psystem.activeCount()], drawElementCmd.instanceCount, [drawElementCmd.firstvertex], drawElementCmd.baseInstance);
+		vkCmdDraw(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 
 	/* TODO: 

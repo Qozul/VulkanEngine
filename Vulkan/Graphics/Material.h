@@ -4,6 +4,7 @@
 
 namespace QZL {
 	namespace Graphics {
+		class TextureSampler;
 		struct MaterialStatic {
 			// 32 bytes
 			float diffuseX, diffuseY, diffuseZ; // Mixed in with texture

@@ -7,12 +7,14 @@ namespace QZL
 {
 	namespace Graphics {
 		class ElementBufferInterface;
+		class VertexBufferInterface;
 		class GraphicsComponent;
 		class ShaderParams;
 
 		class RenderStorage {
 		public:
 			RenderStorage(ElementBufferInterface* buffer);
+			RenderStorage(VertexBufferInterface* buffer);
 			virtual ~RenderStorage();
 			// Mesh must be added with one instance
 			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh);
@@ -29,14 +31,24 @@ namespace QZL
 			size_t instanceCount() {
 				return instances_.size();
 			}
-			ElementBufferInterface* buf() {
-				return buf_;
+			void* buf() {
+				if (bufferType_ == BufferType::ELEMENT) {
+					return buf_.elementBuffer;
+				}
+				else {
+					return buf_.vertexBuffer;
+				}
 			}
 
 		protected:
 			virtual void addInstance(DrawElementsCommand& cmd, GraphicsComponent* instance, uint32_t index);
 
-			ElementBufferInterface* buf_;
+			union {
+				ElementBufferInterface* elementBuffer;
+				VertexBufferInterface* vertexBuffer;
+			} buf_;
+			BufferType bufferType_;
+
 			std::unordered_map<std::string, size_t> dataMap_; // Mesh name to offset in to meshes_
 
 			std::vector<DrawElementsCommand> meshes_;
@@ -49,10 +61,12 @@ namespace QZL
 		public:
 			RenderStorageNoInstances(ElementBufferInterface* buffer)
 				: RenderStorage(buffer) { }
+			RenderStorageNoInstances(VertexBufferInterface* buffer)
+				: RenderStorage(buffer) { }
 			virtual ~RenderStorageNoInstances() { }
 			// Mesh must be added with one instance
 			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh) override {
-				meshes_.emplace_back(mesh->indexCount, 1, mesh->indexOffset, mesh->vertexOffset, 0);
+				meshes_.emplace_back(mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, 0);
 				instances_.push_back(instance);
 			}
 		};

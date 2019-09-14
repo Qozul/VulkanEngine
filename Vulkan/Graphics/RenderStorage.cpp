@@ -1,19 +1,34 @@
 #include "RenderStorage.h"
-#include "ElementBuffer.h"
 #include "GraphicsComponent.h"
 #include "DeviceMemory.h"
+#include "ElementBuffer.h"
+#include "DynamicVertexBuffer.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
 RenderStorage::RenderStorage(ElementBufferInterface* buffer)
-	: buf_(buffer)
+	: bufferType_(buffer->bufferType())
 {
+	buf_.elementBuffer = buffer;
+}
+
+RenderStorage::RenderStorage(VertexBufferInterface* buffer)
+	: bufferType_(buffer->bufferType())
+{
+	buf_.vertexBuffer = buffer;
 }
 
 RenderStorage::~RenderStorage()
 {
-	SAFE_DELETE(buf_);
+	switch (bufferType_) {
+	case BufferType::ELEMENT:
+		SAFE_DELETE(buf_.elementBuffer);
+		break;
+	case BufferType::VERTEX:
+		SAFE_DELETE(buf_.vertexBuffer);
+		break;
+	}
 }
 
 void RenderStorage::addMesh(GraphicsComponent* instance, BasicMesh* mesh)
@@ -28,7 +43,12 @@ void RenderStorage::addMesh(GraphicsComponent* instance, BasicMesh* mesh)
 	else {
 		dataMap_[name] = meshes_.size();
 		auto index = instances_.size();
-		meshes_.emplace_back(mesh->indexCount, 0, mesh->indexOffset, mesh->vertexOffset, index);
+		if (bufferType_ == BufferType::ELEMENT) {
+			meshes_.emplace_back(mesh->count, 0, mesh->indexOffset, mesh->vertexOffset, index);
+		}
+		else {
+			meshes_.emplace_back(mesh->count, 0, 0, mesh->vertexOffset, index);
+		}
 		addInstance(meshes_[dataMap_[name]], instance, index);
 	}
 }

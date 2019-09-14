@@ -55,6 +55,9 @@ namespace QZL
 				deviceMemory_->deleteAllocation(vertexBufferDetails_.id, vertexBufferDetails_.buffer);
 				deviceMemory_->deleteAllocation(indexBufferDetails_.id, indexBufferDetails_.buffer);
 			}
+			for (auto mesh : meshes_) {
+				SAFE_DELETE(mesh.second);
+			}
 		}
 
 		template<typename V>
@@ -159,7 +162,7 @@ namespace QZL
 		inline void ElementBuffer<V>::emplaceMesh(std::string name, size_t indexCount, size_t indexOffset, size_t vertexOffset)
 		{
 			meshes_[name] = new BasicMesh();
-			meshes_[name]->indexCount = indexCount;
+			meshes_[name]->count = indexCount;
 			meshes_[name]->indexOffset = indexOffset;
 			meshes_[name]->vertexOffset = vertexOffset;
 		}

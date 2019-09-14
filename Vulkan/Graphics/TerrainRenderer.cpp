@@ -76,7 +76,7 @@ void TerrainRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t id
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	renderStorage_->buf()->bind(cmdBuffer);
+	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer);
 
 	updateBuffers(viewMatrix);
 
@@ -89,7 +89,7 @@ void TerrainRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t id
 		descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_1));
 		descriptor_->updateDescriptorSets(descWrites);
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx * 2], 0, nullptr);
-		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.indexCount, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 }
 

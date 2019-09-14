@@ -2,19 +2,14 @@
 #include "VkUtil.h"
 #include "Mesh.h"
 #include "DeviceMemory.h"
+#include "ElementBufferInterface.h"
 
 namespace QZL {
 	namespace Graphics {
-
-		struct VertexSubBufferRange {
-			size_t firstVertex;
-			size_t vertexCount;
-		};
-
 		// This class provides a vertex buffer which gives out ranges for animated mesh systems to use
 		// and update each frame.
 		template<typename V>
-		class DynamicVertexBuffer {
+		class DynamicVertexBuffer : public VertexBufferInterface, public DynamicBufferInterface {
 		public:
 			DynamicVertexBuffer(DeviceMemory* deviceMemory, const size_t maxVertices, const int numSwapChainImages)
 				: deviceMemory_(deviceMemory), maxVertices_(maxVertices), usedVertices_(0) {
@@ -23,16 +18,27 @@ namespace QZL {
 			}
 			~DynamicVertexBuffer() {
 				deviceMemory_->deleteAllocation(vertexBufferDetails_.id, vertexBufferDetails_.buffer);
+				for (auto mesh : meshes_) {
+					SAFE_DELETE(mesh.second);
+				}
 			}
 
-			void updateAndBind(VkCommandBuffer cmdBuffer, const uint32_t idx);
+			void updateBuffer(VkCommandBuffer& cmdBuffer, const uint32_t& idx) override;
+			void bind(VkCommandBuffer cmdBuffer) override;
+			void addVertices(void* data, const size_t count, const size_t offset = std::numeric_limits<size_t>::max()) override;
+			void emplaceMesh(std::string name, size_t indexCount, size_t indexOffset, size_t vertexOffset) override;
+			bool contains(const std::string& id) override {
+				return meshes_.count(name) > 0;
+			}
 
-			VertexSubBufferRange allocateSubBufferRange(size_t vertexCount);
+			SubBufferRange allocateSubBufferRange(size_t vertexCount) override;
 			void freeSubBufferRange(VertexSubBufferRange range) {} // TODO
 
-			V* getSubBuffer(size_t firstVertex) {
-				return &buffer_[firstvertex];
+			void* getSubBufferData(size_t firstVertex) override {
+				return &buffer_[firstVertex];
 			}
+
+			const BasicMesh* operator[](const std::string& name) const;
 		private:
 			MemoryAllocationDetails vertexBufferDetails_;
 			DeviceMemory* deviceMemory_;
@@ -45,18 +51,45 @@ namespace QZL {
 		};
 
 		template<typename V>
-		inline void DynamicVertexBuffer<V>::updateAndBind(VkCommandBuffer cmdBuffer, const uint32_t idx)
+		inline void DynamicVertexBuffer<V>::updateBuffer(VkCommandBuffer& cmdBuffer, const uint32_t& idx)
 		{
 			// Update the vertex range for this frame
 			memcpy(vertexBufferDetails_.mappedData[maxVertices * idx], buffer_.data(), maxVertices * sizeof(V));
+		}
 
-			// Bind the vertex buffer range for this frame
+		template<typename V>
+		inline void DynamicVertexBuffer<V>::bind(VkCommandBuffer cmdBuffer)
+		{
 			VkDeviceSize offsets[] = { maxVertices * sizeof(V) * idx };
 			vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBufferDetails_.buffer, offsets);
 		}
 
 		template<typename V>
-		inline VertexSubBufferRange DynamicVertexBuffer<V>::allocateSubBufferRange(size_t vertexCount)
+		inline void DynamicVertexBuffer<V>::addVertices(void* data, const size_t count, const size_t offset)
+		{
+			size_t prevSize;
+			if (offset == std::numeric_limits<size_t>::max()) {
+				prevSize = offset;
+			}
+			else {
+				prevSize = vertices.size();
+			}
+			vertices_.resize(prevSize + size);
+			std::copy_n(static_cast<V*>(data), size, vertices_.begin() + prevSize);
+			return prevSize;
+		}
+
+		template<typename V>
+		inline void DynamicVertexBuffer<V>::emplaceMesh(std::string name, size_t count, size_t indexOffset, size_t vertexOffset)
+		{
+			meshes_[name] = new BasicMesh();
+			meshes_[name]->count = indexCount;
+			meshes_[name]->indexOffset = indexOffset;
+			meshes_[name]->vertexOffset = vertexOffset;
+		}
+
+		template<typename V>
+		inline SubBufferRange DynamicVertexBuffer<V>::allocateSubBufferRange(size_t vertexCount)
 		{
 			ASSERT(usedVertices_ + vertexCount <= maxVertices_);
 
@@ -66,6 +99,12 @@ namespace QZL {
 
 			usedVertices_ += vertexCount;
 			return range;
+		}
+		template<typename V>
+		inline const BasicMesh* DynamicVertexBuffer<V>::operator[](const std::string& name) const
+		{
+			ASSERT(meshes_.count(name) > 0);
+			return meshes_.at(name);
 		}
 	}
 }

@@ -8,39 +8,61 @@ void ParticleSystem::update(float dt)
 	elapsedUpdateTime_ += dt;
 	if (elapsedUpdateTime_ >= updateInterval_) {
 		elapsedUpdateTime_ = 0.0f;
-		// Free any expired particles
-		size_t expiredCount = 0;
-		bool expired = false;
-		do {
-			auto p = activeParticles_.front();
-			if (p.lifetime + elapsedUpdateTime_ >= particleLifetime_) {
-				// If gaps appear in the vertex data it shouldn't draw them.
-				// Gaps may appear if all the expired particles are not replaced the same update.
-				vertices_[p.index].scale = 0.0f;
-				activeParticles_.pop_front();
-				++expiredCount;
-				expired = true;
+
+		if (!alwaysAliveAndUnordered_) {
+			// Update or free every particle that is currently active
+			size_t i = 0;
+			while (i < currentActiveSize_) {
+				particles_[i].lifetime -= elapsedUpdateTime_;
+				if (particles_[i].lifetime <= 0.0f) {
+					// i does not increment because the new particle at index i needs to be checked like any other,
+					// but currentActiveSize_ does decrement, so infinite loop should not be possible.
+					freeParticle(i);
+				}
+				else {
+					updateParticle(particles_[i], vertices_[i]);
+					++i;
+				}
 			}
-		} while (expired);
 
-		// Create any new particles, this is defined by derived classes
-		particleCreation(dt, expiredCount);
+			// Create any new particles, this is defined by derived classes
+			particleCreation(dt, numDeadParticles_);
 
-		// Update each active particle
-		for (size_t i = 0; i < activeParticles_.size(); ++i) {
-			updateParticle(vertices_[activeParticles_[i].index]);
+			// Sort the particles to draw closest to the camera using insertion sort
+			for (int i = 1; i < currentActiveSize_; ++i) {
+				int j = i - 1;
+				auto iVertVal = vertices_[i];
+				auto iPartVal = particles_[i];
+				int iKey = glm::distance(vertices_[i].position, *billboardPoint_);
+				int jKey = glm::distance(vertices_[j].position, *billboardPoint_);
+				while (j >= 0 && jKey > iKey) {
+					vertices_[j + 1] = vertices_[j];
+					particles_[j + 1] = particles_[j];
+					--j;
+				}
+				vertices_[j + 1] = iVertVal;
+				particles_[j + 1] = iPartVal;
+			}
+		}
+		else {
+			for (size_t i = 0; i < currentActiveSize_; ++i) {
+				updateParticle(particles_[i], vertices_[i]);
+			}
 		}
 	}
 }
 
-ParticleSystem::ParticleSystem(size_t maxParticles, float particleLifetime, float updateInterval, float textureTileLength, const std::string& textureName)
-	: particleLifetime_(particleLifetime), updateInterval_(updateInterval), elapsedUpdateTime_(0.0f)
+ParticleSystem::ParticleSystem(size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName,
+	glm::vec3* billboardPoint)
+	: updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
+	numDeadParticles_(0.0f)
 {
+	ASSERT(billboardPoint_ != nullptr);
 	// TODO: load texture with textureName from manager
 
 	material_.textureTileLength = textureTileLength;
 	for (size_t i = 0; i < maxParticles; ++i) {
-		freeParticles_.emplace(i);
+		particles_.emplace_back(i);
 	}
 }
 
@@ -62,21 +84,21 @@ void ParticleSystem::nextTextureTile(glm::vec2& tileOffset)
 	}
 }
 
-Particle ParticleSystem::allocateParticle()
+Particle* ParticleSystem::allocateParticle()
 {
-	ASSERT(!freeParticles_.empty());
-	auto p = freeParticles_.top();
-	freeParticles_.pop();
-	activeParticles_.push_back(p);
-	p.reset();
+	Particle* p = nullptr;
+	if (numDeadParticles_ > 0) {
+		p = &particles_[currentActiveSize_];
+		--numDeadParticles_;
+		updateActiveSize();
+	}
 	return p;
 }
 
-void ParticleSystem::freeParticle()
+void ParticleSystem::freeParticle(size_t idx)
 {
-	if (!activeParticles_.empty()) {
-		auto p = activeParticles_.front();
-		activeParticles_.pop_front();
-		freeParticles_.push(p);
-	}
+	particles_[idx].swapAndReset(particles_[currentActiveSize_]);
+	std::swap(vertices_[idx], vertices_[currentActiveSize_]);
+	++numDeadParticles_;
+	updateActiveSize();
 }
