@@ -34,7 +34,6 @@ namespace QZL
 			VmaAllocator allocator_;
 			AllocationID availableId_; // 0 reserved for invalid id
 			std::map<AllocationID, VmaAllocation> allocations_;
-
 			VkQueue queue_;
 			VkCommandBuffer transferCmdBuffer_;
 			LogicDevice* logicDevice_;

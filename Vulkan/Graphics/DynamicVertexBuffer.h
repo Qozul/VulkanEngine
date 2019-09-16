@@ -24,15 +24,15 @@ namespace QZL {
 			}
 
 			void updateBuffer(VkCommandBuffer& cmdBuffer, const uint32_t& idx) override;
-			void bind(VkCommandBuffer cmdBuffer) override;
+			void bind(VkCommandBuffer cmdBuffer, const size_t idx) override;
 			void addVertices(void* data, const size_t count, const size_t offset = std::numeric_limits<size_t>::max()) override;
 			void emplaceMesh(std::string name, size_t indexCount, size_t indexOffset, size_t vertexOffset) override;
 			bool contains(const std::string& id) override {
-				return meshes_.count(name) > 0;
+				return meshes_.count(id) > 0;
 			}
 
 			SubBufferRange allocateSubBufferRange(size_t vertexCount) override;
-			void freeSubBufferRange(VertexSubBufferRange range) {} // TODO
+			void freeSubBufferRange(SubBufferRange range) {} // TODO
 
 			void* getSubBufferData(size_t firstVertex) override {
 				return &buffer_[firstVertex];
@@ -44,6 +44,7 @@ namespace QZL {
 			DeviceMemory* deviceMemory_;
 			const size_t maxVertices_;
 			size_t usedVertices_;
+			std::map<std::string, BasicMesh*> meshes_;
 
 			// Updates from any vertex system is pushed in to this buffer, then each frame it is copied to the appropriate section of the vertex buffer.
 			// It always contains the most recent vertex values
@@ -54,13 +55,13 @@ namespace QZL {
 		inline void DynamicVertexBuffer<V>::updateBuffer(VkCommandBuffer& cmdBuffer, const uint32_t& idx)
 		{
 			// Update the vertex range for this frame
-			memcpy(vertexBufferDetails_.mappedData[maxVertices * idx], buffer_.data(), maxVertices * sizeof(V));
+			memcpy(vertexBufferDetails_.mappedData[maxVertices_ * idx], buffer_.data(), maxVertices_ * sizeof(V));
 		}
 
 		template<typename V>
-		inline void DynamicVertexBuffer<V>::bind(VkCommandBuffer cmdBuffer)
+		inline void DynamicVertexBuffer<V>::bind(VkCommandBuffer cmdBuffer, const size_t idx)
 		{
-			VkDeviceSize offsets[] = { maxVertices * sizeof(V) * idx };
+			VkDeviceSize offsets[] = { maxVertices_ * sizeof(V) * idx };
 			vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBufferDetails_.buffer, offsets);
 		}
 
@@ -72,10 +73,10 @@ namespace QZL {
 				prevSize = offset;
 			}
 			else {
-				prevSize = vertices.size();
+				prevSize = buffer_.size();
 			}
-			vertices_.resize(prevSize + size);
-			std::copy_n(static_cast<V*>(data), size, vertices_.begin() + prevSize);
+			buffer_.resize(prevSize + count);
+			std::copy_n(static_cast<V*>(data), count, buffer_.begin() + prevSize);
 			return prevSize;
 		}
 
@@ -83,7 +84,7 @@ namespace QZL {
 		inline void DynamicVertexBuffer<V>::emplaceMesh(std::string name, size_t count, size_t indexOffset, size_t vertexOffset)
 		{
 			meshes_[name] = new BasicMesh();
-			meshes_[name]->count = indexCount;
+			meshes_[name]->count = count;
 			meshes_[name]->indexOffset = indexOffset;
 			meshes_[name]->vertexOffset = vertexOffset;
 		}
@@ -93,9 +94,9 @@ namespace QZL {
 		{
 			ASSERT(usedVertices_ + vertexCount <= maxVertices_);
 
-			VertexSubBufferRange range = {};
-			range.firstVertex = usedVertices_;
-			range.vertexCount = vertexCount;
+			SubBufferRange range = {};
+			range.first = usedVertices_;
+			range.count = vertexCount;
 
 			usedVertices_ += vertexCount;
 			return range;

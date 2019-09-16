@@ -14,6 +14,8 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
+size_t SwapChain::numSwapChainImages = 0;
+
 void SwapChain::loop(const glm::mat4& viewMatrix)
 {
 	const uint32_t imgIdx = aquireImage();

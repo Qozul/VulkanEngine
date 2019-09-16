@@ -98,7 +98,7 @@ VkSubpassDescription RenderPass::makeSubpass(VkPipelineBindPoint pipelineType, s
 {
 	VkSubpassDescription atmosphereSubpass = {};
 	atmosphereSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	atmosphereSubpass.colorAttachmentCount = colourReferences.size();
+	atmosphereSubpass.colorAttachmentCount = static_cast<uint32_t>(colourReferences.size());
 	atmosphereSubpass.pColorAttachments = colourReferences.data();
 	atmosphereSubpass.pDepthStencilAttachment = depthReference;
 	return atmosphereSubpass;

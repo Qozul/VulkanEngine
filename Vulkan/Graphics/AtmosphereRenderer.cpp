@@ -61,7 +61,7 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	renderStorage_->buf()->bind(cmdBuffer);
+	renderStorage_->buf()->bind(cmdBuffer, idx);
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		auto params = static_cast<AtmosphereShaderParams*>((*(renderStorage_->instanceData()) + i)->getShaderParams());

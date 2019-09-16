@@ -44,7 +44,7 @@ namespace QZL {
 			}
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
-			void createComputePipelines();
+			void createComputePipelines() {}
 
 			ComputePipeline* apScatteringPipeline_;
 			ComputePipeline* apTransmittancePipeline_;

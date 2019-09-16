@@ -17,7 +17,7 @@ Descriptor::Descriptor(const LogicDevice* logicDevice, const uint32_t maxSets, s
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = poolSizes.size();
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = maxSets;
 
@@ -37,7 +37,7 @@ size_t Descriptor::createSets(const std::vector<VkDescriptorSetLayout>& layouts)
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = pool_;
-	allocInfo.descriptorSetCount = layouts.size();
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(layouts.size());
 	allocInfo.pSetLayouts = layouts.data();
 
 	size_t firstIdx = sets_.size();
@@ -56,7 +56,7 @@ VkDescriptorSetLayout Descriptor::makeLayout(const std::vector<VkDescriptorSetLa
 {
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = bindings.size();
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 	layoutInfo.pBindings = bindings.data();
 	layoutInfo.pNext = pNext;
 	VkDescriptorSetLayout layout;

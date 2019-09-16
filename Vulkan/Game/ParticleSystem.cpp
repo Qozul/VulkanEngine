@@ -1,7 +1,7 @@
 #include "ParticleSystem.h"
 
 using namespace QZL;
-using namespace QZL::Assets;
+using namespace QZL::Game;
 
 void ParticleSystem::update(float dt)
 {
@@ -33,8 +33,8 @@ void ParticleSystem::update(float dt)
 				int j = i - 1;
 				auto iVertVal = vertices_[i];
 				auto iPartVal = particles_[i];
-				int iKey = glm::distance(vertices_[i].position, *billboardPoint_);
-				int jKey = glm::distance(vertices_[j].position, *billboardPoint_);
+				float iKey = glm::distance(vertices_[i].position, *billboardPoint_);
+				float jKey = glm::distance(vertices_[j].position, *billboardPoint_);
 				while (j >= 0 && jKey > iKey) {
 					vertices_[j + 1] = vertices_[j];
 					particles_[j + 1] = particles_[j];
@@ -49,21 +49,22 @@ void ParticleSystem::update(float dt)
 				updateParticle(particles_[i], vertices_[i]);
 			}
 		}
+		void* v = buffer_->getSubBufferData(subBufferRange_.first);
+		memcpy(v, vertices_.data(), vertices_.size() * sizeof(Graphics::ParticleVertex));
 	}
 }
 
-ParticleSystem::ParticleSystem(size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName,
-	glm::vec3* billboardPoint)
-	: updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
-	numDeadParticles_(0.0f)
+ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName,
+	glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf)
+	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
+	numDeadParticles_(0.0f), buffer_(buf), particles_(maxParticles)
 {
 	ASSERT(billboardPoint_ != nullptr);
+	ASSERT(buf != nullptr);
+	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
 	// TODO: load texture with textureName from manager
 
 	material_.textureTileLength = textureTileLength;
-	for (size_t i = 0; i < maxParticles; ++i) {
-		particles_.emplace_back(i);
-	}
 }
 
 ParticleSystem::~ParticleSystem()

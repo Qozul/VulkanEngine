@@ -8,13 +8,13 @@ namespace QZL
 	namespace Graphics {
 		class ElementBufferInterface;
 		class VertexBufferInterface;
+		class BufferInterface;
 		class GraphicsComponent;
 		class ShaderParams;
 
 		class RenderStorage {
 		public:
-			RenderStorage(ElementBufferInterface* buffer);
-			RenderStorage(VertexBufferInterface* buffer);
+			RenderStorage(BufferInterface* buffer);
 			virtual ~RenderStorage();
 			// Mesh must be added with one instance
 			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh);
@@ -31,23 +31,14 @@ namespace QZL
 			size_t instanceCount() {
 				return instances_.size();
 			}
-			void* buf() {
-				if (bufferType_ == BufferType::ELEMENT) {
-					return buf_.elementBuffer;
-				}
-				else {
-					return buf_.vertexBuffer;
-				}
+			BufferInterface* buf() {
+				return buffer_;
 			}
 
 		protected:
 			virtual void addInstance(DrawElementsCommand& cmd, GraphicsComponent* instance, uint32_t index);
 
-			union {
-				ElementBufferInterface* elementBuffer;
-				VertexBufferInterface* vertexBuffer;
-			} buf_;
-			BufferType bufferType_;
+			BufferInterface* buffer_;
 
 			std::unordered_map<std::string, size_t> dataMap_; // Mesh name to offset in to meshes_
 
@@ -59,9 +50,7 @@ namespace QZL
 		// This should be used for when there are not expected to be many entities in the renderer.
 		class RenderStorageNoInstances : public RenderStorage {
 		public:
-			RenderStorageNoInstances(ElementBufferInterface* buffer)
-				: RenderStorage(buffer) { }
-			RenderStorageNoInstances(VertexBufferInterface* buffer)
+			RenderStorageNoInstances(BufferInterface* buffer)
 				: RenderStorage(buffer) { }
 			virtual ~RenderStorageNoInstances() { }
 			// Mesh must be added with one instance

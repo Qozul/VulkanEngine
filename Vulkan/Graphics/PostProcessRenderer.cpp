@@ -66,7 +66,7 @@ PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass 
 	std::array<VkSpecializationInfo, 2> specConstants;
 	specConstants[0].mapEntryCount = 0;
 	specConstants[0].dataSize = 0;
-	specConstants[1].mapEntryCount = specConstantEntries.size();
+	specConstants[1].mapEntryCount = static_cast<uint32_t>(specConstantEntries.size());
 	specConstants[1].pMapEntries = specConstantEntries.data();
 	specConstants[1].dataSize = sizeof(specConstantValues);
 	specConstants[1].pData = specConstantValues.data();
@@ -85,7 +85,7 @@ void PostProcessRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_
 {
 	ASSERT_DEBUG(renderStorage_->meshCount() > 0);
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer);
+	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
 	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
 	auto cmd = *renderStorage_->meshData();
 	vkCmdDrawIndexed(cmdBuffer, cmd.count, cmd.instanceCount, cmd.firstIndex, cmd.baseVertex, cmd.baseInstance);

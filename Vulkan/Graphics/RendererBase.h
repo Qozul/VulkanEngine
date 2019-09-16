@@ -43,7 +43,7 @@ namespace QZL
 			void registerComponent(GraphicsComponent* component, BasicMesh* mesh) {
 				renderStorage_->addMesh(component, mesh);
 			}
-			ElementBufferInterface* getElementBuffer() {
+			BufferInterface* getElementBuffer() {
 				return renderStorage_->buf();
 			}
 			void preframeSetup(const glm::mat4& viewMatrix) {

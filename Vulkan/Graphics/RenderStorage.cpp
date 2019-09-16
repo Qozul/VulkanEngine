@@ -7,28 +7,14 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-RenderStorage::RenderStorage(ElementBufferInterface* buffer)
-	: bufferType_(buffer->bufferType())
+RenderStorage::RenderStorage(BufferInterface* buffer)
+	: buffer_(buffer)
 {
-	buf_.elementBuffer = buffer;
-}
-
-RenderStorage::RenderStorage(VertexBufferInterface* buffer)
-	: bufferType_(buffer->bufferType())
-{
-	buf_.vertexBuffer = buffer;
 }
 
 RenderStorage::~RenderStorage()
 {
-	switch (bufferType_) {
-	case BufferType::ELEMENT:
-		SAFE_DELETE(buf_.elementBuffer);
-		break;
-	case BufferType::VERTEX:
-		SAFE_DELETE(buf_.vertexBuffer);
-		break;
-	}
+	SAFE_DELETE(buffer_);
 }
 
 void RenderStorage::addMesh(GraphicsComponent* instance, BasicMesh* mesh)
@@ -43,11 +29,14 @@ void RenderStorage::addMesh(GraphicsComponent* instance, BasicMesh* mesh)
 	else {
 		dataMap_[name] = meshes_.size();
 		auto index = instances_.size();
-		if (bufferType_ == BufferType::ELEMENT) {
+		if (buffer_->bufferType() & BufferFlags::ELEMENT) {
 			meshes_.emplace_back(mesh->count, 0, mesh->indexOffset, mesh->vertexOffset, index);
 		}
-		else {
+		else if (buffer_->bufferType() & BufferFlags::VERTEX) {
 			meshes_.emplace_back(mesh->count, 0, 0, mesh->vertexOffset, index);
+		}
+		else {
+			ASSERT(false);
 		}
 		addInstance(meshes_[dataMap_[name]], instance, index);
 	}

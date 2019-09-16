@@ -37,7 +37,7 @@ namespace QZL
 			AllocationID id = 0;
 			MemoryAccessType access;
 			void* mappedData = nullptr; // Only used if access is kPersistant
-			VkDeviceSize size;
+			VkDeviceSize size = 0;
 		};
 	}
 }

@@ -12,7 +12,7 @@ components.
 #include "../Graphics/GraphicsComponent.h"
 
 namespace QZL {
-	struct Transform;
+	class Transform;
 	namespace Physics {
 		class RigidBody;
 		class CollisionVolume;

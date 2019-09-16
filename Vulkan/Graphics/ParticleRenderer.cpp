@@ -50,7 +50,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	static_cast<VertexBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer);
+	static_cast<VertexBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
 
 	// TODO move mvp matrix to uniform buffer so that instances can be used
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {

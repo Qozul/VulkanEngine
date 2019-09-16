@@ -76,7 +76,7 @@ void TerrainRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t id
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer);
+	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
 
 	updateBuffers(viewMatrix);
 

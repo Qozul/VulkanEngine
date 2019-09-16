@@ -24,11 +24,11 @@ void GraphicsMaster::registerComponent(GraphicsComponent* component)
 	auto renderer = component->getRendererType();
 	if (component->getVertexType() == VertexType::POSITION_UV_NORMAL) {
 		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-			component->getMeshName(), *renderers_[renderer]->getElementBuffer(), component->getLoadFunc()));
+			component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));
 	}
 	else {
 		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-			component->getMeshName(), *renderers_[renderer]->getElementBuffer(), component->getLoadFuncOnlyPos()));
+			component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFuncOnlyPos()));
 	}
 }
 
@@ -41,6 +41,17 @@ void GraphicsMaster::attachPostProcessScript(Game::AtmosphereScript* script)
 {
 	auto pass = static_cast<PostProcessPass*>(swapChain_->getRenderPass(RenderPassTypes::POST_PROCESS));
 	pass->attachAtmosphereScript(script);
+}
+
+DynamicBufferInterface* GraphicsMaster::getDynamicBuffer(RendererTypes type)
+{
+	auto buf = renderers_[type]->getElementBuffer();
+	if (buf->bufferType() & BufferFlags::DYNAMIC) {
+		return reinterpret_cast<DynamicBufferInterface*>(buf);
+	}
+	else {
+		return nullptr;
+	}
 }
 
 const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)

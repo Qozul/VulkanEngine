@@ -28,7 +28,6 @@
     <ClInclude Include="Assets\AssetManager.h" />
     <ClInclude Include="Assets\AtmosphereParameters.h" />
     <ClInclude Include="Assets\Entity.h" />
-    <ClInclude Include="Assets\ParticleSystem.h" />
     <ClInclude Include="Assets\Skysphere.h" />
     <ClInclude Include="Assets\Terrain.h" />
     <ClInclude Include="Assets\Transform.h" />
@@ -36,6 +35,7 @@
     <ClInclude Include="Game\Camera.h" />
     <ClInclude Include="Game\GameMaster.h" />
     <ClInclude Include="Game\GameScript.h" />
+    <ClInclude Include="Game\ParticleSystem.h" />
     <ClInclude Include="Game\Scene.h" />
     <ClInclude Include="Game\SunScript.h" />
     <ClInclude Include="Graphics\AtmosphereRenderer.h" />
@@ -97,13 +97,13 @@
     <ClCompile Include="Assets\AltAtmosphere.cpp" />
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
-    <ClCompile Include="Assets\ParticleSystem.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />
     <ClCompile Include="Game\AtmosphereScript.cpp" />
     <ClCompile Include="Game\Camera.cpp" />
     <ClCompile Include="Game\GameMaster.cpp" />
     <ClCompile Include="Game\GameScript.cpp" />
+    <ClCompile Include="Game\ParticleSystem.cpp" />
     <ClCompile Include="Game\Scene.cpp" />
     <ClCompile Include="Game\SunScript.cpp" />
     <ClCompile Include="Graphics\AtmosphereRenderer.cpp" />

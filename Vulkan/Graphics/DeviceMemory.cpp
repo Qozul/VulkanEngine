@@ -18,6 +18,12 @@ DeviceMemory::DeviceMemory(PhysicalDevice* physicalDevice, LogicDevice* logicDev
 
 DeviceMemory::~DeviceMemory()
 {
+	if (!allocations_.empty()) {
+		for (auto allocation : allocations_) {
+			DEBUG_LOG("VMA Allocation not deleted, id: " << allocation.first);
+		}
+	}
+
 	vmaDestroyAllocator(allocator_);
 }
 

@@ -27,7 +27,7 @@ namespace QZL
 		public:
 			void loop(const glm::mat4& viewMatrix);
 
-			static int numSwapChainImages;
+			static size_t numSwapChainImages;
 		private:
 			SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities);
 			~SwapChain();

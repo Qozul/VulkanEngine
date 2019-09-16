@@ -30,6 +30,7 @@ namespace QZL
 		class GraphicsMaster;
 		class Validation;
 		class SwapChain;
+		class DynamicBufferInterface;
 
 		struct GraphicsSystemDetails {
 			GLFWwindow* window = nullptr;
@@ -50,7 +51,8 @@ namespace QZL
 
 			void registerComponent(GraphicsComponent* component);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
-			void attachPostProcessScript(Game::AtmosphereScript* script);
+			void attachPostProcessScript(Game::AtmosphereScript* script); // DEPRECATED
+			DynamicBufferInterface* getDynamicBuffer(RendererTypes type);
 			glm::mat4* getViewMatrixPtr() {
 				return viewMatrix_;
 			}

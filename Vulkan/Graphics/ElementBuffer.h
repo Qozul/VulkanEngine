@@ -20,12 +20,12 @@ namespace QZL
 			VkBuffer getVertexBuffer() override;
 			VkBuffer getIndexBuffer() override;
 			uint32_t indexCount() override;
-			void bind(VkCommandBuffer cmdBuffer) override;
+			void bind(VkCommandBuffer cmdBuffer, const size_t idx) override;
 			BasicMesh* getMesh(std::string name) override {
 				return meshes_[name];
 			}
 
-			void emplaceMesh(std::string name, size_t indexCount, size_t indexOffset, size_t vertexOffset) override;
+			void emplaceMesh(std::string name, uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset) override;
 			const BasicMesh* operator[](const std::string& name) const;
 			bool contains(const std::string& name) override {
 				return meshes_.count(name) > 0;
@@ -93,7 +93,7 @@ namespace QZL
 
 			deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
 
-			indexCount_ = indices_.size();
+			indexCount_ = static_cast<uint32_t>(indices_.size());
 			indices_.clear();
 			vertices_.clear();
 			isCommitted_ = true;
@@ -150,7 +150,7 @@ namespace QZL
 		}
 
 		template<typename V>
-		inline void ElementBuffer<V>::bind(VkCommandBuffer cmdBuffer)
+		inline void ElementBuffer<V>::bind(VkCommandBuffer cmdBuffer, const size_t idx)
 		{
 			VkBuffer vertexBuffers[] = { getVertexBuffer() };
 			VkDeviceSize offsets[] = { 0 };
@@ -159,7 +159,7 @@ namespace QZL
 		}
 
 		template<typename V>
-		inline void ElementBuffer<V>::emplaceMesh(std::string name, size_t indexCount, size_t indexOffset, size_t vertexOffset)
+		inline void ElementBuffer<V>::emplaceMesh(std::string name, uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset)
 		{
 			meshes_[name] = new BasicMesh();
 			meshes_[name]->count = indexCount;

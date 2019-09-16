@@ -92,7 +92,7 @@ void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer);
+	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
 
 	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
@@ -110,11 +110,11 @@ void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 		auto srs = static_cast<StaticRenderStorage*>(renderStorage_);
 		if (!logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
 			std::vector<VkWriteDescriptorSet> descWrites;
-			descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_0));
-			descWrites.push_back(srs->getParamData(i).normalMap->descriptorWrite(descriptorSets_[idx * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_1));
+			descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[static_cast<size_t>(idx) * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_0));
+			descWrites.push_back(srs->getParamData(i).normalMap->descriptorWrite(descriptorSets_[static_cast<size_t>(idx) * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_1));
 			descriptor_->updateDescriptorSets(descWrites);
 		}
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx * 2], 0, nullptr);
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[static_cast<size_t>(idx) * 2], 0, nullptr);
 		
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

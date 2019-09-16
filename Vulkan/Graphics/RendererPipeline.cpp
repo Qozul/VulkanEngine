@@ -183,7 +183,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &layout_));
 	
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = shaderStagesInfo.size();
+	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStagesInfo.size());
 	pipelineInfo.pStages = shaderStagesInfo.data();
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;

@@ -3,16 +3,6 @@
 /// Date: 11/10/18
 #pragma once
 
-#include <vulkan/vulkan.h>
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_FORCE_CTOR_INIT
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <iostream>
 #include <stdexcept>
 
@@ -29,6 +19,16 @@
 #include <functional>
 #include <algorithm>
 #include <random>
+
+#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_CTOR_INIT
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "PerfMeasurer.h"
 

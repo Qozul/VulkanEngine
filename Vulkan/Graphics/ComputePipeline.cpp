@@ -50,7 +50,7 @@ VkPipelineLayoutCreateInfo ComputePipeline::makeLayoutInfo(const uint32_t layout
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = layoutCount;
 	pipelineLayoutInfo.pSetLayouts = layouts;
-	pipelineLayoutInfo.pushConstantRangeCount = pushConstantRanges.size();
+	pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
 	pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
 	return pipelineLayoutInfo;
 }
