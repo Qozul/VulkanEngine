@@ -1,4 +1,7 @@
 #include "ParticleSystem.h"
+#include "../System.h"
+#include "../Assets/AssetManager.h"
+#include "../Graphics/TextureManager.h"
 
 using namespace QZL;
 using namespace QZL::Game;
@@ -7,26 +10,29 @@ void ParticleSystem::update(float dt)
 {
 	elapsedUpdateTime_ += dt;
 	if (elapsedUpdateTime_ >= updateInterval_) {
-		elapsedUpdateTime_ = 0.0f;
 
 		if (!alwaysAliveAndUnordered_) {
 			// Update or free every particle that is currently active
 			size_t i = 0;
 			while (i < currentActiveSize_) {
-				particles_[i].lifetime -= elapsedUpdateTime_;
+				Particle& particle = particles_[i];
+				particle.lifetime -= elapsedUpdateTime_;
 				if (particles_[i].lifetime <= 0.0f) {
 					// i does not increment because the new particle at index i needs to be checked like any other,
 					// but currentActiveSize_ does decrement, so infinite loop should not be possible.
 					freeParticle(i);
 				}
 				else {
-					updateParticle(particles_[i], vertices_[i]);
+					// Update velocity/lifetime and move position by velocity
+					Graphics::ParticleVertex& vertex = vertices_[i];
+					updateParticle(particle, vertex, elapsedUpdateTime_);
+					vertex.position = particle.velocity * elapsedUpdateTime_;
 					++i;
 				}
 			}
 
 			// Create any new particles, this is defined by derived classes
-			particleCreation(dt, numDeadParticles_);
+			particleCreation(elapsedUpdateTime_, numDeadParticles_);
 
 			// Sort the particles to draw closest to the camera using insertion sort
 			for (int i = 1; i < currentActiveSize_; ++i) {
@@ -46,29 +52,45 @@ void ParticleSystem::update(float dt)
 		}
 		else {
 			for (size_t i = 0; i < currentActiveSize_; ++i) {
-				updateParticle(particles_[i], vertices_[i]);
+				Graphics::ParticleVertex& vertex = vertices_[i];
+				updateParticle(particles_[i], vertex, dt);
+				vertex.position = particles_[i].velocity * elapsedUpdateTime_;
 			}
 		}
 		void* v = buffer_->getSubBufferData(subBufferRange_.first);
 		memcpy(v, vertices_.data(), vertices_.size() * sizeof(Graphics::ParticleVertex));
+		elapsedUpdateTime_ = 0.0f;
 	}
 }
 
-ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName,
-	glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf)
+Graphics::BasicMesh* ParticleSystem::makeMesh()
+{
+	Graphics::BasicMesh* m = new Graphics::BasicMesh();
+	m->count = subBufferRange_.count;
+	m->vertexOffset = subBufferRange_.first;
+	m->indexOffset = 0;
+	return m;
+}
+
+ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf,
+	size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName)
 	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
-	numDeadParticles_(0.0f), buffer_(buf), particles_(maxParticles)
+	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0)
 {
 	ASSERT(billboardPoint_ != nullptr);
 	ASSERT(buf != nullptr);
+	particles_.resize(maxParticles);
+	vertices_.resize(maxParticles);
 	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
-	// TODO: load texture with textureName from manager
 
+	material_.texture = initialiser.system->getMasters().assetManager->textureManager->requestTextureSeparate(textureName);
+	material_.tint = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	material_.textureTileLength = textureTileLength;
 }
 
 ParticleSystem::~ParticleSystem()
 {
+	SAFE_DELETE(material_.texture);
 }
 
 void ParticleSystem::nextTextureTile(glm::vec2& tileOffset)
@@ -98,8 +120,8 @@ Particle* ParticleSystem::allocateParticle()
 
 void ParticleSystem::freeParticle(size_t idx)
 {
-	particles_[idx].swapAndReset(particles_[currentActiveSize_]);
-	std::swap(vertices_[idx], vertices_[currentActiveSize_]);
+	particles_[idx].swapAndReset(particles_[currentActiveSize_ - 1]);
+	std::swap(vertices_[idx], vertices_[currentActiveSize_ - 1]);
 	++numDeadParticles_;
 	updateActiveSize();
 }

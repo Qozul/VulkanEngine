@@ -92,7 +92,7 @@ void* DeviceMemory::mapMemory(const AllocationID& id)
 	return mappedData;
 }
 
-void DeviceMemory::unmapMemory(const AllocationID & id)
+void DeviceMemory::unmapMemory(const AllocationID& id)
 {
 	vmaUnmapMemory(allocator_, allocations_[id]);
 }

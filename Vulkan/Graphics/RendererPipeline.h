@@ -21,6 +21,9 @@ namespace QZL
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
 				const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 4>* specConstants = nullptr);
+			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
+				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, 
+				VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 3>* specConstants = nullptr);
 			~RendererPipeline();
 
 			void switchMode();

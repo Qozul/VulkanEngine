@@ -49,7 +49,7 @@ namespace QZL
 			static constexpr float NEAR_PLANE_Z = 0.1f;
 			static constexpr float FAR_PLANE_Z = 1000.0f;
 
-			void registerComponent(GraphicsComponent* component);
+			void registerComponent(GraphicsComponent* component, BasicMesh* mesh = nullptr);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
 			void attachPostProcessScript(Game::AtmosphereScript* script); // DEPRECATED
 			DynamicBufferInterface* getDynamicBuffer(RendererTypes type);

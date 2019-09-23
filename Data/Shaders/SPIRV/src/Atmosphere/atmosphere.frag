@@ -29,8 +29,8 @@ float linearizeDepth(float depth)
 #extension GL_GOOGLE_include_directive : enable
 #include "./alt_functions.glsl"
 
-layout (constant_id = 0) const float SC_NEAR_Z = 0.1;
-layout (constant_id = 1) const float SC_FAR_Z = 1000.0;
+layout(constant_id = 0) const float SC_NEAR_Z = 0.1;
+layout(constant_id = 1) const float SC_FAR_Z = 1000.0;
 
 const float AP_HEIGHT_ANGLE_OFFSET = 0.3;
 

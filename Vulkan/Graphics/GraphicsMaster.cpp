@@ -19,16 +19,21 @@ glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0
 
 EnvironmentArgs environmentArgs;
 
-void GraphicsMaster::registerComponent(GraphicsComponent* component)
+void GraphicsMaster::registerComponent(GraphicsComponent* component, BasicMesh* mesh)
 {
 	auto renderer = component->getRendererType();
-	if (component->getVertexType() == VertexType::POSITION_UV_NORMAL) {
-		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-			component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));
+	if (mesh == nullptr) {
+		if (component->getVertexType() == VertexType::POSITION_UV_NORMAL) {
+			renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
+				component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));
+		}
+		else {
+			renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
+				component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFuncOnlyPos()));
+		}
 	}
 	else {
-		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-			component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFuncOnlyPos()));
+		renderers_[renderer]->registerComponent(component, mesh);
 	}
 }
 
@@ -47,7 +52,7 @@ DynamicBufferInterface* GraphicsMaster::getDynamicBuffer(RendererTypes type)
 {
 	auto buf = renderers_[type]->getElementBuffer();
 	if (buf->bufferType() & BufferFlags::DYNAMIC) {
-		return reinterpret_cast<DynamicBufferInterface*>(buf);
+		return dynamic_cast<DynamicBufferInterface*>(buf);
 	}
 	else {
 		return nullptr;

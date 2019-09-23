@@ -6,7 +6,7 @@ using namespace QZL;
 using namespace Game;
 
 const float Camera::SPEED = 20.0f;
-const float Camera::MOUSE_SENSITIVITY = 2.0f;
+const float Camera::MOUSE_SENSITIVITY = 2000.0f;
 const float Camera::MAX_ROTATION_DT = 0.5f;
 
 Camera::Camera(const GameScriptInitialiser& initialiser)
@@ -21,6 +21,7 @@ Camera::Camera(const GameScriptInitialiser& initialiser)
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_E }, std::bind(&Camera::moveDown, this), 0.0f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_X }, std::bind(&Camera::increaseSpeed, this), 0.2f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_Z }, std::bind(&Camera::decreaseSpeed, this), 0.2f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_L }, std::bind(&Camera::logPosition, this), 0.2f });
 	inputManager_->addProfile("camera", &inputProfile_);
 	lookPoint_ = { 0.0f, 0.0f, 0.0f };
 }
@@ -32,11 +33,11 @@ Camera::~Camera()
 
 void Camera::start()
 {
+	*position_ = glm::vec3(136.6f, 83.3f, 20.1f);
 }
 
 void Camera::update(float dt)
 {
-	dt = glm::min(dt, MAX_ROTATION_DT);
 	yaw_ += static_cast<float>(inputManager_->getRelativeMousePos().x) * MOUSE_SENSITIVITY * dt; // movement around y axis
 	pitch_ += static_cast<float>(inputManager_->getRelativeMousePos().y) * MOUSE_SENSITIVITY * dt * -1.0f; // movement around x axis
 	// clamp pitch to avoid inversion
@@ -96,4 +97,9 @@ void Camera::decreaseSpeed()
 void Camera::updatePosition()
 {
 	*viewMatrixPtr_ = glm::lookAt(*position_, lookPoint_ + *position_, { 0.0f, 1.0f, 0.0f });
+}
+
+void Camera::logPosition()
+{
+	DEBUG_LOG(vecToString(*position_));
 }

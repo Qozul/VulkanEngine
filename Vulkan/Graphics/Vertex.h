@@ -7,6 +7,7 @@ namespace QZL
 		class VertexUtility {
 			friend struct Vertex;
 			friend struct VertexOnlyPosition;
+			friend struct ParticleVertex;
 		private:
 			static VkVertexInputBindingDescription fillBindDesc(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate);
 			static void fillAttribDescs(VkVertexInputAttributeDescription& attribDesc, uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
@@ -67,6 +68,21 @@ namespace QZL
 			glm::vec3 position;
 			float scale;
 			glm::vec2 textureOffset;
+
+			static VkVertexInputBindingDescription getBindDesc(uint32_t binding, VkVertexInputRate inputRate)
+			{
+				// Describes at which rate to load data from memory (instance/vertex) and number of bytes between data entries
+				return VertexUtility::fillBindDesc(binding, sizeof(ParticleVertex), inputRate);
+			}
+			static std::array<VkVertexInputAttributeDescription, 3> getAttribDescs(uint32_t binding)
+			{
+				// Describes how to extract a vertex attribute from a chunk of vertex data
+				std::array<VkVertexInputAttributeDescription, 3> attribDescs;
+				VertexUtility::fillAttribDescs(attribDescs[0], 0, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ParticleVertex, position.x));
+				VertexUtility::fillAttribDescs(attribDescs[1], 1, binding, VK_FORMAT_R32_SFLOAT, offsetof(ParticleVertex, scale));
+				VertexUtility::fillAttribDescs(attribDescs[2], 2, binding, VK_FORMAT_R32G32_SFLOAT, offsetof(ParticleVertex, textureOffset.x));
+				return attribDescs;
+			}
 		};
 	}
 }

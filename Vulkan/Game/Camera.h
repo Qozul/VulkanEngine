@@ -23,6 +23,7 @@ namespace QZL {
 			void increaseSpeed();
 			void decreaseSpeed();
 			void updatePosition();
+			void logPosition();
 
 			glm::mat4* viewMatrixPtr_;
 			glm::vec3* position_;

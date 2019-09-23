@@ -33,6 +33,7 @@
     <ClInclude Include="Assets\Transform.h" />
     <ClInclude Include="Game\AtmosphereScript.h" />
     <ClInclude Include="Game\Camera.h" />
+    <ClInclude Include="Game\FireSystem.h" />
     <ClInclude Include="Game\GameMaster.h" />
     <ClInclude Include="Game\GameScript.h" />
     <ClInclude Include="Game\ParticleSystem.h" />
@@ -101,6 +102,7 @@
     <ClCompile Include="Assets\Terrain.cpp" />
     <ClCompile Include="Game\AtmosphereScript.cpp" />
     <ClCompile Include="Game\Camera.cpp" />
+    <ClCompile Include="Game\FireSystem.cpp" />
     <ClCompile Include="Game\GameMaster.cpp" />
     <ClCompile Include="Game\GameScript.cpp" />
     <ClCompile Include="Game\ParticleSystem.cpp" />

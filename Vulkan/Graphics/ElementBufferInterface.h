@@ -71,7 +71,7 @@ namespace QZL {
 			virtual void* getSubBufferData(size_t firstVertex) = 0;
 		};
 
-		class VertexBufferInterface : public BufferInterface {
+		class VertexBufferInterface : public virtual BufferInterface {
 		public:
 			VertexBufferInterface() {
 				flags_ = flags_ | BufferFlags::VERTEX;
@@ -79,7 +79,7 @@ namespace QZL {
 			}
 			virtual ~VertexBufferInterface() {}
 
-			virtual void addVertices(void* data, const size_t count, const size_t offset) = 0;
+			virtual void addVertices(void* data, const size_t count) = 0;
 			virtual VkBuffer getVertexBuffer() = 0;
 			virtual void emplaceMesh(std::string name, uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset) = 0;
 			virtual bool contains(const std::string& id) = 0;

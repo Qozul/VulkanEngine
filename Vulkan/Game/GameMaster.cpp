@@ -4,6 +4,7 @@
 #include "../Graphics/GraphicsMaster.h"
 #include "../Graphics/GraphicsComponent.h"
 #include "../Graphics/StaticShaderParams.h"
+#include "../Graphics/ParticleShaderParams.h"
 #include "../Graphics/TerrainShaderParams.h"
 #include "../Assets/Terrain.h"
 #include "../Assets/Skysphere.h"
@@ -14,6 +15,7 @@
 #include "SunScript.h"
 #include "AtmosphereScript.h"
 #include "Scene.h"
+#include "FireSystem.h"
 
 using namespace QZL;
 using namespace Game;
@@ -63,19 +65,26 @@ void GameMaster::loadGame()
 
 	Assets::Entity* sun = masters_.assetManager->createEntity();
 	scriptInit.owner = sun;
-	auto sunScript = new SunScript(scriptInit);
+	auto sunScript = new SunScript(scriptInit, nullptr, nullptr);
 	sun->setGameScript(sunScript);
 
 	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>(masters_.graphicsMaster->getLogicDevice(), sunScript, scriptInit);
 
+	Assets::Entity* fire = masters_.assetManager->createEntity();
+	scriptInit.owner = fire;
+	auto fireScript = new FireSystem(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::PARTICLE));
+	fire->setGameScript(fireScript);
+	fire->setGraphicsComponent(Graphics::RendererTypes::PARTICLE, new Graphics::ParticleShaderParams(fireScript->getMaterial()), "FireSystem");
+
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
-
+	scenes_[activeSceneIdx_]->addEntity(fire);
 	scenes_[activeSceneIdx_]->start();
 
 	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
 	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
+	masters_.graphicsMaster->registerComponent(fire->getGraphicsComponent(), fireScript->makeMesh());
 }
 
 void GameMaster::update(float dt)

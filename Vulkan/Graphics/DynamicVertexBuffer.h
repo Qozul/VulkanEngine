@@ -14,7 +14,7 @@ namespace QZL {
 			DynamicVertexBuffer(DeviceMemory* deviceMemory, const size_t maxVertices, const int numSwapChainImages)
 				: deviceMemory_(deviceMemory), maxVertices_(maxVertices), usedVertices_(0) {
 				vertexBufferDetails_ = deviceMemory_->createBuffer(MemoryAllocationPattern::kDynamicResource, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, maxVertices * sizeof(V) * numSwapChainImages);
-				ASSERT(vertexBufferDetails_.mappedData != nullptr);
+				
 			}
 			~DynamicVertexBuffer() {
 				deviceMemory_->deleteAllocation(vertexBufferDetails_.id, vertexBufferDetails_.buffer);
@@ -25,8 +25,8 @@ namespace QZL {
 
 			void updateBuffer(VkCommandBuffer& cmdBuffer, const uint32_t& idx) override;
 			void bind(VkCommandBuffer cmdBuffer, const size_t idx) override;
-			void addVertices(void* data, const size_t count, const size_t offset = std::numeric_limits<size_t>::max()) override;
-			void emplaceMesh(std::string name, size_t indexCount, size_t indexOffset, size_t vertexOffset) override;
+			void addVertices(void* data, const size_t count) override;
+			void emplaceMesh(std::string name, uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset) override;
 			bool contains(const std::string& id) override {
 				return meshes_.count(id) > 0;
 			}
@@ -36,6 +36,14 @@ namespace QZL {
 
 			void* getSubBufferData(size_t firstVertex) override {
 				return &buffer_[firstVertex];
+			}
+
+			void commit() override {}
+
+			uint32_t count() override;
+
+			VkBuffer getVertexBuffer() {
+				return vertexBufferDetails_.buffer;
 			}
 
 			const BasicMesh* operator[](const std::string& name) const;
@@ -55,33 +63,36 @@ namespace QZL {
 		inline void DynamicVertexBuffer<V>::updateBuffer(VkCommandBuffer& cmdBuffer, const uint32_t& idx)
 		{
 			// Update the vertex range for this frame
-			memcpy(vertexBufferDetails_.mappedData[maxVertices_ * idx], buffer_.data(), maxVertices_ * sizeof(V));
+			if (vertexBufferDetails_.mappedData != nullptr) {
+				memcpy(static_cast<V*>(vertexBufferDetails_.mappedData) + (idx * maxVertices_), static_cast<V*>(buffer_.data()), maxVertices_ * sizeof(V));
+			}
+			else {
+				V* dataPtr = static_cast<V*>(deviceMemory_->mapMemory(vertexBufferDetails_.id));
+				memcpy(static_cast<V*>(dataPtr) + (idx * maxVertices_), static_cast<V*>(buffer_.data()), maxVertices_ * sizeof(V));
+				deviceMemory_->unmapMemory(vertexBufferDetails_.id);
+			}
 		}
 
 		template<typename V>
 		inline void DynamicVertexBuffer<V>::bind(VkCommandBuffer cmdBuffer, const size_t idx)
 		{
-			VkDeviceSize offsets[] = { maxVertices_ * sizeof(V) * idx };
+			auto n = sizeof(V);
+			VkDeviceSize offsets[] = { maxVertices_ * sizeof(V)* idx };
 			vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBufferDetails_.buffer, offsets);
 		}
 
 		template<typename V>
-		inline void DynamicVertexBuffer<V>::addVertices(void* data, const size_t count, const size_t offset)
+		inline void DynamicVertexBuffer<V>::addVertices(void* data, const size_t count)
 		{
-			size_t prevSize;
-			if (offset == std::numeric_limits<size_t>::max()) {
-				prevSize = offset;
-			}
-			else {
-				prevSize = buffer_.size();
-			}
+			size_t prevSize = buffer_.size();
 			buffer_.resize(prevSize + count);
-			std::copy_n(static_cast<V*>(data), count, buffer_.begin() + prevSize);
-			return prevSize;
+			if (data != nullptr) {
+				std::copy_n(static_cast<V*>(data), count, buffer_.begin() + prevSize);
+			}
 		}
 
 		template<typename V>
-		inline void DynamicVertexBuffer<V>::emplaceMesh(std::string name, size_t count, size_t indexOffset, size_t vertexOffset)
+		inline void DynamicVertexBuffer<V>::emplaceMesh(std::string name, uint32_t count, uint32_t indexOffset, uint32_t vertexOffset)
 		{
 			meshes_[name] = new BasicMesh();
 			meshes_[name]->count = count;
@@ -99,7 +110,13 @@ namespace QZL {
 			range.count = vertexCount;
 
 			usedVertices_ += vertexCount;
+			addVertices(nullptr, vertexCount);
 			return range;
+		}
+		template<typename V>
+		inline uint32_t DynamicVertexBuffer<V>::count()
+		{
+			return static_cast<uint32_t>(usedVertices_);
 		}
 		template<typename V>
 		inline const BasicMesh* DynamicVertexBuffer<V>::operator[](const std::string& name) const

@@ -62,6 +62,34 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 		&tessellationInfo, vertexInputInfo, frontFace, enableDepthTest);
 }
 
+RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
+	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, 
+	VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 3> * specConstants)
+	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
+{
+	Shader vertexModule = { *logicDevice_, vertexShader };
+	Shader fragmentModule = { *logicDevice_, fragmentShader };
+	Shader geometryModule = { *logicDevice_, geometryShader };
+
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo;
+	if (specConstants != nullptr) {
+		shaderStagesInfo = {
+			vertexModule.getCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, &specConstants->at(0)),
+			fragmentModule.getCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants->at(1)),
+			geometryModule.getCreateInfo(VK_SHADER_STAGE_GEOMETRY_BIT, &specConstants->at(2))
+		};
+	}
+	else {
+		shaderStagesInfo = {
+			vertexModule.getCreateInfo(VK_SHADER_STAGE_VERTEX_BIT),
+			fragmentModule.getCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT),
+			geometryModule.getCreateInfo(VK_SHADER_STAGE_GEOMETRY_BIT)
+		};
+	}
+	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(topology, VK_FALSE), nullptr,
+		vertexInputInfo, frontFace, enableDepthTest);
+}
+
 RendererPipeline::~RendererPipeline()
 {
 	vkDestroyPipeline(*logicDevice_, pipeline_, nullptr);

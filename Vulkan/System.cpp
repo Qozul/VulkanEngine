@@ -57,7 +57,7 @@ void System::loop()
 
 		glfwPollEvents();
 		inputManager_->checkInput(deltaTimeSeconds);
-		masters_.gameMaster->update(deltaTime);
+		masters_.gameMaster->update(deltaTimeSeconds);
 		perfMeasurer.startTime();
 		masters_.graphicsMaster->loop();
 		perfMeasurer.endTime();

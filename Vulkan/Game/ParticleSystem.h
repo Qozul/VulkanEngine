@@ -37,14 +37,19 @@ namespace QZL {
 			// Update is controlled in this class to ensure correct behaviour, however start should be derived to
 			// initialise the particle state.
 			virtual void start() = 0;
-			void update(float dt) override;
+			// Update can be overriden by a derived class when needed, however this provides the basic particle system logic
+			virtual void update(float dt) override;
+			Graphics::MaterialParticle& getMaterial() {
+				return material_;
+			}
+			Graphics::BasicMesh* makeMesh();
 		protected:
 			// Number of tiles on xy is identical for x and y, as textures must be square.
-			ParticleSystem(const GameScriptInitialiser& initialiser, size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName,
-				glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf);
+			ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf,
+				size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName);
 			virtual ~ParticleSystem();
 			virtual void particleCreation(float dt, size_t expiredCount) = 0;
-			virtual void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex) = 0;
+			virtual void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex, float dt) = 0;
 
 			// Tiles in the texture must be arranged left to right, top to bottom.
 			void nextTextureTile(glm::vec2& currentOffset);
@@ -53,15 +58,17 @@ namespace QZL {
 			// When true, system update is skipped, instead just updating each particle. This optimises when
 			// particles have infinite lifetime and do not overlap. This is false by default.
 			bool alwaysAliveAndUnordered_;
-		private:
-			// Allocate particle returns nullptr if there is no available particle
 			Particle* allocateParticle();
+
+			Graphics::MaterialParticle material_;
+			size_t currentActiveSize_;
+			
+			// Allocate particle returns nullptr if there is no available particle
 			void freeParticle(size_t idx);
 			void updateActiveSize() {
 				currentActiveSize_ = particles_.size() - numDeadParticles_;
 			}
 
-			Graphics::MaterialParticle material_;
 			// The particles are not necessarily updated every frame, but after a specified time interval in seconds. An interval of 0 will
 			// cause it to update once per frame.
 			float updateInterval_;
@@ -70,7 +77,6 @@ namespace QZL {
 			Graphics::SubBufferRange subBufferRange_;
 			Graphics::DynamicBufferInterface* buffer_;
 
-			size_t currentActiveSize_;
 			size_t numDeadParticles_;
 			std::vector<Particle> particles_;
 			std::vector<Graphics::ParticleVertex> vertices_;

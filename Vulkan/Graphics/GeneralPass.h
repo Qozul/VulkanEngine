@@ -23,6 +23,7 @@ namespace QZL {
 
 			RendererBase* texturedRenderer_;
 			RendererBase* terrainRenderer_;
+			RendererBase* particleRenderer_;
 
 			Image* colourBuffer_;
 			Image* depthBuffer_;

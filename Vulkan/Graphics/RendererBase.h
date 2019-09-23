@@ -89,6 +89,10 @@ namespace QZL
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
 				std::array<VkSpecializationInfo, 2>* specConstants = nullptr);
+			template<typename V>
+			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
+				const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, VkPrimitiveTopology topology, 
+				bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, std::array<VkSpecializationInfo, 3>* specConstants = nullptr);
 			void beginFrame(VkCommandBuffer cmdBuffer);
 
 			LogicDevice* logicDevice_;
@@ -142,7 +146,18 @@ namespace QZL
 			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
 			auto attribDesc = V::getAttribDescs(0);
 			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, topology, frontFace, enableDepthTest, specConstants);
+			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, 
+				topology, frontFace, enableDepthTest, specConstants);
+		}
+
+		template<typename V>
+		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, VkPrimitiveTopology topology, bool enableDepthTest, VkFrontFace frontFace, std::array<VkSpecializationInfo, 3> * specConstants)
+		{
+			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
+			auto attribDesc = V::getAttribDescs(0);
+			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
+			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, geometryShader, 
+				topology, frontFace, enableDepthTest, specConstants);
 		}
 
 		inline void RendererBase::beginFrame(VkCommandBuffer cmdBuffer)
