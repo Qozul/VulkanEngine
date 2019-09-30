@@ -13,6 +13,7 @@ namespace QZL {
 		};
 		// Encompasses a game scene, defining entities in a tree heirarchy with pointers to both parent and children.
 		class Scene {
+			friend std::ostream& operator<<(std::ostream& os, Scene* scene);
 		public:
 			Scene();
 			~Scene();

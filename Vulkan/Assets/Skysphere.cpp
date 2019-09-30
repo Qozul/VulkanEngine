@@ -10,7 +10,8 @@ using namespace Assets;
 using namespace QZL::Game;
 using Vertex = QZL::Graphics::Vertex;
 
-Skysphere::Skysphere(const Graphics::LogicDevice* logicDevice, Game::SunScript* sun, GameScriptInitialiser initialiser)
+Skysphere::Skysphere(const std::string name, const Graphics::LogicDevice* logicDevice, Game::SunScript* sun, Game::GameScriptInitialiser initialiser)
+	: Entity(name)
 {
 	initialiser.owner = this;
 	setGameScript(new AtmosphereScript(initialiser));

@@ -84,7 +84,7 @@ void GeometryPass::createRenderers()
 		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
 
-	particleRenderer_ = new ParticleRenderer(logicDevice_, renderPass_, swapChainDetails_.extent, descriptor_, "ParticlesVert", "ParticlesFrag", "ParticlesGeom", 1, globalRenderData_, graphicsMaster_->getCamPosPtr());
+	particleRenderer_ = new ParticleRenderer(logicDevice_, renderPass_, swapChainDetails_.extent, descriptor_, "ParticlesVert", "ParticlesFrag", "ParticlesGeom", 2, globalRenderData_, graphicsMaster_->getCamPosPtr());
 	graphicsMaster_->setRenderer(RendererTypes::PARTICLE, particleRenderer_);
 }
 

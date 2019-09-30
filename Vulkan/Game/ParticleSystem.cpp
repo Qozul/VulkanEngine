@@ -26,7 +26,7 @@ void ParticleSystem::update(float dt)
 					// Update velocity/lifetime and move position by velocity
 					Graphics::ParticleVertex& vertex = vertices_[i];
 					updateParticle(particle, vertex, elapsedUpdateTime_);
-					vertex.position = particle.velocity * elapsedUpdateTime_;
+					vertex.position = vertex.position + (particle.velocity * elapsedUpdateTime_);
 					++i;
 				}
 			}
@@ -57,8 +57,7 @@ void ParticleSystem::update(float dt)
 				vertex.position = particles_[i].velocity * elapsedUpdateTime_;
 			}
 		}
-		void* v = buffer_->getSubBufferData(subBufferRange_.first);
-		memcpy(v, vertices_.data(), vertices_.size() * sizeof(Graphics::ParticleVertex));
+		updateBuffer();
 		elapsedUpdateTime_ = 0.0f;
 	}
 }
@@ -105,6 +104,12 @@ void ParticleSystem::nextTextureTile(glm::vec2& tileOffset)
 	if (tileOffset.y >= 1.0 - FLT_EPSILON) {
 		tileOffset.y = 0.0f;
 	}
+}
+
+void ParticleSystem::updateBuffer()
+{
+	void* v = buffer_->getSubBufferData(subBufferRange_.first);
+	memcpy(v, vertices_.data(), vertices_.size() * sizeof(Graphics::ParticleVertex));
 }
 
 Particle* ParticleSystem::allocateParticle()

@@ -29,7 +29,7 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 	: RendererBase(logicDevice), descriptor_(descriptor), billboardPoint_(billboardPoint)
 {
 	ASSERT(particleSystemCount > 0);
-	renderStorage_ = new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(logicDevice->getDeviceMemory(), 10, SwapChain::numSwapChainImages));
+	renderStorage_ = new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(logicDevice->getDeviceMemory(), 12, SwapChain::numSwapChainImages));
 
 	DescriptorBuffer* instBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
 		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -77,7 +77,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	size_t instancesSum = 0;
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		auto component = (*(renderStorage_->instanceData()) + instancesSum);
+		auto component =  *(renderStorage_->instanceData() + instancesSum);
 		auto params = static_cast<ParticleShaderParams*>(component->getShaderParams());
 		
 		PushConstantGeometry pcg;

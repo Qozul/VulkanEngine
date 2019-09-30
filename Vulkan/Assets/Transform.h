@@ -11,10 +11,10 @@ namespace QZL
 	class Transform {
 	public:
 		Transform()
-			: position({ 0.0f, 0.0f, 0.0f }), rotation({ 0.0f, 1.0f, 0.0f }),
-			angle(0.0f), scale({ 1.0f, 1.0f, 1.0f }) {}
+			: position({ 0.0f, 0.0f, 0.0f }), rotationAxis({ 0.0f, 1.0f, 0.0f }),
+			rotationAngle(0.0f), scale({ 1.0f, 1.0f, 1.0f }) {}
 		Transform(glm::vec3& position, glm::vec3& rotation, float angle, glm::vec3& scale)
-			: position(position), rotation(rotation), angle(angle), scale(scale) {}
+			: position(position), rotationAxis(rotation), rotationAngle(angle), scale(scale) {}
 
 		void setScale(const float newScale) { 
 			scale.x = newScale;
@@ -25,18 +25,18 @@ namespace QZL
 		glm::mat4 toModelMatrix() {
 			glm::mat4 model(1.0f);
 			model = glm::translate(model, position);
-			model = glm::rotate(model, angle, rotation);
+			model = glm::rotate(model, rotationAngle, rotationAxis);
 			model = glm::scale(model, scale);
 			return model; 
 		}
 
 		float* data() {
-			return &rotation.x;
+			return &rotationAxis.x;
 		}
 
-		glm::vec3 rotation; // axis-angle
+		glm::vec3 rotationAxis; // axis-angle
 		glm::vec3 position;
 		glm::vec3 scale;
-		float angle;
+		float rotationAngle;
 	};
 }

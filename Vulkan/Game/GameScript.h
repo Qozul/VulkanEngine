@@ -8,6 +8,9 @@ namespace QZL {
 	namespace Assets {
 		class Entity;
 	}
+	namespace Graphics {
+		struct BasicMesh;
+	}
 	namespace Game {
 		struct GameScriptInitialiser {
 			Assets::Entity* owner;
@@ -23,6 +26,8 @@ namespace QZL {
 
 			virtual void start() = 0;
 			virtual void update(float dt) = 0;
+			// Some scripts will create meshes differently to the default and will use this to make construct the mesh for graphics component.
+			virtual Graphics::BasicMesh* makeMesh() { return nullptr; }
 			Transform* transform();
 
 			Assets::Entity* owningEntity_;

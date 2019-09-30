@@ -60,11 +60,14 @@ namespace QZL {
 			Game::SceneHeirarchyNode* getSceneNode() {
 				return sceneNode_;
 			}
+			const std::string name() const {
+				return name_;
+			}
 			// Only the game script and rigidbody will change the transform and graphics uniform constants. 
 			// Therefore, some optimisations can be made.
 			bool isStatic() const;
 		protected:
-			Entity();
+			Entity(const std::string name);
 			virtual ~Entity();
 
 			Physics::CollisionVolume* collisionVolume_;
@@ -75,6 +78,7 @@ namespace QZL {
 			Game::SceneHeirarchyNode* sceneNode_;
 			glm::mat4 modelMatrix_;
 			bool preserveChildrenOnDelete_;
+			const std::string name_;
 		};
 	}
 }

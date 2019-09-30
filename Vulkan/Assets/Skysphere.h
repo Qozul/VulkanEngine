@@ -10,7 +10,7 @@ namespace QZL {
 		class Atmosphere;
 		class Skysphere : public Entity {
 		public:
-			Skysphere(const Graphics::LogicDevice* logicDevice, Game::SunScript* sun, Game::GameScriptInitialiser initialiser);
+			Skysphere(const std::string name, const Graphics::LogicDevice* logicDevice, Game::SunScript* sun, Game::GameScriptInitialiser initialiser);
 			~Skysphere();
 		private:
 			Atmosphere* atmos_;

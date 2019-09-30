@@ -8,7 +8,7 @@ namespace QZL {
 		// In this demo, the sun rotates around the earth. This simple script
 		// moves the entity along the circumference of a circle with radius = RADIUS
 		// and centre at the parent's transform, moving by DISTANCE_PER_SECOND.
-		class SunScript : public GameScript {
+		class SunScript : public ParticleSystem {
 		public:
 			SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf);
 			~SunScript();
@@ -18,9 +18,10 @@ namespace QZL {
 
 		protected:
 			void start() override;
-			void particleCreation(float dt, size_t expiredCount);
-			void update(float dt);
-			//void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex, float dt);
+			void update(float dt) override;
+			// Ignore the particle system default behaviour
+			void particleCreation(float dt, size_t expiredCount) override {};
+			void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex, float dt) override {}
 
 		private:
 			float angle_;
@@ -28,7 +29,7 @@ namespace QZL {
 			static constexpr float TWO_PI = static_cast<float>(std::_Pi) * 2.0f;
 			static constexpr float SPEED = 0.01f;
 			static constexpr float DISTANCE_PER_SECOND = SPEED * TWO_PI;
-			static constexpr float RADIUS = 81000.0f;
+			static constexpr float RADIUS = 999.0f;
 			static constexpr float DAWN_DUSK_OFFSET = -0.1f;
 		};
 	}

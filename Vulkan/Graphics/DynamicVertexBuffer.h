@@ -68,7 +68,7 @@ namespace QZL {
 			}
 			else {
 				V* dataPtr = static_cast<V*>(deviceMemory_->mapMemory(vertexBufferDetails_.id));
-				memcpy(static_cast<V*>(dataPtr) + (idx * maxVertices_), static_cast<V*>(buffer_.data()), maxVertices_ * sizeof(V));
+				memcpy(static_cast<V*>(dataPtr) + (idx * maxVertices_), buffer_.data(), maxVertices_ * sizeof(V));
 				deviceMemory_->unmapMemory(vertexBufferDetails_.id);
 			}
 		}
@@ -77,7 +77,7 @@ namespace QZL {
 		inline void DynamicVertexBuffer<V>::bind(VkCommandBuffer cmdBuffer, const size_t idx)
 		{
 			auto n = sizeof(V);
-			VkDeviceSize offsets[] = { maxVertices_ * sizeof(V)* idx };
+			VkDeviceSize offsets[] = { maxVertices_ * sizeof(V) * idx };
 			vkCmdBindVertexBuffers(cmdBuffer, 0, 1, &vertexBufferDetails_.buffer, offsets);
 		}
 

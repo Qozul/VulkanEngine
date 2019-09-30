@@ -21,9 +21,9 @@ namespace QZL {
 		class AssetManager final {
 			friend class System;
 		public:
-			Entity* createEntity();
+			Entity* createEntity(const std::string name);
 			template<typename T, typename... Args>
-			Entity* createEntity(Args&& ... args);
+			Entity* createEntity(const std::string name, Args&& ... args);
 
 			void deleteEntity(Assets::Entity* entity);
 
@@ -41,9 +41,9 @@ namespace QZL {
 		};
 
 		template<typename T, typename... Args>
-		Entity* AssetManager::createEntity(Args&&... args)
+		Entity* AssetManager::createEntity(const std::string name, Args&&... args)
 		{
-			Entity* entity = new T(std::forward<Args>(args)...);
+			Entity* entity = new T(name, std::forward<Args>(args)...);
 			entities_.push_back(entity);
 			return entity;
 		}

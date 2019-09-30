@@ -54,6 +54,7 @@ namespace QZL {
 			// Tiles in the texture must be arranged left to right, top to bottom.
 			void nextTextureTile(glm::vec2& currentOffset);
 
+			void updateBuffer();
 			
 			// When true, system update is skipped, instead just updating each particle. This optimises when
 			// particles have infinite lifetime and do not overlap. This is false by default.

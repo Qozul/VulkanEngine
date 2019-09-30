@@ -68,6 +68,7 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 		auto material = params->material;
 		material.cameraPosition = glm::vec3(0.0f, 1.0f, 0.0f);
 		material.sunDirection = params->sunScript->getSunDirection();
+		DEBUG_LOG(vecToString(material.sunDirection));
 		material.sunIntensity = params->sunScript->getSunIntensity();
 
 		PushConstantExtent pce;

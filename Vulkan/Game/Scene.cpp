@@ -112,12 +112,12 @@ void Scene::deleteHeirarchyRecursively(SceneHeirarchyNode* node)
 	SAFE_DELETE(node);
 }
 
-void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4 modelMatrix, float dt)
+void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4 ctm, float dt)
 {
 	// Update might cause the entity to move, therefore calculate the concatenated model matrix after updating
 	node->entity->update(dt);
 	// The final model matrix of the entity accounts for the transforms of itself and all parents
-	glm::mat4 m = modelMatrix * node->entity->getTransform()->toModelMatrix();
+	glm::mat4 m = ctm * node->entity->getTransform()->toModelMatrix();
 	node->entity->setModelMatrix(m);
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
 		updateRecursively(node->childNodes[i], m, dt);
@@ -130,4 +130,22 @@ void Scene::startRecursively(SceneHeirarchyNode* node)
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
 		startRecursively(node->childNodes[i]);
 	}
+}
+
+std::ostream& outputSceneRecursively(std::ostream& os, SceneHeirarchyNode* node, std::string depthIndicator) {
+	os << depthIndicator << node->entity->name() << std::endl;
+	for (auto child : node->childNodes) {
+		outputSceneRecursively(os, child, depthIndicator + "-");
+	}
+	return os;
+}
+
+// Display the entire scene graph
+std::ostream& QZL::Game::operator<<(std::ostream& os, Scene* scene)
+{
+	os << "Root node" << std::endl;
+	for (auto child : scene->rootNode_->childNodes) {
+		outputSceneRecursively(os, child, "-");
+	}
+	return os;
 }

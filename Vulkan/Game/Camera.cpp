@@ -7,7 +7,7 @@ using namespace Game;
 
 const float Camera::SPEED = 20.0f;
 const float Camera::MOUSE_SENSITIVITY = 2000.0f;
-const float Camera::MAX_ROTATION_DT = 0.5f;
+const float Camera::MAX_ROTATION_DT = 5e-4f;
 
 Camera::Camera(const GameScriptInitialiser& initialiser)
 	: GameScript(initialiser), viewMatrixPtr_(initialiser.system->getMasters().graphicsMaster->getViewMatrixPtr()),
@@ -38,6 +38,7 @@ void Camera::start()
 
 void Camera::update(float dt)
 {
+	dt = glm::min(dt, MAX_ROTATION_DT);
 	yaw_ += static_cast<float>(inputManager_->getRelativeMousePos().x) * MOUSE_SENSITIVITY * dt; // movement around y axis
 	pitch_ += static_cast<float>(inputManager_->getRelativeMousePos().y) * MOUSE_SENSITIVITY * dt * -1.0f; // movement around x axis
 	// clamp pitch to avoid inversion
@@ -96,6 +97,7 @@ void Camera::decreaseSpeed()
 
 void Camera::updatePosition()
 {
+	transform()->position = *position_;
 	*viewMatrixPtr_ = glm::lookAt(*position_, lookPoint_ + *position_, { 0.0f, 1.0f, 0.0f });
 }
 

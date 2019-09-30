@@ -8,7 +8,8 @@ using namespace QZL;
 using namespace Assets;
 using namespace Graphics;
 
-Terrain::Terrain()
+Terrain::Terrain(const std::string name)
+	: Entity(name)
 {
 	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new Graphics::TerrainShaderParams("heightmaps/hmap2", "ground_04",
 		Graphics::MaterialStatic(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f)), "terrain", loadFunction);

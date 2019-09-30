@@ -26,9 +26,9 @@ AssetManager::~AssetManager()
 	}
 }
 
-Entity* AssetManager::createEntity() 
+Entity* AssetManager::createEntity(const std::string name)
 {
-	return createEntity<Entity>();
+	return createEntity<Entity>(name);
 }
 
 void AssetManager::deleteEntity(Entity* entity)

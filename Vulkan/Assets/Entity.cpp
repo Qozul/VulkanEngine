@@ -41,9 +41,9 @@ bool Entity::isStatic() const
 	return rigidBody_ == nullptr && gameScript_ == nullptr;
 }
 
-Entity::Entity() 
+Entity::Entity(const std::string name) 
 	: graphicsComponent_(nullptr), rigidBody_(nullptr), gameScript_(nullptr), transform_(new Transform()), 
-	  collisionVolume_(nullptr), sceneNode_(nullptr), preserveChildrenOnDelete_(true)
+	  collisionVolume_(nullptr), sceneNode_(nullptr), preserveChildrenOnDelete_(true), name_(name)
 {
 }
 
