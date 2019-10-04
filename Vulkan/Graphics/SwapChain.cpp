@@ -35,6 +35,8 @@ void SwapChain::loop(const glm::mat4& viewMatrix)
 	submitQueue(imgIdx, signalSemaphores);
 
 	present(imgIdx, signalSemaphores);
+
+	vkResetCommandBuffer(commandBuffers_[imgIdx], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 }
 
 SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities)
@@ -78,7 +80,7 @@ SwapChain::~SwapChain()
 void SwapChain::initSwapChain(GLFWwindow* window, DeviceSurfaceCapabilities& surfaceCapabilities)
 {
 	details_.surfaceFormat = chooseFormat(surfaceCapabilities.formats);
-	VkPresentModeKHR presentMode = choosePresentMode(surfaceCapabilities.presentModes);
+	details_.presentMode = choosePresentMode(surfaceCapabilities.presentModes);
 	details_.extent = chooseExtent(window, surfaceCapabilities.capabilities);
 }
 

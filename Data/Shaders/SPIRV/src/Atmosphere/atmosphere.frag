@@ -1,29 +1,3 @@
-/*#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-
-#include "./alt_functions.glsl"
-layout (constant_id = 0) const float SC_NEAR_Z = 0.1;
-layout (constant_id = 1) const float SC_FAR_Z = 1000.0;
-
-layout(location = 0) out vec4 color;
-layout(location = 0) in vec2 pos;
-layout(push_constant) uniform Params {
-	mat4 inverseViewProj;
-	vec4 betaRay; // .w = float betaMie	
-	vec4 cameraPosition; // .w = float planetRadius
-	vec4 sunDirection; // .w = float Hatm
-	vec4 sunIntensity; // .w = float g
-} PC;
-layout(set = 0, binding = 1) uniform sampler3D scatteringTexture;
-layout(binding = 1) uniform sampler2D geometryColourBuffer;
-layout(binding = 2) uniform sampler2D geometryDepthBuffer;
-
-float linearizeDepth(float depth)
-{
-  return (2.0 * SC_NEAR_Z) / (SC_FAR_Z + SC_NEAR_Z - depth * (SC_FAR_Z - SC_NEAR_Z));
-}*/
-
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable

@@ -6,6 +6,7 @@
 using namespace QZL;
 using namespace Graphics;
 
+// TODO VkImageViewType and "intended layout" rather than current
 Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo, MemoryAllocationPattern pattern, ImageParameters imageParameters)
 	: logicDevice_(logicDevice), format_(createInfo.format), mipLevels_(createInfo.mipLevels), layout_(createInfo.initialLayout)
 {
@@ -22,11 +23,14 @@ Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo,
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = createInfo.arrayLayers;
 
+
 	CHECK_VKRESULT(vkCreateImageView(*logicDevice, &viewInfo, nullptr, &imageView_));
 
-	if (imageParameters.newLayout != VK_IMAGE_LAYOUT_MAX_ENUM && imageParameters.oldLayout != imageParameters.newLayout) {
-		changeLayout(imageParameters);
-	}
+	changeLayout(imageParameters);
+
+	imageInfo_ = {};
+	imageInfo_.imageLayout = layout_;
+	imageInfo_.imageView = imageView_;
 }
 
 Image::~Image()
@@ -37,8 +41,19 @@ Image::~Image()
 
 void Image::changeLayout(ImageParameters imageParameters)
 {
-	logicDevice_->getDeviceMemory()->changeImageLayout(imageDetails_.image, imageParameters.oldLayout, imageParameters.newLayout, format_, mipLevels_);
-	layout_ = imageParameters.newLayout;
+	changeLayout(imageParameters.newLayout);
+}
+
+void Image::changeLayout(VkImageLayout newLayout) {
+	logicDevice_->getDeviceMemory()->changeImageLayout(imageDetails_.image, layout_, newLayout, format_, mipLevels_);
+	layout_ = newLayout;
+	imageInfo_.imageLayout = layout_;
+}
+
+void Image::changeLayout(VkImageLayout newLayout, VkCommandBuffer& cmdBuffer) {
+	logicDevice_->getDeviceMemory()->changeImageLayout(imageDetails_.image, layout_, newLayout, format_, mipLevels_, cmdBuffer);
+	layout_ = newLayout;
+	imageInfo_.imageLayout = layout_;
 }
 
 const VkImageView& Image::getImageView()
@@ -75,4 +90,19 @@ VkImageMemoryBarrier Image::makeMemoryBarrier(VkAccessFlags srcAccessMask, VkAcc
 	barrier.image = img;
 	barrier.subresourceRange = subresourceRange;
 	return barrier;
+}
+
+VkWriteDescriptorSet Image::descriptorWrite(VkDescriptorSet set, uint32_t binding)
+{
+	ASSERT(layout_ == VK_IMAGE_LAYOUT_GENERAL);
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = set;
+	descriptorWrite.dstBinding = binding;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pImageInfo = &imageInfo_;
+
+	return descriptorWrite;
 }

@@ -24,7 +24,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Assets\AltAtmosphere.h" />
     <ClInclude Include="Assets\AssetManager.h" />
     <ClInclude Include="Assets\AtmosphereParameters.h" />
     <ClInclude Include="Assets\Entity.h" />
@@ -95,7 +94,6 @@
     <ClInclude Include="SystemMasters.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Assets\AltAtmosphere.cpp" />
     <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
@@ -145,7 +143,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{7C4E2C61-BC9E-4C8A-8697-12F625AD657D}</ProjectGuid>
     <RootNamespace>Vulkan</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
     <ProjectName>Engine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -211,11 +209,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.1.101.0\Include;$(SolutionDir)Lib\glfw\include;$(SolutionDir)Lib\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.1.121.2\Include;$(SolutionDir)Lib\glfw\include;$(SolutionDir)Lib\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>26812;4005;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.1.101.0\Lib;$(SolutionDir)Lib\glfw\lib-vc2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\VulkanSDK\1.1.121.2\Lib;$(SolutionDir)Lib\glfw\lib-vc2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>

@@ -4,8 +4,9 @@
 namespace QZL
 {
 	namespace Graphics {
+// Ignore VK_ERROR_VALIDATION_FAILED_EXT 
 #define CHECK_VKRESULT(result) if (result != VK_SUCCESS) { auto str = "Check VK error code " + std::to_string(static_cast<int>(result)) \
-+ " in file " + __FILE__ + " at line " + std::to_string(__LINE__); DEBUG_LOG(str); throw std::runtime_error(str); };
++ " in file " + __FILE__ + " at line " + std::to_string(__LINE__); DEBUG_LOG(str); if(result != VK_ERROR_VALIDATION_FAILED_EXT) throw std::runtime_error(str); };
 #define NOTHROW_CHECK_VKRESULT(result) if (result != VK_SUCCESS) std::cout << "Check VK error code " << std::to_string(static_cast<int>(result)) \
 	<< " in file" << __FILE__ << " at line " << __LINE__ << std::endl;
 

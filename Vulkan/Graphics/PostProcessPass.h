@@ -40,7 +40,6 @@ namespace QZL {
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
 			void attachAtmosphereScript(Game::AtmosphereScript* script) {
 				atmosphereScript_ = script;
-				//createComputePipelines();
 			}
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
@@ -61,6 +60,9 @@ namespace QZL {
 			Image* aerialPerspectiveImageS_;
 			Image* aerialPerspectiveImageT_;
 			Image* colourBuffer_;
+
+			Image* geometryColourBuf_;
+			Image* geometryDepthBuf_;
 
 			// Samplers for the images produced in the GeometryPass render pass.
 			TextureSampler* gpColourBuffer_;

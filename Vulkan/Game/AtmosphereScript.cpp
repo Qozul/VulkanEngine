@@ -76,11 +76,12 @@ void AtmosphereScript::start()
 
 	std::vector<VkWriteDescriptorSet> descWrites;
 	descWrites.push_back(buffer->descriptorWrite(descriptor->getSet(setIdx)));
-	descWrites.push_back(textures_.transmittance->descriptorWrite(descriptor->getSet(setIdx), 1));
-	descWrites.push_back(textures_.scattering->descriptorWrite(descriptor->getSet(setIdx), 2));
-	descWrites.push_back(textures_.gathering->descriptorWrite(descriptor->getSet(setIdx), 3));
-	descWrites.push_back(textures_.gatheringSum->descriptorWrite(descriptor->getSet(setIdx), 4));
-	descWrites.push_back(textures_.scatteringSum->descriptorWrite(descriptor->getSet(setIdx), 5));
+	// TODO need to write using the storage images not the samplers, perhaps need both available when appropriate.
+	descWrites.push_back(textures_.transmittanceImage->descriptorWrite(descriptor->getSet(setIdx), 1));
+	descWrites.push_back(textures_.scatteringImage->descriptorWrite(descriptor->getSet(setIdx), 2));
+	descWrites.push_back(textures_.gatheringImage->descriptorWrite(descriptor->getSet(setIdx), 3));
+	descWrites.push_back(textures_.gatheringSumImage->descriptorWrite(descriptor->getSet(setIdx), 4));
+	descWrites.push_back(textures_.scatteringSumImage->descriptorWrite(descriptor->getSet(setIdx), 5));
 	descriptor->updateDescriptorSets(descWrites);
 
 	// Write the buffer data.
@@ -145,28 +146,28 @@ void AtmosphereScript::start()
 void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedTextures& finalTextures)
 {
 	finalTextures.transmittanceImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_GENERAL, TRANSMITTANCE_TEXTURE_WIDTH, TRANSMITTANCE_TEXTURE_HEIGHT),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D });
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, TRANSMITTANCE_TEXTURE_WIDTH, TRANSMITTANCE_TEXTURE_HEIGHT),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL });
 	finalTextures.transmittance = finalTextures.transmittanceImage->createTextureSampler("AtmosTransmittance", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 
 	finalTextures.gatheringImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_GENERAL, GATHERING_TEXTURE_WIDTH, GATHERING_TEXTURE_HEIGHT),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D });
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, GATHERING_TEXTURE_WIDTH, GATHERING_TEXTURE_HEIGHT),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL });
 	finalTextures.gathering = finalTextures.gatheringImage->createTextureSampler("AtmosGathering", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 
 	finalTextures.gatheringSumImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_GENERAL, GATHERING_TEXTURE_WIDTH, GATHERING_TEXTURE_HEIGHT),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D });
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, GATHERING_TEXTURE_WIDTH, GATHERING_TEXTURE_HEIGHT),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL });
 	finalTextures.gatheringSum = finalTextures.gatheringSumImage->createTextureSampler("AtmosGatheringSum", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 
 	finalTextures.scatteringImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_3D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_GENERAL, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D });
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL });
 	finalTextures.scattering = finalTextures.scatteringImage->createTextureSampler("AtmosScattering", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 
 	finalTextures.scatteringSumImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_3D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_GENERAL, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D });
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL });
 	finalTextures.scatteringSum = finalTextures.scatteringSumImage->createTextureSampler("AtmosScatteringSum", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 }
 

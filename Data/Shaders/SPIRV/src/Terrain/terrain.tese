@@ -13,7 +13,7 @@ layout (location = 0) out vec2 texUV;
 layout (location = 1) out vec3 normal;
 layout (location = 2) out vec3 worldPos;
 
-layout(set = 0, binding = 0) buffer UniformBufferObject {
+layout(set = 0, binding = 0) readonly buffer UniformBufferObject {
     ElementData uElementData;
 } ubo;
 

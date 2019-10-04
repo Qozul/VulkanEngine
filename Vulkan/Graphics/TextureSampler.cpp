@@ -29,9 +29,7 @@ TextureSampler::TextureSampler(const LogicDevice* logicDevice, const std::string
 	createInfo.maxLod = 0.0f;
 	CHECK_VKRESULT(vkCreateSampler(*logicDevice, &createInfo, nullptr, &sampler_));
 
-	imageInfo_ = {};
-	imageInfo_.imageLayout = texture_->getLayout();
-	imageInfo_.imageView = texture_->getImageView();
+	imageInfo_ = texture_->getImageInfo();
 	imageInfo_.sampler = sampler_;
 }
 

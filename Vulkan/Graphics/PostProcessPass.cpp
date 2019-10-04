@@ -35,7 +35,7 @@ PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevic
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
 		(uint32_t)SubPass::AERIAL_PERSPECTIVE,
-		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT));
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		(uint32_t)SubPass::AERIAL_PERSPECTIVE, 
@@ -63,7 +63,10 @@ PostProcessPass::~PostProcessPass()
 }
 
 void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
-{	
+{
+	geometryColourBuf_->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdBuffer);
+	geometryDepthBuf_->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdBuffer);
+
 	VkClearValue color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	auto bi = beginInfo(idx);
 	bi.clearValueCount = 1;
@@ -73,11 +76,16 @@ void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, 
 	atmosphereRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
+
+	geometryColourBuf_->changeLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, cmdBuffer);
+	geometryDepthBuf_->changeLayout(VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL, cmdBuffer);
 }
 
 void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
 {
 	ASSERT(dependencyAttachment.size() == 2);
+	geometryColourBuf_ = dependencyAttachment[0];
+	geometryDepthBuf_ = dependencyAttachment[1];
 	gpColourBuffer_ = new TextureSampler(logicDevice_, "gpColourBuffer", dependencyAttachment[0], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 	gpDepthBuffer_ = new TextureSampler(logicDevice_, "gpDepthBuffer", dependencyAttachment[1], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 	createRenderers();
@@ -93,6 +101,6 @@ void PostProcessPass::createRenderers()
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
 {
 	colourBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_LAYOUT_UNDEFINED, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
+		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
+		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
 }

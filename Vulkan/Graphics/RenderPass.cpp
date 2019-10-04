@@ -34,6 +34,8 @@ RenderPass::~RenderPass()
 
 void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage)
 {
+	// Refer to https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#synchronization-access-types-supported in case of
+	// acces mask related errors
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = static_cast<uint32_t>(createInfo.attachments.size());

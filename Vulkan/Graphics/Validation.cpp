@@ -90,6 +90,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Validation::callback(VkDebugUtilsMessageSeverityF
 {
 	if (severity >= reinterpret_cast<Validation*>(pUserData)->severityFlag_) {
 		DEBUG_LOG("Validation layer (severity " << severity <<"): " << pCallbackData->pMessage);
+		return VK_TRUE;
 	}
 	return VK_FALSE;
 }

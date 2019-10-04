@@ -26,7 +26,7 @@ layout(set = 1, binding = 0) uniform LightingData
 	vec4 lightPositions[1];
 };
 
-layout(set = 0, binding = 1) buffer MaterialData
+layout(set = 0, binding = 1) readonly buffer MaterialData
 {
 	Material material;
 };

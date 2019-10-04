@@ -7,7 +7,6 @@ namespace QZL {
 		struct ImageParameters {
 			VkImageViewType type;
 			VkImageAspectFlagBits aspectBits;
-			VkImageLayout oldLayout;
 			VkImageLayout newLayout;
 		};
 
@@ -19,17 +18,22 @@ namespace QZL {
 			~Image();
 
 			void changeLayout(ImageParameters imageParameters);
+			void changeLayout(VkImageLayout newLayout);
+			void changeLayout(VkImageLayout newLayout, VkCommandBuffer& cmdBuffer);
 
 			const VkImageView& getImageView();
 			const VkImage& getImage();
 			const VkImageLayout& getLayout();
+			VkDescriptorImageInfo getImageInfo() {
+				return imageInfo_;
+			}
 			TextureSampler* createTextureSampler(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy);
 
 			static VkImageMemoryBarrier makeMemoryBarrier(VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout,
 				uint32_t srcQueueIndex, uint32_t dstQueueIndex, VkImage img, VkImageSubresourceRange subresourceRange);
 			
 			static VkImageCreateInfo makeCreateInfo(VkImageType type, uint32_t mipLevels, uint32_t arrayLayers, VkFormat format,
-				VkImageTiling tiling, VkImageUsageFlags usage, VkSampleCountFlagBits samples, VkImageLayout initialLayout, uint32_t width, uint32_t height, uint32_t depth = 1) {
+				VkImageTiling tiling, VkImageUsageFlags usage, VkSampleCountFlagBits samples, uint32_t width, uint32_t height, uint32_t depth = 1) {
 				VkImageCreateInfo createInfo = {};
 				createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 				createInfo.imageType = type;
@@ -40,7 +44,7 @@ namespace QZL {
 				createInfo.arrayLayers = arrayLayers;
 				createInfo.format = format;
 				createInfo.tiling = tiling;
-				createInfo.initialLayout = initialLayout;
+				createInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 				createInfo.usage = usage;
 				createInfo.samples = samples;
 				createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -55,12 +59,14 @@ namespace QZL {
 				binding.stageFlags = flags;
 				return binding;
 			}
+			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set, uint32_t binding);
 		private:
 			MemoryAllocationDetails imageDetails_;
 			VkImageView imageView_;
 			VkFormat format_;
 			VkImageLayout layout_;
 			uint32_t mipLevels_;
+			VkDescriptorImageInfo imageInfo_;
 			const LogicDevice* logicDevice_;
 		};
 	}

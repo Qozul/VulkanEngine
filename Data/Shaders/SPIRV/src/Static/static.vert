@@ -19,14 +19,14 @@ out gl_PerVertex {
 	vec4 gl_Position;
 };
 
-layout(set = 0, binding = 0) buffer UniformBufferObject {
+layout(set = 0, binding = 0) readonly buffer StorageBuffer {
     ElementData[] uElementData;
-} ubo;
+} buf;
 
 void main() {
 	instanceIndex = gl_InstanceIndex;
-	gl_Position = ubo.uElementData[gl_InstanceIndex].mvp * vec4(iPosition, 1.0);
+	gl_Position = buf.uElementData[gl_InstanceIndex].mvp * vec4(iPosition, 1.0);
 	texUV = iTextureCoord;
-	worldPos = (ubo.uElementData[gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;
-	normal = mat3(transpose(inverse(ubo.uElementData[gl_InstanceIndex].model))) * iNormal;
+	worldPos = (buf.uElementData[gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;
+	normal = mat3(transpose(inverse(buf.uElementData[gl_InstanceIndex].model))) * iNormal;
 }

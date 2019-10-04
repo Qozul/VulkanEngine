@@ -20,7 +20,6 @@ namespace QZL
 		private:
 			TextureSampler* geometryColourBuffer_;
 			TextureSampler* geometryDepthBuffer_;
-			size_t staticParamsDescriptorSet_;
 			Descriptor* descriptor_;
 		};
 	}

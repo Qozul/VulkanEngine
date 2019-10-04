@@ -22,6 +22,8 @@ namespace QZL
 			void transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 			void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height);
 			void changeImageLayout(const VkImage& image, const VkImageLayout srcLayout, const VkImageLayout dstLayout, const VkFormat& format, uint32_t mipLevels);
+			// Use alternative with a command buffer for operations required as part of another command state (such as graphics execution)
+			void changeImageLayout(const VkImage& image, const VkImageLayout srcLayout, const VkImageLayout dstLayout, const VkFormat& format, uint32_t mipLevels, VkCommandBuffer& buf);
 		private:
 			DeviceMemory(PhysicalDevice* physicalDevice, LogicDevice* logicDevice, VkCommandBuffer transferCmdBuffer, VkQueue queue);
 			~DeviceMemory();
@@ -30,6 +32,9 @@ namespace QZL
 			void fixAccessType(MemoryAccessType& access, VmaAllocationInfo allocInfo, VkMemoryPropertyFlags memFlags);
 			// Choose VmaCreateInfo based on the selected pattern
 			VmaAllocationCreateInfo makeVmaCreateInfo(MemoryAllocationPattern pattern, MemoryAccessType& access);
+
+			void selectImageLayoutInfo(const VkImage& image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkFormat& format, uint32_t mipLevels, 
+				VkPipelineStageFlags& oldStage, VkPipelineStageFlags& newStage, VkImageMemoryBarrier& barrier);
 
 			VmaAllocator allocator_;
 			AllocationID availableId_; // 0 reserved for invalid id

@@ -41,11 +41,6 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	pipelineLayouts_.push_back(layout);
 	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
 
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(geometryColourBuffer->descriptorWrite(descriptorSets_[0], 1));
-	descWrites.push_back(geometryDepthBuffer->descriptorWrite(descriptorSets_[0], 2));
-	descriptor_->updateDescriptorSets(descWrites);
-
 	std::vector<VkPushConstantRange> pushConstantRanges;
 	pushConstantRanges.push_back(setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT));
 	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), pushConstantRanges.size(),
@@ -60,6 +55,13 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
+
+	// Need to update each frame due to layout transfer? TODO do I really or will the write persist as long as the state is correct when I access it?
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 1));
+	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 2));
+	descriptor_->updateDescriptorSets(descWrites);
+
 	beginFrame(cmdBuffer);
 	renderStorage_->buf()->bind(cmdBuffer, idx);
 
@@ -68,7 +70,6 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 		auto material = params->material;
 		material.cameraPosition = glm::vec3(0.0f, 1.0f, 0.0f);
 		material.sunDirection = params->sunScript->getSunDirection();
-		DEBUG_LOG(vecToString(material.sunDirection));
 		material.sunIntensity = params->sunScript->getSunIntensity();
 
 		PushConstantExtent pce;

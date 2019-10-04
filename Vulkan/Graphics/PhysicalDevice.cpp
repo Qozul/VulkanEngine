@@ -37,6 +37,10 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	deviceFeatures.tessellationShader = VK_TRUE;
+	deviceFeatures.fillModeNonSolid = VK_TRUE;
+	deviceFeatures.geometryShader = VK_TRUE;
+	// TODO sparse residency
 	VkDeviceCreateInfo deviceCreateInfo = {};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	deviceCreateInfo.pQueueCreateInfos = createInfos.data();

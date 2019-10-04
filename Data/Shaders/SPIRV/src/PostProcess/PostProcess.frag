@@ -18,24 +18,8 @@ float linearizeDepth(float depth)
 
 void main()
 {
-	//vec4 sCol = texture(apScatteringTexture, vec3(uv, depth));
-	//vec4 tCol = texture(apTransmittanceTexture, vec3(uv, depth));
-	
 	float depth = texture(geometryDepthTexture, uv).r;
 	depth = clamp(linearizeDepth(depth), 0.0, 1.0);
 	
-	/*vec3 V = getNearPlaneWorldPosition(uv, inverseViewProj);
-	vec3 L = sunDir;
-	
-	float ctheta = dot(V, L);
-	ctheta.
-	
-	vec4 Fex = exp(-(atmosphere.betaRay + atmosphere.betaMie) * depth);
-	vec4 Lin = (rayleightPhase(theta*/
-	
 	colour = texture(geometryColourTexture, uv);
-	/*if (depth < 1.0) {
-		vec4 mixColour = texture(apTransmittanceTexture, uv) * depth;
-		colour = mix(colour, mixColour, 0.5);
-	}*/
 }
