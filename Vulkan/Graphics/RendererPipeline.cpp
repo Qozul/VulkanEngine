@@ -5,7 +5,7 @@
 
 using namespace QZL;
 using namespace QZL::Graphics;
-
+/*
 RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, 
 	VkPipelineLayoutCreateInfo layoutInfo, VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, 
 	VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 2>* specConstants)
@@ -88,6 +88,25 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 	}
 	createPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, shaderStagesInfo, createInputAssembly(topology, VK_FALSE), nullptr,
 		vertexInputInfo, frontFace, enableDepthTest);
+}*/
+
+RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages,
+	PipelineCreateInfo pipelineCreateInfo, PrimitiveType patchVertexCount)
+	: logicDevice_(logicDevice), layout_(VK_NULL_HANDLE)
+{
+	std::vector<Shader> shaderModules;
+	shaderModules.reserve(stages.size());
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfos;
+	shaderStageInfos.reserve(stages.size());
+
+	for (int i = 0; i < stages.size(); ++i) {
+		shaderModules.emplace_back(*logicDevice_, stages[i].name);
+		shaderStageInfos.emplace_back(shaderModules[i].getCreateInfo(stages[i].stageFlag, stages[i].specConstants));
+	}
+
+	VkPipelineTessellationStateCreateInfo tessellationInfo = createTessellationStateInfo(patchVertexCount);
+	VkPipelineTessellationStateCreateInfo* tessInfoPtr = patchVertexCount == PrimitiveType::NONE ? &tessellationInfo : nullptr;
+	createPipeline(logicDevice, renderPass, layoutInfo, shaderStageInfos, createInputAssembly(pipelineCreateInfo.primitiveTopology, VK_FALSE), tessInfoPtr, pipelineCreateInfo);
 }
 
 RendererPipeline::~RendererPipeline()
@@ -135,24 +154,23 @@ VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layou
 	return pipelineLayoutInfo;
 }
 
-void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo,
-	VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace, bool enableDepthTest)
+void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo,
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, 
+	VkPipelineTessellationStateCreateInfo* tessellationInfo, PipelineCreateInfo pipelineCreateInfo)
 {
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	wiremeshMode_ = false;
 	
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)swapChainExtent.width;
-	viewport.height = (float)swapChainExtent.height;
+	viewport.width = (float)pipelineCreateInfo.extent.width;
+	viewport.height = (float)pipelineCreateInfo.extent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent = swapChainExtent;
+	scissor.extent = pipelineCreateInfo.extent;
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -168,7 +186,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = frontFace;
+	rasterizer.frontFace = pipelineCreateInfo.frontFace;
 	rasterizer.depthBiasEnable = VK_FALSE;
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
@@ -178,24 +196,21 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	if (enableDepthTest) {
-		depthStencil.depthTestEnable = VK_TRUE;
-		depthStencil.depthWriteEnable = VK_TRUE;
-		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-		depthStencil.depthBoundsTestEnable = VK_FALSE;
-		depthStencil.stencilTestEnable = VK_FALSE;
-	}
-	else {
-		depthStencil.depthTestEnable = VK_FALSE;
-		depthStencil.depthWriteEnable = VK_FALSE;
-		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-		depthStencil.depthBoundsTestEnable = VK_FALSE;
-		depthStencil.stencilTestEnable = VK_FALSE;
-	}
+	depthStencil.depthTestEnable = pipelineCreateInfo.enableDepthTest;
+	depthStencil.depthWriteEnable = pipelineCreateInfo.enableDepthWrite;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.stencilTestEnable = VK_FALSE;
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -209,11 +224,12 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	colorBlending.blendConstants[3] = 0.0f;
 
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &layout_));
-	
+
+	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStagesInfo.size());
 	pipelineInfo.pStages = shaderStagesInfo.data();
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pVertexInputState = &pipelineCreateInfo.vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;

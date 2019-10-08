@@ -63,8 +63,21 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	}
 	descriptor->updateDescriptorSets(descWrites);
 
-	createPipeline<Vertex>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), vertexShader, fragmentShader, 
-		tessCtrlShader, tessEvalShader, RendererPipeline::PrimitiveType::QUADS);
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	stageInfos.emplace_back(tessCtrlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, nullptr);
+	stageInfos.emplace_back(tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr);
+
+	PipelineCreateInfo pci = {};
+	pci.enableDepthTest = VK_TRUE;
+	pci.enableDepthWrite = VK_TRUE;
+	pci.extent = swapChainExtent;
+	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+
+	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci,
+		RendererPipeline::PrimitiveType::QUADS);
 }
 
 TerrainRenderer::~TerrainRenderer()

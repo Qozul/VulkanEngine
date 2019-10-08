@@ -77,11 +77,11 @@ void AtmosphereScript::start()
 	std::vector<VkWriteDescriptorSet> descWrites;
 	descWrites.push_back(buffer->descriptorWrite(descriptor->getSet(setIdx)));
 	// TODO need to write using the storage images not the samplers, perhaps need both available when appropriate.
-	descWrites.push_back(textures_.transmittanceImage->descriptorWrite(descriptor->getSet(setIdx), 1));
-	descWrites.push_back(textures_.scatteringImage->descriptorWrite(descriptor->getSet(setIdx), 2));
-	descWrites.push_back(textures_.gatheringImage->descriptorWrite(descriptor->getSet(setIdx), 3));
-	descWrites.push_back(textures_.gatheringSumImage->descriptorWrite(descriptor->getSet(setIdx), 4));
-	descWrites.push_back(textures_.scatteringSumImage->descriptorWrite(descriptor->getSet(setIdx), 5));
+	descWrites.push_back(textures_.transmittance->descriptorWrite(descriptor->getSet(setIdx), 1));
+	descWrites.push_back(textures_.scattering->descriptorWrite(descriptor->getSet(setIdx), 2));
+	descWrites.push_back(textures_.gathering->descriptorWrite(descriptor->getSet(setIdx), 3));
+	descWrites.push_back(textures_.gatheringSum->descriptorWrite(descriptor->getSet(setIdx), 4));
+	descWrites.push_back(textures_.scatteringSum->descriptorWrite(descriptor->getSet(setIdx), 5));
 	descriptor->updateDescriptorSets(descWrites);
 
 	// Write the buffer data.

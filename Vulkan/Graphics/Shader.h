@@ -17,10 +17,10 @@ namespace QZL
 			Shader(const VkDevice logicDevice, const std::string& fileName);
 			~Shader();
 			/// Copy and move operations disallowed. Create it where you need it and let it go out of scope.
-			Shader(const Shader& copy) = delete;
-			Shader(Shader&& move) noexcept = delete;
-			Shader& operator=(const Shader& copy) = delete;
-			Shader operator=(Shader&& move_) noexcept = delete;
+			//Shader(const Shader& copy) = delete;
+			//Shader(Shader&& move) noexcept;
+			//Shader& operator=(const Shader& copy) = delete;
+			//Shader operator=(Shader&& move_) noexcept;
 
 			/// Fills a create info struct and returns it for use in pipeline creation.
 			VkPipelineShaderStageCreateInfo getCreateInfo(VkShaderStageFlagBits stageFlagBit, VkSpecializationInfo* specConstants = NULL) const noexcept;

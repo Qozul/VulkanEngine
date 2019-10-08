@@ -46,8 +46,20 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 
 	std::vector<VkPushConstantRange> pushConstantRanges;
 	pushConstantRanges.push_back(setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT));
-	createPipeline<ParticleVertex>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), pushConstantRanges.size(),
-		pushConstantRanges.data()), vertexShader, fragmentShader, geometryShader, VK_PRIMITIVE_TOPOLOGY_POINT_LIST, true, VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	stageInfos.emplace_back(geometryShader, VK_SHADER_STAGE_GEOMETRY_BIT, nullptr);
+
+	PipelineCreateInfo pci = {};
+	pci.enableDepthTest = VK_TRUE;
+	pci.enableDepthWrite = VK_TRUE;
+	pci.extent = swapChainExtent;
+	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+
+	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
 }
 
 ParticleRenderer::~ParticleRenderer()
@@ -85,6 +97,9 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 		pcg.tileLength = params->material.textureTileLength;
 		instancesSum += drawElementCmd.instanceCount;
 
+		std::vector<VkWriteDescriptorSet> descWrites;
+		descWrites.push_back(params->material.texture->descriptorWrite(descriptorSets_[0], 1));
+		descriptor_->updateDescriptorSets(descWrites);
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);

@@ -71,8 +71,17 @@ PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass 
 	specConstants[1].dataSize = sizeof(specConstantValues);
 	specConstants[1].pData = specConstantValues.data();
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, swapChainExtent, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), 
-		vertexShader, fragmentShader, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, false, VK_FRONT_FACE_COUNTER_CLOCKWISE, &specConstants);
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &specConstants[0]);
+	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
+
+	PipelineCreateInfo pci = {};
+	pci.enableDepthTest = VK_FALSE;
+	pci.extent = swapChainExtent;
+	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+
+	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
 }
 
 PostProcessRenderer::~PostProcessRenderer()

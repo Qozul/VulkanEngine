@@ -221,7 +221,7 @@ void SwapChain::submitQueue(const uint32_t imgIdx, VkSemaphore signalSemaphores[
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
 	vkResetFences(*logicDevice_, 1, &inFlightFences_[currentFrame_]);
-
+	// TODO recover in case of device lost
 	CHECK_VKRESULT(vkQueueSubmit(logicDevice_->getQueueHandle(QueueFamilyType::kGraphicsQueue), 1, &submitInfo, inFlightFences_[currentFrame_]));
 }
 

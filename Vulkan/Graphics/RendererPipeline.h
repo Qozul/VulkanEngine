@@ -7,6 +7,24 @@ namespace QZL
 	namespace Graphics {
 		class LogicDevice;
 
+		struct ShaderStageInfo {
+			std::string name;
+			VkShaderStageFlagBits stageFlag;
+			VkSpecializationInfo* specConstants;
+
+			ShaderStageInfo(std::string name, VkShaderStageFlagBits stageFlag, VkSpecializationInfo* specConstants)
+				: name(name), stageFlag(stageFlag), specConstants(specConstants) { }
+		};
+
+		struct PipelineCreateInfo {
+			VkExtent2D extent;
+			VkPipelineVertexInputStateCreateInfo vertexInputInfo;
+			VkPrimitiveTopology primitiveTopology;
+			VkFrontFace frontFace;
+			VkBool32 enableDepthTest;
+			VkBool32 enableDepthWrite;
+		};
+
 		class RendererPipeline {
 		public:
 			enum class PrimitiveType : uint32_t {
@@ -15,15 +33,20 @@ namespace QZL
 				QUADS = 4
 			};
 		public:
-			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
+			/*RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, VkPrimitiveTopology topology, 
 				VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 2>* specConstants = nullptr);
+
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo, 
 				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, 
 				const std::string& tessEvalShader, PrimitiveType patchVertexCount, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 4>* specConstants = nullptr);
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, 
-				VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 3>* specConstants = nullptr);
+				VkPrimitiveTopology topology, VkFrontFace frontFace, bool enableDepthTest, std::array<VkSpecializationInfo, 3>* specConstants = nullptr);*/
+
+			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
+				PipelineCreateInfo pipelineCreateInfo, PrimitiveType patchVertexCount = PrimitiveType::NONE);
+
 			~RendererPipeline();
 
 			void switchMode();
@@ -42,9 +65,13 @@ namespace QZL
 			const LogicDevice* logicDevice_;
 			bool wiremeshMode_;
 		private:
+			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo,
+				std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo, PipelineCreateInfo pipelineCreateInfo);
+			/*
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, VkPipelineTessellationStateCreateInfo* tessellationInfo,
 				VkPipelineVertexInputStateCreateInfo& vertexInputInfo, VkFrontFace frontFace, bool enableDepthTest);
+			*/
 			VkPipelineShaderStageCreateInfo createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage);
 			VkPipelineInputAssemblyStateCreateInfo createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart);
 			VkPipelineTessellationStateCreateInfo createTessellationStateInfo(PrimitiveType patchPointCount);

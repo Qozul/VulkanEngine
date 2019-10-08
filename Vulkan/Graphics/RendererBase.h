@@ -80,7 +80,7 @@ namespace QZL
 				return { pushConstantRange, pinfo };
 			}
 		protected:
-			template<typename V>
+			/*template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader,
 				RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, 
@@ -92,7 +92,12 @@ namespace QZL
 			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, VkPipelineLayoutCreateInfo layoutInfo,
 				const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, VkPrimitiveTopology topology, 
-				bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, std::array<VkSpecializationInfo, 3>* specConstants = nullptr);
+				bool enableDepthTest = true, VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE, std::array<VkSpecializationInfo, 3>* specConstants = nullptr);*/
+
+			template<typename V>
+			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
+				PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount = RendererPipeline::PrimitiveType::NONE);
+
 			void beginFrame(VkCommandBuffer cmdBuffer);
 
 			LogicDevice* logicDevice_;
@@ -126,7 +131,7 @@ namespace QZL
 			return writes;
 		}
 
-		template<typename V>
+		/*template<typename V>
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
 			VkPipelineLayoutCreateInfo layoutInfo, const std::string& vertexShader, const std::string& fragmentShader, const std::string& tessCtrlShader, const std::string& tessEvalShader,
 			RendererPipeline::PrimitiveType patchVertexCount, bool enableDepthTest, VkFrontFace frontFace, std::array<VkSpecializationInfo, 4>* specConstants)
@@ -158,6 +163,16 @@ namespace QZL
 			auto p = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
 			pipeline_ = new RendererPipeline(logicDevice, renderPass, swapChainExtent, layoutInfo, p, vertexShader, fragmentShader, geometryShader, 
 				topology, frontFace, enableDepthTest, specConstants);
+		}*/
+
+		template<typename V>
+		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
+			PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount)
+		{
+			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
+			auto attribDesc = V::getAttribDescs(0);
+			pipelineCreateInfo.vertexInputInfo = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
+			pipeline_ = new RendererPipeline(logicDevice, renderPass, layoutInfo, stages, pipelineCreateInfo, patchVertexCount);
 		}
 
 		inline void RendererBase::beginFrame(VkCommandBuffer cmdBuffer)

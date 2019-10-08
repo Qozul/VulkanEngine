@@ -21,6 +21,6 @@ layout(binding = 1) uniform sampler2D tex;
 
 void main()
 {
-	//colour = texture(tex, inUvCoords);// + PC.tint;
-	colour = UBO.params[inInstanceIndex].tint;
+	colour = texture(tex, inUvCoords);// + PC.tint;
+	//colour = UBO.params[inInstanceIndex].tint;
 }

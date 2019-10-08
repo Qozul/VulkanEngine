@@ -78,7 +78,7 @@ void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, 
 	vkCmdEndRenderPass(cmdBuffer);
 
 	geometryColourBuf_->changeLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, cmdBuffer);
-	geometryDepthBuf_->changeLayout(VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL, cmdBuffer);
+	geometryDepthBuf_->changeLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, cmdBuffer);
 }
 
 void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
