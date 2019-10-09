@@ -10,9 +10,9 @@ layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_siz
 layout(binding = 0) uniform Params {
 	AtmosphereParameters atmosphere;
 };
-layout(binding = 2) uniform sampler3D scatteringTexture;
-layout(binding = 3) uniform restrict writeonly image2D gatheringLUTOrder;
-layout(binding = 4, rgba16f) uniform restrict image2D gatheringLUTSum;
+layout(binding = 7, rgba16f) uniform restrict writeonly image2D gatheringLUTOrder;
+layout(binding = 8, rgba16f) uniform restrict image2D gatheringLUTSum;
+layout(binding = 9) uniform sampler3D scatteringTexture;
 
 void main()
 {

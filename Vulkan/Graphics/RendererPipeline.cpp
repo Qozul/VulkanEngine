@@ -105,7 +105,7 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 	}
 
 	VkPipelineTessellationStateCreateInfo tessellationInfo = createTessellationStateInfo(patchVertexCount);
-	VkPipelineTessellationStateCreateInfo* tessInfoPtr = patchVertexCount == PrimitiveType::NONE ? &tessellationInfo : nullptr;
+	VkPipelineTessellationStateCreateInfo* tessInfoPtr = patchVertexCount == PrimitiveType::NONE ? nullptr : &tessellationInfo;
 	createPipeline(logicDevice, renderPass, layoutInfo, shaderStageInfos, createInputAssembly(pipelineCreateInfo.primitiveTopology, VK_FALSE), tessInfoPtr, pipelineCreateInfo);
 }
 

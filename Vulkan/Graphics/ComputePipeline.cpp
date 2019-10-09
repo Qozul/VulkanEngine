@@ -14,10 +14,12 @@ ComputePipeline::ComputePipeline(const LogicDevice* logicDevice, VkPipelineLayou
 
 	VkPipelineShaderStageCreateInfo stageInfo;
 	stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	stageInfo.pNext = NULL;
 	stageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 	stageInfo.module = module.getModule();
 	stageInfo.pName = "main";
 	stageInfo.pSpecializationInfo = nullptr;
+	stageInfo.flags = VK_PIPELINE_SHADER_STAGE_CREATE_ALLOW_VARYING_SUBGROUP_SIZE_BIT_EXT;
 
 	VkComputePipelineCreateInfo createInfo;
 	createInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;

@@ -65,23 +65,32 @@ void AtmosphereScript::start()
 	// Setup descriptor set, each shader has identical descriptor even if not used.
 	auto descriptor = logicDevice_->getPrimaryDescriptor();
 
-	VkDescriptorSetLayoutBinding transmittance = makeLayoutBinding(1);
-	VkDescriptorSetLayoutBinding scattering = makeLayoutBinding(2);
-	VkDescriptorSetLayoutBinding gathering = makeLayoutBinding(3);
-	VkDescriptorSetLayoutBinding gatheringSum = makeLayoutBinding(4);
-	VkDescriptorSetLayoutBinding scatteringSum = makeLayoutBinding(5);
-	VkDescriptorSetLayout layout = descriptor->makeLayout({ buffer->getBinding(), transmittance, scattering, gathering, gatheringSum, scatteringSum });
+	VkDescriptorSetLayoutBinding transmittance = makeLayoutBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE); // Transmittance write image
+	VkDescriptorSetLayoutBinding scattering = makeLayoutBinding(2, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE); // Scattering write image
+	VkDescriptorSetLayoutBinding gatheringSampler = makeLayoutBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); // Sampler gathering LUT order
+	VkDescriptorSetLayoutBinding gatheringSumSampler = makeLayoutBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); // Gathering Sum Sampler
+	VkDescriptorSetLayoutBinding scatteringSum = makeLayoutBinding(5, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE); // Scattering sum image write
+	VkDescriptorSetLayoutBinding transmittanceSampler = makeLayoutBinding(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); // Transmittance read sampler
+	VkDescriptorSetLayoutBinding gathering = makeLayoutBinding(7, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE); //  gathering LUT order write image
+	VkDescriptorSetLayoutBinding gatheringSum = makeLayoutBinding(8, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE); // Gathering Sum Sampler
+	VkDescriptorSetLayoutBinding scatteringSampler = makeLayoutBinding(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); // Scattering write image
+	VkDescriptorSetLayout layout = descriptor->makeLayout({ buffer->getBinding(), transmittance, scattering, gatheringSampler, gatheringSumSampler, 
+		scatteringSum, transmittanceSampler, gathering, gatheringSum, scatteringSampler });
 	size_t setIdx = descriptor->createSets({ layout });
 	auto set = descriptor->getSet(setIdx);
 
 	std::vector<VkWriteDescriptorSet> descWrites;
 	descWrites.push_back(buffer->descriptorWrite(descriptor->getSet(setIdx)));
 	// TODO need to write using the storage images not the samplers, perhaps need both available when appropriate.
-	descWrites.push_back(textures_.transmittance->descriptorWrite(descriptor->getSet(setIdx), 1));
-	descWrites.push_back(textures_.scattering->descriptorWrite(descriptor->getSet(setIdx), 2));
+	descWrites.push_back(textures_.transmittanceImage->descriptorWrite(descriptor->getSet(setIdx), 1));
+	descWrites.push_back(textures_.scatteringImage->descriptorWrite(descriptor->getSet(setIdx), 2));
 	descWrites.push_back(textures_.gathering->descriptorWrite(descriptor->getSet(setIdx), 3));
 	descWrites.push_back(textures_.gatheringSum->descriptorWrite(descriptor->getSet(setIdx), 4));
-	descWrites.push_back(textures_.scatteringSum->descriptorWrite(descriptor->getSet(setIdx), 5));
+	descWrites.push_back(textures_.scatteringSumImage->descriptorWrite(descriptor->getSet(setIdx), 5));
+	descWrites.push_back(textures_.transmittance->descriptorWrite(descriptor->getSet(setIdx), 6));
+	descWrites.push_back(textures_.gatheringImage->descriptorWrite(descriptor->getSet(setIdx), 7));
+	descWrites.push_back(textures_.gatheringSumImage->descriptorWrite(descriptor->getSet(setIdx), 8));
+	descWrites.push_back(textures_.scatteringSum->descriptorWrite(descriptor->getSet(setIdx), 9));
 	descriptor->updateDescriptorSets(descWrites);
 
 	// Write the buffer data.
@@ -171,12 +180,12 @@ void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedT
 	finalTextures.scatteringSum = finalTextures.scatteringSumImage->createTextureSampler("AtmosScatteringSum", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 }
 
-VkDescriptorSetLayoutBinding AtmosphereScript::makeLayoutBinding(const uint32_t binding, const VkSampler* immutableSamplers)
+VkDescriptorSetLayoutBinding AtmosphereScript::makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers)
 {
 	VkDescriptorSetLayoutBinding layoutBinding;
 	layoutBinding.binding = binding;
 	layoutBinding.descriptorCount = 1;
-	layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	layoutBinding.descriptorType = type;
 	layoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 	layoutBinding.pImmutableSamplers = immutableSamplers;
 	return layoutBinding;

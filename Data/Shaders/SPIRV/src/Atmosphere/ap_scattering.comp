@@ -28,8 +28,8 @@ layout (binding = 0) uniform Params {
 	AtmosphereParameters atmosphere;
 };
 
-layout(binding = 2) uniform writeonly image3D apScatteringTexture;
-layout(binding = 3) uniform sampler2D gatheringSum;
+layout(binding = 2, rgba16f) uniform writeonly image3D apScatteringTexture;
+layout(binding = 4) uniform sampler2D gatheringSum;
 
 void main()
 {

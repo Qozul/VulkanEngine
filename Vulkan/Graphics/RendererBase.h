@@ -75,6 +75,7 @@ namespace QZL
 				pinfo.stages = stages;
 				pinfo.barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 				pinfo.barrier.pNext = NULL;
+				//pinfo.barrier.srcAccessMask
 				pinfo.offset = offset;
 
 				return { pushConstantRange, pinfo };

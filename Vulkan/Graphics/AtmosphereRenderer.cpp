@@ -41,8 +41,7 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	pipelineLayouts_.push_back(layout);
 	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
 
-	std::vector<VkPushConstantRange> pushConstantRanges;
-	pushConstantRanges.push_back(setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT));
+	auto pushConstRange = setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
@@ -55,7 +54,7 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci,
+	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci,
 		RendererPipeline::PrimitiveType::QUADS);
 }
 

@@ -76,7 +76,7 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci,
+	createPipeline<Vertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci,
 		RendererPipeline::PrimitiveType::QUADS);
 }
 

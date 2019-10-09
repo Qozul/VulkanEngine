@@ -44,8 +44,7 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[0]));
 	descriptor->updateDescriptorSets(descWrites);
 
-	std::vector<VkPushConstantRange> pushConstantRanges;
-	pushConstantRanges.push_back(setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT));
+	auto pushConstRange = setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
@@ -59,7 +58,7 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
+	createPipeline<ParticleVertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
 }
 
 ParticleRenderer::~ParticleRenderer()
@@ -103,7 +102,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);
-		vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[0].stages, pushConstantInfos_[0].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[0].barrier, 0, nullptr, 0, nullptr);
+		//vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[0].stages, pushConstantInfos_[0].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[0].barrier, 0, nullptr, 0, nullptr);
 
 		vkCmdDraw(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

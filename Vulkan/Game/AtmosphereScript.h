@@ -56,7 +56,7 @@ namespace QZL {
 		private:
 			// Creates temporary textures, returned via reference argument. Also creates the member textures.
 			void initTextures(const Graphics::LogicDevice* logicDevice, PrecomputedTextures& finalTextures);
-			VkDescriptorSetLayoutBinding makeLayoutBinding(const uint32_t binding, const VkSampler* immutableSamplers = nullptr);
+			VkDescriptorSetLayoutBinding makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers = nullptr);
 
 			Assets::AtmosphereParameters params_;
 			Graphics::MaterialAtmosphere material_;
