@@ -9,3 +9,5 @@ Validation layer (severity 4096): vkUpdateDescriptorSets() failed write update v
 H:\MCOMP\SummerDemo\x64\Debug\Engine.exe (process 5300) exited with code -1.
 To automatically close the console when debugging stops, enable Tools->Options->Debugging->Automatically close the console when debugging stops.
 Press any key to close this window . . .
+
+TODO: Add a TextureGroup where you can have as many textures as you want, and it has an associated descriptor set. Rather than updating a set, need to bind.
