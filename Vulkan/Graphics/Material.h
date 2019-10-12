@@ -1,10 +1,54 @@
 #pragma once
 #include "VkUtil.h"
 #include "../Assets/AtmosphereParameters.h"
+#include <fstream>
+#include <sstream>
 
 namespace QZL {
 	namespace Graphics {
 		class TextureSampler;
+
+		// A material is a simple wrapper around the requirements of a renderer.
+		// It will usually consist of a set of textures and possibly some additional data.
+		// The data should be accessible via getMaterialData, and will likely correspond to a data struct defined by the subclass.
+		// A material has its own data set with the textures held in immutable samplers at bindings of a set.
+		class Material {
+		public:
+			Material(const std::string materialFileName)
+				: materialFileName_(materialFileName), textureSet_(VK_NULL_HANDLE) {}
+
+			VkDescriptorSet getTextureSet() {
+				return textureSet_;
+			}
+		protected:
+			
+
+			virtual void loadMaterial() = 0;
+
+			VkDescriptorSet textureSet_;
+			const std::string materialFileName_;
+		};
+
+		class ParticleMaterial : public Material {
+		public:
+			ParticleMaterial(const std::string materialFileName)
+				: Material(materialFileName) { }
+		protected:
+			void loadMaterial() override {
+				std::ifstream requirementsFile("../descriptor-requirements.txt");
+				ASSERT(requirementsFile.is_open());
+				std::string type, diffuseTexture;
+				requirementsFile >> type >> diffuseTexture;
+				requirementsFile.close();
+
+				ASSERT(type == "PARTICLE");
+				// todo load texture from texture manager.
+				//      call this from texture manager.
+				//      and store the material so it can be reused.
+				//      Add this to GraphicsComponent using Material interface.
+			}
+		};
+
 		struct MaterialStatic {
 			// 32 bytes
 			float diffuseX, diffuseY, diffuseZ; // Mixed in with texture
