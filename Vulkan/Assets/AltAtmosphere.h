@@ -2,7 +2,7 @@
 #include "../Graphics/VkUtil.h"
 #include "../Graphics/Material.h"
 #include "AtmosphereParameters.h"
-
+/*
 namespace QZL {
 	namespace Graphics {
 		class LogicDevice;
@@ -62,3 +62,4 @@ namespace QZL {
 		};
 	}
 }
+*/

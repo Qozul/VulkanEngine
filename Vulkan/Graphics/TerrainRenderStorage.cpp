@@ -6,7 +6,7 @@
 #include "Descriptor.h"
 
 using namespace QZL::Graphics;
-
+/*
 TerrainRenderStorage::TerrainRenderStorage(TextureManager* textureManager, const LogicDevice* logicDevice, ElementBufferInterface* buffer)
 	: RenderStorageMeshParams<TerrainParamData>(buffer), textureManager_(textureManager), logicDevice_(logicDevice)
 {
@@ -28,5 +28,5 @@ TerrainParamData TerrainRenderStorage::resolveParams(GraphicsComponent* instance
 		textureManager_->requestTextureSeparate(params->getDebugDiffuseName(), VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8)
 	};
 }
-
+*/
 

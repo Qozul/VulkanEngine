@@ -22,7 +22,7 @@ using namespace QZL::Graphics;
 PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
 	Descriptor* descriptor, const std::string& vertexShader, const std::string& fragmentShader, Image* apScatteringTex,
 	Image* apTransmittanceTex, TextureSampler* colourTex, TextureSampler* depthTex)
-	: RendererBase(logicDevice, new RenderStorageNoInstances(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()))), descriptor_(descriptor)
+	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE)), descriptor_(descriptor)
 {
 	apScatteringTexture_ = new TextureSampler(logicDevice, "ApScatteringSampler", apScatteringTex, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 	apTransmittanceTexture_ = new TextureSampler(logicDevice, "ApTransmittanceSampler", apTransmittanceTex, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
@@ -50,7 +50,7 @@ PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass 
 	auto voffset = buf->addVertices(vertices.data(), vertices.size());
 	auto ioffset = buf->addIndices(indices.data(), indices.size());
 	buf->emplaceMesh("FullscreenQuad", indices.size(), ioffset, voffset);
-	renderStorage_->addMesh(nullptr, buf->getMesh("FullscreenQuad"));
+	renderStorage_->addMesh(nullptr, new RenderObject("FullscreenQuad", buf->getMesh("FullscreenQuad"), nullptr, nullptr, false));
 
 	std::array<VkSpecializationMapEntry, 2> specConstantEntries;
 	specConstantEntries[0].constantID = 0;

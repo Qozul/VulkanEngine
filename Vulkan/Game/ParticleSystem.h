@@ -2,11 +2,13 @@
 #include "GameScript.h"
 #include "../Graphics/Vertex.h"
 #include "../Graphics/Material.h"
+#include "../Graphics/ShaderParams.h"
 #include "../Graphics/ElementBufferInterface.h"
 
 namespace QZL {
 	namespace Graphics {
 		class DynamicBufferInterface;
+		class RenderObject;
 	}
 	namespace Game {
 		// Particles are a special kind of entity made only of points, and expanded to billboarded textured quads in a shader.
@@ -32,6 +34,7 @@ namespace QZL {
 				other.reset();
 			}
 		};
+
 		class ParticleSystem : public GameScript {
 		public:
 			// Update is controlled in this class to ensure correct behaviour, however start should be derived to
@@ -39,14 +42,14 @@ namespace QZL {
 			virtual void start() = 0;
 			// Update can be overriden by a derived class when needed, however this provides the basic particle system logic
 			virtual void update(float dt) override;
-			Graphics::MaterialParticle& getMaterial() {
-				return material_;
+			Graphics::ParticleShaderParams* makeShaderParams() {
+				return new Graphics::ParticleShaderParams(textureTileLength_, tint);
 			}
-			Graphics::BasicMesh* makeMesh();
+			Graphics::RenderObject* makeRenderObject(std::string name);
 		protected:
 			// Number of tiles on xy is identical for x and y, as textures must be square.
 			ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf,
-				size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName);
+				size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName);
 			virtual ~ParticleSystem();
 			virtual void particleCreation(float dt, size_t expiredCount) = 0;
 			virtual void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex, float dt) = 0;
@@ -61,7 +64,9 @@ namespace QZL {
 			bool alwaysAliveAndUnordered_;
 			Particle* allocateParticle();
 
-			Graphics::MaterialParticle material_;
+			Graphics::Material* material_;
+			float textureTileLength_;
+			glm::vec4 tint;
 			size_t currentActiveSize_;
 			
 			// Allocate particle returns nullptr if there is no available particle

@@ -3,7 +3,7 @@
 
 namespace QZL {
 	namespace Graphics {
-		class TextureManager;
+		/*class TextureManager;
 		class TextureSampler;
 		class LogicDevice;
 		
@@ -20,6 +20,6 @@ namespace QZL {
 		private:
 			const LogicDevice* logicDevice_;
 			TextureManager* textureManager_;
-		};
+		};*/
 	}
 }

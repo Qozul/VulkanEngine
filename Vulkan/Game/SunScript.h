@@ -13,8 +13,8 @@ namespace QZL {
 			SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf);
 			~SunScript();
 
-			glm::vec3 getSunIntensity();
-			glm::vec3 getSunDirection();
+			glm::vec3* getSunIntensity();
+			glm::vec3* getSunDirection();
 
 		protected:
 			void start() override;
@@ -25,6 +25,8 @@ namespace QZL {
 
 		private:
 			float angle_;
+			glm::vec3 direction_;
+			glm::vec3 intensity_;
 
 			static constexpr float TWO_PI = static_cast<float>(std::_Pi) * 2.0f;
 			static constexpr float SPEED = 0.01f;

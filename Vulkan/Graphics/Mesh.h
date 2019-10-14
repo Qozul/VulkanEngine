@@ -13,6 +13,7 @@ namespace QZL
 			uint32_t indexOffset; // Index offset is only used for indexed data
 			uint32_t vertexOffset;
 		};
+		/*
 		struct MeshInstance {
 			Transform transform;
 		};
@@ -29,6 +30,6 @@ namespace QZL
 
 			InstType* inst = new InstType();
 			return inst;
-		}
+		}*/
 	}
 }

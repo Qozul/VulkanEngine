@@ -1,6 +1,6 @@
 #pragma once
 #include "ShaderParams.h"
-
+/*
 namespace QZL {
 	namespace Game {
 		class SunScript;
@@ -23,4 +23,4 @@ namespace QZL {
 			Game::SunScript* sunScript;
 		};
 	}
-}
+}*/

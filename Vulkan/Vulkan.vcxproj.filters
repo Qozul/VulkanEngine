@@ -285,6 +285,9 @@
     <ClInclude Include="Game\FireSystem.h">
       <Filter>Header Files\Game\Scripts\Particles</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\RenderObject.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\TexturedRenderer.cpp">
@@ -418,6 +421,9 @@
     </ClCompile>
     <ClCompile Include="Game\FireSystem.cpp">
       <Filter>Source Files\Game\Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Material.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

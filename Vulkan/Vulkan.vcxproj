@@ -67,6 +67,7 @@
     <ClInclude Include="Graphics\PostProcessRenderer.h" />
     <ClInclude Include="Graphics\RendererBase.h" />
     <ClInclude Include="Graphics\RendererPipeline.h" />
+    <ClInclude Include="Graphics\RenderObject.h" />
     <ClInclude Include="Graphics\RenderPass.h" />
     <ClInclude Include="Graphics\RenderStorage.h" />
     <ClInclude Include="Graphics\RenderStorageMeshParams.h" />
@@ -116,6 +117,7 @@
     <ClCompile Include="Graphics\Image.cpp" />
     <ClCompile Include="Graphics\Image2D.cpp" />
     <ClCompile Include="Graphics\LogicDevice.cpp" />
+    <ClCompile Include="Graphics\Material.cpp" />
     <ClCompile Include="Graphics\MeshLoader.cpp" />
     <ClCompile Include="Graphics\ParticleRenderer.cpp" />
     <ClCompile Include="Graphics\PhysicalDevice.cpp" />

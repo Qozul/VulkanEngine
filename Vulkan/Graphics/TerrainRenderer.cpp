@@ -8,8 +8,9 @@
 #include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
-#include "TerrainShaderParams.h"
-#include "TerrainRenderStorage.h"
+#include "ShaderParams.h"
+#include "RenderObject.h"
+#include "Material.h"
 #include "SwapChain.h"
 #include "../Assets/Entity.h"
 
@@ -22,12 +23,12 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	: RendererBase(logicDevice), descriptor_(descriptor)
 {
 	ASSERT(entityCount > 0);
-	renderStorage_ = new TerrainRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
+	renderStorage_ = new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::UNLIMITED);
 
 	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
 		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
-		sizeof(MaterialStatic) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
+		sizeof(StaticShaderParams::Params) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
 	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::UNRESERVED, 0,
 		sizeof(TessControlInfo) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
 	storageBuffers_.push_back(mvpBuf);
@@ -95,23 +96,22 @@ void TerrainRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t id
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		auto srs = static_cast<TerrainRenderStorage*>(renderStorage_);
-		std::vector<VkWriteDescriptorSet> descWrites;
-		descWrites.push_back(srs->getParamData(i).heightMap->descriptorWrite(descriptorSets_[idx * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_0));
-		descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_1));
-		descriptor_->updateDescriptorSets(descWrites);
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx * 2], 0, nullptr);
+		VkDescriptorSet sets[3] = { descriptorSets_[idx * 2], descriptorSets_[idx * 2 + 1], robject->getMaterial()->getTextureSet() };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
+
+		//vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx * 2], 0, nullptr);
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 }
 
 void TerrainRenderer::initialise(const glm::mat4& viewMatrix)
 {
-	if (renderStorage_->instanceCount() == 0)
+	/*if (renderStorage_->instanceCount() == 0)
 		return;
 	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
-	MaterialStatic* matDataPtr = static_cast<MaterialStatic*>(storageBuffers_[1]->bindRange());
+	StaticShaderParams::Params* matDataPtr = static_cast<StaticShaderParams::Params*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		matDataPtr[i] = static_cast<TerrainShaderParams*>((*(instPtr))->getShaderParams())->getMaterial();
@@ -124,7 +124,7 @@ void TerrainRenderer::initialise(const glm::mat4& viewMatrix)
 		eleDataPtr[i] = data;
 	}
 	storageBuffers_[0]->unbindRange();
-	storageBuffers_[1]->unbindRange();
+	storageBuffers_[1]->unbindRange();*/
 }
 
 void TerrainRenderer::updateBuffers(const glm::mat4& viewMatrix)
@@ -139,7 +139,7 @@ void TerrainRenderer::updateBuffers(const glm::mat4& viewMatrix)
 		eleDataPtr[i] = {
 			model, mvp
 		};
-		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 500.0f+
+		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 350.0f+
 		tcPtr[i].closeDistance = 50.0f;
 		tcPtr[i].patchRadius = 40.0f;
 		tcPtr[i].maxTessellationWeight = 4.0f;

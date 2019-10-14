@@ -19,6 +19,7 @@
 #include <functional>
 #include <algorithm>
 #include <random>
+#include <type_traits>
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>

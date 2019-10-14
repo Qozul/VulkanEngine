@@ -1,4 +1,5 @@
 #include "ParticleSystem.h"
+#include "../Graphics/RenderObject.h"
 #include "../System.h"
 #include "../Assets/AssetManager.h"
 #include "../Graphics/TextureManager.h"
@@ -62,17 +63,17 @@ void ParticleSystem::update(float dt)
 	}
 }
 
-Graphics::BasicMesh* ParticleSystem::makeMesh()
+Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
 {
-	Graphics::BasicMesh* m = new Graphics::BasicMesh();
-	m->count = subBufferRange_.count;
-	m->vertexOffset = subBufferRange_.first;
-	m->indexOffset = 0;
-	return m;
+	Graphics::BasicMesh* mesh = new Graphics::BasicMesh();
+	mesh->count = subBufferRange_.count;
+	mesh->vertexOffset = subBufferRange_.first;
+	mesh->indexOffset = 0;
+	return new Graphics::RenderObject(name, mesh, makeShaderParams(), material_);
 }
 
 ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf,
-	size_t maxParticles, float updateInterval, float textureTileLength, const std::string& textureName)
+	size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName)
 	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
 	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0)
 {
@@ -82,23 +83,22 @@ ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::ve
 	vertices_.resize(maxParticles);
 	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
 
-	material_.texture = initialiser.system->getMasters().assetManager->textureManager->requestTextureSeparate(textureName);
-	material_.tint = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	material_.textureTileLength = textureTileLength;
+	material_ = initialiser.system->getMasters().assetManager->textureManager->requestMaterial<Graphics::ParticleMaterial>(materialName);
+	tint = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	textureTileLength = textureTileLength;
 }
 
 ParticleSystem::~ParticleSystem()
 {
-	SAFE_DELETE(material_.texture);
 }
 
 void ParticleSystem::nextTextureTile(glm::vec2& tileOffset)
 {
 	// Move one along on the columns, if this wraps it around to the beginning then move down a row.
-	tileOffset.x += material_.textureTileLength;
+	tileOffset.x += textureTileLength_;
 	if (tileOffset.x >= 1.0 - FLT_EPSILON) {
 		tileOffset.x = 0.0f;
-		tileOffset.y += material_.textureTileLength;
+		tileOffset.y += textureTileLength_;
 	}
 	// Ensure that rows also wrap to the top and remain in the texture range.
 	if (tileOffset.y >= 1.0 - FLT_EPSILON) {

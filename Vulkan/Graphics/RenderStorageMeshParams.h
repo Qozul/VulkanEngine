@@ -7,7 +7,7 @@ namespace QZL {
 	namespace Graphics {
 		// Adds shader parameter data 1-1 with the meshes, where differences in param id even with the same mesh are
 		// considered different for the purposes of rendering (to correctly push descriptor updates before draw cmd).
-		template <typename ParamData>
+		/*template <typename ParamData>
 		class RenderStorageMeshParams : public RenderStorage {
 		public:
 			RenderStorageMeshParams(ElementBufferInterface* buffer);
@@ -49,6 +49,6 @@ namespace QZL {
 		template<typename ParamData>
 		inline RenderStorageMeshParams<ParamData>::~RenderStorageMeshParams()
 		{
-		}
+		}*/
 	}
 }

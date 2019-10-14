@@ -1,6 +1,6 @@
 #pragma once
 #include "ShaderParams.h"
-
+/*
 namespace QZL {
 	namespace Graphics {
 		class ParticleShaderParams : public ShaderParams {
@@ -16,4 +16,4 @@ namespace QZL {
 			MaterialParticle& material;
 		};
 	}
-}
+}*/

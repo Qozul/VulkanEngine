@@ -7,7 +7,7 @@ using namespace Graphics;
 
 GraphicsComponent::~GraphicsComponent()
 {
-	delete shaderParameters_;
+	SAFE_DELETE(instanceParameters_);
 }
 
 glm::mat4 GraphicsComponent::getModelmatrix()

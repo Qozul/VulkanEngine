@@ -1,6 +1,6 @@
 #pragma once
 #include "ShaderParams.h"
-
+/*
 namespace QZL {
 	namespace Game {
 		class GameMaster;
@@ -34,4 +34,4 @@ namespace QZL {
 			MaterialStatic material_;
 		};
 	}
-}
+}*/

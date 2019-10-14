@@ -9,7 +9,7 @@ namespace QZL {
 	namespace Assets {
 		class Terrain : public Entity {
 		public:
-			Terrain(const std::string name);
+			Terrain(const std::string name, Graphics::TextureManager* textureManager);
 		private:
 			static void loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::Vertex>& vertices);
 			static constexpr float maxHeight = 100.0f;

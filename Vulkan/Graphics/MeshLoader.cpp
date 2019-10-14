@@ -11,52 +11,27 @@ using namespace QZL::Graphics;
 const std::string MeshLoader::kPath = "../Data/Meshes/";
 const std::string MeshLoader::kExt = ".obj";
 
-BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoaderFunction loadFunc)
+BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoadingInfo& mlInfo)
 {
 	ASSERT(!eleBuf.isCommitted());
 	if (!eleBuf.contains(meshName)) {
-		if (loadFunc == nullptr) {
+		if (mlInfo.type == MeshLoadFuncType::NONE) {
 			loadMeshFromFile(meshName, eleBuf);
 		}
-		else {
+		else if (mlInfo.type == MeshLoadFuncType::FULL){
 			std::vector<IndexType> indices;
 			std::vector<Vertex> vertices;
-			loadFunc(indices, vertices);
-			placeMeshInBuffer(meshName, eleBuf, indices, vertices);
-		}
-	}
-	return eleBuf.getMesh(meshName);
-}
-
-BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoaderFunctionOnlyPos loadFunc)
-{
-	ASSERT(!eleBuf.isCommitted());
-	if (!eleBuf.contains(meshName)) {
-		if (loadFunc == nullptr) {
-			loadMeshFromFile(meshName, eleBuf);
+			mlInfo.meshLoaderFunction.full(indices, vertices);
+			placeMeshInBuffer<Vertex>(meshName, eleBuf, indices, vertices);
 		}
 		else {
 			std::vector<IndexType> indices;
 			std::vector<VertexOnlyPosition> vertices;
-			loadFunc(indices, vertices);
-			placeMeshInBuffer(meshName, eleBuf, indices, vertices);
+			mlInfo.meshLoaderFunction.onlyPos(indices, vertices);
+			placeMeshInBuffer<VertexOnlyPosition>(meshName, eleBuf, indices, vertices);
 		}
 	}
 	return eleBuf.getMesh(meshName);
-}
-
-void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBufferInterface& eleBuf, std::vector<IndexType>& indices, std::vector<Vertex>& vertices)
-{
-	auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
-	auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size());
-	eleBuf.emplaceMesh(meshName, indices.size(), indexOffset, vertexOffset);
-}
-
-void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBufferInterface& eleBuf, std::vector<IndexType>& indices, std::vector<VertexOnlyPosition>& vertices)
-{
-	auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
-	auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size());
-	eleBuf.emplaceMesh(meshName, indices.size(), indexOffset, vertexOffset);
 }
 
 void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferInterface& eleBuf)

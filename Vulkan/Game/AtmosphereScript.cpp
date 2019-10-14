@@ -12,12 +12,13 @@
 #include "../Graphics/Descriptor.h"
 #include "../System.h"
 #include "../Graphics/RenderPass.h"
+#include "SunScript.h"
 
 using namespace QZL;
 using namespace QZL::Game;
 using namespace QZL::Graphics;
 
-AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser)
+AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, SunScript* sun)
 	: GameScript(initialiser)
 {
 	logicDevice_ = initialiser.system->getMasters().graphicsMaster->getLogicDevice();
@@ -31,11 +32,13 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser)
 	params_.rayleighScaleHeight = 8000.0f;
 	params_.betaOzoneExt = glm::vec3(5.09f, 7.635f, 0.2545f);
 
-	material_.betaRay = params_.betaRay;
-	material_.betaMie = params_.betaMie;
-	material_.planetRadius = params_.planetRadius;
-	material_.Hatm = params_.Hatm;
-	material_.g = 0.76f;
+	shaderParams_.params.betaRay = params_.betaRay;
+	shaderParams_.params.betaMie = params_.betaMie;
+	shaderParams_.params.planetRadius = params_.planetRadius;
+	shaderParams_.params.Hatm = params_.Hatm;
+	shaderParams_.params.g = 0.76f;
+	shaderParams_.params.sunDirection = sun->getSunDirection();
+	shaderParams_.params.sunIntensity = sun->getSunIntensity();
 }
 
 AtmosphereScript::~AtmosphereScript()
@@ -50,6 +53,12 @@ AtmosphereScript::~AtmosphereScript()
 	SAFE_DELETE(textures_.gatheringSumImage);
 	SAFE_DELETE(textures_.scatteringSum);
 	SAFE_DELETE(textures_.scatteringSumImage);
+	SAFE_DELETE(material_);
+}
+
+Graphics::ShaderParams* AtmosphereScript::getNewShaderParameters() 
+{
+	return new Graphics::AtmosphereShaderParams(shaderParams_);
 }
 
 void AtmosphereScript::start()
@@ -73,7 +82,7 @@ void AtmosphereScript::start()
 	VkDescriptorSetLayoutBinding transmittanceSampler = makeLayoutBinding(6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); // Transmittance read sampler
 	VkDescriptorSetLayoutBinding gathering = makeLayoutBinding(7, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE); //  gathering LUT order write image
 	VkDescriptorSetLayoutBinding gatheringSum = makeLayoutBinding(8, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE); // Gathering Sum Sampler
-	VkDescriptorSetLayoutBinding scatteringSampler = makeLayoutBinding(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); // Scattering write image
+	VkDescriptorSetLayoutBinding scatteringSampler = makeLayoutBinding(9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER); // Scattering sampler
 	VkDescriptorSetLayout layout = descriptor->makeLayout({ buffer->getBinding(), transmittance, scattering, gatheringSampler, gatheringSumSampler, 
 		scatteringSum, transmittanceSampler, gathering, gatheringSum, scatteringSampler });
 	size_t setIdx = descriptor->createSets({ layout });
@@ -149,7 +158,17 @@ void AtmosphereScript::start()
 
 	SAFE_DELETE(buffer);
 
+	// TODO remove
 	sysMasters_->graphicsMaster->attachPostProcessScript(this);
+
+	// TODO free previous set
+
+	// Make the material, it only needs the scattering sampler
+	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding });
+	auto matSetIdx = descriptor->createSets({ matLayout });
+	auto matSet = descriptor->getSet(setIdx);
+	material_ = new AtmosphereMaterial("atmosphereMaterial", set, matLayout);
 }
 
 void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedTextures& finalTextures)

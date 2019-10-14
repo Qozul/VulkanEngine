@@ -8,8 +8,9 @@
 #include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
-#include "StaticShaderParams.h"
-#include "StaticRenderStorage.h"
+#include "ShaderParams.h"
+#include "Material.h"
+#include "RenderObject.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
@@ -20,17 +21,12 @@ TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* tex
 	: RendererBase(logicDevice), descriptor_(descriptor)
 {
 	ASSERT(entityCount > 0);
-	if (logicDevice->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		renderStorage_ = new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
-	}
-	else {
-		renderStorage_ = new StaticRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
-	}
+	renderStorage_ = new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::UNLIMITED);
 
 	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
 		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT);
 	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
-		sizeof(MaterialStatic) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
+		sizeof(StaticShaderParams::Params) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);
 
@@ -79,8 +75,7 @@ TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* tex
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
-
+	createPipeline<Vertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
 }
 
 TexturedRenderer::~TexturedRenderer()
@@ -91,10 +86,10 @@ void TexturedRenderer::initialise(const glm::mat4& viewMatrix)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
-	MaterialStatic* matDataPtr = static_cast<MaterialStatic*>(storageBuffers_[1]->bindRange());
+	StaticShaderParams::Params* matDataPtr = static_cast<StaticShaderParams::Params*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		matDataPtr[i] = static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())->getMaterial();
+		matDataPtr[i] = static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())->params;
 	}
 	storageBuffers_[1]->unbindRange();
 }
@@ -118,15 +113,18 @@ void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		auto srs = static_cast<StaticRenderStorage*>(renderStorage_);
 		if (!logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-			std::vector<VkWriteDescriptorSet> descWrites;
-			descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[static_cast<size_t>(idx) * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_0));
-			descWrites.push_back(srs->getParamData(i).normalMap->descriptorWrite(descriptorSets_[static_cast<size_t>(idx) * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_1));
-			descriptor_->updateDescriptorSets(descWrites);
+			// TODO, the choice here is to get the material from the robject (DI not supported) or from the instance.
+			// it may be best to have 2 cmd loop functions because they may change the flow notably.
+
+			VkDescriptorSet sets[3] = { descriptorSets_[idx * 2], descriptorSets_[idx * 2 + 1], robject->getMaterial()->getTextureSet() };
+			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
 		}
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[static_cast<size_t>(idx) * 2], 0, nullptr);
+		else {
+			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[static_cast<size_t>(idx) * 2], 0, nullptr);
+		}
 		
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

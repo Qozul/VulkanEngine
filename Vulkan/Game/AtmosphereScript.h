@@ -4,6 +4,7 @@
 #include "../InputManager.h"
 #include "../Assets/AtmosphereParameters.h"
 #include "../Graphics/Material.h"
+#include "../Graphics/ShaderParams.h"
 
 namespace QZL {
 	namespace Graphics {
@@ -13,6 +14,7 @@ namespace QZL {
 		class Image;
 	}
 	namespace Game {
+		class SunScript;
 		struct PrecomputedTextures {
 			Graphics::Image* transmittanceImage = nullptr;
 			Graphics::Image* scatteringImage = nullptr;
@@ -39,7 +41,7 @@ namespace QZL {
 
 			static constexpr int INVOCATION_SIZE = 8;
 		public:
-			AtmosphereScript(const GameScriptInitialiser& initialiser);
+			AtmosphereScript(const GameScriptInitialiser& initialiser, SunScript* sun);
 			~AtmosphereScript();
 			PrecomputedTextures& getTextures() {
 				return textures_;
@@ -47,7 +49,8 @@ namespace QZL {
 			Assets::AtmosphereParameters& getParameters() {
 				return params_;
 			}
-			Graphics::MaterialAtmosphere& getMaterial() {
+			Graphics::ShaderParams* getNewShaderParameters();
+			Graphics::Material* getMaterial() {
 				return material_;
 			}
 		protected:
@@ -59,8 +62,9 @@ namespace QZL {
 			VkDescriptorSetLayoutBinding makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers = nullptr);
 
 			Assets::AtmosphereParameters params_;
-			Graphics::MaterialAtmosphere material_;
+			Graphics::AtmosphereShaderParams shaderParams_;
 			PrecomputedTextures textures_;
+			Graphics::Material* material_;
 
 			const Graphics::LogicDevice* logicDevice_;
 		};

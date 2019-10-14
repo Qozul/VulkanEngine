@@ -26,8 +26,9 @@ Descriptor::Descriptor(const LogicDevice* logicDevice, const uint32_t maxSets, s
 
 Descriptor::~Descriptor()
 {
-	for (auto layout : layouts_)
+	for (auto layout : layouts_) {
 		vkDestroyDescriptorSetLayout(*logicDevice_, layout, nullptr);
+	}
 	vkDestroyDescriptorPool(*logicDevice_, pool_, nullptr);
 	sets_.clear();
 }
@@ -43,7 +44,6 @@ size_t Descriptor::createSets(const std::vector<VkDescriptorSetLayout>& layouts)
 	size_t firstIdx = sets_.size();
 	sets_.resize(sets_.size() + layouts.size());
 	CHECK_VKRESULT(vkAllocateDescriptorSets(*logicDevice_, &allocInfo, &sets_[firstIdx]));
-
 	return firstIdx;
 }
 

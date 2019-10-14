@@ -4,8 +4,10 @@
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "TextureSampler.h"
-#include "ParticleShaderParams.h"
+#include "ShaderParams.h"
 #include "SwapChain.h"
+#include "RenderObject.h"
+#include "Material.h"
 #include "../Assets/Entity.h"
 #include "../Assets/Transform.h"
 
@@ -29,14 +31,13 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 	: RendererBase(logicDevice), descriptor_(descriptor), billboardPoint_(billboardPoint)
 {
 	ASSERT(particleSystemCount > 0);
-	renderStorage_ = new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(logicDevice->getDeviceMemory(), 12, SwapChain::numSwapChainImages));
+	renderStorage_ = new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(logicDevice->getDeviceMemory(), 12, SwapChain::numSwapChainImages), RenderStorage::InstanceUsage::UNLIMITED);
 
 	DescriptorBuffer* instBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
 		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	storageBuffers_.push_back(instBuf);
-	auto texBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	VkDescriptorSetLayout layout = descriptor->makeLayout({ instBuf->getBinding(), texBinding });
+	VkDescriptorSetLayout layout = descriptor->makeLayout({ instBuf->getBinding() });
 
 	pipelineLayouts_.push_back(layout);
 	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
@@ -80,7 +81,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 		auto params = static_cast<ParticleShaderParams*>(comp->getShaderParams());
 		glm::mat4 model = comp->getModelmatrix();
 		eleDataPtr[i] = {
-			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model, params->material.tint
+			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model, params->params.tint
 		};
 	}
 	storageBuffers_[0]->unbindRange();
@@ -88,18 +89,17 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	size_t instancesSum = 0;
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
+
 		auto component =  *(renderStorage_->instanceData() + instancesSum);
 		auto params = static_cast<ParticleShaderParams*>(component->getShaderParams());
-		
 		PushConstantGeometry pcg;
 		pcg.billboardPoint = *billboardPoint_;
-		pcg.tileLength = params->material.textureTileLength;
+		pcg.tileLength = params->params.textureTileLength;
 		instancesSum += drawElementCmd.instanceCount;
-
-		std::vector<VkWriteDescriptorSet> descWrites;
-		descWrites.push_back(params->material.texture->descriptorWrite(descriptorSets_[0], 1));
-		descriptor_->updateDescriptorSets(descWrites);
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
+		
+		VkDescriptorSet sets[2] = { descriptorSets_[0], robject->getMaterial()->getTextureSet() };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);
 		//vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[0].stages, pushConstantInfos_[0].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[0].barrier, 0, nullptr, 0, nullptr);

@@ -10,6 +10,7 @@ components.
 #include "../../Shared/Utility.h"
 #include "../Graphics/GraphicsMaster.h"
 #include "../Graphics/GraphicsComponent.h"
+#include "../Graphics/MeshLoader.h"
 
 namespace QZL {
 	class Transform;
@@ -28,10 +29,9 @@ namespace QZL {
 			virtual void update(float dt);
 			void start();
 
-			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
-				Graphics::MeshLoaderFunction meshLoaderFunc = nullptr);
-			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName,
-				Graphics::MeshLoaderFunctionOnlyPos meshLoaderFunc);
+			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* perMeshParams, Graphics::ShaderParams* perInstanceParams,
+				Graphics::Material* material, const std::string& meshName, Graphics::MeshLoadingInfo mlInfo);
+			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::RenderObject* robject, Graphics::ShaderParams* perInstanceParams = nullptr);
 			void setGameScript(Game::GameScript* script);
 			Graphics::GraphicsComponent* getGraphicsComponent() {
 				return graphicsComponent_;

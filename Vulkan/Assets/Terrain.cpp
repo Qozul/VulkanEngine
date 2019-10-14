@@ -1,5 +1,5 @@
 #include "Terrain.h"
-#include "../Graphics/TerrainShaderParams.h"
+#include "../Graphics/ShaderParams.h"
 #include "../Graphics/Material.h"
 #include "../Graphics/LogicDevice.h"
 #include "../Graphics/TextureManager.h"
@@ -8,11 +8,11 @@ using namespace QZL;
 using namespace Assets;
 using namespace Graphics;
 
-Terrain::Terrain(const std::string name)
+Terrain::Terrain(const std::string name, TextureManager* textureManager)
 	: Entity(name)
 {
-	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new Graphics::TerrainShaderParams("heightmaps/hmap2", "ground_04",
-		Graphics::MaterialStatic(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f)), "terrain", loadFunction);
+	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new TerrainShaderParams(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f), nullptr,
+		textureManager->requestMaterial<TerrainMaterial>("ExampleTerrain"), "terrain", Graphics::MeshLoadingInfo(loadFunction));
 	transform_->position.y = 100.0f;
 }
 

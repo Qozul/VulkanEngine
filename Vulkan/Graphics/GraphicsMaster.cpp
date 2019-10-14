@@ -9,6 +9,7 @@
 #include "../Assets/AssetManager.h"
 #include "MeshLoader.h"
 #include "PostProcessPass.h"
+#include "RenderObject.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -19,22 +20,18 @@ glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0
 
 EnvironmentArgs environmentArgs;
 
-void GraphicsMaster::registerComponent(GraphicsComponent* component, BasicMesh* mesh)
+void GraphicsMaster::registerComponent(GraphicsComponent* component, RenderObject* robject)
 {
-	auto renderer = component->getRendererType();
-	if (mesh == nullptr) {
-		if (component->getVertexType() == VertexType::POSITION_UV_NORMAL) {
-			renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-				component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));
-		}
-		else {
-			renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-				component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFuncOnlyPos()));
-		}
+	renderers_[component->getRendererType()]->registerComponent(component);
+	/*if (robject == nullptr) {
+		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
+			component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));
+
+		renderers_[renderer]->registerComponent(component);
 	}
 	else {
-		renderers_[renderer]->registerComponent(component, mesh);
-	}
+		renderers_[renderer]->registerComponent(component, robject);
+	}*/
 }
 
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
