@@ -4,10 +4,6 @@
 struct Material {
 	vec4 diffuseColour;
 	vec4 specularColour;
-	uint diffuseTextureIndex;
-	uint normalMapIndex;
-	float padding0;
-	float padding2;
 };
 
 layout(location = 0) out vec4 fragColor;
@@ -16,7 +12,7 @@ layout (location = 0) in vec2 texUV;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec3 worldPos;
 
-layout(set = 0, binding = 3) uniform sampler2D texSampler;
+layout(set = 2, binding = 1) uniform sampler2D diffuseSampler;
 
 layout(set = 1, binding = 0) uniform LightingData
 {
@@ -40,10 +36,11 @@ void main() {
 	float rFactor = max(0.0, dot(halfDir, normal));
 	float sFactor = pow(rFactor , material.specularColour.w);
 	
-	vec4 texColour = texture(texSampler, texUV);
+	vec4 texColour = texture(diffuseSampler, texUV);
 	
 	vec3 ambient = texColour.rgb * ambientColour.xyz;
 	vec3 diffuse = texColour.rgb * material.diffuseColour.xyz * lambert;
 	vec3 specular = material.specularColour.xyz * sFactor * 0.05;
-	fragColor = vec4(ambient + diffuse + specular, min(texColour.a, material.diffuseColour.w));
+	//fragColor = vec4(ambient + diffuse + specular, min(texColour.a, material.diffuseColour.w));
+	fragColor = vec4(1.0);
 }

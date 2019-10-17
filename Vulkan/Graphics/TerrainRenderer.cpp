@@ -25,17 +25,17 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	ASSERT(entityCount > 0);
 	renderStorage_ = new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::UNLIMITED);
 
-	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
+	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
 		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
-	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
+	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 1, 0,
 		sizeof(StaticShaderParams::Params) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
-	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::UNRESERVED, 0,
+	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 2, 0,
 		sizeof(TessControlInfo) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);
 	storageBuffers_.push_back(tessBuf);
 	VkDescriptorSetLayout layout;
-	VkDescriptorSetLayoutBinding heightmapBinding = {};
+	/*VkDescriptorSetLayoutBinding heightmapBinding = {};
 	heightmapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
 	heightmapBinding.descriptorCount = 1;
 	heightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -47,11 +47,12 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	debugDiffuseBinding.descriptorCount = 1;
 	debugDiffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	debugDiffuseBinding.pImmutableSamplers = nullptr;
-	debugDiffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding(), heightmapBinding, debugDiffuseBinding });
+	debugDiffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;*/
+	layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding() });
 
 	pipelineLayouts_.push_back(layout);
 	pipelineLayouts_.push_back(globalRenderData->getLayout());
+	pipelineLayouts_.push_back(TerrainMaterial::getLayout(descriptor));
 
 	size_t idx = descriptor->createSets({ layout, layout, layout });
 	std::vector<VkWriteDescriptorSet> descWrites;

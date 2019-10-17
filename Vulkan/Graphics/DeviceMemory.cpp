@@ -262,6 +262,10 @@ void DeviceMemory::selectImageLayoutInfo(const VkImage& image, const VkImageLayo
 		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		oldStage = VK_SHADER_STAGE_FRAGMENT_BIT;
 		break;
+	case VK_IMAGE_LAYOUT_GENERAL:
+		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+		oldStage = VK_SHADER_STAGE_COMPUTE_BIT;
+		break;
 	default:
 		ASSERT(false); // Old layout invalid
 	}

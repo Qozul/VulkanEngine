@@ -16,6 +16,7 @@ namespace QZL {
 				: rtype_(type), owningEntity_(owner), meshParameters_(perMeshParams), instanceParameters_(perInstanceParams), 
 				  meshName_(meshName), loadInfo_(loadInfo), material_(material) {
 				if (material != nullptr) {
+					auto t = material->getRendererType();
 					ASSERT(type == material->getRendererType());
 				}
 				if (perInstanceParams != nullptr) {

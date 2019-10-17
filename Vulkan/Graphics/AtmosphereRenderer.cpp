@@ -39,13 +39,14 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	ASSERT(entityCount > 0);
 	renderStorage_ = new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE);
 
-	auto scatteringBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT); // TODO update bindings
-	auto gcbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto gdbBinding = TextureSampler::makeBinding(2, VK_SHADER_STAGE_FRAGMENT_BIT);
+	auto gcbBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
+	auto gdbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	VkDescriptorSetLayout layout = descriptor->makeLayout({ scatteringBinding, gcbBinding, gdbBinding });
+	VkDescriptorSetLayout layout = descriptor->makeLayout({ gcbBinding, gdbBinding });
 
 	pipelineLayouts_.push_back(layout);
+	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor));
+
 	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
 
 	auto pushConstRange = setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -76,8 +77,8 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 
 	// Need to update each frame due to layout transfer? TODO do I really or will the write persist as long as the state is correct when I access it?
 	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 1));
-	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 2));
+	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 0));
+	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 1));
 	descriptor_->updateDescriptorSets(descWrites);
 
 	beginFrame(cmdBuffer);

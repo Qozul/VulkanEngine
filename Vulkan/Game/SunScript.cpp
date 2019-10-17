@@ -5,7 +5,7 @@ using namespace QZL;
 using namespace QZL::Game;
 
 SunScript::SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf)
-	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 3.0f), "Particles/explosion"), angle_(0.0f)
+	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 3.0f), "Fire"), angle_(0.0f)
 {
 }
 

@@ -40,7 +40,7 @@ namespace QZL
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 			virtual void initialise(const glm::mat4& viewMatrix) = 0;
 
-			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr) {
+			void registerComponent(GraphicsComponent* component, RenderObject* robject) {
 				renderStorage_->addMesh(component, robject);
 			}
 			BufferInterface* getElementBuffer() {

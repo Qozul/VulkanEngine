@@ -17,7 +17,7 @@ layout(set = 0, binding = 0) readonly buffer UniformBufferObject {
     ElementData uElementData;
 } ubo;
 
-layout(set = 0, binding = 2) uniform sampler2D heightmap;
+layout(set = 2, binding = 0) uniform sampler2D heightmap;
 
 const float maxHeight = 100.0;
 

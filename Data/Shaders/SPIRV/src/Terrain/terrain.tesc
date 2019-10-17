@@ -17,7 +17,7 @@ layout(set = 1, binding = 0) uniform LightingData
 	vec4 lightPositions[1];
 };
 
-layout (set = 0, binding = 4) uniform TessellationInfo {
+layout (set = 0, binding = 2) uniform TessellationInfo {
 	float distanceFarMinusClose;
 	float closeDistance;
 	float patchRadius;
@@ -25,7 +25,7 @@ layout (set = 0, binding = 4) uniform TessellationInfo {
 	vec4 frustumPlanes[6];
 };
 
-layout(set = 0, binding = 2) uniform sampler2D heightmap;
+layout(set = 2, binding = 0) uniform sampler2D heightmap;
 
 const float maxHeight = 100.0;
 const float minWeight = 1.0;

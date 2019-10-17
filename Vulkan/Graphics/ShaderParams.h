@@ -72,7 +72,6 @@ namespace QZL {
 				float alpha;
 				glm::vec3 specularColour;
 				float specularExponent;
-				float padding0, padding1;
 			} params;
 
 			TerrainShaderParams(glm::vec3 diffuseColour, glm::vec3 specularColour, float alpha, float specularExponent) {

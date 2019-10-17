@@ -27,6 +27,9 @@ TextureManager::TextureManager(const LogicDevice* logicDevice, Descriptor* descr
 TextureManager::~TextureManager()
 {
 	SAFE_DELETE(textureLoader_);
+	for (auto it : materials_) {
+		SAFE_DELETE(it.second);
+	}
 	for (auto it : textures_) {
 		SAFE_DELETE(it.second);
 	}

@@ -13,14 +13,14 @@ layout(location = 0) out vec4 colour;
 
 layout(constant_id = 0) const int SC_MAX_PARTICLE_SYSTEMS = 111;
 
-layout (binding = 0) uniform Params {
+layout (set = 0, binding = 0) uniform Params {
 	PerInstanceParams[SC_MAX_PARTICLE_SYSTEMS] params;
 } UBO;
 
-layout(binding = 1) uniform sampler2D tex;
+layout(set = 1, binding = 0) uniform sampler2D tex;
 
 void main()
 {
-	colour = texture(tex, inUvCoords);// + PC.tint;
+	colour = texture(tex, inUvCoords);// + UBO.params[inInstanceIndex].tint;
 	//colour = UBO.params[inInstanceIndex].tint;
 }

@@ -42,6 +42,7 @@ void RenderStorage::addMeshOneInstance(GraphicsComponent* instance, RenderObject
 	robject = robject == nullptr 
 		? new RenderObject(static_cast<ElementBufferInterface*>(buffer_), instance->getMeshName(), instance->getPerMeshShaderParams(), instance->getLoadInfo(), instance->getMaterial())
 		: robject;
+	renderObjects_.push_back(robject);
 	auto mesh = robject->getMesh();
 	drawCmds_.emplace_back(mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, 0);
 	instances_.push_back(instance);
@@ -64,8 +65,8 @@ void RenderStorage::addMeshUnlimitedInstances(GraphicsComponent* instance, Rende
 		auto mesh = robject->getMesh();
 		dataMap_[key] = drawCmds_.size();
 
-		renderObjects_.push_back(robject);
 		ASSERT(drawCmds_.size() == renderObjects_.size());
+		renderObjects_.push_back(robject);
 
 		auto index = instances_.size();
 		if (buffer_->bufferType() & BufferFlags::ELEMENT) {

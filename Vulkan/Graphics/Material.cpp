@@ -8,33 +8,77 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-std::vector<VkDescriptorSetLayoutBinding> ParticleMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
+VkDescriptorSetLayout ParticleMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
+{
+	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, sampler) });
+}
+
+std::vector<TextureSampler*> ParticleMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
 	ASSERT(lines.size() >= 1);
 	diffuse_ = textureManager->requestTextureSeparate(lines[0]);
-	return { makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, diffuse_->getSampler()) };
+	return { diffuse_ };
 }
 
-std::vector<VkDescriptorSetLayoutBinding> StaticMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
+VkDescriptorSetLayout ParticleMaterial::makeLayout(Descriptor* descriptor)
+{
+	return getLayout(descriptor);
+}
+
+
+VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
 {
 	// TODO
-	return { makeLayoutBinding(0, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr) };
+	return VkDescriptorSetLayout();
 }
 
-std::vector<VkDescriptorSetLayoutBinding> TerrainMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
+std::vector<TextureSampler*> StaticMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
+{
+	// TODO
+	return {};
+}
+
+VkDescriptorSetLayout StaticMaterial::makeLayout(Descriptor* descriptor)
+{
+	return getLayout(descriptor);
+}
+
+
+VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
+{
+	return descriptor->makeLayout({
+		makeLayoutBinding(0, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, sampler),
+		makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, sampler)
+	});
+}
+
+std::vector<TextureSampler*> TerrainMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
 	ASSERT(lines.size() >= 2);
 	heightmap_ = textureManager->requestTextureSeparate(lines[0]);
 	diffuse_ = textureManager->requestTextureSeparate(lines[1]);
-	return {
-		makeLayoutBinding(0, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, heightmap_->getSampler()),
-		makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, diffuse_->getSampler())
-	};
+	return { heightmap_, diffuse_ };
 }
 
-std::vector<VkDescriptorSetLayoutBinding> AtmosphereMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
+VkDescriptorSetLayout TerrainMaterial::makeLayout(Descriptor* descriptor)
+{
+	return getLayout(descriptor);
+}
+
+
+VkDescriptorSetLayout AtmosphereMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
+{
+	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, sampler) });
+}
+
+std::vector<TextureSampler*> AtmosphereMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
 	ASSERT(lines.size() >= 1);
 	scatteringTexture_ = textureManager->requestTextureSeparate(lines[0]);
-	return { makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, scatteringTexture_->getSampler()) };
+	return { scatteringTexture_ };
+}
+
+VkDescriptorSetLayout QZL::Graphics::AtmosphereMaterial::makeLayout(Descriptor* descriptor)
+{
+	return getLayout(descriptor);
 }

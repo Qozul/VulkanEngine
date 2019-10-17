@@ -17,8 +17,8 @@ namespace QZL {
 		// A material is a group of textures with an associated descriptor set.
 		class Material {
 		public:
-			Material(const std::string materialFileName)
-				: materialFileName_(materialFileName), textureSet_(VK_NULL_HANDLE)
+			Material(const std::string materialFileName = "")
+				: materialFileName_(materialFileName), textureSet_(VK_NULL_HANDLE), layout_(VK_NULL_HANDLE)
 			{
 			}
 
@@ -40,32 +40,37 @@ namespace QZL {
 			void load(TextureManager* textureManager, Descriptor* descriptor) {
 				std::vector<std::string> lines;
 				readFile(lines);
+				layout_ = makeLayout(descriptor);
 				makeTextureSet(descriptor, loadTextures(textureManager, lines));
 			}
 
 			virtual const RendererTypes getRendererType() const = 0;
 		protected:
 			void readFile(std::vector<std::string>& lines) {
-				// TODO validation
+				// TODO validation of input
 				std::ifstream file("../Data/Materials/" + materialFileName_ + ".qmat");
 				ASSERT(file.is_open());
-				int count;
+				size_t count;
 				file >> count;
-				lines.reserve(count);
+				lines.reserve(count + 1);
 				std::string line;
-				while (line != "") {
+				while (line != "END") {
 					file >> line;
 					lines.emplace_back(line);
 				}
 				file.close();
 			}
 
-			void makeTextureSet(Descriptor* descriptor, std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings) {
-				layout_ = descriptor->makeLayout(setLayoutBindings);
+			void makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers) {
 				textureSet_ = descriptor->getSet(descriptor->createSets({ layout_ }));
+				std::vector<VkWriteDescriptorSet> setWrites(samplers.size());
+				for (size_t i = 0; i < samplers.size(); ++i) {
+					setWrites[i] = samplers[i]->descriptorWrite(textureSet_, i);
+				}
+				descriptor->updateDescriptorSets(setWrites);
 			}
 
-			VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler) {
+			constexpr static VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler) {
 				VkDescriptorSetLayoutBinding layoutBinding = {};
 				layoutBinding.binding = idx;
 				layoutBinding.descriptorCount = 1;
@@ -75,7 +80,8 @@ namespace QZL {
 				return layoutBinding;
 			}
 
-			virtual std::vector<VkDescriptorSetLayoutBinding> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) = 0;
+			virtual std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) = 0;
+			virtual VkDescriptorSetLayout makeLayout(Descriptor* descriptor) = 0;
 
 			VkDescriptorSet textureSet_;
 			VkDescriptorSetLayout layout_;
@@ -86,15 +92,19 @@ namespace QZL {
 		public:
 			ParticleMaterial(const std::string materialFileName)
 				: Material(materialFileName), diffuse_(nullptr) { }
+			~ParticleMaterial() {
+				SAFE_DELETE(diffuse_);
+			}
+
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
 
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::PARTICLE;
 			}
-			~ParticleMaterial() {
-				SAFE_DELETE(diffuse_);
-			}
+
 		protected:
-			std::vector<VkDescriptorSetLayoutBinding> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
 			TextureSampler* diffuse_;
 		};
@@ -111,11 +121,15 @@ namespace QZL {
 			~StaticMaterial() {
 
 			}
+
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
+
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::STATIC;
 			}
 		protected:
-			std::vector<VkDescriptorSetLayoutBinding> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
 			union {
 				uint32_t diffuseTextureIndex;
@@ -140,11 +154,14 @@ namespace QZL {
 				SAFE_DELETE(diffuse_);
 			}
 
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
+
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::TERRAIN;
 			}
 		protected:
-			std::vector<VkDescriptorSetLayoutBinding> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
 			TextureSampler* heightmap_;
 			TextureSampler* diffuse_;
@@ -161,11 +178,14 @@ namespace QZL {
 			~AtmosphereMaterial() {
 			}
 
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
+
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::TERRAIN;
+				return RendererTypes::ATMOSPHERE;
 			}
 		protected:
-			std::vector<VkDescriptorSetLayoutBinding> loadTextures(TextureManager* textureLoader, std::vector<std::string>& lines) override;
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureLoader, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
 			TextureSampler* scatteringTexture_;
 		};

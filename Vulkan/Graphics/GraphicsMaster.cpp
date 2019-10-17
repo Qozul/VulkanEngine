@@ -22,7 +22,7 @@ EnvironmentArgs environmentArgs;
 
 void GraphicsMaster::registerComponent(GraphicsComponent* component, RenderObject* robject)
 {
-	renderers_[component->getRendererType()]->registerComponent(component);
+	renderers_[component->getRendererType()]->registerComponent(component, robject);
 	/*if (robject == nullptr) {
 		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
 			component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));

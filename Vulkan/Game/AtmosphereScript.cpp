@@ -39,6 +39,14 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 	shaderParams_.params.g = 0.76f;
 	shaderParams_.params.sunDirection = sun->getSunDirection();
 	shaderParams_.params.sunIntensity = sun->getSunIntensity();
+
+	// Make the material, it only needs the scattering sampler
+	auto descriptor = logicDevice_->getPrimaryDescriptor();
+	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding });
+	auto matSetIdx = descriptor->createSets({ matLayout });
+	auto matSet = descriptor->getSet(matSetIdx);
+	material_ = new AtmosphereMaterial("atmosphereMaterial", matSet, matLayout);
 }
 
 AtmosphereScript::~AtmosphereScript()
@@ -152,9 +160,9 @@ void AtmosphereScript::start()
 	CHECK_VKRESULT(vkQueueWaitIdle(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue)));
 
 	// TODO Transfer image memory from writeable to read only optimal, it will never need to be written again.
-	/*textures_.irradianceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
-	textures_.transmittanceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
-	textures_.scatteringImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });*/
+	//textures_.irradianceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+	//textures_.transmittanceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+	textures_.scatteringImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
 
 	SAFE_DELETE(buffer);
 
@@ -163,12 +171,8 @@ void AtmosphereScript::start()
 
 	// TODO free previous set
 
-	// Make the material, it only needs the scattering sampler
-	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding });
-	auto matSetIdx = descriptor->createSets({ matLayout });
-	auto matSet = descriptor->getSet(setIdx);
-	material_ = new AtmosphereMaterial("atmosphereMaterial", set, matLayout);
+	std::vector<VkWriteDescriptorSet> materialWrites = { textures_.scattering->descriptorWrite(material_->getTextureSet(), 0) };
+	descriptor->updateDescriptorSets(materialWrites);
 }
 
 void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedTextures& finalTextures)

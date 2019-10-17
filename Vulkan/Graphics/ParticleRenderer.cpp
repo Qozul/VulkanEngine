@@ -40,6 +40,8 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 	VkDescriptorSetLayout layout = descriptor->makeLayout({ instBuf->getBinding() });
 
 	pipelineLayouts_.push_back(layout);
+	pipelineLayouts_.push_back(ParticleMaterial::getLayout(descriptor));
+
 	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
 	std::vector<VkWriteDescriptorSet> descWrites;
 	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[0]));
@@ -78,7 +80,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		auto comp = (*(instPtr + i));
-		auto params = static_cast<ParticleShaderParams*>(comp->getShaderParams());
+		auto params = static_cast<ParticleShaderParams*>(comp->getPerMeshShaderParams());
 		glm::mat4 model = comp->getModelmatrix();
 		eleDataPtr[i] = {
 			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model, params->params.tint
@@ -92,7 +94,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
 		auto component =  *(renderStorage_->instanceData() + instancesSum);
-		auto params = static_cast<ParticleShaderParams*>(component->getShaderParams());
+		auto params = static_cast<ParticleShaderParams*>(component->getPerMeshShaderParams());
 		PushConstantGeometry pcg;
 		pcg.billboardPoint = *billboardPoint_;
 		pcg.tileLength = params->params.textureTileLength;
