@@ -35,19 +35,6 @@ TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textu
 	storageBuffers_.push_back(matBuf);
 	storageBuffers_.push_back(tessBuf);
 	VkDescriptorSetLayout layout;
-	/*VkDescriptorSetLayoutBinding heightmapBinding = {};
-	heightmapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
-	heightmapBinding.descriptorCount = 1;
-	heightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	heightmapBinding.pImmutableSamplers = nullptr;
-	heightmapBinding.stageFlags = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-
-	VkDescriptorSetLayoutBinding debugDiffuseBinding = {};
-	debugDiffuseBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_1;
-	debugDiffuseBinding.descriptorCount = 1;
-	debugDiffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	debugDiffuseBinding.pImmutableSamplers = nullptr;
-	debugDiffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;*/
 	layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding() });
 
 	pipelineLayouts_.push_back(layout);
@@ -146,9 +133,15 @@ void TerrainRenderer::updateBuffers(const glm::mat4& viewMatrix)
 		tcPtr[i].maxTessellationWeight = 4.0f;
 		tcPtr[i].frustumPlanes = calculateFrustumPlanes(mvp);
 	}
-
 	storageBuffers_[2]->unbindRange();
 	storageBuffers_[0]->unbindRange();
+
+	StaticShaderParams::Params* matDataPtr = static_cast<StaticShaderParams::Params*>(storageBuffers_[1]->bindRange());
+	for (size_t i = 0; i < renderStorage_->meshCount(); ++i) {
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
+		matDataPtr[i] = static_cast<StaticShaderParams*>(robject->getParams())->params;
+	}
+	storageBuffers_[1]->unbindRange();
 }
 
 // Based on https://github.com/SaschaWillems/Vulkan/blob/master/base/frustum.hpp

@@ -84,8 +84,8 @@ ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::ve
 	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
 
 	material_ = initialiser.system->getMasters().assetManager->textureManager->requestMaterial<Graphics::ParticleMaterial>(materialName);
-	tint = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	textureTileLength = textureTileLength;
+	tint_ = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	textureTileLength_ = textureTileLength;
 }
 
 ParticleSystem::~ParticleSystem()

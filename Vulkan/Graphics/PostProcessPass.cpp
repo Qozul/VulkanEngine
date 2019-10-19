@@ -64,8 +64,8 @@ PostProcessPass::~PostProcessPass()
 
 void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
 {
-	geometryColourBuf_->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdBuffer);
-	geometryDepthBuf_->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdBuffer);
+	geometryColourBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_SHADER_STAGE_FRAGMENT_BIT);
+	geometryDepthBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkClearValue color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	auto bi = beginInfo(idx);
@@ -77,8 +77,8 @@ void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, 
 
 	vkCmdEndRenderPass(cmdBuffer);
 
-	geometryColourBuf_->changeLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, cmdBuffer);
-	geometryDepthBuf_->changeLayout(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, cmdBuffer);
+	geometryColourBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	geometryDepthBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 }
 
 void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)

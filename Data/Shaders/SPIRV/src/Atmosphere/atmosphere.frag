@@ -17,9 +17,9 @@ layout(push_constant) uniform Params {
 	vec4 sunDirection; // .w = float Hatm
 	vec4 sunIntensity; // .w = float g
 } PC;
-layout(set = 1, binding = 0) uniform sampler3D scatteringTexture;
 layout(set = 0,binding = 0) uniform sampler2D geometryColourBuffer;
 layout(set = 0, binding = 1) uniform sampler2D geometryDepthBuffer;
+layout(set = 1, binding = 0) uniform sampler3D scatteringTexture;
 
 float linearizeDepth(float depth)
 {

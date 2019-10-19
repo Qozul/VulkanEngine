@@ -21,6 +21,7 @@ void SwapChain::loop(const glm::mat4& viewMatrix)
 	const uint32_t imgIdx = aquireImage();
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
+	vkResetCommandBuffer(commandBuffers_[imgIdx], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -35,8 +36,6 @@ void SwapChain::loop(const glm::mat4& viewMatrix)
 	submitQueue(imgIdx, signalSemaphores);
 
 	present(imgIdx, signalSemaphores);
-
-	vkResetCommandBuffer(commandBuffers_[imgIdx], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 }
 
 SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities)

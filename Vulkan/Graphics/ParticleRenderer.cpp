@@ -88,17 +88,14 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 	}
 	storageBuffers_[0]->unbindRange();
 
-	size_t instancesSum = 0;
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		auto component =  *(renderStorage_->instanceData() + instancesSum);
-		auto params = static_cast<ParticleShaderParams*>(component->getPerMeshShaderParams());
+		auto params = static_cast<ParticleShaderParams*>(robject->getParams());
 		PushConstantGeometry pcg;
 		pcg.billboardPoint = *billboardPoint_;
 		pcg.tileLength = params->params.textureTileLength;
-		instancesSum += drawElementCmd.instanceCount;
 		
 		VkDescriptorSet sets[2] = { descriptorSets_[0], robject->getMaterial()->getTextureSet() };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);

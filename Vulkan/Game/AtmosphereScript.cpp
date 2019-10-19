@@ -42,7 +42,7 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 
 	// Make the material, it only needs the scattering sampler
 	auto descriptor = logicDevice_->getPrimaryDescriptor();
-	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT);
 	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding });
 	auto matSetIdx = descriptor->createSets({ matLayout });
 	auto matSet = descriptor->getSet(matSetIdx);
@@ -162,7 +162,7 @@ void AtmosphereScript::start()
 	// TODO Transfer image memory from writeable to read only optimal, it will never need to be written again.
 	//textures_.irradianceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
 	//textures_.transmittanceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
-	textures_.scatteringImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+	textures_.scatteringImage->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	SAFE_DELETE(buffer);
 
@@ -171,7 +171,7 @@ void AtmosphereScript::start()
 
 	// TODO free previous set
 
-	std::vector<VkWriteDescriptorSet> materialWrites = { textures_.scattering->descriptorWrite(material_->getTextureSet(), 0) };
+	std::vector<VkWriteDescriptorSet> materialWrites = { textures_.scatteringSum->descriptorWrite(material_->getTextureSet(), 0) };
 	descriptor->updateDescriptorSets(materialWrites);
 }
 
@@ -203,13 +203,13 @@ void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedT
 	finalTextures.scatteringSum = finalTextures.scatteringSumImage->createTextureSampler("AtmosScatteringSum", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 }
 
-VkDescriptorSetLayoutBinding AtmosphereScript::makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers)
+VkDescriptorSetLayoutBinding AtmosphereScript::makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers, VkShaderStageFlags stages)
 {
 	VkDescriptorSetLayoutBinding layoutBinding;
 	layoutBinding.binding = binding;
 	layoutBinding.descriptorCount = 1;
 	layoutBinding.descriptorType = type;
-	layoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+	layoutBinding.stageFlags = stages;
 	layoutBinding.pImmutableSamplers = immutableSamplers;
 	return layoutBinding;
 }

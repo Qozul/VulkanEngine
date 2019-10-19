@@ -96,7 +96,7 @@ namespace QZL {
 				SAFE_DELETE(diffuse_);
 			}
 
-			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::PARTICLE;
@@ -122,7 +122,7 @@ namespace QZL {
 
 			}
 
-			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::STATIC;
@@ -154,7 +154,7 @@ namespace QZL {
 				SAFE_DELETE(diffuse_);
 			}
 
-			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::TERRAIN;
@@ -178,7 +178,7 @@ namespace QZL {
 			~AtmosphereMaterial() {
 			}
 
-			static VkDescriptorSetLayout getLayout(Descriptor* descriptor, VkSampler* sampler = nullptr);
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::ATMOSPHERE;

@@ -13,7 +13,7 @@ layout(location = 0) out vec4 colour;
 
 layout(constant_id = 0) const int SC_MAX_PARTICLE_SYSTEMS = 111;
 
-layout (set = 0, binding = 0) uniform Params {
+layout(set = 0, binding = 0) uniform Params {
 	PerInstanceParams[SC_MAX_PARTICLE_SYSTEMS] params;
 } UBO;
 

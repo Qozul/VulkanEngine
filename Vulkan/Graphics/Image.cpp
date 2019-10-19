@@ -6,10 +6,10 @@
 using namespace QZL;
 using namespace Graphics;
 
-// TODO VkImageViewType and "intended layout" rather than current
 Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo, MemoryAllocationPattern pattern, ImageParameters imageParameters)
-	: logicDevice_(logicDevice), format_(createInfo.format), mipLevels_(createInfo.mipLevels), layout_(createInfo.initialLayout)
+	: logicDevice_(logicDevice), format_(createInfo.format), mipLevels_(createInfo.mipLevels)
 {
+	imageInfo_ = {};
 	imageDetails_ = logicDevice->getDeviceMemory()->createImage(pattern, createInfo);
 
 	VkImageViewCreateInfo viewInfo = {};
@@ -23,14 +23,11 @@ Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo,
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = createInfo.arrayLayers;
 
-
 	CHECK_VKRESULT(vkCreateImageView(*logicDevice, &viewInfo, nullptr, &imageView_));
-
-	changeLayout(imageParameters);
-
-	imageInfo_ = {};
-	imageInfo_.imageLayout = layout_;
 	imageInfo_.imageView = imageView_;
+
+	changeLayout(imageParameters.newLayout);
+
 }
 
 Image::~Image()
@@ -39,21 +36,27 @@ Image::~Image()
 	logicDevice_->getDeviceMemory()->deleteAllocation(imageDetails_.id, imageDetails_.image);
 }
 
-void Image::changeLayout(ImageParameters imageParameters)
-{
-	changeLayout(imageParameters.newLayout);
+void Image::changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags) {
+	VkImageAspectFlags aspectMask = imageInfo_.imageLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(imageInfo_.imageLayout, format_) :
+		newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(newLayout, format_) : VK_IMAGE_ASPECT_COLOR_BIT;
+	auto barrier = makeImageMemoryBarrier(newLayout, aspectMask);
+	VkPipelineStageFlags oldStage = oldStageFlags == 0 ? imageLayoutToStage(imageInfo_.imageLayout) : oldStageFlags;
+	VkPipelineStageFlags newStage = newStageFlags == 0 ? imageLayoutToStage(newLayout) : newStageFlags;
+
+	logicDevice_->getDeviceMemory()->changeImageLayout(barrier, oldStage, newStage);
+	imageInfo_.imageLayout = newLayout;
 }
 
-void Image::changeLayout(VkImageLayout newLayout) {
-	logicDevice_->getDeviceMemory()->changeImageLayout(imageDetails_.image, layout_, newLayout, format_, mipLevels_);
-	layout_ = newLayout;
-	imageInfo_.imageLayout = layout_;
-}
+void Image::changeLayout(VkCommandBuffer& cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags) {
 
-void Image::changeLayout(VkImageLayout newLayout, VkCommandBuffer& cmdBuffer) {
-	logicDevice_->getDeviceMemory()->changeImageLayout(imageDetails_.image, layout_, newLayout, format_, mipLevels_, cmdBuffer);
-	layout_ = newLayout;
-	imageInfo_.imageLayout = layout_;
+	VkImageAspectFlags aspectMask = imageInfo_.imageLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(imageInfo_.imageLayout, format_) :
+		newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(newLayout, format_) : VK_IMAGE_ASPECT_COLOR_BIT;
+	auto barrier = makeImageMemoryBarrier(newLayout, aspectMask);
+	VkPipelineStageFlags oldStage = oldStageFlags == 0 ? imageLayoutToStage(imageInfo_.imageLayout) : oldStageFlags;
+	VkPipelineStageFlags newStage = newStageFlags == 0 ? imageLayoutToStage(newLayout) : newStageFlags;
+
+	logicDevice_->getDeviceMemory()->changeImageLayout(barrier, oldStage, newStage, cmdBuffer);
+	imageInfo_.imageLayout = newLayout;
 }
 
 const VkImageView& Image::getImageView()
@@ -68,7 +71,7 @@ const VkImage& Image::getImage()
 
 const VkImageLayout& Image::getLayout()
 {
-	return layout_;
+	return imageInfo_.imageLayout;
 }
 
 TextureSampler* Image::createTextureSampler(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy)
@@ -76,25 +79,9 @@ TextureSampler* Image::createTextureSampler(const std::string& name, VkFilter ma
 	return new TextureSampler(logicDevice_, name, this, magFilter, minFilter, addressMode, anisotropy);
 }
 
-VkImageMemoryBarrier Image::makeMemoryBarrier(VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout, 
-	uint32_t srcQueueIndex, uint32_t dstQueueIndex, VkImage img, VkImageSubresourceRange subresourceRange)
-{
-	VkImageMemoryBarrier barrier = {};
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.srcAccessMask = srcAccessMask;
-	barrier.dstAccessMask = dstAccessMask;
-	barrier.oldLayout = oldLayout;
-	barrier.newLayout = newLayout;
-	barrier.srcQueueFamilyIndex = srcQueueIndex;
-	barrier.dstQueueFamilyIndex = dstQueueIndex;
-	barrier.image = img;
-	barrier.subresourceRange = subresourceRange;
-	return barrier;
-}
-
 VkWriteDescriptorSet Image::descriptorWrite(VkDescriptorSet set, uint32_t binding)
 {
-	ASSERT(layout_ == VK_IMAGE_LAYOUT_GENERAL);
+	ASSERT(imageInfo_.imageLayout == VK_IMAGE_LAYOUT_GENERAL);
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = set;

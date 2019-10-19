@@ -21,9 +21,9 @@ namespace QZL
 			void unmapMemory(const AllocationID& id);
 			void transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 			void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height);
-			void changeImageLayout(const VkImage& image, const VkImageLayout srcLayout, const VkImageLayout dstLayout, const VkFormat& format, uint32_t mipLevels);
-			// Use alternative with a command buffer for operations required as part of another command state (such as graphics execution)
-			void changeImageLayout(const VkImage& image, const VkImageLayout srcLayout, const VkImageLayout dstLayout, const VkFormat& format, uint32_t mipLevels, VkCommandBuffer& buf);
+			void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer);
+			void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage);
+			
 		private:
 			DeviceMemory(PhysicalDevice* physicalDevice, LogicDevice* logicDevice, VkCommandBuffer transferCmdBuffer, VkQueue queue);
 			~DeviceMemory();

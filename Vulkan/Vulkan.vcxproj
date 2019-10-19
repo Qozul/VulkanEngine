@@ -53,7 +53,6 @@
     <ClInclude Include="Graphics\GraphicsMaster.h" />
     <ClInclude Include="Graphics\GraphicsTypes.h" />
     <ClInclude Include="Graphics\Image.h" />
-    <ClInclude Include="Graphics\Image2D.h" />
     <ClInclude Include="Graphics\LogicDevice.h" />
     <ClInclude Include="Graphics\Material.h" />
     <ClInclude Include="Graphics\MemoryAllocation.h" />
@@ -115,7 +114,6 @@
     <ClCompile Include="Graphics\GraphicsComponent.cpp" />
     <ClCompile Include="Graphics\GraphicsMaster.cpp" />
     <ClCompile Include="Graphics\Image.cpp" />
-    <ClCompile Include="Graphics\Image2D.cpp" />
     <ClCompile Include="Graphics\LogicDevice.cpp" />
     <ClCompile Include="Graphics\Material.cpp" />
     <ClCompile Include="Graphics\MeshLoader.cpp" />

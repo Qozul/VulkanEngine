@@ -8,9 +8,9 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-VkDescriptorSetLayout ParticleMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
+VkDescriptorSetLayout ParticleMaterial::getLayout(Descriptor* descriptor)
 {
-	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, sampler) });
+	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
 }
 
 std::vector<TextureSampler*> ParticleMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
@@ -26,7 +26,7 @@ VkDescriptorSetLayout ParticleMaterial::makeLayout(Descriptor* descriptor)
 }
 
 
-VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
+VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor)
 {
 	// TODO
 	return VkDescriptorSetLayout();
@@ -44,11 +44,11 @@ VkDescriptorSetLayout StaticMaterial::makeLayout(Descriptor* descriptor)
 }
 
 
-VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
+VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor)
 {
 	return descriptor->makeLayout({
-		makeLayoutBinding(0, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, sampler),
-		makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, sampler)
+		makeLayoutBinding(0, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr),
+		makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)
 	});
 }
 
@@ -66,9 +66,9 @@ VkDescriptorSetLayout TerrainMaterial::makeLayout(Descriptor* descriptor)
 }
 
 
-VkDescriptorSetLayout AtmosphereMaterial::getLayout(Descriptor* descriptor, VkSampler* sampler)
+VkDescriptorSetLayout AtmosphereMaterial::getLayout(Descriptor* descriptor)
 {
-	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, sampler) });
+	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
 }
 
 std::vector<TextureSampler*> AtmosphereMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)

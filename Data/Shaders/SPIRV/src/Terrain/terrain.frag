@@ -31,7 +31,7 @@ void main() {
 	vec3 viewDir = normalize ( cameraPosition.xyz - worldPos );
 	vec3 halfDir = normalize ( incident + viewDir );
 	float dist = length(lightPositions[0].xyz - worldPos);
-	//float atten = 1.0 - clamp ( dist / lightRadius , 0.0 , 1.0);
+	
 	float lambert = max(0.0, dot(incident, normal));
 	float rFactor = max(0.0, dot(halfDir, normal));
 	float sFactor = pow(rFactor , material.specularColour.w);
@@ -41,6 +41,5 @@ void main() {
 	vec3 ambient = texColour.rgb * ambientColour.xyz;
 	vec3 diffuse = texColour.rgb * material.diffuseColour.xyz * lambert;
 	vec3 specular = material.specularColour.xyz * sFactor * 0.05;
-	//fragColor = vec4(ambient + diffuse + specular, min(texColour.a, material.diffuseColour.w));
-	fragColor = vec4(1.0);
+	fragColor = vec4(ambient + diffuse + specular, min(texColour.a, material.diffuseColour.w));
 }

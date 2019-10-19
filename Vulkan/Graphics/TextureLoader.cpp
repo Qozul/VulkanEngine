@@ -40,7 +40,8 @@ Image* TextureLoader::loadTexture(const std::string& fileName)
 
 	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), 0, image.get_width(), image.get_height());
 
-	texture->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	// TODO pass in the pipeline stage for the image
+	texture->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
 	image.clear();

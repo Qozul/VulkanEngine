@@ -143,23 +143,18 @@ void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstI
 	vkQueueWaitIdle(queue_);
 }
 
-void DeviceMemory::changeImageLayout(const VkImage& image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkFormat& format, uint32_t mipLevels, VkCommandBuffer& cmdBuffer)
+void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer)
 {
-	VkImageMemoryBarrier barrier = {};
-	VkPipelineStageFlags oldStage = 0;
-	VkPipelineStageFlags newStage = 0;
-	selectImageLayoutInfo(image, oldLayout, newLayout, format, mipLevels, oldStage, newStage, barrier);
-
 	vkCmdPipelineBarrier(cmdBuffer, oldStage, newStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-void DeviceMemory::changeImageLayout(const VkImage& image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkFormat& format, uint32_t mipLevels)
+void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage)
 {
 	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	vkBeginCommandBuffer(transferCmdBuffer_, &beginInfo);
 
-	changeImageLayout(image, oldLayout, newLayout, format, mipLevels, transferCmdBuffer_);
+	changeImageLayout(barrier, oldStage, newStage, transferCmdBuffer_);
 
 	vkEndCommandBuffer(transferCmdBuffer_);
 
@@ -239,6 +234,7 @@ void DeviceMemory::selectImageLayoutInfo(const VkImage& image, const VkImageLayo
 	barrier.subresourceRange.levelCount = mipLevels;
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.aspectMask = 0;
 
 	switch (oldLayout) {
 	case VK_IMAGE_LAYOUT_UNDEFINED:
@@ -256,11 +252,14 @@ void DeviceMemory::selectImageLayoutInfo(const VkImage& image, const VkImageLayo
 	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
 		barrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		oldStage = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
+		if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT)
+			barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
 		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		oldStage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_GENERAL:
 		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
@@ -274,30 +273,30 @@ void DeviceMemory::selectImageLayoutInfo(const VkImage& image, const VkImageLayo
 	case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		newStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		newStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
 		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		newStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
 		if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT)
 			barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
 		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		newStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
 		break;
 	case VK_IMAGE_LAYOUT_GENERAL:
 		// For the moment, image layout general is only used for storage images in compute stages.
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
 		newStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_COLOR_BIT;
 		break;
 	default:
 		ASSERT(false); // New layout invalid.

@@ -43,7 +43,7 @@ namespace QZL {
 			// Update can be overriden by a derived class when needed, however this provides the basic particle system logic
 			virtual void update(float dt) override;
 			Graphics::ParticleShaderParams* makeShaderParams() {
-				return new Graphics::ParticleShaderParams(textureTileLength_, tint);
+				return new Graphics::ParticleShaderParams(textureTileLength_, tint_);
 			}
 			Graphics::RenderObject* makeRenderObject(std::string name);
 		protected:
@@ -66,7 +66,7 @@ namespace QZL {
 
 			Graphics::Material* material_;
 			float textureTileLength_;
-			glm::vec4 tint;
+			glm::vec4 tint_;
 			size_t currentActiveSize_;
 			
 			// Allocate particle returns nullptr if there is no available particle
