@@ -1,5 +1,4 @@
 #include "GraphicsComponent.h"
-#include "StaticShaderParams.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;

@@ -23,9 +23,9 @@ TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* tex
 	ASSERT(entityCount > 0);
 	renderStorage_ = new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::UNLIMITED);
 
-	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
+	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
 		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT);
-	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
+	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 1, 0,
 		sizeof(StaticShaderParams::Params) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);
@@ -33,14 +33,14 @@ TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* tex
 	VkDescriptorSetLayout layout;
 	if (!logicDevice->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
 		VkDescriptorSetLayoutBinding diffuseBinding = {};
-		diffuseBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
+		diffuseBinding.binding = 2;
 		diffuseBinding.descriptorCount = 1;
 		diffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		diffuseBinding.pImmutableSamplers = nullptr;
 		diffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 		VkDescriptorSetLayoutBinding normalMapBinding = {};
-		normalMapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_1;
+		normalMapBinding.binding = 3;
 		normalMapBinding.descriptorCount = 1;
 		normalMapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		normalMapBinding.pImmutableSamplers = nullptr;

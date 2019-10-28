@@ -1,5 +1,4 @@
 #include "Skysphere.h"
-#include "../Graphics/AtmosphereShaderParams.h"
 #include "AltAtmosphere.h"
 #include "../Graphics/Vertex.h"
 #include "../Game/GameScript.h"

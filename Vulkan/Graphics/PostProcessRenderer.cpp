@@ -11,7 +11,6 @@
 #include "GraphicsComponent.h"
 #include "SwapChain.h"
 #include "TextureManager.h"
-#include "AtmosphereShaderParams.h"
 #include "../Assets/Entity.h"
 #include "../Game/SunScript.h"
 #include "../Game/AtmosphereScript.h"

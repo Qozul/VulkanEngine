@@ -156,20 +156,11 @@ void AtmosphereScript::start()
 	submitInfo.pCommandBuffers = &cmdBuffer;
 
 	CHECK_VKRESULT(vkQueueSubmit(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue), 1, &submitInfo, VK_NULL_HANDLE));
-	// TODO proper sync rather than just wait idle
 	CHECK_VKRESULT(vkQueueWaitIdle(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue)));
 
-	// TODO Transfer image memory from writeable to read only optimal, it will never need to be written again.
-	//textures_.irradianceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
-	//textures_.transmittanceImage->changeLayout({ VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
 	textures_.scatteringImage->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	SAFE_DELETE(buffer);
-
-	// TODO remove
-	sysMasters_->graphicsMaster->attachPostProcessScript(this);
-
-	// TODO free previous set
 
 	std::vector<VkWriteDescriptorSet> materialWrites = { textures_.scatteringSum->descriptorWrite(material_->getTextureSet(), 0) };
 	descriptor->updateDescriptorSets(materialWrites);

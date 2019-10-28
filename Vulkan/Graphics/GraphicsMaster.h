@@ -52,7 +52,6 @@ namespace QZL
 
 			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
-			void attachPostProcessScript(Game::AtmosphereScript* script); // DEPRECATED
 			DynamicBufferInterface* getDynamicBuffer(RendererTypes type);
 			glm::mat4* getViewMatrixPtr() {
 				return viewMatrix_;

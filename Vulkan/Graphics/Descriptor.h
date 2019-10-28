@@ -6,15 +6,6 @@ namespace QZL
 	namespace Graphics {
 		class LogicDevice;
 
-		// Set = 0 (per renderer)
-		enum class ReservedGraphicsBindings0 : uint32_t {
-			PER_ENTITY_DATA = 0,
-			MATERIAL_DATA = 1,
-			TEXTURE_0 = 2,
-			TEXTURE_1 = 3,
-			UNRESERVED = 4
-		};
-
 		class Descriptor {
 		public:
 			Descriptor(const LogicDevice* logicDevice, const uint32_t maxSets, std::vector<std::pair<VkDescriptorType, uint32_t>> types);

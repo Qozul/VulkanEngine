@@ -23,26 +23,11 @@ EnvironmentArgs environmentArgs;
 void GraphicsMaster::registerComponent(GraphicsComponent* component, RenderObject* robject)
 {
 	renderers_[component->getRendererType()]->registerComponent(component, robject);
-	/*if (robject == nullptr) {
-		renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-			component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));
-
-		renderers_[renderer]->registerComponent(component);
-	}
-	else {
-		renderers_[renderer]->registerComponent(component, robject);
-	}*/
 }
 
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 {
 	renderers_[type] = renderer;
-}
-
-void GraphicsMaster::attachPostProcessScript(Game::AtmosphereScript* script)
-{
-	auto pass = static_cast<PostProcessPass*>(swapChain_->getRenderPass(RenderPassTypes::POST_PROCESS));
-	pass->attachAtmosphereScript(script);
 }
 
 DynamicBufferInterface* GraphicsMaster::getDynamicBuffer(RendererTypes type)

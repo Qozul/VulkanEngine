@@ -168,31 +168,16 @@
     <ClInclude Include="Graphics\TexturedRenderer.h">
       <Filter>Header Files\Graphics\Renderers\Static</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\StaticShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers\Static</Filter>
-    </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\TerrainRenderer.h">
       <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\TerrainShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\ShaderParams.h">
       <Filter>Header Files\Graphics\Renderers</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\RenderStorage.h">
-      <Filter>Header Files\Graphics\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\StaticRenderStorage.h">
-      <Filter>Header Files\Graphics\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\TerrainRenderStorage.h">
-      <Filter>Header Files\Graphics\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\RenderStorageMeshParams.h">
       <Filter>Header Files\Graphics\RenderStorage</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\OptionalExtentions.h">
@@ -217,9 +202,6 @@
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\AtmosphereRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\AtmosphereShaderParams.h">
       <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Image.h">
@@ -269,9 +251,6 @@
     </ClInclude>
     <ClInclude Include="Assets\Skysphere.h">
       <Filter>Header Files\Assets</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ParticleShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers\Particles</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\DynamicVertexBuffer.h">
       <Filter>Header Files\Graphics</Filter>
@@ -359,17 +338,11 @@
     <ClCompile Include="Graphics\GraphicsComponent.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\StaticRenderStorage.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\TerrainRenderer.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Assets\Terrain.cpp">
       <Filter>Source Files\Assets</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\TerrainRenderStorage.cpp">
-      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Assets\Skysphere.cpp">
       <Filter>Source Files\Assets</Filter>

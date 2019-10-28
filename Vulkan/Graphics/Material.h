@@ -109,14 +109,13 @@ namespace QZL {
 			TextureSampler* diffuse_;
 		};
 
-		// TODO
 		class StaticMaterial : public Material {
 		public:
 			StaticMaterial(const std::string materialFileName)
 				: Material(materialFileName) { }
 
 			StaticMaterial(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
-				:Material(name, set, layout) { }
+				: Material(name, set, layout) { }
 
 			~StaticMaterial() {
 
