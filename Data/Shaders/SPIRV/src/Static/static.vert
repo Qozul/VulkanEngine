@@ -19,7 +19,7 @@ out gl_PerVertex {
 	vec4 gl_Position;
 };
 
-layout(set = 0, binding = 0) readonly buffer StorageBuffer {
+layout(set = 1, binding = 0) readonly buffer StorageBuffer {
     ElementData[] uElementData;
 } buf;
 

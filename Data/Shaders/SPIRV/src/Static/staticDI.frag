@@ -5,10 +5,11 @@
 struct Material {
 	vec4 diffuseColour;
 	vec4 specularColour;
-	uint diffuseTextureIndex;
-	uint normalMapIndex;
-	float padding0;
-	float padding2;
+};
+
+struct DescriptorIndexData {
+	uint diffuseIdx;
+	uint normalMapIdx;
 };
 
 layout(location = 0) out vec4 fragColor;
@@ -18,18 +19,23 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec3 worldPos;
 layout (location = 3) flat in int instanceIndex;
 
-layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
+layout(set = 0, binding = 1) uniform sampler2D texSamplers[];
 
-layout(set = 1, binding = 0) uniform LightingData
+layout(set = 0, binding = 0) uniform LightingData
 {
 	vec4 cameraPosition;
 	vec4 ambientColour;
 	vec4 lightPositions[1];
 };
 
-layout(set = 0, binding = 1) readonly buffer MaterialData
+layout(set = 1, binding = 1) readonly buffer MaterialData
 {
 	Material materials[];
+};
+
+layout(set = 1, binding = 2) readonly buffer DescriptorIndexBuffer
+{
+	DescriptorIndexData diData[];
 };
 
 void main() {
@@ -43,8 +49,9 @@ void main() {
 	float rFactor = max(0.0, dot(halfDir, normal));
 	float sFactor = pow(rFactor , mat.specularColour.w);
 	
-	vec4 texColour = texture(texSamplers[nonuniformEXT(mat.diffuseTextureIndex)], texUV);
-	vec4 texColour2 = texture(texSamplers[nonuniformEXT(mat.normalMapIndex)], texUV);
+	DescriptorIndexData descriptorIndices = diData[instanceIndex];
+	vec4 texColour = texture(texSamplers[nonuniformEXT(descriptorIndices.diffuseIdx)], texUV);
+	vec4 texColour2 = texture(texSamplers[nonuniformEXT(descriptorIndices.normalMapIdx)], texUV);
 	
 	vec3 ambient = texColour.rgb * ambientColour.xyz;
 	vec3 diffuse = texColour.rgb * mat.diffuseColour.xyz * lambert;

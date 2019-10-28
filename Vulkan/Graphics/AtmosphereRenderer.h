@@ -15,8 +15,8 @@ namespace QZL
 				const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData,
 				TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer);
 			~AtmosphereRenderer();
+			void createDescriptors(const uint32_t entityCount) override;
 			void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
-			void initialise(const glm::mat4& viewMatrix) override;
 		private:
 			TextureSampler* geometryColourBuffer_;
 			TextureSampler* geometryDepthBuffer_;

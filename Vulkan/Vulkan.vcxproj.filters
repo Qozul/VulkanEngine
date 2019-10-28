@@ -46,20 +46,11 @@
     <Filter Include="Header Files\Graphics\Renderers">
       <UniqueIdentifier>{17835f3b-2be0-44ff-bb87-ffc701e1480b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Static">
-      <UniqueIdentifier>{27d16142-50af-4310-94bb-eba6db1f61b8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Terrain">
-      <UniqueIdentifier>{ed55afb5-7ad4-44ea-a2f2-f10c8f4e6023}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Graphics\RenderStorage">
       <UniqueIdentifier>{27982c88-3cbf-441f-9c55-10afdb96712f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Graphics\Textures">
       <UniqueIdentifier>{383d9e9f-9b09-4c50-aec8-5011adbe5b40}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Atmosphere">
-      <UniqueIdentifier>{0f352c18-9a20-438f-8500-bbaa7dcb1a47}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Game\Scripts">
       <UniqueIdentifier>{a0844ff3-9432-4010-8dbb-0a422bd69453}</UniqueIdentifier>
@@ -69,9 +60,6 @@
     </Filter>
     <Filter Include="Header Files\Graphics\RenderPasses">
       <UniqueIdentifier>{eae44390-ffdf-4547-b43b-1b57afde13fa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Particles">
-      <UniqueIdentifier>{ee73189d-8a04-455a-b22b-0a6954f3accc}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Assets\Specialised Entities">
       <UniqueIdentifier>{f2562f84-fb97-4d7f-bc60-873ed9400c7c}</UniqueIdentifier>
@@ -112,9 +100,6 @@
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\DrawElementsCommand.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ElementBuffer.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\LogicDevice.h">
@@ -165,17 +150,8 @@
     <ClInclude Include="Game\GameMaster.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\TexturedRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Static</Filter>
-    </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\System</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\TerrainRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\RenderStorage.h">
       <Filter>Header Files\Graphics\RenderStorage</Filter>
@@ -197,12 +173,6 @@
     </ClInclude>
     <ClInclude Include="Graphics\RendererBase.h">
       <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ElementBufferInterface.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\AtmosphereRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Image.h">
       <Filter>Header Files\Graphics\Textures</Filter>
@@ -243,17 +213,11 @@
     <ClInclude Include="Graphics\GraphicsTypes.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\ParticleRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Particles</Filter>
-    </ClInclude>
     <ClInclude Include="Assets\Terrain.h">
       <Filter>Header Files\Assets\Specialised Entities</Filter>
     </ClInclude>
     <ClInclude Include="Assets\Skysphere.h">
       <Filter>Header Files\Assets</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\DynamicVertexBuffer.h">
-      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Game\ParticleSystem.h">
       <Filter>Header Files\Game</Filter>
@@ -263,6 +227,30 @@
     </ClInclude>
     <ClInclude Include="Graphics\RenderObject.h">
       <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\AtmosphereRenderer.h">
+      <Filter>Header Files\Graphics\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ParticleRenderer.h">
+      <Filter>Header Files\Graphics\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TexturedRenderer.h">
+      <Filter>Header Files\Graphics\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TerrainRenderer.h">
+      <Filter>Header Files\Graphics\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ShaderParams.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DynamicVertexBuffer.h">
+      <Filter>Header Files\Graphics\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ElementBuffer.h">
+      <Filter>Header Files\Graphics\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ElementBufferInterface.h">
+      <Filter>Header Files\Graphics\RenderStorage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

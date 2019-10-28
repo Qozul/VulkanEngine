@@ -28,14 +28,23 @@ VkDescriptorSetLayout ParticleMaterial::makeLayout(Descriptor* descriptor)
 
 VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor)
 {
-	// TODO
-	return VkDescriptorSetLayout();
+	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr), makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
 }
 
 std::vector<TextureSampler*> StaticMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
-	// TODO
-	return {};
+	isUsingDI = textureManager->descriptorIndexingEnabled();
+	ASSERT(lines.size() >= 2);
+	if (isUsingDI) {
+		diffuse_.diffuseTextureIndex = textureManager->requestTexture(lines[0]);
+		normalMap_.normalMapIndex = textureManager->requestTexture(lines[1]);
+		return {};
+	}
+	else {
+		diffuse_.diffuseSampler = textureManager->requestTextureSeparate(lines[0]);
+		normalMap_.normalMapSampler = textureManager->requestTextureSeparate(lines[1]);
+		return { diffuse_.diffuseSampler, normalMap_.normalMapSampler };
+	}
 }
 
 VkDescriptorSetLayout StaticMaterial::makeLayout(Descriptor* descriptor)

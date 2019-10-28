@@ -32,12 +32,10 @@
 7 6 0
 6 3 0
 
-# Static Renderer: 6 combined image samplers and 6 storage buffers
-1 6 3
-7 6 0
+# Static Renderer: 6 storage buffers
+7 9 3
 
-# Particle Renderer: 1 combined image samplers, 1 uniform buffer
-#1 1 1
+# Particle Renderer: 1 uniform buffer
 6 1 0
 
 # Post Process Renderer: 5 combined image samplers, 2 storage images, and a uniform buffer
@@ -48,11 +46,16 @@
 
 # --------------- Assets ----------------
 
-# Atmosphere: 5 storage images
-3 5 1
+# Atmosphere: 5 storage images and 4 combined samplers, 1 set for precompute and 1 for material
+3 5 2
+1 4 0
 
 # --------------- Materials -------------
 # ExampleTerrain
 1 2 1
+# ExampleStatic
+1 2 1
 # Fire
+1 1 1
+# Atmosphere
 1 1 1

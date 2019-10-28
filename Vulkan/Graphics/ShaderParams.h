@@ -54,11 +54,14 @@ namespace QZL {
 
 		struct StaticShaderParams : public ShaderParams {
 			struct Params {
-				float diffuseX, diffuseY, diffuseZ;
-				float alpha;
-				float specularX, specularY, specularZ;
-				float specularExponent;
-				float padding0, padding1;
+				float diffuseX = 0.7f;
+				float diffuseY = 0.7f;
+				float diffuseZ = 0.7f;
+				float alpha = 1.0f;
+				float specularX = 0.7f;
+				float specularY = 0.7f;
+				float specularZ = 0.7f;
+				float specularExponent = 41.0f;
 			} params;
 
 			const RendererTypes getRendererType() const override {

@@ -34,20 +34,11 @@ struct PushConstantExtent {
 AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
 	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData, 
 	TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
-	: RendererBase(logicDevice), descriptor_(descriptor), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
+	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE)), 
+	  descriptor_(descriptor), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
 {
 	ASSERT(entityCount > 0);
-	renderStorage_ = new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE);
-
-	auto gcbBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto gdbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	VkDescriptorSetLayout layout = descriptor->makeLayout({ gcbBinding, gdbBinding });
-
-	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor));
-
-	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
+	createDescriptors(entityCount);
 
 	auto pushConstRange = setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT);
 
@@ -68,6 +59,19 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 
 AtmosphereRenderer::~AtmosphereRenderer()
 {
+}
+
+void AtmosphereRenderer::createDescriptors(const uint32_t entityCount)
+{
+	VkDescriptorSetLayoutBinding gcbBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
+	VkDescriptorSetLayoutBinding gdbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	VkDescriptorSetLayout layout = descriptor_->makeLayout({ gcbBinding, gdbBinding });
+
+	pipelineLayouts_.push_back(layout);
+	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor_));
+
+	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
 }
 
 void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
@@ -109,15 +113,4 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
-}
-
-void AtmosphereRenderer::initialise(const glm::mat4& viewMatrix)
-{
-	/*if (renderStorage_->instanceCount() == 0)
-		return;
-	auto instPtr = renderStorage_->instanceData();
-	auto params = static_cast<AtmosphereShaderParams*>((*(instPtr))->getShaderParams()); 
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(params->textures.scatteringSum->descriptorWrite(descriptorSets_[0], 0));
-	descriptor_->updateDescriptorSets(descWrites);*/
 }

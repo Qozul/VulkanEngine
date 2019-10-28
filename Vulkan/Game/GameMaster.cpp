@@ -43,22 +43,10 @@ void GameMaster::loadGame()
 	scriptInit.owner = camera;
 	camera->setGameScript(new Camera(scriptInit));
 
-	/*Assets::Entity* testEntity = masters_.assetManager->createEntity();
-	if (masters_.graphicsMaster->supportsOptionalExtension(Graphics::OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		testEntity->setGraphicsComponent(Graphics::RendererTypes::STATIC, new Graphics::StaticShaderParams(
-			"101", "102", 
-			Graphics::MaterialStatic(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f, 
-				masters_.assetManager->textureManager->requestTexture("101"), 
-				masters_.assetManager->textureManager->requestTexture("102"))), 
-			"Teapot"
-		);
-	}
-	else {
-		testEntity->setGraphicsComponent(Graphics::RendererTypes::STATIC, new Graphics::StaticShaderParams(
-			"101", "102", Graphics::MaterialStatic(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f)), "Teapot"
-		);
-	}
-	masters_.graphicsMaster->registerComponent(testEntity->getGraphicsComponent());*/
+	Assets::Entity* teapot = masters_.assetManager->createEntity("Teapot");
+	teapot->getTransform()->scale = glm::vec3(2.0f);
+	teapot->setGraphicsComponent(Graphics::RendererTypes::STATIC, nullptr, new Graphics::StaticShaderParams(),
+		masters_.assetManager->textureManager->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot", Graphics::MeshLoadingInfo());
 
 	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>("terrain", masters_.assetManager->textureManager);
 	entities.push_back(terrain);
@@ -86,6 +74,7 @@ void GameMaster::loadGame()
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(fire);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
+	scenes_[activeSceneIdx_]->addEntity(teapot);
 	scenes_[activeSceneIdx_]->start();
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
@@ -94,6 +83,7 @@ void GameMaster::loadGame()
 	masters_.graphicsMaster->registerComponent(sun->getGraphicsComponent(), sunRobject);
 	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
 	masters_.graphicsMaster->registerComponent(fire->getGraphicsComponent(), fireRobject);
+	masters_.graphicsMaster->registerComponent(teapot->getGraphicsComponent());
 }
 
 void GameMaster::update(float dt)

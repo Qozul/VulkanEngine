@@ -62,12 +62,14 @@ namespace QZL {
 			}
 
 			void makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers) {
-				textureSet_ = descriptor->getSet(descriptor->createSets({ layout_ }));
-				std::vector<VkWriteDescriptorSet> setWrites(samplers.size());
-				for (size_t i = 0; i < samplers.size(); ++i) {
-					setWrites[i] = samplers[i]->descriptorWrite(textureSet_, i);
+				if (samplers.size() > 0) {
+					textureSet_ = descriptor->getSet(descriptor->createSets({ layout_ }));
+					std::vector<VkWriteDescriptorSet> setWrites(samplers.size());
+					for (size_t i = 0; i < samplers.size(); ++i) {
+						setWrites[i] = samplers[i]->descriptorWrite(textureSet_, i);
+					}
+					descriptor->updateDescriptorSets(setWrites);
 				}
-				descriptor->updateDescriptorSets(setWrites);
 			}
 
 			constexpr static VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler) {
@@ -110,6 +112,7 @@ namespace QZL {
 		};
 
 		class StaticMaterial : public Material {
+			friend class TexturedRenderer;
 		public:
 			StaticMaterial(const std::string materialFileName)
 				: Material(materialFileName) { }
@@ -118,7 +121,10 @@ namespace QZL {
 				: Material(name, set, layout) { }
 
 			~StaticMaterial() {
-
+				if (isUsingDI) {
+					SAFE_DELETE(diffuse_.diffuseSampler);
+					SAFE_DELETE(normalMap_.normalMapSampler);
+				}
 			}
 
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
@@ -138,6 +144,7 @@ namespace QZL {
 				uint32_t normalMapIndex;
 				TextureSampler* normalMapSampler;
 			} normalMap_;
+			bool isUsingDI;
 		};
 
 		class TerrainMaterial : public Material {

@@ -64,19 +64,5 @@ namespace QZL
 			std::vector<DrawElementsCommand> drawCmds_;
 			std::vector<GraphicsComponent*> instances_;
 		};
-
-		// Simplifies RenderStorage to only care about single meshes without instances.
-		// This should be used for when there are not expected to be many entities in the renderer.
-		/*class RenderStorageNoInstances : public RenderStorage {
-		public:
-			RenderStorageNoInstances(BufferInterface* buffer)
-				: RenderStorage(buffer) { }
-			virtual ~RenderStorageNoInstances() { }
-			// Mesh must be added with one instance
-			virtual void addMesh(GraphicsComponent* instance, BasicMesh* mesh) override {
-				meshes_.emplace_back(mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, 0);
-				instances_.push_back(instance);
-			}
-		};*/
 	}
 }

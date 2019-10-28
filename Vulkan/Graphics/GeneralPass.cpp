@@ -5,6 +5,7 @@
 #include "../Assets/AssetManager.h"
 #include "TextureManager.h"
 #include "ParticleRenderer.h"
+#include "TexturedRenderer.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -70,16 +71,17 @@ void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkC
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 	terrainRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+	texturedRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 	particleRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
-	//texturedRenderer_->recordFrame(graphicsMaster_->getViewMatrix(), idx, cmdBuffer);
 	vkCmdEndRenderPass(cmdBuffer);
 }
 
 void GeometryPass::createRenderers()
 {
-	/*std::string fragName = logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING) ? "StaticFrag_DI" : "StaticFrag";
+	std::string fragName = logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING) ? "StaticFrag_DI" : "StaticFrag";
 	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, "StaticVert", fragName, 1, globalRenderData_);
-	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);*/
+	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
+
 	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
 		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);

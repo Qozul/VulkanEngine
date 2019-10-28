@@ -28,24 +28,11 @@ struct PerInstanceParams {
 ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor, 
 	const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, const uint32_t particleSystemCount, const GlobalRenderData* globalRenderData,
 	glm::vec3* billboardPoint)
-	: RendererBase(logicDevice), descriptor_(descriptor), billboardPoint_(billboardPoint)
+	: RendererBase(logicDevice, new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(logicDevice->getDeviceMemory(), 12, SwapChain::numSwapChainImages), RenderStorage::InstanceUsage::UNLIMITED)),
+	  descriptor_(descriptor), billboardPoint_(billboardPoint)
 {
 	ASSERT(particleSystemCount > 0);
-	renderStorage_ = new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(logicDevice->getDeviceMemory(), 12, SwapChain::numSwapChainImages), RenderStorage::InstanceUsage::UNLIMITED);
-
-	DescriptorBuffer* instBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-	storageBuffers_.push_back(instBuf);
-
-	VkDescriptorSetLayout layout = descriptor->makeLayout({ instBuf->getBinding() });
-
-	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(ParticleMaterial::getLayout(descriptor));
-
-	descriptorSets_.push_back(descriptor->getSet(descriptor->createSets({ layout })));
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[0]));
-	descriptor->updateDescriptorSets(descWrites);
+	createDescriptors(particleSystemCount);
 
 	auto pushConstRange = setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT);
 
@@ -66,6 +53,23 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 
 ParticleRenderer::~ParticleRenderer()
 {
+}
+
+void ParticleRenderer::createDescriptors(const uint32_t particleSystemCount)
+{
+	DescriptorBuffer* instBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
+		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+	storageBuffers_.push_back(instBuf);
+
+	VkDescriptorSetLayout layout = descriptor_->makeLayout({ instBuf->getBinding() });
+
+	pipelineLayouts_.push_back(layout);
+	pipelineLayouts_.push_back(ParticleMaterial::getLayout(descriptor_));
+
+	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[0]));
+	descriptor_->updateDescriptorSets(descWrites);
 }
 
 void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
@@ -105,10 +109,4 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 
 		vkCmdDraw(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
-}
-
-void ParticleRenderer::initialise(const glm::mat4& viewMatrix)
-{
-	if (renderStorage_->instanceCount() == 0)
-		return;
 }

@@ -35,6 +35,10 @@ namespace QZL {
 				descriptorSetIdx_ = idx;
 			}
 
+			const bool descriptorIndexingEnabled() {
+				return descriptorIndexingActive_;
+			}
+
 		private:
 			VkWriteDescriptorSet makeDescriptorWrite(VkDescriptorImageInfo imageInfo, uint32_t idx, uint32_t count = 1);
 

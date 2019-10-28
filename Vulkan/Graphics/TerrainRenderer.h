@@ -21,8 +21,8 @@ namespace QZL
 				const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
 				const uint32_t entityCount, const GlobalRenderData* globalRenderData);
 			~TerrainRenderer();
+			void createDescriptors(const uint32_t entityCount) override;
 			void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
-			void initialise(const glm::mat4& viewMatrix) override;
 		private:
 			void updateBuffers(const glm::mat4& viewMatrix);
 			std::array<glm::vec4, 6> calculateFrustumPlanes(const glm::mat4& mvp);

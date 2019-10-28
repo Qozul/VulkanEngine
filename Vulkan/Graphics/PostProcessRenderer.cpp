@@ -89,6 +89,10 @@ PostProcessRenderer::~PostProcessRenderer()
 	SAFE_DELETE(apTransmittanceTexture_);
 }
 
+void PostProcessRenderer::createDescriptors(const uint32_t count)
+{
+}
+
 void PostProcessRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	ASSERT_DEBUG(renderStorage_->meshCount() > 0);
@@ -97,8 +101,4 @@ void PostProcessRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_
 	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
 	auto cmd = *renderStorage_->meshData();
 	vkCmdDrawIndexed(cmdBuffer, cmd.count, cmd.instanceCount, cmd.firstIndex, cmd.baseVertex, cmd.baseInstance);
-}
-
-void PostProcessRenderer::initialise(const glm::mat4& viewMatrix)
-{
 }
