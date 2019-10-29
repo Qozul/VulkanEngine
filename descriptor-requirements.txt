@@ -46,9 +46,10 @@
 
 # --------------- Assets ----------------
 
-# Atmosphere: 5 storage images and 4 combined samplers, 1 set for precompute and 1 for material
+# Atmosphere: 5 storage images, 4 combined samplers, and a uniform buyffer, 1 set for precompute and 1 for material
 3 5 2
 1 4 0
+6 1 0
 
 # --------------- Materials -------------
 # ExampleTerrain

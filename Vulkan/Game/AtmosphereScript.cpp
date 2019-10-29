@@ -98,7 +98,6 @@ void AtmosphereScript::start()
 
 	std::vector<VkWriteDescriptorSet> descWrites;
 	descWrites.push_back(buffer->descriptorWrite(descriptor->getSet(setIdx)));
-	// TODO need to write using the storage images not the samplers, perhaps need both available when appropriate.
 	descWrites.push_back(textures_.transmittanceImage->descriptorWrite(descriptor->getSet(setIdx), 1));
 	descWrites.push_back(textures_.scatteringImage->descriptorWrite(descriptor->getSet(setIdx), 2));
 	descWrites.push_back(textures_.gathering->descriptorWrite(descriptor->getSet(setIdx), 3));
@@ -122,7 +121,6 @@ void AtmosphereScript::start()
 	ComputePipeline multipleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltMultipleScattering");
 
 	// Record command buffer and execute on compute queue.
-	// TODO optimise workgroup stuff: https://stackoverflow.com/questions/54750009/compute-shader-and-workgroup
 	VkCommandBuffer cmdBuffer = logicDevice_->getComputeCommandBuffer();
 
 	VkCommandBufferBeginInfo beginInfo = {};

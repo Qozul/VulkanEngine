@@ -72,18 +72,17 @@ void AtmosphereRenderer::createDescriptors(const uint32_t entityCount)
 	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor_));
 
 	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
+
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 0));
+	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 1));
+	descriptor_->updateDescriptorSets(descWrites);
 }
 
 void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
-
-	// Need to update each frame due to layout transfer? TODO do I really or will the write persist as long as the state is correct when I access it?
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 0));
-	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 1));
-	descriptor_->updateDescriptorSets(descWrites);
 
 	beginFrame(cmdBuffer);
 	renderStorage_->buf()->bind(cmdBuffer, idx);
@@ -109,8 +108,7 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pce);
-		vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[0].stages, pushConstantInfos_[0].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[0].barrier, 0, nullptr, 0, nullptr);
-
+		
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 }

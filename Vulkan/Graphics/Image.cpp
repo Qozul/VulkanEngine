@@ -27,7 +27,6 @@ Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo,
 	imageInfo_.imageView = imageView_;
 
 	changeLayout(imageParameters.newLayout);
-
 }
 
 Image::~Image()

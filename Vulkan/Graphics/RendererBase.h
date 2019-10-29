@@ -6,6 +6,7 @@
 #include "GraphicsComponent.h"
 #include "ElementBuffer.h"
 #include "GlobalRenderData.h"
+#include "Image.h"
 
 namespace QZL
 {
@@ -70,6 +71,8 @@ namespace QZL
 				pinfo.stages = stages;
 				pinfo.barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 				pinfo.barrier.pNext = NULL;
+				pinfo.barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+				pinfo.barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 				pinfo.offset = offset;
 
 				return { pushConstantRange, pinfo };

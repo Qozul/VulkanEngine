@@ -26,6 +26,9 @@ void SwapChain::loop(const glm::mat4& viewMatrix)
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
+	LightingData lightingData = { glm::vec4(master_->getCamPos(), 0.0f), glm::vec4(glm::vec3(0.2f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
+	globalRenderData_->updateData(0, lightingData);
+
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
 	renderPasses_[0]->doFrame(viewMatrix, imgIdx, commandBuffers_[imgIdx]);
@@ -39,7 +42,7 @@ void SwapChain::loop(const glm::mat4& viewMatrix)
 }
 
 SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities)
-	: logicDevice_(logicDevice)
+	: logicDevice_(logicDevice), master_(master)
 {
 	initSwapChain(window, surfaceCapabilities);
 	initSwapChainImages(window, surface, surfaceCapabilities);
@@ -51,8 +54,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	else {
 		globalRenderData_ = new GlobalRenderData(logicDevice);
 	}
-	LightingData lightingData = { glm::vec4(master->getCamPos(), 0.0f), glm::vec4(glm::vec3(0.2f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
-	globalRenderData_->updateData(0, lightingData);
+	
 	renderPasses_.push_back(new GeometryPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_.push_back(new PostProcessPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });

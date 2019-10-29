@@ -24,7 +24,7 @@ namespace QZL {
 			const VkImageView& getImageView();
 			const VkImage& getImage();
 			const VkImageLayout& getLayout();
-			VkDescriptorImageInfo getImageInfo() {
+			VkDescriptorImageInfo& getImageInfo() {
 				return imageInfo_;
 			}
 			TextureSampler* createTextureSampler(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy);

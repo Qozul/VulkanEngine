@@ -34,6 +34,8 @@ ComputePipeline::ComputePipeline(const LogicDevice* logicDevice, VkPipelineLayou
 
 ComputePipeline::~ComputePipeline()
 {
+	vkDestroyPipeline(*logicDevice_, pipeline_, nullptr);
+	vkDestroyPipelineLayout(*logicDevice_, layout_, nullptr);
 }
 
 VkPipeline ComputePipeline::getPipeline()

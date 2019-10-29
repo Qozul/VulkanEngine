@@ -60,6 +60,7 @@ namespace QZL
 
 			SwapChainDetails details_;
 			LogicDevice* logicDevice_;
+			GraphicsMaster* master_;
 
 			void createSyncObjects();
 			std::vector<VkSemaphore> imageAvailableSemaphores_;

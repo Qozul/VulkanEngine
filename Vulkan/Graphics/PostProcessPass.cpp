@@ -35,8 +35,8 @@ PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevic
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
 		(uint32_t)SubPass::AERIAL_PERSPECTIVE,
-		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT));
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT));
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		(uint32_t)SubPass::AERIAL_PERSPECTIVE, 
 		VK_SUBPASS_EXTERNAL, 
@@ -64,9 +64,6 @@ PostProcessPass::~PostProcessPass()
 
 void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
 {
-	geometryColourBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_SHADER_STAGE_FRAGMENT_BIT);
-	geometryDepthBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_SHADER_STAGE_FRAGMENT_BIT);
-
 	VkClearValue color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	auto bi = beginInfo(idx);
 	bi.clearValueCount = 1;
@@ -76,9 +73,6 @@ void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, 
 	atmosphereRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
-
-	geometryColourBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	geometryDepthBuf_->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 }
 
 void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
