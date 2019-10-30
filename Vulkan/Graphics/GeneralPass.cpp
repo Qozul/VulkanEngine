@@ -19,7 +19,7 @@ GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 	createInfo.attachments.push_back(makeAttachment(depthFormat, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL));
 
 	std::vector<VkAttachmentReference> colourAttachmentRefs;
 	VkAttachmentReference colourRef = {};
@@ -63,7 +63,6 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(terrainRenderer_);
 	SAFE_DELETE(texturedRenderer_);
-	SAFE_DELETE(particleRenderer_);
 	SAFE_DELETE(atmosphereRenderer_);
 }
 
@@ -85,7 +84,6 @@ void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkC
 
 	terrainRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 	texturedRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
-	particleRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -99,9 +97,6 @@ void GeometryPass::createRenderers()
 	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
 		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
-
-	particleRenderer_ = new ParticleRenderer(logicDevice_, renderPass_, swapChainDetails_.extent, descriptor_, "ParticlesVert", "ParticlesFrag", "ParticlesGeom", 2, globalRenderData_, graphicsMaster_->getCamPosPtr());
-	graphicsMaster_->setRenderer(RendererTypes::PARTICLE, particleRenderer_);
 
 	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
 		"AtmosphereVert", "AtmosphereFrag", 1, globalRenderData_, graphicsMaster_->getCamPosPtr());
@@ -130,7 +125,7 @@ VkFormat GeometryPass::createDepthBuffer(LogicDevice* logicDevice, const SwapCha
 	ASSERT(imageFormat != VkFormat::VK_FORMAT_UNDEFINED);
 
 	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, imageFormat, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
 	depthBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	return imageFormat;

@@ -24,7 +24,6 @@ namespace QZL {
 
 			RendererBase* texturedRenderer_;
 			RendererBase* terrainRenderer_;
-			RendererBase* particleRenderer_;
 			RendererBase* atmosphereRenderer_;
 
 			Image* colourBuffer_;

@@ -43,9 +43,11 @@ namespace QZL {
 			}
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
+			VkFormat createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 			void createComputePipelines() {}
 
 			RendererBase* postProcessRenderer_;
+			RendererBase* particleRenderer_;
 
 			PushConstantInfo pushConstantInfo_;
 			ComputePushConstants pushConstants_;
@@ -55,6 +57,7 @@ namespace QZL {
 			std::array<VkImageMemoryBarrier, 4> memoryBarriers_; 
 
 			Image* colourBuffer_;
+			Image* depthBuffer_;
 
 			Image* geometryColourBuf_;
 			Image* geometryDepthBuf_;

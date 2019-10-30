@@ -60,7 +60,7 @@ void main()
 	vec3 mie;
 	calculateRayleighAndMie(V, L, Z, rayleigh, mie);
 		
-	colour = vec4(rayleigh + mie, 1.0) * 10.0;// * vec4(PC.sunIntensity.xyz, 1.0);
+	colour = vec4(rayleigh + mie, 1.0) * 2.0;// * vec4(PC.sunIntensity.xyz, 1.0);
 	colour = colour / (colour + vec4(1.0, 1.0, 1.0, 0.0));
 	colour.rgb = pow(colour.rgb, vec3(1.0/2.2));
 }

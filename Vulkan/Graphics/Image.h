@@ -17,9 +17,10 @@ namespace QZL {
 			Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo, MemoryAllocationPattern pattern, ImageParameters imageParameters);
 			~Image();
 
-			void changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags = (VkPipelineStageFlags)0, VkPipelineStageFlags newStageFlags = (VkPipelineStageFlags)0);
+			void changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags = (VkPipelineStageFlags)0, VkPipelineStageFlags newStageFlags = (VkPipelineStageFlags)0, 
+				VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT);
 			void changeLayout(VkCommandBuffer& cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags = (VkPipelineStageFlags)0, 
-				VkPipelineStageFlags newStageFlags = (VkPipelineStageFlags)0);
+				VkPipelineStageFlags newStageFlags = (VkPipelineStageFlags)0, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT);
 
 			const VkImageView& getImageView();
 			const VkImage& getImage();
@@ -33,6 +34,8 @@ namespace QZL {
 				switch (layout) {
 				case VK_IMAGE_LAYOUT_UNDEFINED:
 					return static_cast<VkAccessFlags>(0);
+				case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+					return VK_ACCESS_TRANSFER_READ_BIT;
 				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
 					return VK_ACCESS_TRANSFER_WRITE_BIT;
 				case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
@@ -53,6 +56,8 @@ namespace QZL {
 				switch (layout) {
 				case VK_IMAGE_LAYOUT_UNDEFINED:
 					return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+				case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+					return VK_PIPELINE_STAGE_TRANSFER_BIT;
 				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
 					return VK_PIPELINE_STAGE_TRANSFER_BIT;
 				case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:

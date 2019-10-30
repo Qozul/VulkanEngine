@@ -26,7 +26,7 @@ Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo,
 	CHECK_VKRESULT(vkCreateImageView(*logicDevice, &viewInfo, nullptr, &imageView_));
 	imageInfo_.imageView = imageView_;
 
-	changeLayout(imageParameters.newLayout);
+	changeLayout(imageParameters.newLayout, 0, 0, imageParameters.aspectBits);
 }
 
 Image::~Image()
@@ -35,9 +35,7 @@ Image::~Image()
 	logicDevice_->getDeviceMemory()->deleteAllocation(imageDetails_.id, imageDetails_.image);
 }
 
-void Image::changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags) {
-	VkImageAspectFlags aspectMask = imageInfo_.imageLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(imageInfo_.imageLayout, format_) :
-		newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(newLayout, format_) : VK_IMAGE_ASPECT_COLOR_BIT;
+void Image::changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags, VkImageAspectFlags aspectMask) {
 	auto barrier = makeImageMemoryBarrier(newLayout, aspectMask);
 	VkPipelineStageFlags oldStage = oldStageFlags == 0 ? imageLayoutToStage(imageInfo_.imageLayout) : oldStageFlags;
 	VkPipelineStageFlags newStage = newStageFlags == 0 ? imageLayoutToStage(newLayout) : newStageFlags;
@@ -46,10 +44,9 @@ void Image::changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageF
 	imageInfo_.imageLayout = newLayout;
 }
 
-void Image::changeLayout(VkCommandBuffer& cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags) {
+void Image::changeLayout(VkCommandBuffer& cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags, 
+	VkImageAspectFlags aspectMask) {
 
-	VkImageAspectFlags aspectMask = imageInfo_.imageLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(imageInfo_.imageLayout, format_) :
-		newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL ? imageLayoutToAspectMask(newLayout, format_) : VK_IMAGE_ASPECT_COLOR_BIT;
 	auto barrier = makeImageMemoryBarrier(newLayout, aspectMask);
 	VkPipelineStageFlags oldStage = oldStageFlags == 0 ? imageLayoutToStage(imageInfo_.imageLayout) : oldStageFlags;
 	VkPipelineStageFlags newStage = newStageFlags == 0 ? imageLayoutToStage(newLayout) : newStageFlags;

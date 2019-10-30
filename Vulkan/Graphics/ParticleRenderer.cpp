@@ -47,7 +47,7 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 	pci.extent = swapChainExtent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-	pci.subpassIndex = 1;
+	pci.subpassIndex = 0;
 
 	createPipeline<ParticleVertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
 }
