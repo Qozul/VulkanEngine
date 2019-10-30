@@ -43,10 +43,11 @@ ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass render
 
 	PipelineCreateInfo pci = {};
 	pci.enableDepthTest = VK_TRUE;
-	pci.enableDepthWrite = VK_TRUE;
+	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = swapChainExtent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+	pci.subpassIndex = 1;
 
 	createPipeline<ParticleVertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
 }

@@ -32,10 +32,9 @@ struct PushConstantExtent {
 };
 
 AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData, 
-	TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
+	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData, glm::vec3* cameraPosition)
 	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE)), 
-	  descriptor_(descriptor), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
+	  descriptor_(descriptor), cameraPosition_(cameraPosition)
 {
 	ASSERT(entityCount > 0);
 	createDescriptors(entityCount);
@@ -52,6 +51,7 @@ AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager*
 	pci.extent = swapChainExtent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	pci.subpassIndex = 0;
 
 	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci,
 		RendererPipeline::PrimitiveType::QUADS);
@@ -63,20 +63,7 @@ AtmosphereRenderer::~AtmosphereRenderer()
 
 void AtmosphereRenderer::createDescriptors(const uint32_t entityCount)
 {
-	VkDescriptorSetLayoutBinding gcbBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
-	VkDescriptorSetLayoutBinding gdbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	VkDescriptorSetLayout layout = descriptor_->makeLayout({ gcbBinding, gdbBinding });
-
-	pipelineLayouts_.push_back(layout);
 	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor_));
-
-	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
-
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 0));
-	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 1));
-	descriptor_->updateDescriptorSets(descWrites);
 }
 
 void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
@@ -96,7 +83,7 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 
 		PushConstantExtent pce;
 		pce.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * viewMatrix);
-		pce.cameraPosition = glm::vec3(0.0f, 1.0f, 0.0f); // TODO actual position
+		pce.cameraPosition = *cameraPosition_;
 		pce.sunDirection = *params.sunDirection;
 		pce.sunIntensity = *params.sunIntensity;
 		pce.betaMie = params.betaMie;
@@ -104,8 +91,8 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 		pce.g = params.g;
 		pce.Hatm = params.Hatm;
 		pce.planetRadius = params.planetRadius;
-		VkDescriptorSet sets[2] = { descriptorSets_[0], robject->getMaterial()->getTextureSet() };
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
+		VkDescriptorSet sets[1] = { robject->getMaterial()->getTextureSet() };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pce);
 		

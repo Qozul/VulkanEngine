@@ -45,10 +45,7 @@ namespace QZL {
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 			void createComputePipelines() {}
 
-			ComputePipeline* apScatteringPipeline_;
-			ComputePipeline* apTransmittancePipeline_;
 			RendererBase* postProcessRenderer_;
-			RendererBase* atmosphereRenderer_;
 
 			PushConstantInfo pushConstantInfo_;
 			ComputePushConstants pushConstants_;
@@ -57,8 +54,6 @@ namespace QZL {
 			// [0] = scattering, [1] = transmittance (transition to compute), [2] = scattering, [3] = transmittance (transition from compute)
 			std::array<VkImageMemoryBarrier, 4> memoryBarriers_; 
 
-			Image* aerialPerspectiveImageS_;
-			Image* aerialPerspectiveImageT_;
 			Image* colourBuffer_;
 
 			Image* geometryColourBuf_;
@@ -67,8 +62,6 @@ namespace QZL {
 			// Samplers for the images produced in the GeometryPass render pass.
 			TextureSampler* gpColourBuffer_;
 			TextureSampler* gpDepthBuffer_;
-			TextureSampler* apScattering_;
-			TextureSampler* apTransmittance_;
 			Game::AtmosphereScript* atmosphereScript_; // Owned by the atmosphereScript a
 		};
 	}

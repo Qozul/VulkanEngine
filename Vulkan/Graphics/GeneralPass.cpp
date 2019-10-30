@@ -32,11 +32,18 @@ GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 
 	// Atmosphere and general subpasses
 	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef));
+	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef));
 	
 	createInfo.dependencies.push_back(makeSubpassDependency(
-		VK_SUBPASS_EXTERNAL, 
-		(uint32_t)SubPass::GENERAL,
+		VK_SUBPASS_EXTERNAL,
+		(uint32_t)SubPass::ATMOSPHERE,
 		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+	);
+	createInfo.dependencies.push_back(makeSubpassDependency(
+		(uint32_t)SubPass::ATMOSPHERE,
+		(uint32_t)SubPass::GENERAL,
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	);
 	createInfo.dependencies.push_back(makeSubpassDependency(
@@ -57,6 +64,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(terrainRenderer_);
 	SAFE_DELETE(texturedRenderer_);
 	SAFE_DELETE(particleRenderer_);
+	SAFE_DELETE(atmosphereRenderer_);
 }
 
 void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
@@ -70,9 +78,15 @@ void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkC
 	bi.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
+
+	atmosphereRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+
+	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
 	terrainRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 	texturedRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 	particleRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+
 	vkCmdEndRenderPass(cmdBuffer);
 }
 
@@ -88,6 +102,10 @@ void GeometryPass::createRenderers()
 
 	particleRenderer_ = new ParticleRenderer(logicDevice_, renderPass_, swapChainDetails_.extent, descriptor_, "ParticlesVert", "ParticlesFrag", "ParticlesGeom", 2, globalRenderData_, graphicsMaster_->getCamPosPtr());
 	graphicsMaster_->setRenderer(RendererTypes::PARTICLE, particleRenderer_);
+
+	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
+		"AtmosphereVert", "AtmosphereFrag", 1, globalRenderData_, graphicsMaster_->getCamPosPtr());
+	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
 }
 
 void GeometryPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

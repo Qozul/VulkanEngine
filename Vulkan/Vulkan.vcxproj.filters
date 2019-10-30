@@ -67,6 +67,9 @@
     <Filter Include="Header Files\Game\Scripts\Particles">
       <UniqueIdentifier>{ad8ad852-95a1-40e2-a505-7f7c181a0455}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Graphics\Renderers">
+      <UniqueIdentifier>{9bcb9772-7c4e-49b4-8f82-7241bd817574}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\Shader.h">
@@ -254,9 +257,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Graphics\TexturedRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\TextureLoader.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
@@ -326,17 +326,11 @@
     <ClCompile Include="Graphics\GraphicsComponent.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\TerrainRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Assets\Terrain.cpp">
       <Filter>Source Files\Assets</Filter>
     </ClCompile>
     <ClCompile Include="Assets\Skysphere.cpp">
       <Filter>Source Files\Assets</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\AtmosphereRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\TextureManager.cpp">
       <Filter>Source Files\System</Filter>
@@ -362,13 +356,7 @@
     <ClCompile Include="Graphics\GeneralPass.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\PostProcessRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\PostProcessPass.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\ParticleRenderer.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Game\ParticleSystem.cpp">
@@ -379,6 +367,21 @@
     </ClCompile>
     <ClCompile Include="Graphics\Material.cpp">
       <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\AtmosphereRenderer.cpp">
+      <Filter>Source Files\Graphics\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TerrainRenderer.cpp">
+      <Filter>Source Files\Graphics\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TexturedRenderer.cpp">
+      <Filter>Source Files\Graphics\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\PostProcessRenderer.cpp">
+      <Filter>Source Files\Graphics\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ParticleRenderer.cpp">
+      <Filter>Source Files\Graphics\Renderers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

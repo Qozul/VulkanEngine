@@ -10,7 +10,6 @@
 #include "Image.h"
 #include "../Assets/AtmosphereParameters.h"
 #include "../Game/AtmosphereScript.h"
-#include "AtmosphereRenderer.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -50,16 +49,11 @@ PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevic
 
 PostProcessPass::~PostProcessPass()
 {
-	SAFE_DELETE(aerialPerspectiveImageS_);
-	SAFE_DELETE(aerialPerspectiveImageT_);
 	SAFE_DELETE(gpColourBuffer_);
 	SAFE_DELETE(gpDepthBuffer_);
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(paramsBuf_);
 	SAFE_DELETE(postProcessRenderer_);
-	SAFE_DELETE(apScatteringPipeline_);
-	SAFE_DELETE(apTransmittancePipeline_);
-	SAFE_DELETE(atmosphereRenderer_);
 }
 
 void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
@@ -70,7 +64,7 @@ void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, 
 	bi.pClearValues = &color;
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	atmosphereRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+	postProcessRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -87,9 +81,9 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 
 void PostProcessPass::createRenderers()
 {
-	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
-		"AtmosphereVert", "AtmosphereFrag", 1, globalRenderData_, gpColourBuffer_, gpDepthBuffer_);
-	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
+	postProcessRenderer_ = new PostProcessRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
+		"PPVert", "PPFrag", 1, globalRenderData_, gpColourBuffer_, gpDepthBuffer_);
+	graphicsMaster_->setRenderer(RendererTypes::POST_PROCESS, postProcessRenderer_);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

@@ -1,5 +1,4 @@
 #include "PostProcessRenderer.h"
-#include "AtmosphereRenderer.h"
 #include "ElementBuffer.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
@@ -10,46 +9,45 @@
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
 #include "SwapChain.h"
-#include "TextureManager.h"
+#include "ShaderParams.h"
+#include "RenderObject.h"
+#include "Material.h"
 #include "../Assets/Entity.h"
 #include "../Game/SunScript.h"
 #include "../Game/AtmosphereScript.h"
 
 using namespace QZL;
-using namespace QZL::Graphics;
+using namespace Graphics;
 
-PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
-	Descriptor* descriptor, const std::string& vertexShader, const std::string& fragmentShader, Image* apScatteringTex,
-	Image* apTransmittanceTex, TextureSampler* colourTex, TextureSampler* depthTex)
-	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE)), descriptor_(descriptor)
+struct PushConstantExtent {
+	glm::mat4 inverseViewProj;
+	glm::vec3 betaRay;
+	float betaMie;
+	glm::vec3 cameraPosition;
+	float planetRadius;
+	glm::vec3 sunDirection;
+	float Hatm;
+	glm::vec3 sunIntensity;
+	float g;
+};
+
+PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
+	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData,
+	TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
+	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE)),
+	descriptor_(descriptor), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
 {
-	apScatteringTexture_ = new TextureSampler(logicDevice, "ApScatteringSampler", apScatteringTex, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
-	apTransmittanceTexture_ = new TextureSampler(logicDevice, "ApTransmittanceSampler", apTransmittanceTex, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
+	ASSERT(entityCount > 0);
+	createDescriptors(entityCount);
 
-	auto scatteringbinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto transmittancebinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto colourbinding = TextureSampler::makeBinding(2, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto depthbinding = TextureSampler::makeBinding(3, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	auto layout = descriptor->makeLayout({ scatteringbinding, transmittancebinding, colourbinding, depthbinding });
-	pipelineLayouts_.push_back(layout);
-
-	auto setIdx = descriptor->createSets({ layout });
-	descriptorSets_.push_back(descriptor->getSet(setIdx));
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(apScatteringTexture_->descriptorWrite(descriptorSets_[0], 0));
-	descWrites.push_back(apTransmittanceTexture_->descriptorWrite(descriptorSets_[0], 1));
-	descWrites.push_back(colourTex->descriptorWrite(descriptorSets_[0], 2));
-	descWrites.push_back(depthTex->descriptorWrite(descriptorSets_[0], 3));
-	descriptor_->updateDescriptorSets(descWrites);
-	
 	std::vector<Graphics::VertexOnlyPosition> vertices = { glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, -1.0f, 0.0f) };
 	std::vector<uint16_t> indices = { 0, 1, 3, 2 };
 	auto buf = static_cast<ElementBufferInterface*>(renderStorage_->buf());
 	auto voffset = buf->addVertices(vertices.data(), vertices.size());
 	auto ioffset = buf->addIndices(indices.data(), indices.size());
 	buf->emplaceMesh("FullscreenQuad", indices.size(), ioffset, voffset);
-	renderStorage_->addMesh(nullptr, new RenderObject("FullscreenQuad", buf->getMesh("FullscreenQuad"), nullptr, nullptr, false));
+
+	//auto pushConstRange = setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	std::array<VkSpecializationMapEntry, 2> specConstantEntries;
 	specConstantEntries[0].constantID = 0;
@@ -76,29 +74,44 @@ PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass 
 
 	PipelineCreateInfo pci = {};
 	pci.enableDepthTest = VK_FALSE;
+	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = swapChainExtent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	pci.subpassIndex = 0;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
+	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
+		RendererPipeline::PrimitiveType::QUADS);
 }
 
 PostProcessRenderer::~PostProcessRenderer()
 {
-	SAFE_DELETE(apScatteringTexture_);
-	SAFE_DELETE(apTransmittanceTexture_);
 }
 
-void PostProcessRenderer::createDescriptors(const uint32_t count)
+void PostProcessRenderer::createDescriptors(const uint32_t entityCount)
 {
+	VkDescriptorSetLayoutBinding gcbBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
+	VkDescriptorSetLayoutBinding gdbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	VkDescriptorSetLayout layout = descriptor_->makeLayout({ gcbBinding, gdbBinding });
+
+	pipelineLayouts_.push_back(layout);
+
+	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
+
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 0));
+	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 1));
+	descriptor_->updateDescriptorSets(descWrites);
 }
 
 void PostProcessRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
-	ASSERT_DEBUG(renderStorage_->meshCount() > 0);
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
-	auto cmd = *renderStorage_->meshData();
-	vkCmdDrawIndexed(cmdBuffer, cmd.count, cmd.instanceCount, cmd.firstIndex, cmd.baseVertex, cmd.baseInstance);
+	renderStorage_->buf()->bind(cmdBuffer, idx);
+
+	VkDescriptorSet sets[1] = { descriptorSets_[0] };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
+
+	vkCmdDrawIndexed(cmdBuffer, 4, 1, 0, 0, 0);
 }

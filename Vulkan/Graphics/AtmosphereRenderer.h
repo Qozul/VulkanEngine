@@ -12,15 +12,13 @@ namespace QZL
 		class AtmosphereRenderer : public RendererBase {
 		public:
 			AtmosphereRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-				const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData,
-				TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer);
+				const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData, glm::vec3* cameraPosition);
 			~AtmosphereRenderer();
 			void createDescriptors(const uint32_t entityCount) override;
 			void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
 		private:
-			TextureSampler* geometryColourBuffer_;
-			TextureSampler* geometryDepthBuffer_;
 			Descriptor* descriptor_;
+			glm::vec3* cameraPosition_;
 		};
 	}
 }

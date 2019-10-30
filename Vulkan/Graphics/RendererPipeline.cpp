@@ -154,7 +154,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.layout = layout_;
 	pipelineInfo.renderPass = renderPass;
-	pipelineInfo.subpass = 0;
+	pipelineInfo.subpass = pipelineCreateInfo.subpassIndex;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 	if (inputAssembly.topology == VK_PRIMITIVE_TOPOLOGY_PATCH_LIST && tessellationInfo != nullptr) {

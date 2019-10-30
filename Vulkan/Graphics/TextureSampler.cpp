@@ -1,4 +1,3 @@
-// Ref https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler
 #include "TextureSampler.h"
 #include "LogicDevice.h"
 #include "Image.h"

@@ -23,6 +23,7 @@ namespace QZL
 			VkFrontFace frontFace;
 			VkBool32 enableDepthTest;
 			VkBool32 enableDepthWrite;
+			uint32_t subpassIndex;
 		};
 
 		class RendererPipeline {
