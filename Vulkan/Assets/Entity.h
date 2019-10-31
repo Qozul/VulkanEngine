@@ -26,7 +26,7 @@ namespace QZL {
 		class Entity {
 			friend class AssetManager;
 		public:
-			virtual void update(float dt);
+			virtual void update(float dt, const glm::mat4& parentMatrix);
 			void start();
 
 			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* perMeshParams, Graphics::ShaderParams* perInstanceParams,

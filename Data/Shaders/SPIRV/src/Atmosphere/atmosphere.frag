@@ -29,7 +29,7 @@ float rayleighPhase(float ctheta)
 float miePhase(float ctheta, float g)
 {
 	float g2 = g * g;
-	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta, 1.5));
+	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta * ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta * ctheta, 1.5));
 }
 
 void calculateRayleighAndMie(in vec3 V, in vec3 L, in vec3 Z, out vec3 rayleigh, out vec3 mie) 

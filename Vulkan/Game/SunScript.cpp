@@ -42,7 +42,7 @@ void SunScript::start()
 	updateBuffer();
 }
 
-void SunScript::update(float dt) 
+void SunScript::update(float dt, const glm::mat4& parentMatrix)
 {
 	angle_ += DISTANCE_PER_SECOND * dt;
 	if (angle_ > TWO_PI) {
@@ -51,7 +51,7 @@ void SunScript::update(float dt)
 	transform()->rotationAngle = angle_;
 
 	// The direction from the sun particle to the centre point in world space, which in model space is +x
-	direction_ = glm::normalize(glm::vec3(transform()->toModelMatrix() * glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+	direction_ = glm::vec3(parentMatrix * (transform()->toModelMatrix() * glm::vec4(vertices_[0].position, 1.0)));
 
 
 	auto sinTheta = glm::sin(angle_) + DAWN_DUSK_OFFSET;

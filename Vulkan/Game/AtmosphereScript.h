@@ -55,7 +55,7 @@ namespace QZL {
 			}
 		protected:
 			void start() override;
-			void update(float dt) override { }
+			void update(float dt, const glm::mat4& parentMatrix) override { }
 		private:
 			// Creates temporary textures, returned via reference argument. Also creates the member textures.
 			void initTextures(const Graphics::LogicDevice* logicDevice, PrecomputedTextures& finalTextures);

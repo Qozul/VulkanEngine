@@ -41,7 +41,7 @@ namespace QZL {
 			// initialise the particle state.
 			virtual void start() = 0;
 			// Update can be overriden by a derived class when needed, however this provides the basic particle system logic
-			virtual void update(float dt) override;
+			virtual void update(float dt, const glm::mat4& parentMatrix) override;
 			Graphics::ParticleShaderParams* makeShaderParams() {
 				return new Graphics::ParticleShaderParams(textureTileLength_, tint_);
 			}

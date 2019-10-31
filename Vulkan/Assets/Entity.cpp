@@ -6,10 +6,10 @@
 using namespace QZL;
 using namespace QZL::Assets;
 
-void Entity::update(float dt)
+void Entity::update(float dt, const glm::mat4& parentMatrix)
 {
 	if (gameScript_ != nullptr) {
-		gameScript_->update(dt);
+		gameScript_->update(dt, parentMatrix);
 	}
 }
 
