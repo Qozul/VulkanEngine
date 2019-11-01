@@ -1,3 +1,6 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #include "ParticleRenderer.h"
 #include "DynamicVertexBuffer.h"
 #include "StorageBuffer.h"
@@ -25,31 +28,28 @@ struct PerInstanceParams {
 	glm::vec4 tint;
 };
 
-ParticleRenderer::ParticleRenderer(LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor, 
-	const std::string& vertexShader, const std::string& fragmentShader, const std::string& geometryShader, const uint32_t particleSystemCount, const GlobalRenderData* globalRenderData,
-	glm::vec3* billboardPoint)
-	: RendererBase(logicDevice, new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(logicDevice->getDeviceMemory(), 12, SwapChain::numSwapChainImages), RenderStorage::InstanceUsage::UNLIMITED)),
-	  descriptor_(descriptor), billboardPoint_(billboardPoint)
+ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo, uint32_t maxUniqueParticles)
+	: RendererBase(createInfo, new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(createInfo.logicDevice->getDeviceMemory(), maxUniqueParticles, createInfo.swapChainImageCount),
+	  RenderStorage::InstanceUsage::UNLIMITED))
 {
-	ASSERT(particleSystemCount > 0);
-	createDescriptors(particleSystemCount);
+	createDescriptors(createInfo.maxDrawnEntities);
 
 	auto pushConstRange = setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT);
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
-	stageInfos.emplace_back(geometryShader, VK_SHADER_STAGE_GEOMETRY_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.geometryShader, VK_SHADER_STAGE_GEOMETRY_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_FALSE;
-	pci.extent = swapChainExtent;
+	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-	pci.subpassIndex = 0;
+	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<ParticleVertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
+	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
 }
 
 ParticleRenderer::~ParticleRenderer()
@@ -73,13 +73,13 @@ void ParticleRenderer::createDescriptors(const uint32_t particleSystemCount)
 	descriptor_->updateDescriptorSets(descWrites);
 }
 
-void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	dynamic_cast<DynamicBufferInterface*>(renderStorage_->buf())->updateBuffer(cmdBuffer, idx);
-	dynamic_cast<VertexBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
+	dynamic_cast<DynamicBufferInterface*>(renderStorage_->buffer())->updateBuffer(cmdBuffer, idx);
+	dynamic_cast<VertexBufferInterface*>(renderStorage_->buffer())->bind(cmdBuffer, idx);
 
 	PerInstanceParams* eleDataPtr = static_cast<PerInstanceParams*>(storageBuffers_[0]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
@@ -88,7 +88,7 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 		auto params = static_cast<ParticleShaderParams*>(comp->getPerMeshShaderParams());
 		glm::mat4 model = comp->getModelmatrix();
 		eleDataPtr[i] = {
-			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model, params->params.tint
+			model, GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model, params->params.tint
 		};
 	}
 	storageBuffers_[0]->unbindRange();
@@ -99,14 +99,13 @@ void ParticleRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t i
 
 		auto params = static_cast<ParticleShaderParams*>(robject->getParams());
 		PushConstantGeometry pcg;
-		pcg.billboardPoint = *billboardPoint_;
+		pcg.billboardPoint = camera.position;
 		pcg.tileLength = params->params.textureTileLength;
 		
 		VkDescriptorSet sets[2] = { descriptorSets_[0], robject->getMaterial()->getTextureSet() };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);
-		//vkCmdPipelineBarrier(cmdBuffer, pushConstantInfos_[0].stages, pushConstantInfos_[0].stages, VK_DEPENDENCY_BY_REGION_BIT, 1, &pushConstantInfos_[0].barrier, 0, nullptr, 0, nullptr);
 
 		vkCmdDraw(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

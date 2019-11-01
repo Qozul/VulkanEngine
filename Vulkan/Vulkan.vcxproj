@@ -52,12 +52,13 @@
     <ClInclude Include="Graphics\GraphicsMaster.h" />
     <ClInclude Include="Graphics\GraphicsTypes.h" />
     <ClInclude Include="Graphics\Image.h" />
+    <ClInclude Include="Graphics\LogicalCamera.h" />
     <ClInclude Include="Graphics\LogicDevice.h" />
     <ClInclude Include="Graphics\Material.h" />
     <ClInclude Include="Graphics\MemoryAllocation.h" />
     <ClInclude Include="Graphics\Mesh.h" />
     <ClInclude Include="Graphics\MeshLoader.h" />
-    <ClInclude Include="Graphics\OptionalExtentions.h" />
+    <ClInclude Include="Graphics\OptionalExtensions.h" />
     <ClInclude Include="Graphics\ParticleRenderer.h" />
     <ClInclude Include="Graphics\PhysicalDevice.h" />
     <ClInclude Include="Graphics\PostProcessPass.h" />

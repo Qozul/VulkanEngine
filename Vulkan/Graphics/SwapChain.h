@@ -12,6 +12,7 @@ namespace QZL
 		struct DeviceSurfaceCapabilities;
 		class GlobalRenderData;
 		class GraphicsMaster;
+		struct LogicalCamera;
 
 		struct SwapChainDetails {
 			VkSwapchainKHR swapChain;
@@ -25,7 +26,7 @@ namespace QZL
 		class SwapChain {
 			friend class GraphicsMaster;
 		public:
-			void loop(const glm::mat4& viewMatrix);
+			void loop(LogicalCamera& camera);
 
 			static size_t numSwapChainImages;
 		private:

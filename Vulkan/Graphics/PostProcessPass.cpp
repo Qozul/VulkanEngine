@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "PostProcessPass.h"
 #include "SwapChain.h"
 #include "GraphicsMaster.h"
@@ -61,12 +63,11 @@ PostProcessPass::~PostProcessPass()
 	SAFE_DELETE(gpDepthBuffer_);
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(depthBuffer_);
-	SAFE_DELETE(paramsBuf_);
 	SAFE_DELETE(postProcessRenderer_);
 	SAFE_DELETE(particleRenderer_);
 }
 
-void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
+void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer)
 {
 	VkOffset3D imageOffset = {};
 	imageOffset.x = 0;
@@ -115,9 +116,9 @@ void PostProcessPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, 
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	postProcessRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+	postProcessRenderer_->recordFrame(camera, idx, cmdBuffer);
 
-	particleRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+	particleRenderer_->recordFrame(camera, idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -134,11 +135,21 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 
 void PostProcessPass::createRenderers()
 {
-	particleRenderer_ = new ParticleRenderer(logicDevice_, renderPass_, swapChainDetails_.extent, descriptor_, "ParticlesVert", "ParticlesFrag", "ParticlesGeom", 2, globalRenderData_, graphicsMaster_->getCamPosPtr());
-	graphicsMaster_->setRenderer(RendererTypes::PARTICLE, particleRenderer_);
+	RendererCreateInfo createInfo = {};
+	createInfo.logicDevice = logicDevice_;
+	createInfo.descriptor = descriptor_;
+	createInfo.extent = swapChainDetails_.extent;
+	createInfo.renderPass = renderPass_;
+	createInfo.globalRenderData = globalRenderData_;
+	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 
-	postProcessRenderer_ = new PostProcessRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
-		"PPVert", "PPFrag", 1, globalRenderData_, gpColourBuffer_, gpDepthBuffer_);
+	createInfo.updateRendererSpecific(0, 1, "PPVert", "PPFrag");
+	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthBuffer_);
+
+	createInfo.updateRendererSpecific(0, 2, "ParticlesVert", "ParticlesFrag", "ParticlesGeom");
+	particleRenderer_ = new ParticleRenderer(createInfo, 12);
+
+	graphicsMaster_->setRenderer(RendererTypes::PARTICLE, particleRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::POST_PROCESS, postProcessRenderer_);
 }
 

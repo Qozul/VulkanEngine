@@ -1,14 +1,14 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #include "PostProcessRenderer.h"
-#include "ElementBuffer.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "TextureSampler.h"
-#include "TextureManager.h"
 #include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
-#include "SwapChain.h"
 #include "ShaderParams.h"
 #include "RenderObject.h"
 #include "Material.h"
@@ -19,35 +19,10 @@
 using namespace QZL;
 using namespace Graphics;
 
-struct PushConstantExtent {
-	glm::mat4 inverseViewProj;
-	glm::vec3 betaRay;
-	float betaMie;
-	glm::vec3 cameraPosition;
-	float planetRadius;
-	glm::vec3 sunDirection;
-	float Hatm;
-	glm::vec3 sunIntensity;
-	float g;
-};
-
-PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData,
-	TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
-	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE)),
-	descriptor_(descriptor), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
+	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
 {
-	ASSERT(entityCount > 0);
-	createDescriptors(entityCount);
-
-	std::vector<Graphics::VertexOnlyPosition> vertices = { glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, -1.0f, 0.0f) };
-	std::vector<uint16_t> indices = { 0, 1, 3, 2 };
-	auto buf = static_cast<ElementBufferInterface*>(renderStorage_->buf());
-	auto voffset = buf->addVertices(vertices.data(), vertices.size());
-	auto ioffset = buf->addIndices(indices.data(), indices.size());
-	buf->emplaceMesh("FullscreenQuad", indices.size(), ioffset, voffset);
-
-	//auto pushConstRange = setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT);
+	createDescriptors(createInfo.maxDrawnEntities);
 
 	std::array<VkSpecializationMapEntry, 2> specConstantEntries;
 	specConstantEntries[0].constantID = 0;
@@ -69,18 +44,18 @@ PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, TextureManage
 	specConstants[1].pData = specConstantValues.data();
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &specConstants[0]);
-	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &specConstants[0]);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
 
 	PipelineCreateInfo pci = {};
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
-	pci.extent = swapChainExtent;
-	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.extent = createInfo.extent;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	pci.subpassIndex = 0;
+	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
+	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
 		RendererPipeline::PrimitiveType::QUADS);
 }
 
@@ -105,13 +80,12 @@ void PostProcessRenderer::createDescriptors(const uint32_t entityCount)
 	descriptor_->updateDescriptorSets(descWrites);
 }
 
-void PostProcessRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	beginFrame(cmdBuffer);
-	renderStorage_->buf()->bind(cmdBuffer, idx);
 
 	VkDescriptorSet sets[1] = { descriptorSets_[0] };
 	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
 
-	vkCmdDrawIndexed(cmdBuffer, 4, 1, 0, 0, 0);
+	vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
 }

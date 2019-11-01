@@ -1,3 +1,6 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #include "RendererPipeline.h"
 #include "LogicDevice.h"
 #include "Shader.h"
@@ -171,12 +174,12 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 
 VkPipelineShaderStageCreateInfo RendererPipeline::createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage)
 {
-	VkPipelineShaderStageCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	info.stage = stage;
-	info.module = module;
-	info.pName = "main";
-	return info;
+	VkPipelineShaderStageCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	createInfo.stage = stage;
+	createInfo.module = module;
+	createInfo.pName = "main";
+	return createInfo;
 }
 
 VkPipelineInputAssemblyStateCreateInfo RendererPipeline::createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart)

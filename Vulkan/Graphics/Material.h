@@ -115,10 +115,10 @@ namespace QZL {
 			friend class TexturedRenderer;
 		public:
 			StaticMaterial(const std::string materialFileName)
-				: Material(materialFileName) { }
-
-			StaticMaterial(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
-				: Material(name, set, layout) { }
+				: Material(materialFileName), isUsingDI(false) {
+				diffuse_.diffuseSampler = nullptr;
+				normalMap_.normalMapSampler = nullptr;
+			}
 
 			~StaticMaterial() {
 				if (!isUsingDI) {
@@ -151,9 +151,6 @@ namespace QZL {
 		public:
 			TerrainMaterial(const std::string materialFileName)
 				: Material(materialFileName), heightmap_(nullptr), diffuse_(nullptr) { }
-
-			TerrainMaterial(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
-				: Material(name, set, layout) { }
 
 			~TerrainMaterial() {
 				SAFE_DELETE(heightmap_);

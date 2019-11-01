@@ -45,7 +45,7 @@ namespace QZL
 			size_t renderObjectCount() {
 				return renderObjects_.size();
 			}
-			BufferInterface* buf() {
+			BufferInterface* buffer() {
 				return buffer_;
 			}
 

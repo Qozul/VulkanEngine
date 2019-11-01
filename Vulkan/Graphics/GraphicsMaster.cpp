@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "GraphicsMaster.h"
 #include "Validation.h"
 #include "PhysicalDevice.h"
@@ -14,11 +16,7 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-constexpr auto kHoldConsole = false;
-
 glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, NEAR_PLANE_Z, FAR_PLANE_Z);
-
-EnvironmentArgs environmentArgs;
 
 void GraphicsMaster::registerComponent(GraphicsComponent* component, RenderObject* robject)
 {
@@ -41,6 +39,11 @@ DynamicBufferInterface* GraphicsMaster::getDynamicBuffer(RendererTypes type)
 	}
 }
 
+LogicalCamera* GraphicsMaster::getLogicalCamera(RendererTypes type)
+{
+	return nullptr;
+}
+
 const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)
 {
 	return details_.physicalDevice->optionalExtensionsEnabled_[ext];
@@ -51,9 +54,6 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 {
 	kProjectionMatrix[1][1] *= -1;
 	details_.master = this;
-	environmentArgs.numObjectsX = 10;
-	environmentArgs.numObjectsY = 10;
-	environmentArgs.numObjectsZ = 10;
 	std::vector<const char*> extensions;
 	uint32_t enabledLayerCount;
 	const char* const* enabledLayerNames;
@@ -70,8 +70,8 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
 	}
 
-	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	camPosition_ = new glm::vec3(0.0f, 10.0f, 0.0f);
+	mainCamera_.viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	mainCamera_.position = glm::vec3(0.0f, 10.0f, 0.0f);
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
@@ -97,8 +97,6 @@ GraphicsMaster::~GraphicsMaster()
 
 	SAFE_DELETE(details_.physicalDevice);
 	SAFE_DELETE(validation_);
-	SAFE_DELETE(viewMatrix_);
-	SAFE_DELETE(camPosition_);
 
 	vkDestroySurfaceKHR(details_.instance, details_.surface, nullptr);
 	vkDestroyInstance(details_.instance, nullptr);
@@ -173,7 +171,7 @@ void GraphicsMaster::preframeSetup()
 	// NOTE that since the are renderers are stored in no order then it may not be the same key each time
 	int i = 0;
 	for (auto renderer : renderers_) {
-		renderer.second->preframeSetup(*viewMatrix_);
+		renderer.second->preframeSetup();
 		inputProfile_.profileBindings.push_back({ { GLFW_KEY_1 + i }, std::bind(&RendererBase::toggleWiremeshMode, renderer.second), 1.0f });
 		++i;
 	}
@@ -182,5 +180,5 @@ void GraphicsMaster::preframeSetup()
 
 void GraphicsMaster::loop()
 {
-	swapChain_->loop(getViewMatrix());
+	swapChain_->loop(mainCamera_);
 }

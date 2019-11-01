@@ -1,10 +1,12 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #include "TexturedRenderer.h"
 #include "ElementBuffer.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "TextureSampler.h"
-#include "TextureManager.h"
 #include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
@@ -16,29 +18,26 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData)
-	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::UNLIMITED)), descriptor_(descriptor)
+TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
+	: RendererBase(createInfo, new RenderStorage(new ElementBuffer<Vertex>(createInfo.logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::UNLIMITED))
 {
-	ASSERT(entityCount > 0);
-
-	descriptorSets_.push_back(globalRenderData->getSet());
-	pipelineLayouts_.push_back(globalRenderData->getLayout());
-	createDescriptors(entityCount);
+	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
+	createDescriptors(createInfo.maxDrawnEntities);
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_TRUE;
-	pci.extent = swapChainExtent;
+	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	pci.subpassIndex = 1;
+	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<Vertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
 }
 
 TexturedRenderer::~TexturedRenderer()
@@ -85,24 +84,24 @@ void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 	descriptor_->updateDescriptorSets(descWrites);
 }
 
-void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
+	static_cast<ElementBufferInterface*>(renderStorage_->buffer())->bind(cmdBuffer, idx);
 
-	updateBuffers(viewMatrix);
+	updateBuffers(camera.viewMatrix);
 
 	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		recordDIFrame(viewMatrix, idx, cmdBuffer);
+		recordDIFrame(idx, cmdBuffer);
 	}
 	else {
-		recordNormalFrame(viewMatrix, idx, cmdBuffer);
+		recordNormalFrame(idx, cmdBuffer);
 	}
 }
 
-void TexturedRenderer::recordDIFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	// Textures defined per instance using descriptor indexing
 	updateDIBuffer();
@@ -117,7 +116,7 @@ void TexturedRenderer::recordDIFrame(const glm::mat4& viewMatrix, const uint32_t
 	}
 }
 
-void TexturedRenderer::recordNormalFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void TexturedRenderer::recordNormalFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	// Texture defined per mesh, not per instance
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {

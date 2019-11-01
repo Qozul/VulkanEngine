@@ -8,6 +8,7 @@
 #include "../Assets/AssetManager.h"
 #include "TextureManager.h"
 #include "GraphicsMaster.h"
+#include "LogicalCamera.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -16,7 +17,7 @@ using namespace QZL::Graphics;
 
 size_t SwapChain::numSwapChainImages = 0;
 
-void SwapChain::loop(const glm::mat4& viewMatrix)
+void SwapChain::loop(LogicalCamera& camera)
 {
 	const uint32_t imgIdx = aquireImage();
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
@@ -31,8 +32,8 @@ void SwapChain::loop(const glm::mat4& viewMatrix)
 
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
-	renderPasses_[0]->doFrame(viewMatrix, imgIdx, commandBuffers_[imgIdx]);
-	renderPasses_[1]->doFrame(viewMatrix, imgIdx, commandBuffers_[imgIdx]);
+	renderPasses_[0]->doFrame(camera, imgIdx, commandBuffers_[imgIdx]);
+	renderPasses_[1]->doFrame(camera, imgIdx, commandBuffers_[imgIdx]);
 
 	CHECK_VKRESULT(vkEndCommandBuffer(commandBuffers_[imgIdx]));
 

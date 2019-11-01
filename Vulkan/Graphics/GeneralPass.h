@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "RenderPass.h"
 
@@ -14,7 +16,7 @@ namespace QZL {
 		protected:
 			GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);
 			~GeometryPass();
-			void doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer) override;
+			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) override;
 			void createRenderers() override;
 			// No dependency
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override { }

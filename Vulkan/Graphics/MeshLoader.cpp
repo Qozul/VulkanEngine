@@ -1,4 +1,6 @@
-/// Reference: https://github.com/syoyo/tinyobjloader code example for loading using tinyobj
+/// Author: Ralph Ridley
+/// Date: 19/02/19
+// Reference: https://github.com/syoyo/tinyobjloader code example for loading using tinyobj
 #include "MeshLoader.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION

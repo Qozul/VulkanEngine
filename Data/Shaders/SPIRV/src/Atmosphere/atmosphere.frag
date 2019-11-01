@@ -22,14 +22,15 @@ layout(set = 0, binding = 0) uniform sampler3D scatteringTexture;
 // theta is the angle between the direction of the incident light and the direction of the scattered light
 float rayleighPhase(float ctheta)
 {
-	return 0.8 * (1.4 + 0.5 * ctheta * ctheta);
+	return 0.8 * (1.4 + 0.5 * ctheta);
 }
 
 // g is in range [-1, 1]
 float miePhase(float ctheta, float g)
 {
 	float g2 = g * g;
-	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta * ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta * ctheta, 1.5));
+	float c2theta = ctheta * ctheta;
+	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + c2theta) / pow(1.0 + g2 - 2.0 * g * c2theta, 1.5));
 }
 
 void calculateRayleighAndMie(in vec3 V, in vec3 L, in vec3 Z, out vec3 rayleigh, out vec3 mie) 
@@ -60,7 +61,7 @@ void main()
 	vec3 mie;
 	calculateRayleighAndMie(V, L, Z, rayleigh, mie);
 		
-	colour = vec4(rayleigh + mie, 1.0) * 2.0;// * vec4(PC.sunIntensity.xyz, 1.0);
+	colour = vec4(rayleigh + mie, 1.0) * 2.0;// vec4(PC.sunIntensity.xyz, 1.0);
 	colour = colour / (colour + vec4(1.0, 1.0, 1.0, 0.0));
 	colour.rgb = pow(colour.rgb, vec3(1.0/2.2));
 }

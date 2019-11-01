@@ -1,3 +1,6 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #pragma once
 #include "VkUtil.h"
 #include "Vertex.h"
@@ -62,6 +65,7 @@ namespace QZL
 			VkPipelineInputAssemblyStateCreateInfo createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart);
 			VkPipelineTessellationStateCreateInfo createTessellationStateInfo(PrimitiveType patchPointCount);
 		};
+
 		template<typename V>
 		inline VkPipelineVertexInputStateCreateInfo RendererPipeline::makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc,
 			typename std::result_of<decltype(&V::getAttribDescs)(uint32_t)>::type attribDescs)

@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
 
@@ -12,7 +14,7 @@ namespace QZL
 		public:
 			TextureLoader(const LogicDevice* logicDevice);
 			~TextureLoader();
-			Image* loadTexture(const std::string& fileName);
+			Image* loadTexture(const std::string& fileName, VkShaderStageFlags stages);
 
 		private:
 			VkFormat convertToVkFormat(unsigned int oldFormat);

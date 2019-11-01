@@ -15,7 +15,6 @@ Validation::Validation(const VkInstance instance, const VkDebugUtilsMessageSever
 {
 	EXPECTS(instance != VK_NULL_HANDLE);
 	if (tryEnableSuccess) {
-		// Basic validation
 		VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -48,33 +47,8 @@ bool Validation::tryEnable(std::vector<const char*>& extensions, uint32_t& enabl
 #ifndef ENABLE_VALIDATION
 	return false;
 #else
-	// Check the extension is available with this Vulkan implementation
-	auto availableExtensions = obtainVkData<VkExtensionProperties>(vkEnumerateInstanceExtensionProperties, "");
-	bool found = false;
-	for (auto ext : kExtensions) {
-		for (const auto& extension : availableExtensions) {
-			if (strcmp(ext, extension.extensionName) == 0) {
-				found = true;
-				break;
-			}
-		}
-		if (!found)
-			return false;
-	}
-	// Check the validation layers are available.
-	auto layerProperties = obtainVkData<VkLayerProperties>(vkEnumerateInstanceLayerProperties);
-	for (auto layer : kLayers) {
-		bool found = false;
-		for (const auto& property : layerProperties) {
-			if (strcmp(layer, property.layerName) == 0) {
-				found = true;
-				break;
-			}
-		}
-		if(!found) 
-			return false; 
-	}
-	// Only now it is confirmed may the validation be implemented
+	isExtensionAvailable();
+	isValidationLayerAvailable();
 	enabledLayerCount = static_cast<uint32_t>(kLayers.size());
 	ppEnabledLayerNames = kLayers.data();
 	for (auto ext : kExtensions) {
@@ -93,4 +67,38 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Validation::callback(VkDebugUtilsMessageSeverityF
 		return VK_TRUE;
 	}
 	return VK_FALSE;
+}
+
+bool Validation::isExtensionAvailable()
+{
+	auto availableExtensions = obtainVkData<VkExtensionProperties>(vkEnumerateInstanceExtensionProperties, "");
+	bool found = false;
+	for (auto ext : kExtensions) {
+		for (const auto& extension : availableExtensions) {
+			if (strcmp(ext, extension.extensionName) == 0) {
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			return false;
+	}
+	return true;
+}
+
+bool Validation::isValidationLayerAvailable()
+{
+	auto layerProperties = obtainVkData<VkLayerProperties>(vkEnumerateInstanceLayerProperties);
+	for (auto layer : kLayers) {
+		bool found = false;
+		for (const auto& property : layerProperties) {
+			if (strcmp(layer, property.layerName) == 0) {
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			return false;
+	}
+	return true;
 }

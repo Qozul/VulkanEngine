@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "LogicDevice.h"
 #include "DeviceMemory.h"

@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
 #include "Material.h"
@@ -22,7 +24,7 @@ namespace QZL {
 			// Returns a texture sampler and passes ownership of the sampler to the caller, which is expected to destroy the resource prior to this class
 			// destructor being called.
 			TextureSampler* requestTextureSeparate(const std::string& name, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR,
-				VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT, float anisotropy = 8);
+				VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT, float anisotropy = 8, VkShaderStageFlags stages = VK_SHADER_STAGE_FRAGMENT_BIT);
 			
 			template<typename Subclass>
 			Material* requestMaterial(const std::string name);

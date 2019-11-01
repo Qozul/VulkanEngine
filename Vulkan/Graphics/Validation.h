@@ -28,6 +28,9 @@ namespace QZL
 				const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 				void* pUserData);
 		private:
+			static bool isExtensionAvailable();
+			static bool isValidationLayerAvailable();
+
 			const VkInstance cInstance_;
 			VkDebugUtilsMessengerEXT callbackHandle_;
 			const VkDebugUtilsMessageSeverityFlagBitsEXT severityFlag_;

@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
 #include "ShaderParams.h"
@@ -12,33 +14,8 @@ namespace QZL {
 		class GraphicsComponent {
 		public:
 			GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
-				const std::string& meshName, MeshLoadingInfo loadInfo, Material* material)
-				: rtype_(type), owningEntity_(owner), meshParameters_(perMeshParams), instanceParameters_(perInstanceParams), 
-				  meshName_(meshName), loadInfo_(loadInfo), material_(material) {
-				if (material != nullptr) {
-					auto t = material->getRendererType();
-					ASSERT(type == material->getRendererType());
-				}
-				if (perInstanceParams != nullptr) {
-					ASSERT(type == perInstanceParams->getRendererType());
-				}
-				if (perMeshParams != nullptr) {
-					ASSERT(type == perMeshParams->getRendererType());
-				}
-			}
-			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr)
-				: rtype_(type), owningEntity_(owner), meshParameters_(robject->getParams()), instanceParameters_(perInstanceParams),
-				meshName_(robject->getMeshName()), loadInfo_(), material_(robject->getMaterial()) {
-				if (robject->getMaterial() != nullptr) {
-					ASSERT(type == robject->getMaterial()->getRendererType());
-				}
-				if (perInstanceParams != nullptr) {
-					ASSERT(type == perInstanceParams->getRendererType());
-				}
-				if (robject->getParams() != nullptr) {
-					ASSERT(type == robject->getParams()->getRendererType());
-				}
-			}
+				const std::string& meshName, MeshLoadingInfo loadInfo, Material* material);
+			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
 
 			~GraphicsComponent();
 			const std::string& getMeshName() const {

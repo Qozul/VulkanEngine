@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "GeneralPass.h"
 #include "SwapChain.h"
 #include "GraphicsMaster.h"
@@ -66,7 +68,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(atmosphereRenderer_);
 }
 
-void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer)
+void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer)
 {
 	std::array<VkClearValue, 2> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -78,28 +80,37 @@ void GeometryPass::doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkC
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	atmosphereRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+	atmosphereRenderer_->recordFrame(camera, idx, cmdBuffer);
 
 	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
-	terrainRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
-	texturedRenderer_->recordFrame(viewMatrix, idx, cmdBuffer);
+	terrainRenderer_->recordFrame(camera, idx, cmdBuffer);
+	texturedRenderer_->recordFrame(camera, idx, cmdBuffer);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
 
 void GeometryPass::createRenderers()
 {
-	std::string fragName = logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING) ? "StaticFrag_DI" : "StaticFrag";
-	texturedRenderer_ = new TexturedRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_, "StaticVert", fragName, 1, globalRenderData_);
+	RendererCreateInfo createInfo = {};
+	createInfo.logicDevice = logicDevice_;
+	createInfo.descriptor = descriptor_;
+	createInfo.extent = swapChainDetails_.extent;
+	createInfo.renderPass = renderPass_;
+	createInfo.globalRenderData = globalRenderData_;
+	createInfo.swapChainImageCount = swapChainDetails_.images.size();
+
+	createInfo.updateRendererSpecific(1, 1, "StaticVert", logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING) ? "StaticFrag_DI" : "StaticFrag");
+	texturedRenderer_ = new TexturedRenderer(createInfo);
+
+	createInfo.updateRendererSpecific(1, 1, "TerrainVert", "TerrainFrag", "", "TerrainTESC", "TerrainTESE");
+	terrainRenderer_ = new TerrainRenderer(createInfo);
+
+	createInfo.updateRendererSpecific(0, 1, "AtmosphereVert", "AtmosphereFrag");
+	atmosphereRenderer_ = new AtmosphereRenderer(createInfo);
+
 	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
-
-	terrainRenderer_ = new TerrainRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
-		"TerrainVert", "TerrainTESC", "TerrainTESE", "TerrainFrag", 1, globalRenderData_);
 	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
-
-	atmosphereRenderer_ = new AtmosphereRenderer(logicDevice_, graphicsMaster_->getMasters().assetManager->textureManager, renderPass_, swapChainDetails_.extent, descriptor_,
-		"AtmosphereVert", "AtmosphereFrag", 1, globalRenderData_, graphicsMaster_->getCamPosPtr());
 	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
 }
 

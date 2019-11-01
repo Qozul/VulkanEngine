@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "DeviceMemory.h"
 #include "GraphicsMaster.h"
 #include "PhysicalDevice.h"

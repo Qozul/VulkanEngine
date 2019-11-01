@@ -126,6 +126,12 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 			optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = true;
 			DEBUG_LOG("Descriptor indexing is enabled.");
 		}
+		if (!strcmp(ext.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
+			deviceExtensions_.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+			deviceExtensions_.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			optionalExtensionsEnabled_[OptionalExtensions::DEBUG_MARKER] = true;
+			DEBUG_LOG("Debug markers are enabled.");
+		}
 		// Required
 		if (!strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) {
 			hasSwapchain = true;

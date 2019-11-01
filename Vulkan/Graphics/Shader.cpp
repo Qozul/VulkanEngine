@@ -1,10 +1,9 @@
 /// Author: Ralph Ridley
 /// Date: 29/10/18
-/// Purpose: Definitions of Shader.h code
 #include "Shader.h"
 
-#include <stdlib.h> // system() for runBatchCompilation
-#include <fstream> // for ifstream
+#include <stdlib.h>
+#include <fstream>
 #include <filesystem>
 
 using namespace QZL;

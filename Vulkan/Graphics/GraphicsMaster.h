@@ -1,8 +1,9 @@
 #pragma once
 #include "VkUtil.h"
 #include "../InputManager.h"
-#include "OptionalExtentions.h"
+#include "OptionalExtensions.h"
 #include "GraphicsTypes.h"
+#include "LogicalCamera.h"
 
 namespace QZL
 {
@@ -12,13 +13,6 @@ namespace QZL
 		class AtmosphereScript;
 	}
 	namespace Graphics {
-
-		struct EnvironmentArgs {
-			int numObjectsX;
-			int numObjectsY;
-			int numObjectsZ;
-		};
-
 		struct DeviceSwapChainDetails;
 		class PhysicalDevice;
 		class LogicDevice;
@@ -53,18 +47,25 @@ namespace QZL
 			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
 			DynamicBufferInterface* getDynamicBuffer(RendererTypes type);
+			LogicalCamera* getLogicalCamera(RendererTypes type);
+
 			glm::mat4* getViewMatrixPtr() {
-				return viewMatrix_;
+				return &(mainCamera_.viewMatrix);
 			}
 			glm::vec3* getCamPosPtr() {
-				return camPosition_;
+				return &(mainCamera_.position);
 			}
 			const glm::mat4& getViewMatrix() {
-				return *viewMatrix_;
+				return mainCamera_.viewMatrix;
 			}
 			const glm::vec3& getCamPos() {
-				return *camPosition_;
+				return mainCamera_.position;
 			}
+
+			LogicalCamera* getMainCameraPtr() {
+				return &mainCamera_;
+			}
+
 			const LogicDevice* getLogicDevice() {
 				return details_.logicDevice;
 			}
@@ -88,16 +89,10 @@ namespace QZL
 
 			GraphicsSystemDetails details_;
 			Validation* validation_;
-
 			SwapChain* swapChain_;
-
 			std::unordered_map<RendererTypes, RendererBase*> renderers_;
-
-			glm::mat4* viewMatrix_;
-			glm::vec3* camPosition_;
-
+			LogicalCamera mainCamera_;
 			InputProfile inputProfile_;
-
 			const SystemMasters& masters_;
 
 			static const int kDefaultWidth = 800;

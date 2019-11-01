@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "StorageBuffer.h"
 
 using namespace QZL;

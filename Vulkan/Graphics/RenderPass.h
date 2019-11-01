@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
 #include "Mesh.h"
@@ -5,6 +7,7 @@
 #include "TerrainRenderer.h"
 #include "GraphicsMaster.h"
 #include "Image.h"
+#include "LogicalCamera.h"
 
 namespace QZL
 {
@@ -25,7 +28,7 @@ namespace QZL
 				std::vector<VkSubpassDependency> dependencies;
 			};
 
-			virtual void doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer) = 0;
+			virtual void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) = 0;
 			virtual void createRenderers() = 0;
 			virtual void initRenderPassDependency(std::vector<Image*> dependencyAttachment) = 0;
 			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);

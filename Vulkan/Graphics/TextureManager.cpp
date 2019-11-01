@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "TextureManager.h"
 #include "Descriptor.h"
 #include "TextureLoader.h"
@@ -59,14 +61,15 @@ uint32_t TextureManager::requestTexture(const std::string& name, VkFilter magFil
 	}
 }
 
-TextureSampler* TextureManager::requestTextureSeparate(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy)
+TextureSampler* TextureManager::requestTextureSeparate(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode,
+	float anisotropy, VkShaderStageFlags stages)
 {
 	// Always make a new sampler, but reuse image if it exists
 	if (textures_.count(name)) {
 		return textures_[name]->createTextureSampler(name, magFilter, minFilter, addressMode, anisotropy);
 	}
 	else {
-		auto image = textureLoader_->loadTexture(name);
+		auto image = textureLoader_->loadTexture(name, stages);
 		textures_[name] = image;
 		return image->createTextureSampler(name, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8);
 	}

@@ -1,10 +1,12 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #include "AtmosphereRenderer.h"
 #include "ElementBuffer.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "TextureSampler.h"
-#include "TextureManager.h"
 #include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
@@ -31,30 +33,27 @@ struct PushConstantExtent {
 	float g;
 };
 
-AtmosphereRenderer::AtmosphereRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData, glm::vec3* cameraPosition)
-	: RendererBase(logicDevice, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE)), 
-	  descriptor_(descriptor), cameraPosition_(cameraPosition)
+AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
+	: RendererBase(createInfo, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(createInfo.logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE))
 {
-	ASSERT(entityCount > 0);
-	createDescriptors(entityCount);
+	createDescriptors(createInfo.maxDrawnEntities);
 
 	auto pushConstRange = setupPushConstantRange<PushConstantExtent>(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
-	pci.extent = swapChainExtent;
+	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	pci.subpassIndex = 0;
+	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci,
-		RendererPipeline::PrimitiveType::QUADS);
+	createPipeline<VertexOnlyPosition>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), 
+		stageInfos, pci, RendererPipeline::PrimitiveType::QUADS);
 }
 
 AtmosphereRenderer::~AtmosphereRenderer()
@@ -66,13 +65,13 @@ void AtmosphereRenderer::createDescriptors(const uint32_t entityCount)
 	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor_));
 }
 
-void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
 
 	beginFrame(cmdBuffer);
-	renderStorage_->buf()->bind(cmdBuffer, idx);
+	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
@@ -82,8 +81,8 @@ void AtmosphereRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t
 		AtmosphereShaderParams::Params params = perMeshParams->params;
 
 		PushConstantExtent pce;
-		pce.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * viewMatrix);
-		pce.cameraPosition = *cameraPosition_;
+		pce.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * camera.viewMatrix);
+		pce.cameraPosition = camera.position;
 		pce.sunDirection = *params.sunDirection;
 		pce.sunIntensity = *params.sunIntensity;
 		pce.betaMie = params.betaMie;
