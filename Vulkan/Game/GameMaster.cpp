@@ -46,7 +46,7 @@ void GameMaster::loadGame()
 	Assets::Entity* teapot = masters_.assetManager->createEntity("Teapot");
 	teapot->getTransform()->scale = glm::vec3(2.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::STATIC, nullptr, new Graphics::StaticShaderParams(),
-		masters_.assetManager->textureManager->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot", Graphics::MeshLoadingInfo());
+		masters_.assetManager->textureManager->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot");
 
 	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>("terrain", masters_.assetManager->textureManager);
 	entities.push_back(terrain);

@@ -128,7 +128,6 @@
     <ClCompile Include="Graphics\TextureManager.cpp" />
     <ClCompile Include="Graphics\TextureSampler.cpp" />
     <ClCompile Include="Graphics\Validation.cpp" />
-    <ClCompile Include="Graphics\Vertex.cpp" />
     <ClCompile Include="Graphics\VkUtil.cpp" />
     <ClCompile Include="System.cpp" />
   </ItemGroup>

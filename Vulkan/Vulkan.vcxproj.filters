@@ -416,9 +416,6 @@
     <ClCompile Include="Graphics\StorageBuffer.cpp">
       <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\Vertex.cpp">
-      <Filter>Source Files\Graphics\Memory\Mesh</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\VkUtil.cpp">
       <Filter>Source Files\Graphics\Core</Filter>
     </ClCompile>

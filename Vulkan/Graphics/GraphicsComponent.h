@@ -14,7 +14,7 @@ namespace QZL {
 		class GraphicsComponent {
 		public:
 			GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
-				const std::string& meshName, MeshLoadingInfo loadInfo, Material* material);
+				const std::string& meshName, MeshLoadFunc loadFunc, Material* material);
 			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
 
 			~GraphicsComponent();
@@ -39,15 +39,15 @@ namespace QZL {
 			const RendererTypes getRendererType() {
 				return rtype_;
 			}
-			MeshLoadingInfo& getLoadInfo() {
-				return loadInfo_;
+			MeshLoadFunc& getLoadInfo() {
+				return loadFunc_;
 			}
 			glm::mat4 getModelmatrix();
 		private:
 			Assets::Entity* owningEntity_;
 			RendererTypes rtype_;
 			const std::string meshName_;
-			MeshLoadingInfo loadInfo_;
+			MeshLoadFunc loadFunc_;
 			ShaderParams* instanceParameters_;
 			ShaderParams* meshParameters_;
 			Material* material_;

@@ -6,22 +6,17 @@
 namespace QZL
 {
 	namespace Graphics {
-		class VertexUtility {
-			friend struct Vertex;
-			friend struct VertexOnlyPosition;
-			friend struct ParticleVertex;
-		private:
-			static VkVertexInputBindingDescription fillBindDesc(uint32_t binding, uint32_t stride, VkVertexInputRate inputRate);
-			static void fillAttribDescs(VkVertexInputAttributeDescription& attribDesc, uint32_t location, uint32_t binding, VkFormat format, uint32_t offset);
-		};
-
 		enum class VertexType {
 			POSITION_ONLY,
 			POSITION_UV_NORMAL
 		};
 
 		inline VkVertexInputBindingDescription makeVertexBindingDescription(uint32_t binding, uint32_t sizeOfVertex, VkVertexInputRate inputRate) {
-			return { binding, sizeOfVertex, inputRate };
+			VkVertexInputBindingDescription desc = {};
+			desc.binding = binding;
+			desc.inputRate = inputRate;
+			desc.stride = sizeOfVertex;
+			return desc;
 		}
 
 		inline std::vector<VkVertexInputAttributeDescription> makeVertexAttribDescriptions(uint32_t binding, std::vector<std::pair<uint32_t, VkFormat>> attribInfo) {
@@ -43,19 +38,12 @@ namespace QZL
 			Vertex(float x = 0.0f, float y = 0.0f, float z = 0.0f, float u = 0.0f, float v = 0.0f, float nx = 0.0f, float ny = 0.0f, float nz = 0.0f)
 				: x(x), y(y), z(z), u(u), v(v), nx(nx), ny(ny), nz(nz) {}
 
-			static VkVertexInputBindingDescription getBindDesc(uint32_t binding, VkVertexInputRate inputRate)
-			{
-				// Describes at which rate to load data from memory (instance/vertex) and number of bytes between data entries
-				return VertexUtility::fillBindDesc(binding, sizeof(Vertex), inputRate);
-			}
-			static std::array<VkVertexInputAttributeDescription, 3> getAttribDescs(uint32_t binding)
-			{
-				// Describes how to extract a vertex attribute from a chunk of vertex data
-				std::array<VkVertexInputAttributeDescription, 3> attribDescs;
-				VertexUtility::fillAttribDescs(attribDescs[0], 0, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, x));
-				VertexUtility::fillAttribDescs(attribDescs[1], 1, binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, u));
-				VertexUtility::fillAttribDescs(attribDescs[2], 2, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, nx));
-				return attribDescs;
+			static std::vector<std::pair<uint32_t, VkFormat>> makeAttribInfo() {
+				return { 
+					{ offsetof(Vertex, x), VK_FORMAT_R32G32B32_SFLOAT }, 
+					{ offsetof(Vertex, u), VK_FORMAT_R32G32_SFLOAT },
+					{ offsetof(Vertex, nx), VK_FORMAT_R32G32B32_SFLOAT } 
+				};
 			}
 		};
 #pragma pack(push, 1)
@@ -67,17 +55,10 @@ namespace QZL
 			VertexOnlyPosition(glm::vec3 p)
 				: pos(p) {}
 
-			static VkVertexInputBindingDescription getBindDesc(uint32_t binding, VkVertexInputRate inputRate)
-			{
-				// Describes at which rate to load data from memory (instance/vertex) and number of bytes between data entries
-				return VertexUtility::fillBindDesc(binding, sizeof(VertexOnlyPosition), inputRate);
-			}
-			static std::array<VkVertexInputAttributeDescription, 1> getAttribDescs(uint32_t binding)
-			{
-				// Describes how to extract a vertex attribute from a chunk of vertex data
-				std::array<VkVertexInputAttributeDescription, 1> attribDescs;
-				VertexUtility::fillAttribDescs(attribDescs[0], 0, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexOnlyPosition, pos.x));
-				return attribDescs;
+			static std::vector<std::pair<uint32_t, VkFormat>> makeAttribInfo() {
+				return {
+					{ offsetof(VertexOnlyPosition, pos.x), VK_FORMAT_R32G32B32_SFLOAT }
+				};
 			}
 		};
 #pragma pack(pop)
@@ -86,19 +67,12 @@ namespace QZL
 			float scale;
 			glm::vec2 textureOffset;
 
-			static VkVertexInputBindingDescription getBindDesc(uint32_t binding, VkVertexInputRate inputRate)
-			{
-				// Describes at which rate to load data from memory (instance/vertex) and number of bytes between data entries
-				return VertexUtility::fillBindDesc(binding, sizeof(ParticleVertex), inputRate);
-			}
-			static std::array<VkVertexInputAttributeDescription, 3> getAttribDescs(uint32_t binding)
-			{
-				// Describes how to extract a vertex attribute from a chunk of vertex data
-				std::array<VkVertexInputAttributeDescription, 3> attribDescs;
-				VertexUtility::fillAttribDescs(attribDescs[0], 0, binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ParticleVertex, position.x));
-				VertexUtility::fillAttribDescs(attribDescs[1], 1, binding, VK_FORMAT_R32_SFLOAT, offsetof(ParticleVertex, scale));
-				VertexUtility::fillAttribDescs(attribDescs[2], 2, binding, VK_FORMAT_R32G32_SFLOAT, offsetof(ParticleVertex, textureOffset.x));
-				return attribDescs;
+			static std::vector<std::pair<uint32_t, VkFormat>> makeAttribInfo() {
+				return {
+					{ offsetof(ParticleVertex, position.x), VK_FORMAT_R32G32B32_SFLOAT },
+					{ offsetof(ParticleVertex, scale), VK_FORMAT_R32_SFLOAT },
+					{ offsetof(ParticleVertex, textureOffset.x), VK_FORMAT_R32G32_SFLOAT }
+				};
 			}
 		};
 	}

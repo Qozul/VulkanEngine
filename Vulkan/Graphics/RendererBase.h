@@ -159,9 +159,9 @@ namespace QZL
 		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
 			PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount)
 		{
-			auto bindingDesc = V::getBindDesc(0, VK_VERTEX_INPUT_RATE_VERTEX);
-			auto attribDesc = V::getAttribDescs(0);
-			pipelineCreateInfo.vertexInputInfo = RendererPipeline::makeVertexInputInfo<V>(bindingDesc, attribDesc);
+			auto bindingDesc = makeVertexBindingDescription(0, sizeof(V), VK_VERTEX_INPUT_RATE_VERTEX);
+			auto attribDesc = makeVertexAttribDescriptions(0, V::makeAttribInfo());
+			pipelineCreateInfo.vertexInputInfo = RendererPipeline::makeVertexInputInfo(bindingDesc, attribDesc);
 			pipeline_ = new RendererPipeline(logicDevice, renderPass, layoutInfo, stages, pipelineCreateInfo, patchVertexCount);
 		}
 

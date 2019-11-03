@@ -47,9 +47,9 @@ namespace QZL
 			VkPipelineLayout getLayout();
 			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, 
 				const uint32_t pushConstantCount = 0, const VkPushConstantRange* pushConstantRange = nullptr);
-			template<typename V>
+			
 			static VkPipelineVertexInputStateCreateInfo makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc,
-				typename std::result_of<decltype(&V::getAttribDescs)(uint32_t)>::type attribDescs);
+				std::vector<VkVertexInputAttributeDescription>& attribDescs);
 		protected:
 			VkPipeline pipeline_;
 			VkPipeline wiremeshPipeline_;
@@ -65,19 +65,5 @@ namespace QZL
 			VkPipelineInputAssemblyStateCreateInfo createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart);
 			VkPipelineTessellationStateCreateInfo createTessellationStateInfo(PrimitiveType patchPointCount);
 		};
-
-		template<typename V>
-		inline VkPipelineVertexInputStateCreateInfo RendererPipeline::makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc,
-			typename std::result_of<decltype(&V::getAttribDescs)(uint32_t)>::type attribDescs)
-		{
-			VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-			vertexInputInfo.vertexBindingDescriptionCount = 1;
-			vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribDescs.size());
-			vertexInputInfo.pVertexBindingDescriptions = &bindingDesc;
-			vertexInputInfo.pVertexAttributeDescriptions = attribDescs.data();
-			return vertexInputInfo;
-		}
 	}
 }

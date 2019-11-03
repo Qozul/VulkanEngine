@@ -24,6 +24,7 @@ namespace QZL {
 			it cannot be updated after commit().
 		*/
 		class ElementBufferObject {
+			friend class MeshLoader;
 		public:
 			ElementBufferObject(DeviceMemory* deviceMemory, size_t sizeOfVertices, size_t sizeOfIndices = 0);
 			virtual ~ElementBufferObject();

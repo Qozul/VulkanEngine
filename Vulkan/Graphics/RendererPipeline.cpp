@@ -73,6 +73,18 @@ VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layou
 	return pipelineLayoutInfo;
 }
 
+VkPipelineVertexInputStateCreateInfo RendererPipeline::makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc, std::vector<VkVertexInputAttributeDescription>& attribDescs)
+{
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribDescs.size());
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDesc;
+	vertexInputInfo.pVertexAttributeDescriptions = attribDescs.data();
+	return vertexInputInfo;
+}
+
 void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo,
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStagesInfo, VkPipelineInputAssemblyStateCreateInfo inputAssembly, 
 	VkPipelineTessellationStateCreateInfo* tessellationInfo, PipelineCreateInfo pipelineCreateInfo)

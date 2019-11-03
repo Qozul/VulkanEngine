@@ -3,18 +3,12 @@ Each file should be refactored with the following ideas in mind:
 [Style, Clean, Descriptive, Efficient]
 
 TODO:
- - RenderStorage: (The general structure of the buffers aren't great with templates, give them a good thunk. The storage should be changed to remember why it is in arrays)
-	- DynamicVertexBuffer [n,n,n,n]
-	- ElementBuffer [n,n,n,n]
-	- ElementBufferInterface [n,n,n,n]
-	- RenderStorage [n,n,n,n]
  - DeviceMemory [n,n,n,n]
  - GlobalRenderData [n,n,n,n] (Rename to GlobalDescriptor)
  - GraphicsMaster [n,n,n,n]
  - LogicDevice [n,n,n,n]
  - PhysicalDevice [n,n,n,n]
  - SwapChain [n,n,n,n]
- - Vertex [n,n,n,n]
 
  - System [n,n,n,n]
  - SystemMasters (Note, want quick getters for the important things) [n,n,n,n]
@@ -32,8 +26,9 @@ TODO:
  - Material.h input validation
  - Look at enum types and constants and change to have k prefix
  - In code TODOs
- - Precompiled headers where appropriate
+ - Go through headers and do as many forward declarations as possible
  - Descriptor indexing has problems atm
+ - MeshLoader, move away from the typed loading funcs to just one using vector<char>
 
 
 Possible future stuff:

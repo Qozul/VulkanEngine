@@ -21,9 +21,9 @@ void Entity::start()
 }
 
 void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* perMeshParams, Graphics::ShaderParams* perInstanceParams,
-	Graphics::Material* material, const std::string& meshName, Graphics::MeshLoadingInfo mlInfo)
+	Graphics::Material* material, const std::string& meshName, Graphics::MeshLoadFunc loadFunc)
 {
-	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, perMeshParams, perInstanceParams, meshName, mlInfo, material);
+	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, perMeshParams, perInstanceParams, meshName, loadFunc, material);
 }
 
 void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::RenderObject* robject, Graphics::ShaderParams* perInstanceParams)

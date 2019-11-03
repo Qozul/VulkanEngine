@@ -12,27 +12,30 @@ using namespace QZL::Graphics;
 const std::string MeshLoader::kPath = "../Data/Meshes/";
 const std::string MeshLoader::kExt = ".obj";
 
-BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferObject& eleBuf, MeshLoadingInfo& mlInfo)
+BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferObject& eleBuf, MeshLoadFunc loaderFunc)
 {
 	ASSERT(!eleBuf.isCommitted());
 	if (!eleBuf.containsMesh(meshName)) {
-		if (mlInfo.type == MeshLoadFuncType::NONE) {
+		if (loaderFunc == nullptr) {
 			loadMeshFromFile(meshName, eleBuf);
 		}
-		else if (mlInfo.type == MeshLoadFuncType::FULL){
-			std::vector<IndexType> indices;
-			std::vector<Vertex> vertices;
-			mlInfo.meshLoaderFunction.full(indices, vertices);
-			placeMeshInBuffer<Vertex>(meshName, eleBuf, indices, vertices);
-		}
 		else {
-			std::vector<IndexType> indices;
-			std::vector<VertexOnlyPosition> vertices;
-			mlInfo.meshLoaderFunction.onlyPos(indices, vertices);
-			placeMeshInBuffer<VertexOnlyPosition>(meshName, eleBuf, indices, vertices);
+			uint32_t count;
+			std::vector<char> indices;
+			std::vector<char> vertices;
+			loaderFunc(count, indices, vertices);
+			placeMeshInBuffer(meshName, eleBuf, count, indices.data(), vertices.data(), indices.size(), vertices.size());
 		}
 	}
 	return eleBuf.getMesh(meshName);
+}
+
+void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBufferObject& eleBuf, uint32_t count, 
+	void* indices, void* vertices, size_t indicesSize, size_t verticesSize)
+{
+	auto indexOffset = eleBuf.addIndices(indices, indicesSize);
+	auto vertexOffset = eleBuf.addVertices(vertices, verticesSize);
+	eleBuf.emplaceMesh(meshName, count, vertexOffset, indexOffset);
 }
 
 void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObject& eleBuf)
@@ -68,5 +71,5 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObje
 			indices.push_back(indices.size());
 		}
 	}
-	placeMeshInBuffer(meshName, eleBuf, indices, verts);
+	placeMeshInBuffer(meshName, eleBuf, indices.size(), indices.data(), verts.data(), indices.size() * sizeof(IndexType), verts.size() * sizeof(Vertex));
 }
