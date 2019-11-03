@@ -25,7 +25,7 @@ namespace QZL
 		class Validation;
 		class SwapChain;
 		class RenderObject;
-		class DynamicBufferInterface;
+		class ElementBufferObject;
 
 		struct GraphicsSystemDetails {
 			GLFWwindow* window = nullptr;
@@ -46,7 +46,7 @@ namespace QZL
 
 			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
-			DynamicBufferInterface* getDynamicBuffer(RendererTypes type);
+			ElementBufferObject* getDynamicBuffer(RendererTypes type);
 			LogicalCamera* getLogicalCamera(RendererTypes type);
 
 			glm::mat4* getViewMatrixPtr() {

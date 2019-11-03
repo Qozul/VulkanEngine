@@ -5,17 +5,14 @@
 #pragma once
 #include "../../Shared/Utility.h"
 #include "DrawElementsCommand.h"
-#include "Mesh.h"
 
 namespace QZL
 {
 	namespace Graphics {
-		class ElementBufferInterface;
-		class VertexBufferInterface;
-		class BufferInterface;
+		class ElementBufferObject;
 		class GraphicsComponent;
-		class ShaderParams;
 		class RenderObject;
+		struct ShaderParams;
 
 		class RenderStorage {
 		public:
@@ -23,7 +20,7 @@ namespace QZL
 				ONE, UNLIMITED
 			};
 		public:
-			RenderStorage(BufferInterface* buffer, InstanceUsage usage);
+			RenderStorage(ElementBufferObject* buffer, InstanceUsage usage);
 			virtual ~RenderStorage();
 			virtual void addMesh(GraphicsComponent* instance, RenderObject* robject);
 			
@@ -45,7 +42,7 @@ namespace QZL
 			size_t renderObjectCount() {
 				return renderObjects_.size();
 			}
-			BufferInterface* buffer() {
+			ElementBufferObject* buffer() {
 				return buffer_;
 			}
 
@@ -55,7 +52,7 @@ namespace QZL
 			void addMeshUnlimitedInstances(GraphicsComponent* instance, RenderObject* robject);
 
 			InstanceUsage usage_;
-			BufferInterface* buffer_;
+			ElementBufferObject* buffer_;
 
 			std::unordered_map<std::string, size_t> dataMap_;
 

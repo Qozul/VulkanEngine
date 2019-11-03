@@ -20,6 +20,21 @@ namespace QZL
 			POSITION_UV_NORMAL
 		};
 
+		inline VkVertexInputBindingDescription makeVertexBindingDescription(uint32_t binding, uint32_t sizeOfVertex, VkVertexInputRate inputRate) {
+			return { binding, sizeOfVertex, inputRate };
+		}
+
+		inline std::vector<VkVertexInputAttributeDescription> makeVertexAttribDescriptions(uint32_t binding, std::vector<std::pair<uint32_t, VkFormat>> attribInfo) {
+			std::vector<VkVertexInputAttributeDescription> attribDescriptions(attribInfo.size());
+			for (uint32_t i = 0; i < attribDescriptions.size(); ++i) {
+				attribDescriptions[i].location = i;
+				attribDescriptions[i].binding = binding;
+				attribDescriptions[i].offset = attribInfo[i].first;
+				attribDescriptions[i].format = attribInfo[i].second;
+			}
+			return attribDescriptions;
+		}
+
 		struct Vertex {
 			float x, y, z;
 			float u, v;

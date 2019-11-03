@@ -171,9 +171,6 @@
     <ClInclude Include="Game\Camera.h">
       <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
-    <ClInclude Include="Game\SunScript.h">
-      <Filter>Header Files\Game\Scripts</Filter>
-    </ClInclude>
     <ClInclude Include="Game\AtmosphereScript.h">
       <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
@@ -212,15 +209,6 @@
     </ClInclude>
     <ClInclude Include="Graphics\TerrainRenderer.h">
       <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\DynamicVertexBuffer.h">
-      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ElementBuffer.h">
-      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ElementBufferInterface.h">
-      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\ComputePipeline.h">
       <Filter>Header Files\Graphics\Compute</Filter>
@@ -296,6 +284,15 @@
     </ClInclude>
     <ClInclude Include="Graphics\OptionalExtensions.h">
       <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ElementBufferObject.h">
+      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DynamicElementBuffer.h">
+      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\SunScript.h">
+      <Filter>Header Files\Game\Scripts\Particles</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -424,6 +421,12 @@
     </ClCompile>
     <ClCompile Include="Graphics\VkUtil.cpp">
       <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DynamicElementBuffer.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ElementBufferObject.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -6,10 +6,6 @@
 namespace QZL
 {
 	namespace Graphics {
-		class DeviceMemory;
-		class TextureManager;
-		class TextureSampler;
-
 		// Draws atmospheres from within the atmosphere
 		class AtmosphereRenderer : public RendererBase {
 		public:

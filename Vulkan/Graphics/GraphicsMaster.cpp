@@ -28,11 +28,11 @@ void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 	renderers_[type] = renderer;
 }
 
-DynamicBufferInterface* GraphicsMaster::getDynamicBuffer(RendererTypes type)
+ElementBufferObject* GraphicsMaster::getDynamicBuffer(RendererTypes type)
 {
 	auto buf = renderers_[type]->getElementBuffer();
-	if (buf->bufferType() & BufferFlags::DYNAMIC) {
-		return dynamic_cast<DynamicBufferInterface*>(buf);
+	if (buf->isDynamic()) {
+		return buf;
 	}
 	else {
 		return nullptr;

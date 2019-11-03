@@ -1,5 +1,6 @@
 #include "TerrainRenderer.h"
-#include "ElementBuffer.h"
+#include "ElementBufferObject.h"
+#include "../Assets/Transform.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
@@ -18,7 +19,7 @@ using namespace QZL;
 using namespace Graphics;
 
 TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBuffer<Vertex>(createInfo.logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::UNLIMITED))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), RenderStorage::InstanceUsage::UNLIMITED))
 {
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	createDescriptors(createInfo.maxDrawnEntities);
@@ -79,7 +80,7 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buffer())->bind(cmdBuffer, idx);
+	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
 	updateBuffers(camera);
 

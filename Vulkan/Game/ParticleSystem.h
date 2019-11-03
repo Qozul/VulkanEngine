@@ -3,7 +3,7 @@
 #include "../Graphics/Vertex.h"
 #include "../Graphics/Material.h"
 #include "../Graphics/ShaderParams.h"
-#include "../Graphics/ElementBufferInterface.h"
+#include "../Graphics/ElementBufferObject.h"
 
 namespace QZL {
 	namespace Graphics {
@@ -48,7 +48,7 @@ namespace QZL {
 			Graphics::RenderObject* makeRenderObject(std::string name);
 		protected:
 			// Number of tiles on xy is identical for x and y, as textures must be square.
-			ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf,
+			ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
 				size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName);
 			virtual ~ParticleSystem();
 			virtual void particleCreation(float dt, size_t expiredCount) = 0;
@@ -81,7 +81,7 @@ namespace QZL {
 			float elapsedUpdateTime_;
 			glm::vec3* billboardPoint_;
 			Graphics::SubBufferRange subBufferRange_;
-			Graphics::DynamicBufferInterface* buffer_;
+			Graphics::ElementBufferObject* buffer_;
 
 			size_t numDeadParticles_;
 			std::vector<Particle> particles_;

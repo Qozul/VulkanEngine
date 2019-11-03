@@ -3,6 +3,7 @@
 #include "../Graphics/Material.h"
 #include "../Graphics/LogicDevice.h"
 #include "../Graphics/TextureManager.h"
+#include "Transform.h"
 
 using namespace QZL;
 using namespace Assets;

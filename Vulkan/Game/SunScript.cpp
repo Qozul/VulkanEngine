@@ -4,7 +4,7 @@
 using namespace QZL;
 using namespace QZL::Game;
 
-SunScript::SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf)
+SunScript::SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf)
 	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(0.0f)
 {
 }

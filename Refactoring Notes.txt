@@ -19,8 +19,6 @@ TODO:
  - System [n,n,n,n]
  - SystemMasters (Note, want quick getters for the important things) [n,n,n,n]
 
- - Visual Studio Filters. -------------
-
  - References
 
  - Warnings
@@ -31,8 +29,12 @@ TODO:
 
 TODO:
  - release material reference tracking
- - load texture, provide stage flag -----------
  - Material.h input validation
  - Look at enum types and constants and change to have k prefix
  - In code TODOs
  - Precompiled headers where appropriate
+ - Descriptor indexing has problems atm
+
+
+Possible future stuff:
+ - vkCmdDrawIndexedIndirect

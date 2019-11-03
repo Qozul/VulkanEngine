@@ -10,7 +10,7 @@ namespace QZL {
 		// and centre at the parent's transform, moving by DISTANCE_PER_SECOND.
 		class SunScript : public ParticleSystem {
 		public:
-			SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf);
+			SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf);
 			~SunScript();
 
 			glm::vec3* getSunIntensity();

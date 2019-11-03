@@ -67,12 +67,12 @@ Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
 {
 	Graphics::BasicMesh* mesh = new Graphics::BasicMesh();
 	mesh->count = subBufferRange_.count;
-	mesh->vertexOffset = subBufferRange_.first;
+	mesh->vertexOffset = subBufferRange_.first / sizeof(Graphics::ParticleVertex);
 	mesh->indexOffset = 0;
 	return new Graphics::RenderObject(name, mesh, makeShaderParams(), material_);
 }
 
-ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::DynamicBufferInterface* buf,
+ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
 	size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName)
 	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
 	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0)

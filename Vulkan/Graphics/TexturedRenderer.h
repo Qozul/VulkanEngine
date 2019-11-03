@@ -6,9 +6,6 @@
 namespace QZL
 {
 	namespace Graphics {
-		class TextureSampler;
-		class DeviceMemory;
-
 		class TexturedRenderer : public RendererBase {
 		public:
 			TexturedRenderer(RendererCreateInfo& createInfo);

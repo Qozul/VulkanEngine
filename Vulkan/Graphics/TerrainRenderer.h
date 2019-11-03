@@ -7,9 +7,6 @@
 namespace QZL
 {
 	namespace Graphics {
-		class TextureSampler;
-		class DeviceMemory;
-
 		class TerrainRenderer : public RendererBase {
 			struct TessControlInfo {
 				float distanceFarMinusClose;

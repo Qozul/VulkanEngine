@@ -66,7 +66,7 @@ namespace QZL {
 					textureSet_ = descriptor->getSet(descriptor->createSets({ layout_ }));
 					std::vector<VkWriteDescriptorSet> setWrites(samplers.size());
 					for (size_t i = 0; i < samplers.size(); ++i) {
-						setWrites[i] = samplers[i]->descriptorWrite(textureSet_, i);
+						setWrites[i] = samplers[i]->descriptorWrite(textureSet_, static_cast<uint32_t>(i));
 					}
 					descriptor->updateDescriptorSets(setWrites);
 				}

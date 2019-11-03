@@ -2,7 +2,8 @@
 /// Date: 19/02/19
 /// Purpose: Encapsulate and support loading meshes from .obj files.
 #pragma once
-#include "ElementBuffer.h"
+#include "ElementBufferObject.h"
+#include "Vertex.h"
 
 namespace QZL
 {
@@ -39,15 +40,15 @@ namespace QZL
 
 		class MeshLoader {
 		public:
-			static BasicMesh* loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoadingInfo& mlInfo);
+			static BasicMesh* loadMesh(const std::string& meshName, ElementBufferObject& eleBuf, MeshLoadingInfo& mlInfo);
 		private:
 			template<typename V>
-			static void placeMeshInBuffer(const std::string& meshName, ElementBufferInterface& eleBuf, std::vector<IndexType>& indices, std::vector<V>& vertices) {
-				auto indexOffset = eleBuf.addIndices(indices.data(), indices.size());
-				auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size());
-				eleBuf.emplaceMesh(meshName, indices.size(), indexOffset, vertexOffset);
+			static void placeMeshInBuffer(const std::string& meshName, ElementBufferObject& eleBuf, std::vector<IndexType>& indices, std::vector<V>& vertices) {
+				auto indexOffset = eleBuf.addIndices(indices.data(), indices.size() * sizeof(IndexType));
+				auto vertexOffset = eleBuf.addVertices(vertices.data(), vertices.size() * sizeof(V));
+				eleBuf.emplaceMesh(meshName, indices.size(), vertexOffset, indexOffset);
 			}
-			static void loadMeshFromFile(const std::string& meshName, ElementBufferInterface& eleBuf);
+			static void loadMeshFromFile(const std::string& meshName, ElementBufferObject& eleBuf);
 			static const std::string kPath;
 			static const std::string kExt;
 		};

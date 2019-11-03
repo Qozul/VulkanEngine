@@ -6,10 +6,6 @@
 namespace QZL
 {
 	namespace Graphics {
-		class DeviceMemory;
-		class TextureManager;
-		class TextureSampler;
-
 		class ParticleRenderer : public RendererBase {
 		public:
 			ParticleRenderer(RendererCreateInfo& createInfo, uint32_t maxUniqueParticles);

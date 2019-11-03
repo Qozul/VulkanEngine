@@ -2,7 +2,7 @@
 // Date: 01/11/19
 
 #include "AtmosphereRenderer.h"
-#include "ElementBuffer.h"
+#include "ElementBufferObject.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
@@ -15,6 +15,7 @@
 #include "RenderObject.h"
 #include "Material.h"
 #include "../Assets/Entity.h"
+#include "../Assets/Transform.h"
 #include "../Game/SunScript.h"
 #include "../Game/AtmosphereScript.h"
 
@@ -34,7 +35,7 @@ struct PushConstantExtent {
 };
 
 AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBuffer<VertexOnlyPosition>(createInfo.logicDevice->getDeviceMemory()), RenderStorage::InstanceUsage::ONE))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(VertexOnlyPosition), sizeof(uint16_t)), RenderStorage::InstanceUsage::ONE))
 {
 	createDescriptors(createInfo.maxDrawnEntities);
 

@@ -1,14 +1,13 @@
 #include "RenderStorage.h"
 #include "GraphicsComponent.h"
 #include "DeviceMemory.h"
-#include "ElementBuffer.h"
-#include "DynamicVertexBuffer.h"
+#include "ElementBufferObject.h"
 #include "RenderObject.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-RenderStorage::RenderStorage(BufferInterface* buffer, InstanceUsage usage)
+RenderStorage::RenderStorage(ElementBufferObject* buffer, InstanceUsage usage)
 	: buffer_(buffer), usage_(usage)
 {
 }
@@ -40,7 +39,7 @@ void RenderStorage::addInstance(DrawElementsCommand& cmd, GraphicsComponent* ins
 void RenderStorage::addMeshOneInstance(GraphicsComponent* instance, RenderObject* robject)
 {
 	robject = robject == nullptr 
-		? new RenderObject(static_cast<ElementBufferInterface*>(buffer_), instance->getMeshName(), instance->getPerMeshShaderParams(), instance->getLoadInfo(), instance->getMaterial())
+		? new RenderObject(buffer_, instance->getMeshName(), instance->getPerMeshShaderParams(), instance->getLoadInfo(), instance->getMaterial())
 		: robject;
 	renderObjects_.push_back(robject);
 	auto mesh = robject->getMesh();
@@ -60,7 +59,7 @@ void RenderStorage::addMeshUnlimitedInstances(GraphicsComponent* instance, Rende
 	}
 	else {
 		robject = robject == nullptr
-			? new RenderObject(static_cast<ElementBufferInterface*>(buffer_), instance->getMeshName(), instance->getPerMeshShaderParams(), instance->getLoadInfo(), instance->getMaterial())
+			? new RenderObject(buffer_, instance->getMeshName(), instance->getPerMeshShaderParams(), instance->getLoadInfo(), instance->getMaterial())
 			: robject;
 		auto mesh = robject->getMesh();
 		dataMap_[key] = drawCmds_.size();
@@ -68,15 +67,12 @@ void RenderStorage::addMeshUnlimitedInstances(GraphicsComponent* instance, Rende
 		ASSERT(drawCmds_.size() == renderObjects_.size());
 		renderObjects_.push_back(robject);
 
-		auto index = instances_.size();
-		if (buffer_->bufferType() & BufferFlags::ELEMENT) {
+		uint32_t index = static_cast<uint32_t>(instances_.size());
+		if (buffer_->isIndexed()) {
 			drawCmds_.emplace_back(mesh->count, 0, mesh->indexOffset, mesh->vertexOffset, index);
 		}
-		else if (buffer_->bufferType() & BufferFlags::VERTEX) {
-			drawCmds_.emplace_back(mesh->count, 0, 0, mesh->vertexOffset, index);
-		}
 		else {
-			ASSERT(false);
+			drawCmds_.emplace_back(mesh->count, 0, 0, mesh->vertexOffset, index);
 		}
 		addInstance(drawCmds_[dataMap_[key]], instance, index);
 	}

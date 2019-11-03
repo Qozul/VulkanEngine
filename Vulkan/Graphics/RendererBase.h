@@ -7,7 +7,6 @@
 #include "StorageBuffer.h"
 #include "RenderStorage.h"
 #include "GraphicsComponent.h"
-#include "ElementBuffer.h"
 #include "GlobalRenderData.h"
 #include "Image.h"
 #include "LogicalCamera.h"
@@ -72,7 +71,7 @@ namespace QZL
 			void registerComponent(GraphicsComponent* component, RenderObject* robject) {
 				renderStorage_->addMesh(component, robject);
 			}
-			BufferInterface* getElementBuffer() {
+			ElementBufferObject* getElementBuffer() {
 				return renderStorage_->buffer();
 			}
 			void preframeSetup() {

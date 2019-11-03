@@ -43,9 +43,8 @@
     <ClInclude Include="Graphics\Descriptor.h" />
     <ClInclude Include="Graphics\DeviceMemory.h" />
     <ClInclude Include="Graphics\DrawElementsCommand.h" />
-    <ClInclude Include="Graphics\DynamicVertexBuffer.h" />
-    <ClInclude Include="Graphics\ElementBuffer.h" />
-    <ClInclude Include="Graphics\ElementBufferInterface.h" />
+    <ClInclude Include="Graphics\DynamicElementBuffer.h" />
+    <ClInclude Include="Graphics\ElementBufferObject.h" />
     <ClInclude Include="Graphics\GeneralPass.h" />
     <ClInclude Include="Graphics\GlobalRenderData.h" />
     <ClInclude Include="Graphics\GraphicsComponent.h" />
@@ -104,6 +103,8 @@
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />
     <ClCompile Include="Graphics\DeviceMemory.cpp" />
+    <ClCompile Include="Graphics\DynamicElementBuffer.cpp" />
+    <ClCompile Include="Graphics\ElementBufferObject.cpp" />
     <ClCompile Include="Graphics\GeneralPass.cpp" />
     <ClCompile Include="Graphics\GraphicsComponent.cpp" />
     <ClCompile Include="Graphics\GraphicsMaster.cpp" />

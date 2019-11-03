@@ -11,7 +11,7 @@ namespace QZL {
 	namespace Graphics {
 		class RenderObject {
 		public:
-			RenderObject(ElementBufferInterface* meshBuffer, const std::string meshName, ShaderParams* params, MeshLoadingInfo mlInfo, Material* material)
+			RenderObject(ElementBufferObject* meshBuffer, const std::string meshName, ShaderParams* params, MeshLoadingInfo mlInfo, Material* material)
 				: meshName_(meshName), mesh_(MeshLoader::loadMesh(meshName, *meshBuffer, mlInfo)), params_(params), material_(material), deleteMesh_(false) {
 				key_ = material != nullptr ? meshName + material->getName() : meshName;
 				key_ = params != nullptr ? key_ + params->id : key_;

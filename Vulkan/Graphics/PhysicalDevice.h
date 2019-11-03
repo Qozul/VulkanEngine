@@ -11,7 +11,7 @@ namespace QZL
 
 		enum class QueueFamilyType : size_t;
 
-		/// Deals with Queue Families, Memory heap, and Memory types
+		// Deals with Queue Families, Memory heap, and Memory types
 		class PhysicalDevice {
 			friend class GraphicsMaster;
 			friend class LogicDevice;

@@ -2,7 +2,8 @@
 // Date: 01/11/19
 
 #include "ParticleRenderer.h"
-#include "DynamicVertexBuffer.h"
+#include "DynamicElementBuffer.h"
+#include "../Assets/Transform.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
@@ -29,7 +30,7 @@ struct PerInstanceParams {
 };
 
 ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo, uint32_t maxUniqueParticles)
-	: RendererBase(createInfo, new RenderStorage(new DynamicVertexBuffer<ParticleVertex>(createInfo.logicDevice->getDeviceMemory(), maxUniqueParticles, createInfo.swapChainImageCount),
+	: RendererBase(createInfo, new RenderStorage(new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)),
 	  RenderStorage::InstanceUsage::UNLIMITED))
 {
 	createDescriptors(createInfo.maxDrawnEntities);
@@ -78,8 +79,8 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	dynamic_cast<DynamicBufferInterface*>(renderStorage_->buffer())->updateBuffer(cmdBuffer, idx);
-	dynamic_cast<VertexBufferInterface*>(renderStorage_->buffer())->bind(cmdBuffer, idx);
+	renderStorage_->buffer()->updateBuffer(cmdBuffer, idx);
+	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
 	PerInstanceParams* eleDataPtr = static_cast<PerInstanceParams*>(storageBuffers_[0]->bindRange());
 	auto instPtr = renderStorage_->instanceData();

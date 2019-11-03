@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "../Assets/Entity.h"
+#include "../Assets/Transform.h"
 
 using namespace QZL;
 using namespace Game;

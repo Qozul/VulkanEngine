@@ -1,13 +1,12 @@
+// Author: Ralph Ridley
+// Date: 03/11/19
 #pragma once
-#include "Vertex.h"
-#include "../Assets/Transform.h"
+#include "VkUtil.h"
 
 namespace QZL
 {
 	namespace Graphics {
-		class Texture;
-
-		/// BasicMesh needs to provide a transform and pointers to it's data
+		// BasicMesh needs to provide a transform and pointers to it's data
 		struct BasicMesh {
 			uint32_t count; // This will be index count for indexed data, vertex count otherwise
 			uint32_t indexOffset; // Index offset is only used for indexed data

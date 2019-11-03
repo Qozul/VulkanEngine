@@ -15,7 +15,6 @@ namespace QZL
 			kGraphicsQueue = 0,
 			kPresentationQueue,
 			kComputeQueue,
-			//kTransferQueue,
 			kNumQueueFamilyTypes // Do not index with this, this is the size
 		};
 

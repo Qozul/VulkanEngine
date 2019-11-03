@@ -8,7 +8,6 @@
 #include "TerrainRenderer.h"
 #include "AtmosphereRenderer.h"
 #include "GraphicsMaster.h"
-#include "ElementBuffer.h"
 #include "MeshLoader.h"
 #include "GraphicsMaster.h"
 #include "StorageBuffer.h"

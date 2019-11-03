@@ -5,7 +5,6 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../../Shared/tiny_obj_loader.h"
-#include "ElementBuffer.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -13,10 +12,10 @@ using namespace QZL::Graphics;
 const std::string MeshLoader::kPath = "../Data/Meshes/";
 const std::string MeshLoader::kExt = ".obj";
 
-BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterface& eleBuf, MeshLoadingInfo& mlInfo)
+BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferObject& eleBuf, MeshLoadingInfo& mlInfo)
 {
 	ASSERT(!eleBuf.isCommitted());
-	if (!eleBuf.contains(meshName)) {
+	if (!eleBuf.containsMesh(meshName)) {
 		if (mlInfo.type == MeshLoadFuncType::NONE) {
 			loadMeshFromFile(meshName, eleBuf);
 		}
@@ -36,7 +35,7 @@ BasicMesh* MeshLoader::loadMesh(const std::string& meshName, ElementBufferInterf
 	return eleBuf.getMesh(meshName);
 }
 
-void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferInterface& eleBuf)
+void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObject& eleBuf)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
