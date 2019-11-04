@@ -62,7 +62,7 @@ namespace QZL {
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::PARTICLE;
+				return RendererTypes::kParticle;
 			}
 
 		protected:
@@ -86,7 +86,7 @@ namespace QZL {
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::STATIC;
+				return RendererTypes::kStatic;
 			}
 		protected:
 			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
@@ -113,7 +113,7 @@ namespace QZL {
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::TERRAIN;
+				return RendererTypes::kTerrain;
 			}
 		protected:
 			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
@@ -136,7 +136,7 @@ namespace QZL {
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::ATMOSPHERE;
+				return RendererTypes::kAtmosphere;
 			}
 		protected:
 			std::vector<TextureSampler*> loadTextures(TextureManager* textureLoader, std::vector<std::string>& lines) override;

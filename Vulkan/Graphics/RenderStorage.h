@@ -17,7 +17,7 @@ namespace QZL
 		class RenderStorage {
 		public:
 			enum class InstanceUsage {
-				ONE, UNLIMITED
+				kOne, kUnlimited
 			};
 		public:
 			RenderStorage(ElementBufferObject* buffer, InstanceUsage usage);

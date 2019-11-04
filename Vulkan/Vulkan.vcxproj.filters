@@ -434,5 +434,8 @@
     <ClCompile Include="Graphics\RendererBase.cpp">
       <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\GlobalRenderData.cpp">
+      <Filter>Source Files\Graphics\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

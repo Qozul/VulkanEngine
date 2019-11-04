@@ -59,7 +59,6 @@ namespace QZL
 				break;
 			}
 			case MemoryAccessType::kTransfer:
-				// TODO
 				ASSERT(false);
 				break;
 			}

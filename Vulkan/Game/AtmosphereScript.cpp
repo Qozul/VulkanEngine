@@ -11,7 +11,6 @@
 #include "../Graphics/StorageBuffer.h"
 #include "../Graphics/Descriptor.h"
 #include "../System.h"
-#include "../Graphics/RenderPass.h"
 #include "SunScript.h"
 
 using namespace QZL;
@@ -156,7 +155,7 @@ void AtmosphereScript::start()
 	CHECK_VKRESULT(vkQueueSubmit(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue), 1, &submitInfo, VK_NULL_HANDLE));
 	CHECK_VKRESULT(vkQueueWaitIdle(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue)));
 
-	// TODO 
+	// TODO during atmos fix
 	//textures_.scatteringSumImage->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	SAFE_DELETE(buffer);
@@ -169,7 +168,7 @@ void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedT
 {
 	finalTextures.transmittanceImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, TRANSMITTANCE_TEXTURE_WIDTH, TRANSMITTANCE_TEXTURE_HEIGHT),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL });
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL }, "AtmosTransmittance");
 	finalTextures.transmittance = finalTextures.transmittanceImage->createTextureSampler("AtmosTransmittance", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 
 	finalTextures.gatheringImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,

@@ -7,10 +7,9 @@ components.
 */
 #pragma once
 
-#include "../../Shared/Utility.h"
-#include "../Graphics/GraphicsMaster.h"
+#include "../Graphics/VkUtil.h"
+#include "../Graphics/GraphicsTypes.h"
 #include "../Graphics/GraphicsComponent.h"
-#include "../Graphics/MeshLoader.h"
 
 namespace QZL {
 	class Transform;

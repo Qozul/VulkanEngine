@@ -4,6 +4,7 @@
 #include "GraphicsMaster.h"
 #include "PhysicalDevice.h"
 #include "LogicDevice.h"
+#include "Validation.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -53,7 +54,7 @@ const MemoryAllocationDetails DeviceMemory::createBuffer(MemoryAllocationPattern
 	return allocationDetails;
 }
 
-const MemoryAllocationDetails DeviceMemory::createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo)
+const MemoryAllocationDetails DeviceMemory::createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo, std::string debugName)
 {
 	MemoryAllocationDetails allocationDetails = {};
 	allocationDetails.id = availableId_++;
@@ -62,6 +63,7 @@ const MemoryAllocationDetails DeviceMemory::createImage(MemoryAllocationPattern 
 	VmaAllocationInfo allocInfo;
 
 	CHECK_VKRESULT(vmaCreateImage(allocator_, &imageCreateInfo, &allocCreateInfo, &allocationDetails.image, &allocations_[allocationDetails.id], &allocInfo));
+	Validation::addDebugName(logicDevice_, VK_OBJECT_TYPE_IMAGE, (uint64_t)allocationDetails.image, debugName);
 
 	VkMemoryPropertyFlags memFlags;
 	vmaGetMemoryTypeProperties(allocator_, allocInfo.memoryType, &memFlags);

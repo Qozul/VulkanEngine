@@ -49,7 +49,7 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, Texture
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
-		RendererPipeline::PrimitiveType::QUADS);
+		RendererPipeline::PrimitiveType::kQuads);
 }
 
 PostProcessRenderer::~PostProcessRenderer()

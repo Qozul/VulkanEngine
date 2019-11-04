@@ -21,7 +21,7 @@ RenderStorage::~RenderStorage()
 
 void RenderStorage::addMesh(GraphicsComponent* instance, RenderObject* robject)
 {
-	if (usage_ == InstanceUsage::ONE) {
+	if (usage_ == InstanceUsage::kOne) {
 		addMeshOneInstance(instance, robject);
 	}
 	else {

@@ -74,7 +74,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	initDevices(surfaceCapabilities, enabledLayerCount, enabledLayerNames);
 
 	masters.assetManager->textureManager = new Graphics::TextureManager(details_.logicDevice, details_.logicDevice->getPrimaryDescriptor(),
-		MAX_DESCRIPTOR_INDEXED_TEXTURES, supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING));
+		MAX_DESCRIPTOR_INDEXED_TEXTURES, supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
 
 	swapChain_ = new SwapChain(this, details_.window, details_.surface, details_.logicDevice, surfaceCapabilities);
 	swapChain_->setCommandBuffers(std::vector<VkCommandBuffer>(details_.logicDevice->commandBuffers_.begin() + 1, details_.logicDevice->commandBuffers_.end()));

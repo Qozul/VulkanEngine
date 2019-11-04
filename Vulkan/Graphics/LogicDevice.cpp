@@ -33,7 +33,7 @@ LogicDevice::LogicDevice(PhysicalDevice* physicalDevice, VkDevice device, const 
 
 	createPrimaryDescriptor();
 
-	deviceMemory_ = new DeviceMemory(physicalDevice, this, commandBuffers_[0], getQueueHandle(QueueFamilyType::kGraphicsQueue)); // TODO change to transfer queue
+	deviceMemory_ = new DeviceMemory(physicalDevice, this, commandBuffers_[0], getQueueHandle(QueueFamilyType::kGraphicsQueue));
 }
 
 LogicDevice::~LogicDevice()

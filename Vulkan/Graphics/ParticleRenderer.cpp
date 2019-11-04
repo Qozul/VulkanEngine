@@ -29,7 +29,7 @@ struct PerInstanceParams {
 
 ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)),
-	  RenderStorage::InstanceUsage::UNLIMITED))
+	  RenderStorage::InstanceUsage::kUnlimited))
 {
 	createDescriptors(createInfo.maxDrawnEntities);
 

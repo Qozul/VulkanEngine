@@ -28,7 +28,7 @@ namespace QZL {
 				: params({ tileLength, tint }) { }
 
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::PARTICLE;
+				return RendererTypes::kParticle;
 			}
 		};
 
@@ -48,7 +48,7 @@ namespace QZL {
 			} params;
 
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::ATMOSPHERE;
+				return RendererTypes::kAtmosphere;
 			}
 		};
 
@@ -65,7 +65,7 @@ namespace QZL {
 			} params;
 
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::STATIC;
+				return RendererTypes::kStatic;
 			}
 		};
 
@@ -84,7 +84,7 @@ namespace QZL {
 				params.specularExponent = specularExponent;
 			}
 			const RendererTypes getRendererType() const override {
-				return RendererTypes::TERRAIN;
+				return RendererTypes::kTerrain;
 			}
 		};
 	}

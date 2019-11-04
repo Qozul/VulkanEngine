@@ -18,7 +18,7 @@ using namespace QZL;
 using namespace Graphics;
 
 TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), RenderStorage::InstanceUsage::UNLIMITED))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
 {
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	createDescriptors(createInfo.maxDrawnEntities);
@@ -40,7 +40,7 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data()), stageInfos, pci,
-	RendererPipeline::PrimitiveType::QUADS);
+	RendererPipeline::PrimitiveType::kQuads);
 }
 
 TerrainRenderer::~TerrainRenderer()

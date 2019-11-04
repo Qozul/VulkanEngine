@@ -6,11 +6,6 @@
 namespace QZL
 {
 	namespace Graphics {
-		enum class VertexType {
-			POSITION_ONLY,
-			POSITION_UV_NORMAL
-		};
-
 		inline VkVertexInputBindingDescription makeVertexBindingDescription(uint32_t binding, uint32_t sizeOfVertex, VkVertexInputRate inputRate) {
 			VkVertexInputBindingDescription desc = {};
 			desc.binding = binding;

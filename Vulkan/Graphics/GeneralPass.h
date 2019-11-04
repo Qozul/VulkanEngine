@@ -9,9 +9,9 @@ namespace QZL {
 		class GeometryPass : public RenderPass {
 			friend class SwapChain;
 			enum class SubPass : uint32_t {
-				ATMOSPHERE,
-				GENERAL,
-				SUBPASS_COUNT
+				kAtmosphere,
+				kGeneral,
+				kSubpassCount
 			};
 		protected:
 			GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);

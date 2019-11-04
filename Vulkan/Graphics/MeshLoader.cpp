@@ -55,7 +55,7 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObje
 
 	std::vector<IndexType> indices;
 	std::vector<Vertex> verts;
-	// TODO: remove duplicate vertices
+
 	for (const auto& shape : shapes) {
 		for (const auto& index : shape.mesh.indices) {
 			Vertex vertex = {};

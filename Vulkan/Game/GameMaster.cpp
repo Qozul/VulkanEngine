@@ -45,29 +45,29 @@ void GameMaster::loadGame()
 
 	Assets::Entity* teapot = masters_.assetManager->createEntity("Teapot");
 	teapot->getTransform()->scale = glm::vec3(2.0f);
-	teapot->setGraphicsComponent(Graphics::RendererTypes::STATIC, nullptr, new Graphics::StaticShaderParams(),
-		masters_.assetManager->textureManager->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot");
-
-	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>("terrain", masters_.assetManager->textureManager);
+	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
+		masters_.getTextureManager()->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot");
+	
+	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>("terrain", masters_.getTextureManager());
 	entities.push_back(terrain);
 
 	Assets::Entity* sun = masters_.assetManager->createEntity("sun");
 	entities.push_back(sun);
 	scriptInit.owner = sun;
-	auto sunScript = new SunScript(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::PARTICLE));
+	auto sunScript = new SunScript(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle));
 	sun->setGameScript(sunScript);
 	auto sunRobject = sunScript->makeRenderObject("SunSystem");
-	sun->setGraphicsComponent(Graphics::RendererTypes::PARTICLE, sunRobject);
+	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunRobject);
 
-	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>("sky", masters_.graphicsMaster->getLogicDevice(), sunScript, scriptInit);
+	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
 	Assets::Entity* fire = masters_.assetManager->createEntity("firetest");
 	entities.push_back(fire);
 	scriptInit.owner = fire;
-	auto fireScript = new FireSystem(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::PARTICLE));
+	auto fireScript = new FireSystem(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle));
 	fire->setGameScript(fireScript);
 	auto fireRobject = fireScript->makeRenderObject("FireSystem");
-	fire->setGraphicsComponent(Graphics::RendererTypes::PARTICLE, fireRobject);
+	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireRobject);
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);

@@ -38,11 +38,11 @@ PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevic
 
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
-		(uint32_t)SubPass::AERIAL_PERSPECTIVE,
+		(uint32_t)SubPass::kAerialPerspective,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT));
 	createInfo.dependencies.push_back(makeSubpassDependency(
-		(uint32_t)SubPass::AERIAL_PERSPECTIVE, 
+		(uint32_t)SubPass::kAerialPerspective, 
 		VK_SUBPASS_EXTERNAL, 
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_MEMORY_READ_BIT)
@@ -144,8 +144,8 @@ void PostProcessPass::createRenderers()
 	createInfo.updateRendererSpecific(0, 2, "ParticlesVert", "ParticlesFrag", "ParticlesGeom");
 	particleRenderer_ = new ParticleRenderer(createInfo);
 
-	graphicsMaster_->setRenderer(RendererTypes::PARTICLE, particleRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::POST_PROCESS, postProcessRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kParticle, particleRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, postProcessRenderer_);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

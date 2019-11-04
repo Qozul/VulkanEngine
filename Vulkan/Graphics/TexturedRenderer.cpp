@@ -18,7 +18,7 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), RenderStorage::InstanceUsage::UNLIMITED))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
 {
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -54,7 +54,7 @@ void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 
 	VkDescriptorSetLayout layout;
 	DescriptorBuffer* diBuf = nullptr;
-	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
+	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
 		diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
 			sizeof(uint32_t) * 2 * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
 		storageBuffers_.push_back(diBuf);
@@ -65,7 +65,7 @@ void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 	}
 
 	pipelineLayouts_.push_back(layout);
-	if (!logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
+	if (!logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
 		pipelineLayouts_.push_back(StaticMaterial::getLayout(descriptor_));
 	}
 
@@ -92,7 +92,7 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 
 	updateBuffers(camera.viewMatrix);
 
-	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
+	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
 		recordDIFrame(idx, cmdBuffer);
 	}
 	else {

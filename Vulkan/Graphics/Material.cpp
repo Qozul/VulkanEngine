@@ -21,7 +21,7 @@ void Material::load(TextureManager* textureManager, Descriptor* descriptor)
 
 void Material::readFile(std::vector<std::string>& lines)
 {
-	// TODO validation of input
+	// Validation is deferred
 	std::ifstream file("../Data/Materials/" + materialFileName_ + ".qmat");
 	ASSERT(file.is_open());
 	size_t count;

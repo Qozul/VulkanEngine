@@ -12,8 +12,8 @@ namespace QZL {
 		class PostProcessPass : public RenderPass {
 			friend class SwapChain;
 			enum class SubPass : uint32_t {
-				AERIAL_PERSPECTIVE,
-				SUBPASS_COUNT
+				kAerialPerspective,
+				kSubpassCount
 			};
 		protected:
 			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);

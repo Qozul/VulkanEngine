@@ -1,6 +1,5 @@
 #pragma once
 #include "Entity.h"
-#include "../Graphics/MeshLoader.h"
 
 namespace QZL {
 	namespace Graphics {

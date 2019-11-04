@@ -1,33 +1,19 @@
-Each file should be refactored with the following ideas in mind:
-
-[Style, Clean, Descriptive, Efficient]
-
-TODO:
- - DeviceMemory [n,n,n,n]
- - GlobalRenderData [n,n,n,n] (Rename to GlobalDescriptor)
- - GraphicsMaster [n,n,n,n]
- - LogicDevice [n,n,n,n]
- - PhysicalDevice [n,n,n,n]
- - SwapChain [n,n,n,n]
-
- - System [n,n,n,n]
- - SystemMasters (Note, want quick getters for the important things) [n,n,n,n]
-
  - References
 
- - LogicalCamera, then everything has camera position too
-	NOTE that if the scene was drawn with a different camera (e.g. for water) then it would still have the lighting based on the main camera
-	Therefore, if swapping camera, just update global render data.
-
 TODO:
- - release material reference tracking
  - Material.h input validation
- - Look at enum types and constants and change to have k prefix
- - In code TODOs
- - Go through headers and do as many forward declarations as possible
  - Correct size buffers for each frame
- - GlobalRenderData need a good looking at
 
 Possible future stuff:
+ - release material reference tracking
  - vkCmdDrawIndexedIndirect
- - https://stackoverflow.com/questions/5177046/how-to-use-precompiled-headers-efficiently-using-yc-and-yu-options
+ - Scene graph, adding and removing a "draw" bool, then when traversing the scene graph every frame, also perform some simple
+	culling and mark an object as draw or not.
+ 	 - Add a special SceneNode (derived) which is a SceneNodeGroup, and this marks more than a simple parent-child, but marks that they are the same "object"
+	   and when one of these fails their test, the whole branch is discarded.
+ 	 - If moving towards an indirect rendering model, when the scene graph is traversed, the commands could be constructed
+	 - If using sparse residency, could commit/uncommit textures based on scene graph traversal
+
+ - Terrain: Change to be a single grid with uniform buffer of x,z offsets, set up draw elements command each frame with the current amount of instances
+	    which offset themselves in the vshader, and tesselate, use offsets for uv coords.
+ - pimple (vk_mem_alloc)

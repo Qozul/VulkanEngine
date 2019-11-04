@@ -16,7 +16,7 @@ namespace QZL
 			friend class LogicDevice;
 		public:
 			const MemoryAllocationDetails createBuffer(MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size, MemoryAccessType accessType = MemoryAccessType::kDirect);
-			const MemoryAllocationDetails createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo);
+			const MemoryAllocationDetails createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo, std::string debugName);
 			void deleteAllocation(AllocationID id, VkBuffer buffer);
 			void deleteAllocation(AllocationID id, VkImage image);
 			void* mapMemory(const AllocationID& id);

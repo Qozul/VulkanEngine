@@ -31,13 +31,13 @@ namespace QZL
 		class RendererPipeline {
 		public:
 			enum class PrimitiveType : uint32_t {
-				NONE = 0,
-				TRIANGLES = 3,
-				QUADS = 4
+				kNone = 0,
+				kTriangles = 3,
+				kQuads = 4
 			};
 		public:
 			RendererPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
-				PipelineCreateInfo pipelineCreateInfo, PrimitiveType patchVertexCount = PrimitiveType::NONE);
+				PipelineCreateInfo pipelineCreateInfo, PrimitiveType patchVertexCount = PrimitiveType::kNone);
 
 			~RendererPipeline();
 

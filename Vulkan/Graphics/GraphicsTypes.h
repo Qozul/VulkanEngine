@@ -5,11 +5,16 @@
 namespace QZL {
 	namespace Graphics {
 		enum class RendererTypes {
-			STATIC, TERRAIN, ATMOSPHERE, PARTICLE, POST_PROCESS
+			kStatic,
+			kTerrain,
+			kAtmosphere,
+			kParticle,
+			kPostProcess
 		};
 
 		enum class RenderPassTypes : size_t {
-			GEOMETRY = 0, POST_PROCESS = 1
+			kGeometry,
+			kPostProcess
 		};
 	}
 }

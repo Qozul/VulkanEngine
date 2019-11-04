@@ -12,7 +12,7 @@ Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo,
 	: logicDevice_(logicDevice), format_(createInfo.format), mipLevels_(createInfo.mipLevels)
 {
 	imageInfo_ = {};
-	imageDetails_ = logicDevice->getDeviceMemory()->createImage(pattern, createInfo);
+	imageDetails_ = logicDevice->getDeviceMemory()->createImage(pattern, createInfo, debugName);
 
 	VkImageViewCreateInfo viewInfo = {};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -29,10 +29,6 @@ Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo,
 	imageInfo_.imageView = imageView_;
 
 	changeLayout(imageParameters.newLayout, 0, 0, imageParameters.aspectBits);
-
-	if (debugName != "" && logicDevice->supportsOptionalExtension(OptionalExtensions::DEBUG_MARKER)) {
-		// TODO debug stuff see https://www.lunarg.com/wp-content/uploads/2018/05/Vulkan-Debug-Utils_05_18_v1.pdf
-	}
 }
 
 Image::~Image()

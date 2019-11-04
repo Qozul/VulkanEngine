@@ -15,7 +15,7 @@ TextureManager::TextureManager(const LogicDevice* logicDevice, Descriptor* descr
 	descriptorSetIdx_(0), descriptor_(descriptor)
 {
 	setLayoutBinding_ = {};
-	setLayoutBinding_.binding = (uint32_t)GlobalRenderDataBindings::TEXTURE_ARRAY_BINDING;
+	setLayoutBinding_.binding = (uint32_t)GlobalRenderDataBindings::kTextureArray;
 	setLayoutBinding_.descriptorCount = maxTextures;
 	setLayoutBinding_.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	setLayoutBinding_.pImmutableSamplers = nullptr;
@@ -79,7 +79,7 @@ VkWriteDescriptorSet TextureManager::makeDescriptorWrite(VkDescriptorImageInfo i
 {
 	VkWriteDescriptorSet write = {};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	write.dstBinding = (uint32_t)GlobalRenderDataBindings::TEXTURE_ARRAY_BINDING;
+	write.dstBinding = (uint32_t)GlobalRenderDataBindings::kTextureArray;
 	write.dstArrayElement = idx;
 	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	write.descriptorCount = count;

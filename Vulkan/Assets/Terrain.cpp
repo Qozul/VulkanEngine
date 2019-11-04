@@ -1,8 +1,8 @@
 #include "Terrain.h"
 #include "../Graphics/ShaderParams.h"
 #include "../Graphics/Material.h"
-#include "../Graphics/LogicDevice.h"
 #include "../Graphics/TextureManager.h"
+#include "../Graphics/Vertex.h"
 #include "Transform.h"
 
 using namespace QZL;
@@ -12,7 +12,7 @@ using namespace Graphics;
 Terrain::Terrain(const std::string name, TextureManager* textureManager)
 	: Entity(name)
 {
-	setGraphicsComponent(Graphics::RendererTypes::TERRAIN, new TerrainShaderParams(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f), nullptr,
+	setGraphicsComponent(Graphics::RendererTypes::kTerrain, new TerrainShaderParams(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f), nullptr,
 		textureManager->requestMaterial<TerrainMaterial>("ExampleTerrain"), "terrain", loadFunction);
 	transform_->position.y = 100.0f;
 }
@@ -23,7 +23,7 @@ void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vec
 	const int numSubGrids = 100;
 	const int subGridSize = gridSize / numSubGrids;
 
-	std::vector<Graphics::IndexType> inds;
+	std::vector<uint16_t> inds;
 	std::vector<Graphics::Vertex> verts;
 	// Vertex grid
 	for (int x = 0; x < numSubGrids; ++x) {
@@ -47,8 +47,8 @@ void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vec
 		}
 	}
 	count = static_cast<uint32_t>(inds.size());
-	indices.resize(inds.size() * sizeof(Graphics::IndexType));
+	indices.resize(inds.size() * sizeof(uint16_t));
 	vertices.resize(verts.size() * sizeof(Graphics::Vertex));
-	memcpy(indices.data(), inds.data(), inds.size() * sizeof(Graphics::IndexType));
+	memcpy(indices.data(), inds.data(), inds.size() * sizeof(uint16_t));
 	memcpy(vertices.data(), verts.data(), verts.size() * sizeof(Graphics::Vertex));
 }

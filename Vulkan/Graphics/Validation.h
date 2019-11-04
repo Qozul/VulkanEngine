@@ -27,6 +27,9 @@ namespace QZL
 				VkDebugUtilsMessageTypeFlagsEXT type,
 				const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 				void* pUserData);
+
+			// See https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#debugging-object-types
+			static void addDebugName(LogicDevice* logicDevice, VkObjectType type, uint64_t handle, std::string name);
 		private:
 			static bool isExtensionAvailable();
 			static bool isValidationLayerAvailable();
@@ -34,6 +37,7 @@ namespace QZL
 			const VkInstance cInstance_;
 			VkDebugUtilsMessengerEXT callbackHandle_;
 			const VkDebugUtilsMessageSeverityFlagBitsEXT severityFlag_;
+			static PFN_vkSetDebugUtilsObjectNameEXT debugNamesFunction_;
 
 			static bool tryEnableSuccess;
 

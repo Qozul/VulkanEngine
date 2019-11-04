@@ -8,8 +8,6 @@ using namespace QZL::Graphics;
 void DescriptorBuffer::init(MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags)
 {
 	bufferDetails_ = logicDevice_->getDeviceMemory()->createBuffer(pattern, getUsageBits(), size_);
-	// TODO create staging buffer transfer alternative
-	//ENSURES(bufferDetails_.access == MemoryAccessType::kDirect || bufferDetails_.access == MemoryAccessType::kPersistant);
 
 	binding_ = {};
 	binding_.binding = bindingIdx_;

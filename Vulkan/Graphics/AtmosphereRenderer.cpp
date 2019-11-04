@@ -29,7 +29,7 @@ struct PushConstantExtent {
 };
 
 AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(VertexOnlyPosition), sizeof(uint16_t)), RenderStorage::InstanceUsage::ONE))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(VertexOnlyPosition), sizeof(uint16_t)), RenderStorage::InstanceUsage::kOne))
 {
 	createDescriptors(createInfo.maxDrawnEntities);
 
@@ -48,7 +48,7 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline<VertexOnlyPosition>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 1, &pushConstRange),
-		stageInfos, pci, RendererPipeline::PrimitiveType::QUADS);
+		stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 AtmosphereRenderer::~AtmosphereRenderer()

@@ -48,7 +48,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	initSwapChainImages(window, surface, surfaceCapabilities);
 	numSwapChainImages = details_.images.size();
 	initImageViews();
-	if (master->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
+	if (master->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
 		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().getTextureManager()->getSetlayoutBinding());
 	}
 	else {
@@ -222,7 +222,7 @@ void SwapChain::submitQueue(const uint32_t imgIdx, VkSemaphore signalSemaphores[
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
 	vkResetFences(*logicDevice_, 1, &inFlightFences_[currentFrame_]);
-	// TODO recover in case of device lost
+
 	CHECK_VKRESULT(vkQueueSubmit(logicDevice_->getQueueHandle(QueueFamilyType::kGraphicsQueue), 1, &submitInfo, inFlightFences_[currentFrame_]));
 }
 

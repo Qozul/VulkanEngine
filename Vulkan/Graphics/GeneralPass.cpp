@@ -38,18 +38,18 @@ GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 	
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
-		(uint32_t)SubPass::ATMOSPHERE,
+		(uint32_t)SubPass::kAtmosphere,
 		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	);
 	createInfo.dependencies.push_back(makeSubpassDependency(
-		(uint32_t)SubPass::ATMOSPHERE,
-		(uint32_t)SubPass::GENERAL,
+		(uint32_t)SubPass::kAtmosphere,
+		(uint32_t)SubPass::kGeneral,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	);
 	createInfo.dependencies.push_back(makeSubpassDependency(
-		(uint32_t)SubPass::GENERAL, 
+		(uint32_t)SubPass::kGeneral, 
 		VK_SUBPASS_EXTERNAL, 
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT));
@@ -100,7 +100,7 @@ void GeometryPass::createRenderers()
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 
-	createInfo.updateRendererSpecific(1, 1, "StaticVert", logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING) ? "StaticFrag_DI" : "StaticFrag");
+	createInfo.updateRendererSpecific(1, 1, "StaticVert", logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing) ? "StaticFrag_DI" : "StaticFrag");
 	texturedRenderer_ = new TexturedRenderer(createInfo);
 
 	createInfo.updateRendererSpecific(1, 1, "TerrainVert", "TerrainFrag", "", "TerrainTESC", "TerrainTESE");
@@ -109,9 +109,9 @@ void GeometryPass::createRenderers()
 	createInfo.updateRendererSpecific(0, 1, "AtmosphereVert", "AtmosphereFrag");
 	atmosphereRenderer_ = new AtmosphereRenderer(createInfo);
 
-	graphicsMaster_->setRenderer(RendererTypes::STATIC, texturedRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::TERRAIN, terrainRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::ATMOSPHERE, atmosphereRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kStatic, texturedRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kTerrain, terrainRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kAtmosphere, atmosphereRenderer_);
 }
 
 void GeometryPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
