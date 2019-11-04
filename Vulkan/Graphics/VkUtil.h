@@ -1,5 +1,7 @@
 #pragma once
 #include "../../Shared/Utility.h"
+#include "OptionalExtensions.h"
+#include "../SystemMasters.h"
 
 namespace QZL
 {
@@ -8,6 +10,8 @@ namespace QZL
 + " in file " + __FILE__ + " at line " + std::to_string(__LINE__); DEBUG_LOG(str); throw std::runtime_error(str); };
 #define NOTHROW_CHECK_VKRESULT(result) if (result != VK_SUCCESS) std::cout << "Check VK error code " << std::to_string(static_cast<int>(result)) \
 	<< " in file" << __FILE__ << " at line " << __LINE__ << std::endl;
+
+		using MeshLoadFunc = void(*)(uint32_t& count, std::vector<char>& indices, std::vector<char>& vertices);
 
 		/// Utility function for getting data from Vulkan where it needs to call a function to get
 		/// a count of the data and then call it again to get the data.

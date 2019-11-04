@@ -15,8 +15,6 @@ TODO:
 
  - References
 
- - Warnings
-
  - LogicalCamera, then everything has camera position too
 	NOTE that if the scene was drawn with a different camera (e.g. for water) then it would still have the lighting based on the main camera
 	Therefore, if swapping camera, just update global render data.
@@ -27,9 +25,9 @@ TODO:
  - Look at enum types and constants and change to have k prefix
  - In code TODOs
  - Go through headers and do as many forward declarations as possible
- - Descriptor indexing has problems atm
- - MeshLoader, move away from the typed loading funcs to just one using vector<char>
-
+ - Correct size buffers for each frame
+ - GlobalRenderData need a good looking at
 
 Possible future stuff:
  - vkCmdDrawIndexedIndirect
+ - https://stackoverflow.com/questions/5177046/how-to-use-precompiled-headers-efficiently-using-yc-and-yu-options

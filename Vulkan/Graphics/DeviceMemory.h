@@ -1,8 +1,8 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #pragma once
-#include "vk_mem_alloc.h"
 #include "MemoryAllocation.h"
+#include "vk_mem_alloc.h"
 
 namespace QZL
 {

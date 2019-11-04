@@ -1,13 +1,13 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #include "GeneralPass.h"
-#include "SwapChain.h"
 #include "GraphicsMaster.h"
-#include "../SystemMasters.h"
-#include "../Assets/AssetManager.h"
-#include "TextureManager.h"
-#include "ParticleRenderer.h"
+#include "SwapChainDetails.h"
 #include "TexturedRenderer.h"
+#include "TerrainRenderer.h"
+#include "AtmosphereRenderer.h"
+#include "Image.h"
+#include "LogicDevice.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;

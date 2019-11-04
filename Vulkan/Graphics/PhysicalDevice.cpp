@@ -122,9 +122,9 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 	for (auto& ext : availableExts) {
 		// Optional extensions
 		if (!strcmp(ext.extensionName, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) {
-			//deviceExtensions_.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-			//optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = true;
-			//DEBUG_LOG("Descriptor indexing is enabled.");
+			deviceExtensions_.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+			optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = true;
+			DEBUG_LOG("Descriptor indexing is enabled.");
 		}
 		if (!strcmp(ext.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
 			deviceExtensions_.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);

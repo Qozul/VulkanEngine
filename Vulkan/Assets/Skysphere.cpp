@@ -26,7 +26,7 @@ void Skysphere::loadFunction(uint32_t& count, std::vector<char>& indices, std::v
 {
 	std::vector<Graphics::IndexType> inds = { 0, 1, 3, 2 };
 	std::vector<Graphics::VertexOnlyPosition> verts = { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f) };
-	count = inds.size();
+	count = static_cast<uint32_t>(inds.size());
 	indices.resize(inds.size() * sizeof(Graphics::IndexType));
 	vertices.resize(verts.size() * sizeof(Graphics::VertexOnlyPosition));
 	memcpy(indices.data(), inds.data(), inds.size() * sizeof(Graphics::IndexType));

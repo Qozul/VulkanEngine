@@ -4,9 +4,64 @@
 #include "Material.h"
 #include "TextureManager.h"
 #include "TextureSampler.h"
+#include "Descriptor.h"
+#include <fstream>
+#include <sstream>
 
 using namespace QZL;
 using namespace QZL::Graphics;
+
+void Material::load(TextureManager* textureManager, Descriptor* descriptor)
+{
+	std::vector<std::string> lines;
+	readFile(lines);
+	layout_ = makeLayout(descriptor);
+	makeTextureSet(descriptor, loadTextures(textureManager, lines));
+}
+
+void Material::readFile(std::vector<std::string>& lines)
+{
+	// TODO validation of input
+	std::ifstream file("../Data/Materials/" + materialFileName_ + ".qmat");
+	ASSERT(file.is_open());
+	size_t count;
+	file >> count;
+	lines.reserve(count + 1);
+	std::string line;
+	while (line != "END") {
+		file >> line;
+		lines.emplace_back(line);
+	}
+	file.close();
+}
+
+void Material::makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers)
+{
+	if (samplers.size() > 0) {
+		textureSet_ = descriptor->getSet(descriptor->createSets({ layout_ }));
+		std::vector<VkWriteDescriptorSet> setWrites(samplers.size());
+		for (size_t i = 0; i < samplers.size(); ++i) {
+			setWrites[i] = samplers[i]->descriptorWrite(textureSet_, static_cast<uint32_t>(i));
+		}
+		descriptor->updateDescriptorSets(setWrites);
+	}
+}
+
+constexpr VkDescriptorSetLayoutBinding QZL::Graphics::Material::makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler)
+{
+	VkDescriptorSetLayoutBinding layoutBinding = {};
+	layoutBinding.binding = idx;
+	layoutBinding.descriptorCount = 1;
+	layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	layoutBinding.pImmutableSamplers = sampler;
+	layoutBinding.stageFlags = stageFlags;
+	return layoutBinding;
+}
+
+ParticleMaterial::~ParticleMaterial() 
+{
+	SAFE_DELETE(diffuse_);
+}
 
 VkDescriptorSetLayout ParticleMaterial::getLayout(Descriptor* descriptor)
 {
@@ -25,6 +80,13 @@ VkDescriptorSetLayout ParticleMaterial::makeLayout(Descriptor* descriptor)
 	return getLayout(descriptor);
 }
 
+StaticMaterial::~StaticMaterial()
+{
+	if (!isUsingDI) {
+		SAFE_DELETE(diffuse_.diffuseSampler);
+		SAFE_DELETE(normalMap_.normalMapSampler);
+	}
+}
 
 VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor)
 {
@@ -52,6 +114,12 @@ VkDescriptorSetLayout StaticMaterial::makeLayout(Descriptor* descriptor)
 	return getLayout(descriptor);
 }
 
+
+TerrainMaterial::~TerrainMaterial()
+{
+	SAFE_DELETE(heightmap_);
+	SAFE_DELETE(diffuse_);
+}
 
 VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor)
 {

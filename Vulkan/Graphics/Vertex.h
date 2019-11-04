@@ -40,9 +40,9 @@ namespace QZL
 
 			static std::vector<std::pair<uint32_t, VkFormat>> makeAttribInfo() {
 				return { 
-					{ offsetof(Vertex, x), VK_FORMAT_R32G32B32_SFLOAT }, 
-					{ offsetof(Vertex, u), VK_FORMAT_R32G32_SFLOAT },
-					{ offsetof(Vertex, nx), VK_FORMAT_R32G32B32_SFLOAT } 
+					{ static_cast<uint32_t>(offsetof(Vertex, x)), VK_FORMAT_R32G32B32_SFLOAT }, 
+					{ static_cast<uint32_t>(offsetof(Vertex, u)), VK_FORMAT_R32G32_SFLOAT },
+					{ static_cast<uint32_t>(offsetof(Vertex, nx)), VK_FORMAT_R32G32B32_SFLOAT }
 				};
 			}
 		};
@@ -64,7 +64,7 @@ namespace QZL
 #pragma pack(pop)
 		struct ParticleVertex {
 			glm::vec3 position;
-			float scale;
+			float scale = 0.0f;
 			glm::vec2 textureOffset;
 
 			static std::vector<std::pair<uint32_t, VkFormat>> makeAttribInfo() {

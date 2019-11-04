@@ -89,7 +89,7 @@ size_t ElementBufferObject::addVertices(void* data, const size_t size)
 	if (data != nullptr) {
 		memcpy(vertexData_.data() + prevSize, data, size);
 	}
-	vertexCount_ += size / sizeOfVertices_;
+	vertexCount_ += static_cast<uint32_t>(size / sizeOfVertices_);
 	ASSERT(vertexCount_ == (vertexData_.size() / sizeOfVertices_));
 	return prevSize;
 }
@@ -102,7 +102,7 @@ size_t ElementBufferObject::addIndices(void* data, const size_t size)
 	if (data != nullptr) {
 		memcpy(indexData_.data() + prevSize, data, size);
 	}
-	indexCount_ += size / sizeOfIndices_;
+	indexCount_ += static_cast<uint32_t>(size / sizeOfIndices_);
 	ASSERT(indexCount_ == (indexData_.size() / sizeOfIndices_));
 	return prevSize;
 }

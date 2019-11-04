@@ -1,10 +1,10 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #include "TextureLoader.h"
-#include "../../Shared/nv_dds.h"
 #include "Image.h"
 #include "LogicDevice.h"
 #include "DeviceMemory.h"
+#include "../../Shared/nv_dds.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;

@@ -2,19 +2,12 @@
 // Date: 01/11/19
 
 #include "PostProcessRenderer.h"
-#include "StorageBuffer.h"
+#include "GlobalRenderData.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "TextureSampler.h"
-#include "DeviceMemory.h"
 #include "RendererPipeline.h"
-#include "GraphicsComponent.h"
-#include "ShaderParams.h"
-#include "RenderObject.h"
-#include "Material.h"
-#include "../Assets/Entity.h"
-#include "../Game/SunScript.h"
-#include "../Game/AtmosphereScript.h"
+#include "GraphicsMaster.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -55,7 +48,7 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, Texture
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
+	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
 		RendererPipeline::PrimitiveType::QUADS);
 }
 

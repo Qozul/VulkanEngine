@@ -1,6 +1,5 @@
 #pragma once
 #include "VkUtil.h"
-#include "OptionalExtensions.h"
 
 namespace QZL
 {

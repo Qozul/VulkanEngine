@@ -1,14 +1,13 @@
+// Author: Ralph Ridley
+// Date: 04/11/19
 #include "SwapChain.h"
 #include "LogicDevice.h"
 #include "GeneralPass.h"
 #include "PostProcessPass.h"
 #include "RendererBase.h"
 #include "GlobalRenderData.h"
-#include "../SystemMasters.h"
-#include "../Assets/AssetManager.h"
-#include "TextureManager.h"
 #include "GraphicsMaster.h"
-#include "LogicalCamera.h"
+#include "TextureManager.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -50,7 +49,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	numSwapChainImages = details_.images.size();
 	initImageViews();
 	if (master->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().assetManager->textureManager->getSetlayoutBinding());
+		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().getTextureManager()->getSetlayoutBinding());
 	}
 	else {
 		globalRenderData_ = new GlobalRenderData(logicDevice);

@@ -1,15 +1,16 @@
-/// Author: Ralph Ridley
-/// Date: 19/02/19
-/// Purpose: Encapsulate and support loading meshes from .obj files.
+// Author: Ralph Ridley
+// Date: 19/02/19
+// Purpose: Encapsulate and support loading meshes from .obj files.
 #pragma once
-#include "ElementBufferObject.h"
 #include "Vertex.h"
 
 namespace QZL
 {
 	namespace Graphics {
 		using IndexType = uint16_t;
-		using MeshLoadFunc = void(*)(uint32_t& count, std::vector<char>& indices, std::vector<char>& vertices);
+
+		class ElementBufferObject;
+		struct BasicMesh;
 
 		class MeshLoader {
 		public:

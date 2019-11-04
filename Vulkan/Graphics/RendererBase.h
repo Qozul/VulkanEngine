@@ -1,21 +1,24 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #pragma once
-
-#include "Mesh.h"
+#include "VkUtil.h"
 #include "RendererPipeline.h"
-#include "StorageBuffer.h"
-#include "RenderStorage.h"
-#include "GraphicsComponent.h"
-#include "GlobalRenderData.h"
-#include "Image.h"
-#include "LogicalCamera.h"
+#include "DrawElementsCommand.h"
+#include "Vertex.h"
 
 namespace QZL
 {
 	namespace Graphics {
 		class LogicDevice;
 		class Descriptor;
+		class RenderStorage;
+		class RenderObject;
+		class GraphicsComponent;
+		class ElementBufferObject;
+		class DescriptorBuffer;
+		class GlobalRenderData;
+		struct BasicMesh;
+		struct LogicalCamera;
 
 		struct RendererCreateInfo {
 			LogicDevice* logicDevice;
@@ -25,7 +28,7 @@ namespace QZL
 			uint32_t subpassIndex;
 			VkExtent2D extent;
 			uint32_t maxDrawnEntities;
-			uint32_t swapChainImageCount;
+			size_t swapChainImageCount;
 			std::string vertexShader;
 			std::string fragmentShader;
 			std::string geometryShader;
@@ -50,12 +53,12 @@ namespace QZL
 		};
 
 		struct PushConstantInfo {
-			size_t size;
+			uint32_t size;
 			VkShaderStageFlagBits stages;
 			VkMemoryBarrier barrier;
 			uint32_t offset;
 		};
-		constexpr size_t kMaxPushConstantSize = 128;
+		constexpr uint32_t kMaxPushConstantSize = 128;
 
 		class RendererBase {
 		public:
@@ -68,20 +71,11 @@ namespace QZL
 			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 
-			void registerComponent(GraphicsComponent* component, RenderObject* robject) {
-				renderStorage_->addMesh(component, robject);
-			}
-			ElementBufferObject* getElementBuffer() {
-				return renderStorage_->buffer();
-			}
-			void preframeSetup() {
-				if (renderStorage_ != nullptr) {
-					renderStorage_->buffer()->commit();
-				}
-			}
-			void toggleWiremeshMode() {
-				pipeline_->switchMode();
-			}
+			void registerComponent(GraphicsComponent* component, RenderObject* robject);
+			ElementBufferObject* getElementBuffer();
+
+			void preframeSetup();
+			void toggleWiremeshMode();
 
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages);
@@ -91,11 +85,13 @@ namespace QZL
 		protected:
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages,
 				PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount = RendererPipeline::PrimitiveType::NONE);
+
 			template<typename V>
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
 				PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount = RendererPipeline::PrimitiveType::NONE);
 
-			void beginFrame(VkCommandBuffer cmdBuffer);
+			void beginFrame(VkCommandBuffer& cmdBuffer);
+			void bindEBO(VkCommandBuffer& cmdBuffer, uint32_t idx);
 
 			LogicDevice* logicDevice_;
 			RendererPipeline* pipeline_;
@@ -107,23 +103,6 @@ namespace QZL
 			std::vector<PushConstantInfo> pushConstantInfos_;
 			uint32_t pushConstantOffset_;
 		};
-
-		inline RendererBase::~RendererBase() {
-			for (auto& buffer : storageBuffers_) {
-				SAFE_DELETE(buffer);
-			}
-			SAFE_DELETE(renderStorage_);
-			SAFE_DELETE(pipeline_);
-		}
-
-		inline std::vector<VkWriteDescriptorSet> RendererBase::getDescriptorWrites(uint32_t frameIdx)
-		{
-			std::vector<VkWriteDescriptorSet> writes;
-			for (auto& buf : storageBuffers_) {
-				writes.push_back(buf->descriptorWrite(descriptorSets_[frameIdx]));
-			}
-			return writes;
-		}
 
 		template<typename PC>
 		inline const VkPushConstantRange RendererBase::setupPushConstantRange(VkShaderStageFlagBits stages)
@@ -139,12 +118,12 @@ namespace QZL
 		{
 			static_assert(sizeof(PC) <= kMaxPushConstantSize, "Push constant size is potentially beyond the limit.");
 			VkPushConstantRange pushConstantRange = {};
-			pushConstantRange.size = sizeof(PC);
+			pushConstantRange.size = static_cast<uint32_t>(sizeof(PC));
 			pushConstantRange.offset = offset;
 			pushConstantRange.stageFlags = stages;
 
 			PushConstantInfo pinfo;
-			pinfo.size = sizeof(PC);
+			pinfo.size = static_cast<uint32_t>(sizeof(PC));
 			pinfo.stages = stages;
 			pinfo.barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 			pinfo.barrier.pNext = NULL;
@@ -163,18 +142,6 @@ namespace QZL
 			auto attribDesc = makeVertexAttribDescriptions(0, V::makeAttribInfo());
 			pipelineCreateInfo.vertexInputInfo = RendererPipeline::makeVertexInputInfo(bindingDesc, attribDesc);
 			pipeline_ = new RendererPipeline(logicDevice, renderPass, layoutInfo, stages, pipelineCreateInfo, patchVertexCount);
-		}
-
-		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages,
-			PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount) {
-			pipelineCreateInfo.vertexInputInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO, nullptr, 0, 0, nullptr, 0, nullptr };
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, layoutInfo, stages, pipelineCreateInfo, patchVertexCount);
-		}
-
-		inline void RendererBase::beginFrame(VkCommandBuffer cmdBuffer)
-		{
-			EXPECTS(pipeline_ != nullptr);
-			vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getPipeline());
 		}
 	}
 }

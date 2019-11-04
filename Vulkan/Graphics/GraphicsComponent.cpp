@@ -1,6 +1,9 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #include "GraphicsComponent.h"
+#include "ShaderParams.h"
+#include "RenderObject.h"
+#include "Material.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
@@ -40,6 +43,11 @@ GraphicsComponent::GraphicsComponent(Assets::Entity* owner, RendererTypes type, 
 GraphicsComponent::~GraphicsComponent()
 {
 	SAFE_DELETE(instanceParameters_);
+}
+
+std::string GraphicsComponent::getParamsId()
+{
+	return meshParameters_ == nullptr ? "" : meshParameters_->id;
 }
 
 glm::mat4 GraphicsComponent::getModelmatrix()

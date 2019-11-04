@@ -32,6 +32,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "PerfMeasurer.h"
+#pragma warning (disable : 4244)
 
 using uint = uint64_t;
 

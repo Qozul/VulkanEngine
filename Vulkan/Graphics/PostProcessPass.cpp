@@ -1,18 +1,13 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #include "PostProcessPass.h"
-#include "SwapChain.h"
 #include "GraphicsMaster.h"
-#include "../SystemMasters.h"
-#include "../Assets/AssetManager.h"
-#include "TextureManager.h"
+#include "SwapChainDetails.h"
 #include "TextureSampler.h"
-#include "ComputePipeline.h"
 #include "PostProcessRenderer.h"
 #include "ParticleRenderer.h"
 #include "Image.h"
-#include "../Assets/AtmosphereParameters.h"
-#include "../Game/AtmosphereScript.h"
+#include "LogicDevice.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -147,7 +142,7 @@ void PostProcessPass::createRenderers()
 	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthBuffer_);
 
 	createInfo.updateRendererSpecific(0, 2, "ParticlesVert", "ParticlesFrag", "ParticlesGeom");
-	particleRenderer_ = new ParticleRenderer(createInfo, 12);
+	particleRenderer_ = new ParticleRenderer(createInfo);
 
 	graphicsMaster_->setRenderer(RendererTypes::PARTICLE, particleRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::POST_PROCESS, postProcessRenderer_);

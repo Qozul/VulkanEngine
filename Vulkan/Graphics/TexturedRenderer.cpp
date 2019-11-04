@@ -1,14 +1,12 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
-
 #include "TexturedRenderer.h"
 #include "ElementBufferObject.h"
-#include "../Assets/Transform.h"
+#include "RenderStorage.h"
+#include "GlobalRenderData.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
-#include "TextureSampler.h"
-#include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
 #include "ShaderParams.h"
@@ -38,7 +36,7 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data()), stageInfos, pci);
 }
 
 TexturedRenderer::~TexturedRenderer()
@@ -110,7 +108,7 @@ void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuff
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		VkDescriptorSet sets[2] = { descriptorSets_[1 + idx], descriptorSets_[0] };
+		VkDescriptorSet sets[2] = { descriptorSets_[0], descriptorSets_[1 + (size_t)idx] };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
@@ -124,7 +122,7 @@ void TexturedRenderer::recordNormalFrame(const uint32_t idx, VkCommandBuffer cmd
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		VkDescriptorSet sets[3] = { descriptorSets_[0], descriptorSets_[1 + idx], robject->getMaterial()->getTextureSet() };
+		VkDescriptorSet sets[3] = { descriptorSets_[0], descriptorSets_[1 + (size_t)idx], robject->getMaterial()->getTextureSet() };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
@@ -137,7 +135,7 @@ void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
 	StaticShaderParams::Params* paramsPtr = static_cast<StaticShaderParams::Params*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
+		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
 		eleDataPtr[i] = {
 			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
 		};

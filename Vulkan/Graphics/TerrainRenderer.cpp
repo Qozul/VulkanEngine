@@ -1,18 +1,17 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "TerrainRenderer.h"
 #include "ElementBufferObject.h"
-#include "../Assets/Transform.h"
+#include "RenderStorage.h"
+#include "GlobalRenderData.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
-#include "TextureSampler.h"
-#include "TextureManager.h"
-#include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
 #include "ShaderParams.h"
 #include "RenderObject.h"
 #include "Material.h"
-#include "SwapChain.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
@@ -40,7 +39,7 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci,
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data()), stageInfos, pci,
 	RendererPipeline::PrimitiveType::QUADS);
 }
 
@@ -51,11 +50,11 @@ TerrainRenderer::~TerrainRenderer()
 void TerrainRenderer::createDescriptors(const uint32_t entityCount)
 {
 	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+		sizeof(ElementData) * 2, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT); // 2 = MAX_FRAMES_IN_FLIGHT
 	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
-		sizeof(StaticShaderParams::Params) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
+		sizeof(StaticShaderParams::Params) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
 	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
-		sizeof(TessControlInfo) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+		sizeof(TessControlInfo) * 2, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);
 	storageBuffers_.push_back(tessBuf);
@@ -88,7 +87,7 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		VkDescriptorSet sets[3] = { descriptorSets_[1 + idx], descriptorSets_[0], robject->getMaterial()->getTextureSet() };
+		VkDescriptorSet sets[3] = { descriptorSets_[1 + (size_t)idx], descriptorSets_[0], robject->getMaterial()->getTextureSet() };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
@@ -102,7 +101,7 @@ void TerrainRenderer::updateBuffers(LogicalCamera& camera)
 
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
+		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
 		glm::mat4 mvp = GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model;
 		eleDataPtr[i] = {
 			model, mvp

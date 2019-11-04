@@ -2,22 +2,19 @@
 // Date: 01/11/19
 #pragma once
 #include "RenderPass.h"
-#include "RendererBase.h"
 
 namespace QZL {
 	namespace Game {
 		class AtmosphereScript;
 	}
 	namespace Graphics {
+		class RendererBase;
 		class PostProcessPass : public RenderPass {
 			friend class SwapChain;
-			friend class GraphicsMaster;
-
 			enum class SubPass : uint32_t {
 				AERIAL_PERSPECTIVE,
 				SUBPASS_COUNT
 			};
-
 		protected:
 			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);
 			~PostProcessPass();

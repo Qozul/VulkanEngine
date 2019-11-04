@@ -3,21 +3,15 @@
 
 #include "AtmosphereRenderer.h"
 #include "ElementBufferObject.h"
+#include "RenderStorage.h"
+#include "GlobalRenderData.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
-#include "Descriptor.h"
-#include "TextureSampler.h"
-#include "DeviceMemory.h"
 #include "RendererPipeline.h"
-#include "GraphicsComponent.h"
-#include "SwapChain.h"
 #include "ShaderParams.h"
 #include "RenderObject.h"
 #include "Material.h"
 #include "../Assets/Entity.h"
-#include "../Assets/Transform.h"
-#include "../Game/SunScript.h"
-#include "../Game/AtmosphereScript.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -25,13 +19,13 @@ using namespace Graphics;
 struct PushConstantExtent {
 	glm::mat4 inverseViewProj;
 	glm::vec3 betaRay;
-	float betaMie;
+	float betaMie = 0.0f;
 	glm::vec3 cameraPosition;
-	float planetRadius;
+	float planetRadius = 0.0f;
 	glm::vec3 sunDirection;
-	float Hatm;
+	float Hatm = 0.0f;
 	glm::vec3 sunIntensity;
-	float g;
+	float g = 0.0f;
 };
 
 AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
@@ -53,7 +47,7 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<VertexOnlyPosition>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), 
+	createPipeline<VertexOnlyPosition>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 1, &pushConstRange),
 		stageInfos, pci, RendererPipeline::PrimitiveType::QUADS);
 }
 
@@ -72,7 +66,7 @@ void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, 
 		return;
 
 	beginFrame(cmdBuffer);
-	renderStorage_->buffer()->bind(cmdBuffer, idx);
+	bindEBO(cmdBuffer, idx);
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];

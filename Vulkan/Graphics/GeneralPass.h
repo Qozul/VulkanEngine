@@ -5,7 +5,7 @@
 
 namespace QZL {
 	namespace Graphics {
-
+		class RendererBase;
 		class GeometryPass : public RenderPass {
 			friend class SwapChain;
 			enum class SubPass : uint32_t {

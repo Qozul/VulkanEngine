@@ -2,22 +2,19 @@
 // Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
-#include "Mesh.h"
-#include "AtmosphereRenderer.h"
-#include "TerrainRenderer.h"
-#include "GraphicsMaster.h"
-#include "Image.h"
-#include "LogicalCamera.h"
 
 namespace QZL
 {
 	namespace Graphics {
+		class GraphicsMaster;
 		class LogicDevice;
 		class Descriptor;
-		struct SwapChainDetails;
 		class GlobalRenderData;
 		class DescriptorBuffer;
 		class TextureSampler;
+		class Image;
+		struct LogicalCamera;
+		struct SwapChainDetails;
 
 		class RenderPass {
 			friend class SwapChain;

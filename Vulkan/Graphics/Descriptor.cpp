@@ -69,5 +69,5 @@ VkDescriptorSetLayout Descriptor::makeLayout(const std::vector<VkDescriptorSetLa
 
 void Descriptor::updateDescriptorSets(const std::vector<VkWriteDescriptorSet>& descriptorWrites)
 {
-	vkUpdateDescriptorSets(*logicDevice_, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+	vkUpdateDescriptorSets(*logicDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }

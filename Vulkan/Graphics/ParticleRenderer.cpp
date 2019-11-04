@@ -3,24 +3,22 @@
 
 #include "ParticleRenderer.h"
 #include "DynamicElementBuffer.h"
-#include "../Assets/Transform.h"
 #include "StorageBuffer.h"
+#include "RenderStorage.h"
+#include "GlobalRenderData.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
-#include "TextureSampler.h"
 #include "ShaderParams.h"
-#include "SwapChain.h"
 #include "RenderObject.h"
 #include "Material.h"
 #include "../Assets/Entity.h"
-#include "../Assets/Transform.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
 struct PushConstantGeometry {
 	glm::vec3 billboardPoint;
-	float tileLength;
+	float tileLength = 0.0f;
 };
 
 struct PerInstanceParams {
@@ -29,7 +27,7 @@ struct PerInstanceParams {
 	glm::vec4 tint;
 };
 
-ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo, uint32_t maxUniqueParticles)
+ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)),
 	  RenderStorage::InstanceUsage::UNLIMITED))
 {
@@ -50,7 +48,7 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo, uint32_t maxU
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
+	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
 }
 
 ParticleRenderer::~ParticleRenderer()
@@ -80,7 +78,7 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		return;
 	beginFrame(cmdBuffer);
 	renderStorage_->buffer()->updateBuffer(cmdBuffer, idx);
-	renderStorage_->buffer()->bind(cmdBuffer, idx);
+	bindEBO(cmdBuffer, idx);
 
 	PerInstanceParams* eleDataPtr = static_cast<PerInstanceParams*>(storageBuffers_[0]->bindRange());
 	auto instPtr = renderStorage_->instanceData();

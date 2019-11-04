@@ -1,25 +1,14 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #include "RenderPass.h"
-#include "SwapChain.h"
+#include "SwapChainDetails.h"
 #include "LogicDevice.h"
-#include "Descriptor.h"
-#include "TexturedRenderer.h"
-#include "TerrainRenderer.h"
-#include "AtmosphereRenderer.h"
-#include "GraphicsMaster.h"
-#include "MeshLoader.h"
-#include "GraphicsMaster.h"
-#include "StorageBuffer.h"
-#include "TextureManager.h"
-#include "../Assets/AssetManager.h"
-#include "../System.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
 RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd)
-	: logicDevice_(logicDevice), swapChainDetails_(swapChainDetails), graphicsMaster_(master), globalRenderData_(grd), descriptor_(logicDevice->getPrimaryDescriptor())
+	: logicDevice_(logicDevice), swapChainDetails_(swapChainDetails), graphicsMaster_(master), globalRenderData_(grd), descriptor_(logicDevice->getPrimaryDescriptor()), renderPass_(VK_NULL_HANDLE)
 {
 }
 

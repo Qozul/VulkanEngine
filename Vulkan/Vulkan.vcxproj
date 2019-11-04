@@ -71,6 +71,7 @@
     <ClInclude Include="Graphics\ShaderParams.h" />
     <ClInclude Include="Graphics\StorageBuffer.h" />
     <ClInclude Include="Graphics\SwapChain.h" />
+    <ClInclude Include="Graphics\SwapChainDetails.h" />
     <ClInclude Include="Graphics\TerrainRenderer.h" />
     <ClInclude Include="Graphics\TexturedRenderer.h" />
     <ClInclude Include="Graphics\TextureLoader.h" />
@@ -116,6 +117,7 @@
     <ClCompile Include="Graphics\PhysicalDevice.cpp" />
     <ClCompile Include="Graphics\PostProcessPass.cpp" />
     <ClCompile Include="Graphics\PostProcessRenderer.cpp" />
+    <ClCompile Include="Graphics\RendererBase.cpp" />
     <ClCompile Include="Graphics\RendererPipeline.cpp" />
     <ClCompile Include="Graphics\RenderPass.cpp" />
     <ClCompile Include="Graphics\RenderStorage.cpp" />
@@ -130,6 +132,7 @@
     <ClCompile Include="Graphics\Validation.cpp" />
     <ClCompile Include="Graphics\VkUtil.cpp" />
     <ClCompile Include="System.cpp" />
+    <ClCompile Include="SystemMasters.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

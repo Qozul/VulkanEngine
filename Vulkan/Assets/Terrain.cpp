@@ -28,8 +28,8 @@ void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vec
 	// Vertex grid
 	for (int x = 0; x < numSubGrids; ++x) {
 		for (int z = 0; z < numSubGrids; ++z) {
-			float vx = x * subGridSize;
-			float vz = z * subGridSize;
+			float vx = static_cast<float>(x * subGridSize);
+			float vz = static_cast<float>(z * subGridSize);
 			float u = vx / gridSize;
 			float v = vz / gridSize;
 			verts.emplace_back(vx, 0.0f, vz, u, v, 0.0f, 1.0f, 0.0f);
@@ -46,7 +46,7 @@ void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vec
 			inds.push_back(xoffset1 + z);
 		}
 	}
-	count = inds.size();
+	count = static_cast<uint32_t>(inds.size());
 	indices.resize(inds.size() * sizeof(Graphics::IndexType));
 	vertices.resize(verts.size() * sizeof(Graphics::Vertex));
 	memcpy(indices.data(), inds.data(), inds.size() * sizeof(Graphics::IndexType));

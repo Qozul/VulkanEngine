@@ -165,9 +165,6 @@
     <ClInclude Include="Game\Scene.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="SystemMasters.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Game\Camera.h">
       <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
@@ -293,6 +290,12 @@
     </ClInclude>
     <ClInclude Include="Game\SunScript.h">
       <Filter>Header Files\Game\Scripts\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\SwapChainDetails.h">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemMasters.h">
+      <Filter>Header Files\System</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -424,6 +427,12 @@
     </ClCompile>
     <ClCompile Include="Graphics\ElementBufferObject.cpp">
       <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemMasters.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\RendererBase.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

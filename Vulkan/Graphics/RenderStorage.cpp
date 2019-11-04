@@ -1,6 +1,5 @@
 #include "RenderStorage.h"
 #include "GraphicsComponent.h"
-#include "DeviceMemory.h"
 #include "ElementBufferObject.h"
 #include "RenderObject.h"
 

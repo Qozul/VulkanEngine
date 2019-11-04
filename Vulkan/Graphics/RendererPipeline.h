@@ -3,7 +3,6 @@
 
 #pragma once
 #include "VkUtil.h"
-#include "Vertex.h"
 
 namespace QZL
 {

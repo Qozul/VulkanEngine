@@ -36,8 +36,8 @@ void ParticleSystem::update(float dt, const glm::mat4& parentMatrix)
 			particleCreation(elapsedUpdateTime_, numDeadParticles_);
 
 			// Sort the particles to draw closest to the camera using insertion sort
-			for (int i = 1; i < currentActiveSize_; ++i) {
-				int j = i - 1;
+			for (size_t i = 1; i < currentActiveSize_; ++i) {
+				long long int j = i - 1;
 				auto iVertVal = vertices_[i];
 				auto iPartVal = particles_[i];
 				float iKey = glm::distance(vertices_[i].position, *billboardPoint_);
@@ -66,8 +66,8 @@ void ParticleSystem::update(float dt, const glm::mat4& parentMatrix)
 Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
 {
 	Graphics::BasicMesh* mesh = new Graphics::BasicMesh();
-	mesh->count = subBufferRange_.count;
-	mesh->vertexOffset = subBufferRange_.first / sizeof(Graphics::ParticleVertex);
+	mesh->count = static_cast<uint32_t>(subBufferRange_.count);
+	mesh->vertexOffset = static_cast<uint32_t>(subBufferRange_.first / sizeof(Graphics::ParticleVertex));
 	mesh->indexOffset = 0;
 	return new Graphics::RenderObject(name, mesh, makeShaderParams(), material_);
 }

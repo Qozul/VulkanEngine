@@ -2,22 +2,24 @@
 // Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
-#include "ShaderParams.h"
-#include "../Graphics/MeshLoader.h"
-#include "RenderObject.h"
+#include "GraphicsTypes.h"
 
 namespace QZL {
 	namespace Assets {
 		class Entity;
 	}
 	namespace Graphics {
+		struct ShaderParams;
+		class Material;
+		class RenderObject;
 		class GraphicsComponent {
 		public:
 			GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
 				const std::string& meshName, MeshLoadFunc loadFunc, Material* material);
 			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
-
 			~GraphicsComponent();
+
+			std::string getParamsId();
 			const std::string& getMeshName() const {
 				return meshName_;
 			}
@@ -26,9 +28,6 @@ namespace QZL {
 			}
 			ShaderParams* getShaderParams() {
 				return instanceParameters_;
-			}
-			std::string getParamsId() {
-				return meshParameters_ == nullptr ? "" : meshParameters_->id;
 			}
 			Material* getMaterial() {
 				return material_;

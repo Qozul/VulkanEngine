@@ -7,11 +7,8 @@
 #include "SwapChain.h"
 #include "RendererBase.h"
 #include "TextureManager.h"
-#include "../System.h"
+#include "../SystemMasters.h"
 #include "../Assets/AssetManager.h"
-#include "MeshLoader.h"
-#include "PostProcessPass.h"
-#include "RenderObject.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -30,13 +27,7 @@ void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 
 ElementBufferObject* GraphicsMaster::getDynamicBuffer(RendererTypes type)
 {
-	auto buf = renderers_[type]->getElementBuffer();
-	if (buf->isDynamic()) {
-		return buf;
-	}
-	else {
-		return nullptr;
-	}
+	return renderers_[type]->getElementBuffer();
 }
 
 LogicalCamera* GraphicsMaster::getLogicalCamera(RendererTypes type)

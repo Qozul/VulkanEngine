@@ -1,7 +1,6 @@
 #pragma once
 #include "VkUtil.h"
 #include "../InputManager.h"
-#include "OptionalExtensions.h"
 #include "GraphicsTypes.h"
 #include "LogicalCamera.h"
 
@@ -13,19 +12,19 @@ namespace QZL
 		class AtmosphereScript;
 	}
 	namespace Graphics {
-		struct DeviceSwapChainDetails;
 		class PhysicalDevice;
 		class LogicDevice;
 		class CommandPool;
 		class GraphicsComponent;
 		class RendererBase;
-		struct BasicMesh;
-		struct DeviceSurfaceCapabilities;
 		class GraphicsMaster;
 		class Validation;
 		class SwapChain;
 		class RenderObject;
 		class ElementBufferObject;
+		struct BasicMesh;
+		struct DeviceSurfaceCapabilities;
+		struct DeviceSwapChainDetails;
 
 		struct GraphicsSystemDetails {
 			GLFWwindow* window = nullptr;

@@ -4,15 +4,13 @@
 
 #pragma once
 #include "VkUtil.h"
-#include "Descriptor.h"
 #include "GraphicsTypes.h"
-#include "TextureSampler.h"
-#include <fstream>
-#include <sstream>
 
 namespace QZL {
 	namespace Graphics {
+		class Descriptor;
 		class TextureManager;
+		class TextureSampler;
 		
 		// A material is a group of textures with an associated descriptor set.
 		class Material {
@@ -37,50 +35,15 @@ namespace QZL {
 				return materialFileName_;
 			}
 
-			void load(TextureManager* textureManager, Descriptor* descriptor) {
-				std::vector<std::string> lines;
-				readFile(lines);
-				layout_ = makeLayout(descriptor);
-				makeTextureSet(descriptor, loadTextures(textureManager, lines));
-			}
+			void load(TextureManager* textureManager, Descriptor* descriptor);
 
 			virtual const RendererTypes getRendererType() const = 0;
 		protected:
-			void readFile(std::vector<std::string>& lines) {
-				// TODO validation of input
-				std::ifstream file("../Data/Materials/" + materialFileName_ + ".qmat");
-				ASSERT(file.is_open());
-				size_t count;
-				file >> count;
-				lines.reserve(count + 1);
-				std::string line;
-				while (line != "END") {
-					file >> line;
-					lines.emplace_back(line);
-				}
-				file.close();
-			}
+			void readFile(std::vector<std::string>& lines);
 
-			void makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers) {
-				if (samplers.size() > 0) {
-					textureSet_ = descriptor->getSet(descriptor->createSets({ layout_ }));
-					std::vector<VkWriteDescriptorSet> setWrites(samplers.size());
-					for (size_t i = 0; i < samplers.size(); ++i) {
-						setWrites[i] = samplers[i]->descriptorWrite(textureSet_, static_cast<uint32_t>(i));
-					}
-					descriptor->updateDescriptorSets(setWrites);
-				}
-			}
+			void makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers);
 
-			constexpr static VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler) {
-				VkDescriptorSetLayoutBinding layoutBinding = {};
-				layoutBinding.binding = idx;
-				layoutBinding.descriptorCount = 1;
-				layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				layoutBinding.pImmutableSamplers = sampler;
-				layoutBinding.stageFlags = stageFlags;
-				return layoutBinding;
-			}
+			constexpr static VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler);
 
 			virtual std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) = 0;
 			virtual VkDescriptorSetLayout makeLayout(Descriptor* descriptor) = 0;
@@ -94,9 +57,7 @@ namespace QZL {
 		public:
 			ParticleMaterial(const std::string materialFileName)
 				: Material(materialFileName), diffuse_(nullptr) { }
-			~ParticleMaterial() {
-				SAFE_DELETE(diffuse_);
-			}
+			~ParticleMaterial();
 
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
@@ -120,12 +81,7 @@ namespace QZL {
 				normalMap_.normalMapSampler = nullptr;
 			}
 
-			~StaticMaterial() {
-				if (!isUsingDI) {
-					SAFE_DELETE(diffuse_.diffuseSampler);
-					SAFE_DELETE(normalMap_.normalMapSampler);
-				}
-			}
+			~StaticMaterial();
 
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
@@ -152,10 +108,7 @@ namespace QZL {
 			TerrainMaterial(const std::string materialFileName)
 				: Material(materialFileName), heightmap_(nullptr), diffuse_(nullptr) { }
 
-			~TerrainMaterial() {
-				SAFE_DELETE(heightmap_);
-				SAFE_DELETE(diffuse_);
-			}
+			~TerrainMaterial();
 
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 
@@ -178,8 +131,7 @@ namespace QZL {
 			AtmosphereMaterial(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
 				: Material(name, set, layout), scatteringTexture_(nullptr) { }
 
-			~AtmosphereMaterial() {
-			}
+			~AtmosphereMaterial() { }
 
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
 

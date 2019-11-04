@@ -1,7 +1,8 @@
-/// Author: Ralph Ridley
-/// Date: 19/02/19
+// Author: Ralph Ridley
+// Date: 19/02/19
 // Reference: https://github.com/syoyo/tinyobjloader code example for loading using tinyobj
 #include "MeshLoader.h"
+#include "ElementBufferObject.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../../Shared/tiny_obj_loader.h"
@@ -35,7 +36,7 @@ void MeshLoader::placeMeshInBuffer(const std::string& meshName, ElementBufferObj
 {
 	auto indexOffset = eleBuf.addIndices(indices, indicesSize);
 	auto vertexOffset = eleBuf.addVertices(vertices, verticesSize);
-	eleBuf.emplaceMesh(meshName, count, vertexOffset, indexOffset);
+	eleBuf.emplaceMesh(meshName, count, static_cast<uint32_t>(vertexOffset), static_cast<uint32_t>(indexOffset));
 }
 
 void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObject& eleBuf)
@@ -58,18 +59,18 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObje
 	for (const auto& shape : shapes) {
 		for (const auto& index : shape.mesh.indices) {
 			Vertex vertex = {};
-			vertex.x = attrib.vertices[3 * index.vertex_index + 0];
-			vertex.y = attrib.vertices[3 * index.vertex_index + 1];
-			vertex.z = attrib.vertices[3 * index.vertex_index + 2];
-			vertex.u = attrib.texcoords[2 * index.texcoord_index + 0];
-			vertex.v = 1.0f - attrib.texcoords[2 * index.texcoord_index + 1];
-			vertex.nx = attrib.normals[3 * index.normal_index + 0];
-			vertex.ny = attrib.normals[3 * index.normal_index + 1];
-			vertex.nz = attrib.normals[3 * index.normal_index + 2];
+			vertex.x = attrib.vertices[3 * (size_t)index.vertex_index + 0];
+			vertex.y = attrib.vertices[3 * (size_t)index.vertex_index + 1];
+			vertex.z = attrib.vertices[3 * (size_t)index.vertex_index + 2];
+			vertex.u = attrib.texcoords[2 * (size_t)index.texcoord_index + 0];
+			vertex.v = 1.0f - attrib.texcoords[2 * (size_t)index.texcoord_index + 1];
+			vertex.nx = attrib.normals[3 * (size_t)index.normal_index + 0];
+			vertex.ny = attrib.normals[3 * (size_t)index.normal_index + 1];
+			vertex.nz = attrib.normals[3 * (size_t)index.normal_index + 2];
 
 			verts.push_back(vertex);
-			indices.push_back(indices.size());
+			indices.push_back(static_cast<IndexType>(indices.size()));
 		}
 	}
-	placeMeshInBuffer(meshName, eleBuf, indices.size(), indices.data(), verts.data(), indices.size() * sizeof(IndexType), verts.size() * sizeof(Vertex));
+	placeMeshInBuffer(meshName, eleBuf, static_cast<uint32_t>(indices.size()), indices.data(), verts.data(), indices.size() * sizeof(IndexType), verts.size() * sizeof(Vertex));
 }

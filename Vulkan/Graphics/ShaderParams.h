@@ -72,9 +72,9 @@ namespace QZL {
 		struct TerrainShaderParams : public ShaderParams {
 			struct Params {
 				glm::vec3 diffuseColour;
-				float alpha;
+				float alpha = 1.0f;
 				glm::vec3 specularColour;
-				float specularExponent;
+				float specularExponent = 1.0f;
 			} params;
 
 			TerrainShaderParams(glm::vec3 diffuseColour, glm::vec3 specularColour, float alpha, float specularExponent) {
