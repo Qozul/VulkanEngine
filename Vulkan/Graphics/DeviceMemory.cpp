@@ -5,11 +5,46 @@
 #include "PhysicalDevice.h"
 #include "LogicDevice.h"
 #include "Validation.h"
+#include "vk_mem_alloc.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-DeviceMemory::DeviceMemory(PhysicalDevice* physicalDevice, LogicDevice* logicDevice, VkCommandBuffer transferCmdBuffer, VkQueue queue)
+class DeviceMemory::Impl {
+	friend class DeviceMemory;
+private:
+	const MemoryAllocationDetails createBuffer(std::string debugName, MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, 
+		VkDeviceSize size, MemoryAccessType accessType = MemoryAccessType::kDirect);
+	const MemoryAllocationDetails createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo, std::string debugName);
+	void deleteAllocation(AllocationID id, VkBuffer buffer);
+	void deleteAllocation(AllocationID id, VkImage image);
+	void* mapMemory(const AllocationID& id);
+	void unmapMemory(const AllocationID& id);
+	void transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
+	void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height);
+	void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer);
+	void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage);
+
+	Impl(PhysicalDevice* physicalDevice, LogicDevice* logicDevice, VkCommandBuffer transferCmdBuffer, VkQueue queue);
+	~Impl();
+
+	// Ensure mapped access is possible if requested
+	void fixAccessType(MemoryAccessType& access, VmaAllocationInfo allocInfo, VkMemoryPropertyFlags memFlags);
+	// Choose VmaCreateInfo based on the selected pattern
+	VmaAllocationCreateInfo makeVmaCreateInfo(MemoryAllocationPattern pattern, MemoryAccessType& access);
+
+	void selectImageLayoutInfo(const VkImage& image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkFormat& format, uint32_t mipLevels,
+		VkPipelineStageFlags& oldStage, VkPipelineStageFlags& newStage, VkImageMemoryBarrier& barrier);
+
+	VmaAllocator allocator_;
+	AllocationID availableId_; // 0 reserved for invalid id
+	std::map<AllocationID, VmaAllocation> allocations_;
+	VkQueue queue_;
+	VkCommandBuffer transferCmdBuffer_;
+	LogicDevice* logicDevice_;
+};
+
+DeviceMemory::Impl::Impl(PhysicalDevice* physicalDevice, LogicDevice* logicDevice, VkCommandBuffer transferCmdBuffer, VkQueue queue)
 	: availableId_(1), logicDevice_(logicDevice), transferCmdBuffer_(transferCmdBuffer), queue_(queue)
 {
 	VmaAllocatorCreateInfo allocatorInfo = {};
@@ -19,7 +54,7 @@ DeviceMemory::DeviceMemory(PhysicalDevice* physicalDevice, LogicDevice* logicDev
 	vmaCreateAllocator(&allocatorInfo, &allocator_);
 }
 
-DeviceMemory::~DeviceMemory()
+DeviceMemory::Impl::~Impl()
 {
 	if (!allocations_.empty()) {
 		for (auto allocation : allocations_) {
@@ -30,7 +65,7 @@ DeviceMemory::~DeviceMemory()
 	vmaDestroyAllocator(allocator_);
 }
 
-const MemoryAllocationDetails DeviceMemory::createBuffer(std::string debugName, MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size, MemoryAccessType accessType)
+const MemoryAllocationDetails DeviceMemory::Impl::createBuffer(std::string debugName, MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size, MemoryAccessType accessType)
 {
 	MemoryAllocationDetails allocationDetails = {};
 	allocationDetails.size = size;
@@ -55,7 +90,7 @@ const MemoryAllocationDetails DeviceMemory::createBuffer(std::string debugName, 
 	return allocationDetails;
 }
 
-const MemoryAllocationDetails DeviceMemory::createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo, std::string debugName)
+const MemoryAllocationDetails DeviceMemory::Impl::createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo, std::string debugName)
 {
 	MemoryAllocationDetails allocationDetails = {};
 	allocationDetails.id = availableId_++;
@@ -78,31 +113,31 @@ const MemoryAllocationDetails DeviceMemory::createImage(MemoryAllocationPattern 
 	return allocationDetails;
 }
 
-void DeviceMemory::deleteAllocation(AllocationID id, VkBuffer buffer)
+void DeviceMemory::Impl::deleteAllocation(AllocationID id, VkBuffer buffer)
 {
 	vmaDestroyBuffer(allocator_, buffer, allocations_[id]);
 	allocations_.erase(id);
 }
 
-void DeviceMemory::deleteAllocation(AllocationID id, VkImage image)
+void DeviceMemory::Impl::deleteAllocation(AllocationID id, VkImage image)
 {
 	vmaDestroyImage(allocator_, image, allocations_[id]);
 	allocations_.erase(id);
 }
 
-void* DeviceMemory::mapMemory(const AllocationID& id)
+void* DeviceMemory::Impl::mapMemory(const AllocationID& id)
 {
 	void* mappedData;
 	CHECK_VKRESULT(vmaMapMemory(allocator_, allocations_[id], &mappedData));
 	return mappedData;
 }
 
-void DeviceMemory::unmapMemory(const AllocationID& id)
+void DeviceMemory::Impl::unmapMemory(const AllocationID& id)
 {
 	vmaUnmapMemory(allocator_, allocations_[id]);
 }
 
-void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size)
+void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size)
 {
 	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -120,7 +155,7 @@ void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dst
 	vkQueueWaitIdle(queue_);
 }
 
-void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height)
+void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height)
 {
 	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -148,12 +183,12 @@ void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstI
 	vkQueueWaitIdle(queue_);
 }
 
-void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer)
+void DeviceMemory::Impl::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer)
 {
 	vkCmdPipelineBarrier(cmdBuffer, oldStage, newStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 }
 
-void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage)
+void DeviceMemory::Impl::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage)
 {
 	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -171,7 +206,7 @@ void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineSta
 	vkQueueWaitIdle(queue_);
 }
 
-void DeviceMemory::fixAccessType(MemoryAccessType& access, VmaAllocationInfo allocInfo, VkMemoryPropertyFlags memFlags)
+void DeviceMemory::Impl::fixAccessType(MemoryAccessType& access, VmaAllocationInfo allocInfo, VkMemoryPropertyFlags memFlags)
 {
 	switch (access) {
 	case MemoryAccessType::kPersistant:
@@ -187,7 +222,7 @@ void DeviceMemory::fixAccessType(MemoryAccessType& access, VmaAllocationInfo all
 	}
 }
 
-VmaAllocationCreateInfo DeviceMemory::makeVmaCreateInfo(MemoryAllocationPattern pattern, MemoryAccessType& access)
+VmaAllocationCreateInfo DeviceMemory::Impl::makeVmaCreateInfo(MemoryAllocationPattern pattern, MemoryAccessType& access)
 {
 	VmaAllocationCreateInfo createInfo = {};
 	switch (pattern) {
@@ -225,7 +260,7 @@ VmaAllocationCreateInfo DeviceMemory::makeVmaCreateInfo(MemoryAllocationPattern 
 	return createInfo;
 }
 
-void DeviceMemory::selectImageLayoutInfo(const VkImage& image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkFormat& format, uint32_t mipLevels,
+void DeviceMemory::Impl::selectImageLayoutInfo(const VkImage& image, const VkImageLayout oldLayout, const VkImageLayout newLayout, const VkFormat& format, uint32_t mipLevels,
 	VkPipelineStageFlags& oldStage, VkPipelineStageFlags& newStage, VkImageMemoryBarrier& barrier)
 {
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -306,4 +341,56 @@ void DeviceMemory::selectImageLayoutInfo(const VkImage& image, const VkImageLayo
 	default:
 		ASSERT(false); // New layout invalid.
 	}
+}
+
+// pImple interface comes below
+
+DeviceMemory::DeviceMemory(PhysicalDevice* physicalDevice, LogicDevice* logicDevice, VkCommandBuffer transferCmdBuffer, VkQueue queue)
+	: pImpl_(new DeviceMemory::Impl(physicalDevice, logicDevice, transferCmdBuffer, queue))
+{
+}
+DeviceMemory::~DeviceMemory()
+{
+	delete pImpl_;
+}
+const MemoryAllocationDetails DeviceMemory::createBuffer(std::string debugName, MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage,
+	VkDeviceSize size, MemoryAccessType accessType)
+{
+	return pImpl_->createBuffer(debugName, pattern, bufferUsage, size, accessType);
+}
+const MemoryAllocationDetails DeviceMemory::createImage(MemoryAllocationPattern pattern, VkImageCreateInfo imageCreateInfo, std::string debugName)
+{
+	return pImpl_->createImage(pattern, imageCreateInfo, debugName);
+}
+void DeviceMemory::deleteAllocation(AllocationID id, VkBuffer buffer)
+{
+	pImpl_->deleteAllocation(id, buffer);
+}
+void DeviceMemory::deleteAllocation(AllocationID id, VkImage image)
+{
+	pImpl_->deleteAllocation(id, image);
+}
+void* DeviceMemory::mapMemory(const AllocationID& id)
+{
+	return pImpl_->mapMemory(id);
+}
+void DeviceMemory::unmapMemory(const AllocationID& id)
+{
+	pImpl_->unmapMemory(id);
+}
+void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size)
+{
+	pImpl_->transferMemory(srcBuffer, dstBuffer, srcOffset, dstOffset, size);
+}
+void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height)
+{
+	pImpl_->transferMemory(srcBuffer, dstImage, srcOffset, width, height);
+}
+void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer)
+{
+	pImpl_->changeImageLayout(barrier, oldStage, newStage, cmdBuffer);
+}
+void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage)
+{
+	pImpl_->changeImageLayout(barrier, oldStage, newStage);
 }
