@@ -15,4 +15,3 @@ Possible future stuff:
 
  - Terrain: Change to be a single grid with uniform buffer of x,z offsets, set up draw elements command each frame with the current amount of instances
 	    which offset themselves in the vshader, and tesselate, use offsets for uv coords.
- - pimple (vk_mem_alloc)

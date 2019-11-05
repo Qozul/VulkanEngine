@@ -37,7 +37,8 @@ Image::~Image()
 	logicDevice_->getDeviceMemory()->deleteAllocation(imageDetails_.id, imageDetails_.image);
 }
 
-void Image::changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags, VkImageAspectFlags aspectMask) {
+void Image::changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags, VkImageAspectFlags aspectMask) 
+{
 	auto barrier = makeImageMemoryBarrier(newLayout, aspectMask);
 	VkPipelineStageFlags oldStage = oldStageFlags == 0 ? imageLayoutToStage(imageInfo_.imageLayout) : oldStageFlags;
 	VkPipelineStageFlags newStage = newStageFlags == 0 ? imageLayoutToStage(newLayout) : newStageFlags;
@@ -47,8 +48,8 @@ void Image::changeLayout(VkImageLayout newLayout, VkPipelineStageFlags oldStageF
 }
 
 void Image::changeLayout(VkCommandBuffer& cmdBuffer, VkImageLayout newLayout, VkPipelineStageFlags oldStageFlags, VkPipelineStageFlags newStageFlags, 
-	VkImageAspectFlags aspectMask) {
-
+	VkImageAspectFlags aspectMask) 
+{
 	auto barrier = makeImageMemoryBarrier(newLayout, aspectMask);
 	VkPipelineStageFlags oldStage = oldStageFlags == 0 ? imageLayoutToStage(imageInfo_.imageLayout) : oldStageFlags;
 	VkPipelineStageFlags newStage = newStageFlags == 0 ? imageLayoutToStage(newLayout) : newStageFlags;

@@ -2,8 +2,8 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "./alt_functions.glsl"
 
-#define TOTAL_INVOCATIONS vec2(64.0, 256.0)
-#define SAMPLE_COUNT 500
+#define TOTAL_INVOCATIONS vec2(63.0, 255.0)
+#define INTEGRATION_STEPS_TRANSMITTANCE 200
 
 layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_size_z = 1) in;
 
@@ -18,7 +18,7 @@ void main()
 	float height = UhToHeight(gl_GlobalInvocationID.x / TOTAL_INVOCATIONS.x, atmosphere.Hatm);
 	float Cv = UvToCv(gl_GlobalInvocationID.y / TOTAL_INVOCATIONS.y, height, atmosphere.planetRadius);
 
-	vec2 Pa = vec2(0.0, height + atmosphere.planetRadius);
+	vec2 Pa = vec2(height + atmosphere.planetRadius, 0.0);
 	
 	vec2 v = getRay(Cv);
 	
@@ -41,9 +41,9 @@ void main()
 	float previousRayleighDensity = 0.0;
 	float previousOzoneDensity = 0.0;
 	// Integrate along viewing ray from corresponding height
-	float stepSize = distance(Pa, Pb) / float(SAMPLE_COUNT);
+	float stepSize = distance(Pa, Pb) / float(INTEGRATION_STEPS_TRANSMITTANCE);
 	// For each integration step, calculate the particle density of Mie and Rayleigh
-	for (int s = 0; s < SAMPLE_COUNT; ++s) {
+	for (int s = 0; s < INTEGRATION_STEPS_TRANSMITTANCE; ++s) {
 		vec2 P = Pa + stepSize * s * v; // Integration point
 		float h = getHeight(P, atmosphere.planetRadius);
 		float mieDensity = getDensity(h, atmosphere.mieScaleHeight);

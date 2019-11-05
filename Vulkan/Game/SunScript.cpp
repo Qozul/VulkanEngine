@@ -5,7 +5,7 @@ using namespace QZL;
 using namespace QZL::Game;
 
 SunScript::SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf)
-	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(0.0f)
+	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(150.0f))
 {
 }
 
@@ -40,6 +40,8 @@ void SunScript::start()
 	vertices_[1].textureOffset = glm::vec2(0.0f, 0.0f);
 
 	updateBuffer();
+
+	intensity_ = glm::vec3(6.5e-7, 5.1e-7, 4.75e-7) * glm::vec3(1e7);
 }
 
 void SunScript::update(float dt, const glm::mat4& parentMatrix)
@@ -53,9 +55,4 @@ void SunScript::update(float dt, const glm::mat4& parentMatrix)
 	// The direction from the sun particle to the centre point in world space, which in model space is +x
 	direction_ = glm::vec3(parentMatrix * (transform()->toModelMatrix() * glm::vec4(vertices_[0].position, 1.0)));
 
-
-	auto sinTheta = glm::sin(angle_) + DAWN_DUSK_OFFSET;
-	auto sign = glm::sign(sinTheta);
-	auto factor = sign * glm::pow((sinTheta), 2.0f);
-	intensity_ = glm::max(glm::vec3(10.0f) * factor, glm::vec3(0.0f));
 }

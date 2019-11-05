@@ -22,8 +22,8 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 {
 	logicDevice_ = initialiser.system->getMasters().graphicsMaster->getLogicDevice();
 
-	params_.betaRay = glm::vec3(6.55e-6f, 1.73e-5f, 2.30e-5f);
-	params_.betaMie = 2.2e-6f;
+	params_.betaRay = calculateBetaRayeligh(1.0003, 2.545e25, { 6.5e-7, 5.1e-7, 4.75e-7 });// glm::vec3(6.55e-6f, 1.73e-5f, 2.30e-5f);
+	params_.betaMie = 2e-6f;
 	params_.betaMieExt = params_.betaMie / 0.9f;
 	params_.planetRadius = 6371e3f;
 	params_.Hatm = 80000.0f;
@@ -146,6 +146,7 @@ void AtmosphereScript::start()
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, multipleScatteringPipeline.getPipeline());
 		vkCmdDispatch(cmdBuffer, SCATTERING_TEXTURE_WIDTH / INVOCATION_SIZE, SCATTERING_TEXTURE_HEIGHT / INVOCATION_SIZE, SCATTERING_TEXTURE_DEPTH / INVOCATION_SIZE);
 	}
+	//textures_.scatteringSumImage->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	CHECK_VKRESULT(vkEndCommandBuffer(cmdBuffer));
 
 	VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
@@ -154,9 +155,6 @@ void AtmosphereScript::start()
 
 	CHECK_VKRESULT(vkQueueSubmit(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue), 1, &submitInfo, VK_NULL_HANDLE));
 	CHECK_VKRESULT(vkQueueWaitIdle(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue)));
-
-	// TODO during atmos fix
-	//textures_.scatteringSumImage->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
 	SAFE_DELETE(buffer);
 
@@ -201,4 +199,10 @@ VkDescriptorSetLayoutBinding AtmosphereScript::makeLayoutBinding(const uint32_t 
 	layoutBinding.stageFlags = stages;
 	layoutBinding.pImmutableSamplers = immutableSamplers;
 	return layoutBinding;
+}
+
+glm::dvec3 AtmosphereScript::calculateBetaRayeligh(double refractiveIndex, double molecularDensity, glm::dvec3 wavelength)
+{
+	double numerator = (refractiveIndex * refractiveIndex - 1);
+	return glm::dvec3((8.0 * std::pow(std::_Pi, 3.0))) * ((numerator * numerator) / (3.0 * molecularDensity * glm::pow(wavelength, glm::dvec3(4.0))));
 }

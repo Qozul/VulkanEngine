@@ -34,7 +34,7 @@ namespace QZL {
 
 			static constexpr int SCATTERING_TEXTURE_WIDTH = 32;
 			static constexpr int SCATTERING_TEXTURE_HEIGHT = 128;
-			static constexpr int SCATTERING_TEXTURE_DEPTH = 64;
+			static constexpr int SCATTERING_TEXTURE_DEPTH = 32;
 
 			static constexpr int GATHERING_TEXTURE_WIDTH = 32;
 			static constexpr int GATHERING_TEXTURE_HEIGHT = 32;
@@ -60,6 +60,8 @@ namespace QZL {
 			// Creates temporary textures, returned via reference argument. Also creates the member textures.
 			void initTextures(const Graphics::LogicDevice* logicDevice, PrecomputedTextures& finalTextures);
 			VkDescriptorSetLayoutBinding makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers = nullptr, VkShaderStageFlags stages = VK_SHADER_STAGE_COMPUTE_BIT);
+
+			glm::dvec3 calculateBetaRayeligh(double refractiveIndex, double molecularDensity, glm::dvec3 wavelength);
 
 			Assets::AtmosphereParameters params_;
 			Graphics::AtmosphereShaderParams shaderParams_;
