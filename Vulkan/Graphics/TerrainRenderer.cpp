@@ -18,7 +18,8 @@ using namespace QZL;
 using namespace Graphics;
 
 TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
+		sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
 {
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	createDescriptors(createInfo.maxDrawnEntities);
@@ -32,6 +33,7 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	stageInfos.emplace_back(createInfo.tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "Terrain";
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_TRUE;
 	pci.extent = createInfo.extent;
@@ -39,8 +41,8 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data()), stageInfos, pci,
-	RendererPipeline::PrimitiveType::kQuads);
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
+		pipelineLayouts_.data()), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 TerrainRenderer::~TerrainRenderer()
@@ -50,11 +52,11 @@ TerrainRenderer::~TerrainRenderer()
 void TerrainRenderer::createDescriptors(const uint32_t entityCount)
 {
 	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(ElementData) * 2, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT); // 2 = MAX_FRAMES_IN_FLIGHT
+		sizeof(ElementData) * 2, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "TerrainMVPBuffer"); // 2 = MAX_FRAMES_IN_FLIGHT
 	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
-		sizeof(StaticShaderParams::Params) * 2, VK_SHADER_STAGE_FRAGMENT_BIT);
+		sizeof(StaticShaderParams::Params) * 2, VK_SHADER_STAGE_FRAGMENT_BIT, "TerrainParamsBuffer");
 	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
-		sizeof(TessControlInfo) * 2, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+		sizeof(TessControlInfo) * 2, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "TerrainTessCtrlBuffer");
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);
 	storageBuffers_.push_back(tessBuf);

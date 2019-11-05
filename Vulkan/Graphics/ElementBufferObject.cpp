@@ -57,18 +57,20 @@ void ElementBufferObject::commit()
 		return;
 	}
 
-	MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer(MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, largestSize);
+	MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer("", MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, largestSize);
 
 	void* data = deviceMemory_->mapMemory(stagingBuffer.id);
 	memcpy(data, vertexData_.data(), vertexSize);
 	deviceMemory_->unmapMemory(stagingBuffer.id);
-	vertexBufferDetails_ = deviceMemory_->createBuffer(MemoryAllocationPattern::kStaticResource, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexSize);
+	vertexBufferDetails_ = deviceMemory_->createBuffer("EBO VertexBuffer", MemoryAllocationPattern::kStaticResource, 
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexSize);
 	deviceMemory_->transferMemory(stagingBuffer.buffer, vertexBufferDetails_.buffer, 0, 0, vertexSize);
 	if (isIndexed()) {
 		data = deviceMemory_->mapMemory(stagingBuffer.id);
 		memcpy(data, indexData_.data(), indexSize);
 		deviceMemory_->unmapMemory(stagingBuffer.id);
-		indexBufferDetails_ = deviceMemory_->createBuffer(MemoryAllocationPattern::kStaticResource, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexSize);
+		indexBufferDetails_ = deviceMemory_->createBuffer("EBO IndexBuffer", MemoryAllocationPattern::kStaticResource, 
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexSize);
 		deviceMemory_->transferMemory(stagingBuffer.buffer, indexBufferDetails_.buffer, 0, 0, indexSize);
 		indexData_.clear();
 	}

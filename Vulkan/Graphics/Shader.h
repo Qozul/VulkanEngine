@@ -8,9 +8,10 @@
 namespace QZL
 {
 	namespace Graphics {
+		class LogicDevice;
 		class Shader {
 		public:
-			Shader(const VkDevice logicDevice, const std::string& fileName);
+			Shader(const LogicDevice* logicDevice, const std::string& fileName);
 			~Shader();
 
 			VkPipelineShaderStageCreateInfo getCreateInfo(VkShaderStageFlagBits stageFlagBit, VkSpecializationInfo* specConstants = NULL) const noexcept;
@@ -22,7 +23,7 @@ namespace QZL
 
 			std::vector<char> readSPIRV(const std::string& fileName);
 
-			const VkDevice logicDevice_;
+			const LogicDevice* logicDevice_;
 			VkShaderModule module_;
 
 			static const std::string kPath;

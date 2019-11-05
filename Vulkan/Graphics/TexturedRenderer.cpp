@@ -18,7 +18,8 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), 
+		RenderStorage::InstanceUsage::kUnlimited))
 {
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -29,6 +30,7 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "Static";
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_TRUE;
 	pci.extent = createInfo.extent;
@@ -36,7 +38,8 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data()), stageInfos, pci);
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
+		pipelineLayouts_.data()), stageInfos, pci);
 }
 
 TexturedRenderer::~TexturedRenderer()
@@ -46,9 +49,9 @@ TexturedRenderer::~TexturedRenderer()
 void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 {
 	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT);
+		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT, "StaticMVPBuffer");
 	DescriptorBuffer* paramsBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
-		sizeof(StaticShaderParams::Params) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
+		sizeof(StaticShaderParams::Params) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticParamsBuffer");
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(paramsBuf);
 
@@ -56,7 +59,7 @@ void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 	DescriptorBuffer* diBuf = nullptr;
 	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
 		diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
-			sizeof(uint32_t) * 2 * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
+			sizeof(uint32_t) * 2 * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
 		storageBuffers_.push_back(diBuf);
 		layout = descriptor_->makeLayout({ mvpBuf->getBinding(), paramsBuf->getBinding(), diBuf->getBinding() });
 	}

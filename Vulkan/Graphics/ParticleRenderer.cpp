@@ -41,6 +41,7 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	stageInfos.emplace_back(createInfo.geometryShader, VK_SHADER_STAGE_GEOMETRY_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "Particle";
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = createInfo.extent;
@@ -48,7 +49,8 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
+	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
+		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
 }
 
 ParticleRenderer::~ParticleRenderer()
@@ -58,7 +60,7 @@ ParticleRenderer::~ParticleRenderer()
 void ParticleRenderer::createDescriptors(const uint32_t particleSystemCount)
 {
 	DescriptorBuffer* instBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "ParticleInstancesBuffer");
 	storageBuffers_.push_back(instBuf);
 
 	VkDescriptorSetLayout layout = descriptor_->makeLayout({ instBuf->getBinding() });

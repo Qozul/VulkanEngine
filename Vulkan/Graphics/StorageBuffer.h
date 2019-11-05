@@ -14,7 +14,7 @@ namespace QZL
 		class DescriptorBuffer {
 		public:
 			virtual ~DescriptorBuffer();
-			void init( MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags);
+			void init( MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags, std::string debugName = "");
 			const VkDescriptorSetLayoutBinding& getBinding();
 			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set);
 			template<typename DataType>
@@ -26,9 +26,10 @@ namespace QZL
 			const MemoryAllocationDetails& getBufferDetails() { return bufferDetails_; }
 
 			template<typename T>
-			static DescriptorBuffer* makeBuffer(const LogicDevice* logicDevice, MemoryAllocationPattern pattern, uint32_t binding, VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags) {
+			static DescriptorBuffer* makeBuffer(const LogicDevice* logicDevice, MemoryAllocationPattern pattern, uint32_t binding, 
+				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags, std::string debugName) {
 				DescriptorBuffer* buf = new T(logicDevice, binding, maxSize);
-				buf->init(pattern, flags, stageFlags);
+				buf->init(pattern, flags, stageFlags, debugName);
 				return buf;
 			}
 		protected:
@@ -67,10 +68,10 @@ namespace QZL
 		class StorageBuffer : public DescriptorBuffer {
 			template<typename T>
 			friend DescriptorBuffer* DescriptorBuffer::makeBuffer(const LogicDevice* logicDevice, MemoryAllocationPattern pattern, uint32_t binding,
-				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags);
+				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags, std::string debugName);
 		protected:
 			StorageBuffer(const LogicDevice* logicDevice, uint32_t binding, VkDeviceSize maxSize)
-				: DescriptorBuffer(logicDevice, binding, maxSize) {}
+				: DescriptorBuffer(logicDevice, binding, maxSize) { }
 
 			virtual VkBufferUsageFlagBits getUsageBits() override {
 				return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
@@ -83,12 +84,10 @@ namespace QZL
 		class UniformBuffer : public DescriptorBuffer {
 			template<typename T>
 			friend DescriptorBuffer* DescriptorBuffer::makeBuffer(const LogicDevice* logicDevice, MemoryAllocationPattern pattern, uint32_t binding,
-				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags);
+				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags, std::string debugName);
 		protected:
 			UniformBuffer(const LogicDevice* logicDevice, uint32_t binding, VkDeviceSize maxSize)
-				: DescriptorBuffer(logicDevice, binding, maxSize) {
-				
-			}
+				: DescriptorBuffer(logicDevice, binding, maxSize) { }
 
 			virtual VkBufferUsageFlagBits getUsageBits() override {
 				return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
@@ -101,10 +100,10 @@ namespace QZL
 		class DynamicUniformBuffer : public DescriptorBuffer {
 			template<typename T>
 			friend DescriptorBuffer* DescriptorBuffer::makeBuffer(const LogicDevice* logicDevice, MemoryAllocationPattern pattern, uint32_t binding,
-				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags);
+				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags, std::string debugName);
 		protected:
 			DynamicUniformBuffer(const LogicDevice* logicDevice, uint32_t binding, VkDeviceSize maxSize)
-				: DescriptorBuffer(logicDevice, binding, maxSize) {}
+				: DescriptorBuffer(logicDevice, binding, maxSize) { }
 
 			virtual VkBufferUsageFlagBits getUsageBits() override {
 				return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;

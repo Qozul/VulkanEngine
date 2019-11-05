@@ -14,7 +14,7 @@ DynamicElementBuffer::DynamicElementBuffer(DeviceMemory* deviceMemory, size_t sw
 
 void DynamicElementBuffer::commit()
 {
-	vertexBufferDetails_ = deviceMemory_->createBuffer(MemoryAllocationPattern::kDynamicResource, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexData_.size() * swapChainImageCount_);
+	vertexBufferDetails_ = deviceMemory_->createBuffer("DynamicEBO VertexBuffer", MemoryAllocationPattern::kDynamicResource, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexData_.size() * swapChainImageCount_);
 	isCommitted_ = true;
 }
 

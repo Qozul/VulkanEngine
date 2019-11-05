@@ -73,7 +73,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Validation::callback(VkDebugUtilsMessageSeverityF
 	return VK_FALSE;
 }
 
-void Validation::addDebugName(LogicDevice* logicDevice, VkObjectType type, uint64_t handle, std::string name)
+void Validation::addDebugName(const LogicDevice* logicDevice, VkObjectType type, uint64_t handle, std::string name)
 {
 	if (tryEnableSuccess && debugNamesFunction_ != nullptr && name != "") {
 		VkDebugUtilsObjectNameInfoEXT nameInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT, nullptr, type, handle, name.c_str() };

@@ -30,7 +30,7 @@ Image* TextureLoader::loadTexture(const std::string& fileName, VkShaderStageFlag
 	ASSERT(image.is_valid());
 	VkFormat format = convertToVkFormat(image.get_format());
 
-	MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer(MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, image.get_size());
+	MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer("", MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, image.get_size());
 	uint8_t* data = static_cast<uint8_t*>(deviceMemory_->mapMemory(stagingBuffer.id));
 	memcpy(data, image, image.get_size());
 	deviceMemory_->unmapMemory(stagingBuffer.id);

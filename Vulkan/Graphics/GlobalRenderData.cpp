@@ -35,7 +35,7 @@ void GlobalRenderData::createDescriptorSet(LogicDevice* logicDevice, std::vector
 	setLayoutBindingFlags.pBindingFlags = bindingFlags.data();
 
 	lightingUbo_ = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)GlobalRenderDataBindings::kLighting, 0,
-		sizeof(LightingData), VK_SHADER_STAGE_ALL);
+		sizeof(LightingData), VK_SHADER_STAGE_ALL, "GlobalLightingBuffer");
 
 	auto descriptor = logicDevice->getPrimaryDescriptor();
 	if (descriptorIndexBinding != nullptr) {

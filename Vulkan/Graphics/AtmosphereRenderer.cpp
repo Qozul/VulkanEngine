@@ -29,7 +29,8 @@ struct PushConstantExtent {
 };
 
 AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(VertexOnlyPosition), sizeof(uint16_t)), RenderStorage::InstanceUsage::kOne))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), 
+		sizeof(VertexOnlyPosition), sizeof(uint16_t)), RenderStorage::InstanceUsage::kOne))
 {
 	createDescriptors(createInfo.maxDrawnEntities);
 
@@ -40,6 +41,7 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "Atmosphere";
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = createInfo.extent;
@@ -47,8 +49,8 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<VertexOnlyPosition>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 1, &pushConstRange),
-		stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
+	createPipeline<VertexOnlyPosition>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
+		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 AtmosphereRenderer::~AtmosphereRenderer()

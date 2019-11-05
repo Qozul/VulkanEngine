@@ -30,7 +30,7 @@ DeviceMemory::~DeviceMemory()
 	vmaDestroyAllocator(allocator_);
 }
 
-const MemoryAllocationDetails DeviceMemory::createBuffer(MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size, MemoryAccessType accessType)
+const MemoryAllocationDetails DeviceMemory::createBuffer(std::string debugName, MemoryAllocationPattern pattern, VkBufferUsageFlags bufferUsage, VkDeviceSize size, MemoryAccessType accessType)
 {
 	MemoryAllocationDetails allocationDetails = {};
 	allocationDetails.size = size;
@@ -45,6 +45,7 @@ const MemoryAllocationDetails DeviceMemory::createBuffer(MemoryAllocationPattern
 	VmaAllocationInfo allocInfo;
 
 	CHECK_VKRESULT(vmaCreateBuffer(allocator_, &bufferCreateInfo, &allocCreateInfo, &allocationDetails.buffer, &allocations_[allocationDetails.id], &allocInfo));
+	Validation::addDebugName(logicDevice_, VK_OBJECT_TYPE_BUFFER, (uint64_t)allocationDetails.buffer, debugName);
 
 	VkMemoryPropertyFlags memFlags;
 	vmaGetMemoryTypeProperties(allocator_, allocInfo.memoryType, &memFlags);

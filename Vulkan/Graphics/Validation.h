@@ -29,7 +29,7 @@ namespace QZL
 				void* pUserData);
 
 			// See https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#debugging-object-types
-			static void addDebugName(LogicDevice* logicDevice, VkObjectType type, uint64_t handle, std::string name);
+			static void addDebugName(const LogicDevice* logicDevice, VkObjectType type, uint64_t handle, std::string name);
 		private:
 			static bool isExtensionAvailable();
 			static bool isValidationLayerAvailable();

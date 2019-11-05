@@ -1,6 +1,5 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
-
 #pragma once
 #include "VkUtil.h"
 
@@ -19,6 +18,7 @@ namespace QZL
 		};
 
 		struct PipelineCreateInfo {
+			std::string debugName = "";
 			VkExtent2D extent;
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 			VkPrimitiveTopology primitiveTopology;

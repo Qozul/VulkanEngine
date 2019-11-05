@@ -1,7 +1,6 @@
  - References
 
 TODO:
- - Material.h input validation
  - Correct size buffers for each frame
 
 Possible future stuff:

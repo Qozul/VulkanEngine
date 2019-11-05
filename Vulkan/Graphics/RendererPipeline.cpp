@@ -5,6 +5,7 @@
 #include "LogicDevice.h"
 #include "Shader.h"
 #include "Vertex.h"
+#include "Validation.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -19,7 +20,7 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 	shaderStageInfos.reserve(stages.size());
 
 	for (int i = 0; i < stages.size(); ++i) {
-		shaderModules.emplace_back(*logicDevice_, stages[i].name);
+		shaderModules.emplace_back(logicDevice_, stages[i].name);
 		shaderStageInfos.emplace_back(shaderModules[i].getCreateInfo(stages[i].stageFlag, stages[i].specConstants));
 	}
 
@@ -177,11 +178,13 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	}
 
 	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline_));
+	Validation::addDebugName(logicDevice_, VK_OBJECT_TYPE_PIPELINE, (uint64_t)pipeline_, pipelineCreateInfo.debugName);
 
 	// Wiremesh mode for debugging
 	rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &wiremeshLayout_));
 	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &wiremeshPipeline_));
+	Validation::addDebugName(logicDevice_, VK_OBJECT_TYPE_PIPELINE, (uint64_t)wiremeshPipeline_, pipelineCreateInfo.debugName + "Wiremesh");
 }
 
 VkPipelineShaderStageCreateInfo RendererPipeline::createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage)

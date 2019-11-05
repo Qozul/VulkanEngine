@@ -41,6 +41,7 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, Texture
 	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "PostProcess";
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = createInfo.extent;

@@ -5,9 +5,9 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-void DescriptorBuffer::init(MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags)
+void DescriptorBuffer::init(MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags, std::string debugName)
 {
-	bufferDetails_ = logicDevice_->getDeviceMemory()->createBuffer(pattern, getUsageBits(), size_);
+	bufferDetails_ = logicDevice_->getDeviceMemory()->createBuffer(debugName, pattern, getUsageBits(), size_);
 
 	binding_ = {};
 	binding_.binding = bindingIdx_;

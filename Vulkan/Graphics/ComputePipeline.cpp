@@ -12,7 +12,7 @@ ComputePipeline::ComputePipeline(const LogicDevice* logicDevice, VkPipelineLayou
 {
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &layout_));
 
-	Shader module = { *logicDevice_, computeShader };
+	Shader module = { logicDevice_, computeShader };
 
 	VkPipelineShaderStageCreateInfo stageInfo;
 	stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
