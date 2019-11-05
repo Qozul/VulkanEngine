@@ -11,7 +11,6 @@ void ParticleSystem::update(float dt, const glm::mat4& parentMatrix)
 {
 	elapsedUpdateTime_ += dt;
 	if (elapsedUpdateTime_ >= updateInterval_) {
-
 		if (!alwaysAliveAndUnordered_) {
 			// Update or free every particle that is currently active
 			size_t i = 0;
@@ -75,7 +74,7 @@ Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
 ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
 	size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName)
 	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
-	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0)
+	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0), tint_(0.0f)
 {
 	ASSERT(billboardPoint_ != nullptr);
 	ASSERT(buf != nullptr);
@@ -84,7 +83,6 @@ ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::ve
 	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
 
 	material_ = initialiser.system->getMasters().assetManager->textureManager->requestMaterial<Graphics::ParticleMaterial>(materialName);
-	tint_ = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	textureTileLength_ = textureTileLength;
 }
 

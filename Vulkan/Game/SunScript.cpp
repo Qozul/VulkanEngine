@@ -55,4 +55,5 @@ void SunScript::update(float dt, const glm::mat4& parentMatrix)
 	// The direction from the sun particle to the centre point in world space, which in model space is +x
 	direction_ = glm::vec3(parentMatrix * (transform()->toModelMatrix() * glm::vec4(vertices_[0].position, 1.0)));
 
+	static_cast<Graphics::ParticleShaderParams*>(owningEntity_->getGraphicsComponent()->getPerMeshShaderParams())->params.tint = glm::abs(glm::cos(angle_)) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 }
