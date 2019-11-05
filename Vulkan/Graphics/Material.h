@@ -1,90 +1,148 @@
+// Author: Ralph Ridley
+// Date: 12/10/19
+// Define each material type for the renderers
+
 #pragma once
 #include "VkUtil.h"
-#include "../Assets/AtmosphereParameters.h"
-#include <fstream>
-#include <sstream>
+#include "GraphicsTypes.h"
 
 namespace QZL {
 	namespace Graphics {
+		class Descriptor;
+		class TextureManager;
 		class TextureSampler;
-
-		// A material is a simple wrapper around the requirements of a renderer.
-		// It will usually consist of a set of textures and possibly some additional data.
-		// The data should be accessible via getMaterialData, and will likely correspond to a data struct defined by the subclass.
-		// A material has its own data set with the textures held in immutable samplers at bindings of a set.
+		
+		// A material is a group of textures with an associated descriptor set.
 		class Material {
 		public:
-			Material(const std::string materialFileName)
-				: materialFileName_(materialFileName), textureSet_(VK_NULL_HANDLE) {}
+			Material(const std::string materialFileName = "")
+				: materialFileName_(materialFileName), textureSet_(VK_NULL_HANDLE), layout_(VK_NULL_HANDLE)
+			{
+			}
 
-			VkDescriptorSet getTextureSet() {
+			// This ctor is for when a material is created by the program (such as a game script). Note that care is taken with memory management
+			// and that by calling this ctor, the object and its samplers are *probably* not managed by the texture manager and must be deleted manually.
+			Material(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
+				: materialFileName_(name), textureSet_(set), layout_(layout) { }
+
+			virtual ~Material() {}
+
+			VkDescriptorSet getTextureSet() const {
 				return textureSet_;
 			}
-		protected:
-			
 
-			virtual void loadMaterial() = 0;
+			const std::string& getName() const {
+				return materialFileName_;
+			}
+
+			void load(TextureManager* textureManager, Descriptor* descriptor);
+
+			virtual const RendererTypes getRendererType() const = 0;
+		protected:
+			void readFile(std::vector<std::string>& lines);
+
+			void makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers);
+
+			constexpr static VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler);
+
+			virtual std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) = 0;
+			virtual VkDescriptorSetLayout makeLayout(Descriptor* descriptor) = 0;
 
 			VkDescriptorSet textureSet_;
+			VkDescriptorSetLayout layout_;
 			const std::string materialFileName_;
 		};
 
 		class ParticleMaterial : public Material {
 		public:
 			ParticleMaterial(const std::string materialFileName)
-				: Material(materialFileName) { }
-		protected:
-			void loadMaterial() override {
-				std::ifstream requirementsFile("../descriptor-requirements.txt");
-				ASSERT(requirementsFile.is_open());
-				std::string type, diffuseTexture;
-				requirementsFile >> type >> diffuseTexture;
-				requirementsFile.close();
+				: Material(materialFileName), diffuse_(nullptr) { }
+			~ParticleMaterial();
 
-				ASSERT(type == "PARTICLE");
-				// todo load texture from texture manager.
-				//      call this from texture manager.
-				//      and store the material so it can be reused.
-				//      Add this to GraphicsComponent using Material interface.
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
+
+			const RendererTypes getRendererType() const override {
+				return RendererTypes::kParticle;
 			}
+
+		protected:
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
+		private:
+			TextureSampler* diffuse_;
 		};
 
-		struct MaterialStatic {
-			// 32 bytes
-			float diffuseX, diffuseY, diffuseZ; // Mixed in with texture
-			float alpha; // Sets maximum alpha
-			float specularX, specularY, specularZ; // Can create tinting
-			float specularExponent; // The intesity of the colour
-			uint32_t diffuseTextureIndex; // Only used if descriptor indexing is enabled
-			uint32_t normalMapIndex; // Only used if descriptor indexing is enabled
-			float padding0, padding1;
-			MaterialStatic(glm::vec3 diffuseColour, glm::vec3 specularColour, float alpha, float specExponent) 
-				: diffuseX(diffuseColour.x), diffuseY(diffuseColour.y), diffuseZ(diffuseColour.z), alpha(alpha),
-				  specularX(specularColour.x), specularY(specularColour.y), specularZ(specularColour.z), specularExponent(specExponent),
-				diffuseTextureIndex(0), normalMapIndex(0), padding0(0.0f), padding1(0.0f) { }
-			MaterialStatic(glm::vec3 diffuseColour, glm::vec3 specularColour, float alpha, float specExponent, 
-				uint32_t diffuseIndex, uint32_t normalMapIndex)
-				: diffuseX(diffuseColour.x), diffuseY(diffuseColour.y), diffuseZ(diffuseColour.z), alpha(alpha),
-				specularX(specularColour.x), specularY(specularColour.y), specularZ(specularColour.z), specularExponent(specExponent),
-				diffuseTextureIndex(diffuseIndex), normalMapIndex(normalMapIndex), padding0(0.0f), padding1(0.0f) { }
+		class StaticMaterial : public Material {
+			friend class TexturedRenderer;
+		public:
+			StaticMaterial(const std::string materialFileName)
+				: Material(materialFileName), isUsingDI(false) {
+				diffuse_.diffuseSampler = nullptr;
+				normalMap_.normalMapSampler = nullptr;
+			}
+
+			~StaticMaterial();
+
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
+
+			const RendererTypes getRendererType() const override {
+				return RendererTypes::kStatic;
+			}
+		protected:
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
+		private:
+			union {
+				uint32_t diffuseTextureIndex;
+				TextureSampler* diffuseSampler;
+			} diffuse_;
+			union {
+				uint32_t normalMapIndex;
+				TextureSampler* normalMapSampler;
+			} normalMap_;
+			bool isUsingDI;
 		};
-		struct MaterialAtmosphere {
-			glm::vec3 betaRay;
-			float betaMie;
 
-			glm::vec3 cameraPosition;
-			float planetRadius;
+		class TerrainMaterial : public Material {
+		public:
+			TerrainMaterial(const std::string materialFileName)
+				: Material(materialFileName), heightmap_(nullptr), diffuse_(nullptr) { }
 
-			glm::vec3 sunDirection;
-			float Hatm;
+			~TerrainMaterial();
 
-			glm::vec3 sunIntensity;
-			float g;
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
+
+			const RendererTypes getRendererType() const override {
+				return RendererTypes::kTerrain;
+			}
+		protected:
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
+		private:
+			TextureSampler* heightmap_;
+			TextureSampler* diffuse_;
 		};
-		struct MaterialParticle {
-			float textureTileLength;
-			glm::vec4 tint;
-			TextureSampler* texture;
+
+		class AtmosphereMaterial : public Material {
+		public:
+			AtmosphereMaterial(const std::string materialFileName)
+				: Material(materialFileName), scatteringTexture_(nullptr) { }
+
+			AtmosphereMaterial(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
+				: Material(name, set, layout), scatteringTexture_(nullptr) { }
+
+			~AtmosphereMaterial() { }
+
+			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
+
+			const RendererTypes getRendererType() const override {
+				return RendererTypes::kAtmosphere;
+			}
+		protected:
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureLoader, std::vector<std::string>& lines) override;
+			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
+		private:
+			TextureSampler* scatteringTexture_;
 		};
 	}
 }

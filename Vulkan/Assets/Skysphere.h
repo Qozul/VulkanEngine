@@ -7,15 +7,12 @@ namespace QZL {
 		struct GameScriptInitialiser;
 	}
 	namespace Assets {
-		class Atmosphere;
 		class Skysphere : public Entity {
 		public:
 			Skysphere(const std::string name, const Graphics::LogicDevice* logicDevice, Game::SunScript* sun, Game::GameScriptInitialiser initialiser);
 			~Skysphere();
 		private:
-			Atmosphere* atmos_;
-
-			static void loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::VertexOnlyPosition>& vertices);
+			static void loadFunction(uint32_t& count, std::vector<char>& indices, std::vector<char>& vertices);
 		};
 	}
 }

@@ -1,56 +1,21 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #include "PostProcessRenderer.h"
-#include "AtmosphereRenderer.h"
-#include "ElementBuffer.h"
-#include "StorageBuffer.h"
+#include "GlobalRenderData.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "TextureSampler.h"
-#include "TextureManager.h"
-#include "DeviceMemory.h"
 #include "RendererPipeline.h"
-#include "GraphicsComponent.h"
-#include "SwapChain.h"
-#include "TextureManager.h"
-#include "AtmosphereShaderParams.h"
-#include "../Assets/Entity.h"
-#include "../Game/SunScript.h"
-#include "../Game/AtmosphereScript.h"
+#include "GraphicsMaster.h"
 
 using namespace QZL;
-using namespace QZL::Graphics;
+using namespace Graphics;
 
-PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass renderPass, VkExtent2D swapChainExtent,
-	Descriptor* descriptor, const std::string& vertexShader, const std::string& fragmentShader, Image* apScatteringTex,
-	Image* apTransmittanceTex, TextureSampler* colourTex, TextureSampler* depthTex)
-	: RendererBase(logicDevice, new RenderStorageNoInstances(new ElementBuffer<VertexOnlyPosition>(logicDevice->getDeviceMemory()))), descriptor_(descriptor)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
+	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
 {
-	apScatteringTexture_ = new TextureSampler(logicDevice, "ApScatteringSampler", apScatteringTex, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
-	apTransmittanceTexture_ = new TextureSampler(logicDevice, "ApTransmittanceSampler", apTransmittanceTex, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
-
-	auto scatteringbinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto transmittancebinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto colourbinding = TextureSampler::makeBinding(2, VK_SHADER_STAGE_FRAGMENT_BIT);
-	auto depthbinding = TextureSampler::makeBinding(3, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	auto layout = descriptor->makeLayout({ scatteringbinding, transmittancebinding, colourbinding, depthbinding });
-	pipelineLayouts_.push_back(layout);
-
-	auto setIdx = descriptor->createSets({ layout });
-	descriptorSets_.push_back(descriptor->getSet(setIdx));
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(apScatteringTexture_->descriptorWrite(descriptorSets_[0], 0));
-	descWrites.push_back(apTransmittanceTexture_->descriptorWrite(descriptorSets_[0], 1));
-	descWrites.push_back(colourTex->descriptorWrite(descriptorSets_[0], 2));
-	descWrites.push_back(depthTex->descriptorWrite(descriptorSets_[0], 3));
-	descriptor_->updateDescriptorSets(descWrites);
-	
-	std::vector<Graphics::VertexOnlyPosition> vertices = { glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, -1.0f, 0.0f) };
-	std::vector<uint16_t> indices = { 0, 1, 3, 2 };
-	auto buf = static_cast<ElementBufferInterface*>(renderStorage_->buf());
-	auto voffset = buf->addVertices(vertices.data(), vertices.size());
-	auto ioffset = buf->addIndices(indices.data(), indices.size());
-	buf->emplaceMesh("FullscreenQuad", indices.size(), ioffset, voffset);
-	renderStorage_->addMesh(nullptr, buf->getMesh("FullscreenQuad"));
+	createDescriptors(createInfo.maxDrawnEntities);
 
 	std::array<VkSpecializationMapEntry, 2> specConstantEntries;
 	specConstantEntries[0].constantID = 0;
@@ -72,34 +37,49 @@ PostProcessRenderer::PostProcessRenderer(LogicDevice* logicDevice, VkRenderPass 
 	specConstants[1].pData = specConstantValues.data();
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &specConstants[0]);
-	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &specConstants[0]);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "PostProcess";
 	pci.enableDepthTest = VK_FALSE;
-	pci.extent = swapChainExtent;
-	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.enableDepthWrite = VK_FALSE;
+	pci.extent = createInfo.extent;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
+	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
+		RendererPipeline::PrimitiveType::kQuads);
 }
 
 PostProcessRenderer::~PostProcessRenderer()
 {
-	SAFE_DELETE(apScatteringTexture_);
-	SAFE_DELETE(apTransmittanceTexture_);
 }
 
-void PostProcessRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void PostProcessRenderer::createDescriptors(const uint32_t entityCount)
 {
-	ASSERT_DEBUG(renderStorage_->meshCount() > 0);
+	VkDescriptorSetLayoutBinding gcbBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
+	VkDescriptorSetLayoutBinding gdbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	VkDescriptorSetLayout layout = descriptor_->makeLayout({ gcbBinding, gdbBinding });
+
+	pipelineLayouts_.push_back(layout);
+
+	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
+
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 0));
+	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 1));
+	descriptor_->updateDescriptorSets(descWrites);
+}
+
+void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
+{
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, &descriptorSets_[0], 0, nullptr);
-	auto cmd = *renderStorage_->meshData();
-	vkCmdDrawIndexed(cmdBuffer, cmd.count, cmd.instanceCount, cmd.firstIndex, cmd.baseVertex, cmd.baseInstance);
-}
 
-void PostProcessRenderer::initialise(const glm::mat4& viewMatrix)
-{
+	VkDescriptorSet sets[1] = { descriptorSets_[0] };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
+
+	vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
 }

@@ -45,7 +45,7 @@ float UsToCs(float Us) {
 }
 
 float CsToUs(float Cs) {
-	return 0.5 * (atan(max(Cs, -0.1975) * tan(1.26 * 1.1)) / 1.1 + (1 - 0.26));
+	return 0.5 * (atan(max(Cs, -0.1975) * tan(1.26 * 1.1)) / 1.1 + (1.0 - 0.26));
 }
 
 vec2 getRay(float Cv) {

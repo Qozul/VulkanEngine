@@ -1,133 +1,162 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "TexturedRenderer.h"
-#include "ElementBuffer.h"
+#include "ElementBufferObject.h"
+#include "RenderStorage.h"
+#include "GlobalRenderData.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
-#include "TextureSampler.h"
-#include "TextureManager.h"
-#include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
-#include "StaticShaderParams.h"
-#include "StaticRenderStorage.h"
+#include "ShaderParams.h"
+#include "Material.h"
+#include "RenderObject.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-TexturedRenderer::TexturedRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-	const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData)
-	: RendererBase(logicDevice), descriptor_(descriptor)
+TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), 
+		RenderStorage::InstanceUsage::kUnlimited))
 {
-	ASSERT(entityCount > 0);
-	if (logicDevice->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		renderStorage_ = new RenderStorage(new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
-	}
-	else {
-		renderStorage_ = new StaticRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
-	}
-
-	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
-		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT);
-	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
-		sizeof(MaterialStatic) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT);
-	storageBuffers_.push_back(mvpBuf);
-	storageBuffers_.push_back(matBuf);
-
-	VkDescriptorSetLayout layout;
-	if (!logicDevice->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		VkDescriptorSetLayoutBinding diffuseBinding = {};
-		diffuseBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
-		diffuseBinding.descriptorCount = 1;
-		diffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		diffuseBinding.pImmutableSamplers = nullptr;
-		diffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		VkDescriptorSetLayoutBinding normalMapBinding = {};
-		normalMapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_1;
-		normalMapBinding.descriptorCount = 1;
-		normalMapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		normalMapBinding.pImmutableSamplers = nullptr;
-		normalMapBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), diffuseBinding, normalMapBinding });
-	}
-	else {
-		layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding() });
-	}
-
-	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(globalRenderData->getLayout());
-
-	size_t idx = descriptor->createSets({ layout, layout, layout });
-	std::vector<VkWriteDescriptorSet> descWrites;
-	for (int i = 0; i < 3; ++i) {
-		descriptorSets_.push_back(descriptor->getSet(idx + i));
-		descriptorSets_.push_back(globalRenderData->getSet());
-		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
-		descWrites.push_back(matBuf->descriptorWrite(descriptor->getSet(idx + i)));
-	}
-	descriptor->updateDescriptorSets(descWrites);
+	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
+	createDescriptors(createInfo.maxDrawnEntities);
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "Static";
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_TRUE;
-	pci.extent = swapChainExtent;
+	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<VertexOnlyPosition>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci);
-
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
+		pipelineLayouts_.data()), stageInfos, pci);
 }
 
 TexturedRenderer::~TexturedRenderer()
 {
 }
 
-void TexturedRenderer::initialise(const glm::mat4& viewMatrix)
+void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 {
-	if (renderStorage_->instanceCount() == 0)
-		return;
-	MaterialStatic* matDataPtr = static_cast<MaterialStatic*>(storageBuffers_[1]->bindRange());
-	auto instPtr = renderStorage_->instanceData();
-	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		matDataPtr[i] = static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())->getMaterial();
+	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
+		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT, "StaticMVPBuffer");
+	DescriptorBuffer* paramsBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
+		sizeof(StaticShaderParams::Params) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticParamsBuffer");
+	storageBuffers_.push_back(mvpBuf);
+	storageBuffers_.push_back(paramsBuf);
+
+	VkDescriptorSetLayout layout;
+	DescriptorBuffer* diBuf = nullptr;
+	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
+		diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
+			sizeof(uint32_t) * 2 * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
+		storageBuffers_.push_back(diBuf);
+		layout = descriptor_->makeLayout({ mvpBuf->getBinding(), paramsBuf->getBinding(), diBuf->getBinding() });
 	}
-	storageBuffers_[1]->unbindRange();
+	else {
+		layout = descriptor_->makeLayout({ mvpBuf->getBinding(), paramsBuf->getBinding() });
+	}
+
+	pipelineLayouts_.push_back(layout);
+	if (!logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
+		pipelineLayouts_.push_back(StaticMaterial::getLayout(descriptor_));
+	}
+
+	size_t setIdx = descriptor_->createSets({ layout, layout, layout });
+
+	std::vector<VkWriteDescriptorSet> descWrites;
+	for (int i = 0; i < 3; ++i) {
+		descriptorSets_.push_back(descriptor_->getSet(setIdx + i));
+		descWrites.push_back(mvpBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
+		descWrites.push_back(paramsBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
+		if (diBuf != nullptr) {
+			descWrites.push_back(diBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
+		}
+	}
+	descriptor_->updateDescriptorSets(descWrites);
 }
 
-void TexturedRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
+	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
+	updateBuffers(camera.viewMatrix);
+
+	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
+		recordDIFrame(idx, cmdBuffer);
+	}
+	else {
+		recordNormalFrame(idx, cmdBuffer);
+	}
+}
+
+void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
+{
+	// Textures defined per instance using descriptor indexing
+	updateDIBuffer();
+	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
+		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
+
+		VkDescriptorSet sets[2] = { descriptorSets_[0], descriptorSets_[1 + (size_t)idx] };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
+
+		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+	}
+}
+
+void TexturedRenderer::recordNormalFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
+{
+	// Texture defined per mesh, not per instance
+	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
+		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
+
+		VkDescriptorSet sets[3] = { descriptorSets_[0], descriptorSets_[1 + (size_t)idx], robject->getMaterial()->getTextureSet() };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
+
+		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+	}
+}
+
+void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
+{
 	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
+	StaticShaderParams::Params* paramsPtr = static_cast<StaticShaderParams::Params*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
+		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
 		eleDataPtr[i] = {
 			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
 		};
+		paramsPtr[i] = {
+			static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())->params
+		};
 	}
+	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();
+}
 
-	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-
-		auto srs = static_cast<StaticRenderStorage*>(renderStorage_);
-		if (!logicDevice_->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-			std::vector<VkWriteDescriptorSet> descWrites;
-			descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[static_cast<size_t>(idx) * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_0));
-			descWrites.push_back(srs->getParamData(i).normalMap->descriptorWrite(descriptorSets_[static_cast<size_t>(idx) * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_1));
-			descriptor_->updateDescriptorSets(descWrites);
-		}
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[static_cast<size_t>(idx) * 2], 0, nullptr);
-		
-		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+void TexturedRenderer::updateDIBuffer()
+{
+	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[2]->bindRange());
+	auto instPtr = renderStorage_->instanceData();
+	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 2) {
+		dataPtr[i] = static_cast<StaticMaterial*>((*(instPtr + i))->getMaterial())->diffuse_.diffuseTextureIndex;
+		dataPtr[i + 1] = static_cast<StaticMaterial*>((*(instPtr + i))->getMaterial())->normalMap_.normalMapIndex;
 	}
+	storageBuffers_[2]->unbindRange();
 }

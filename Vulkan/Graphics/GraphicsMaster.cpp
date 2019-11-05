@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "GraphicsMaster.h"
 #include "Validation.h"
 #include "PhysicalDevice.h"
@@ -5,36 +7,17 @@
 #include "SwapChain.h"
 #include "RendererBase.h"
 #include "TextureManager.h"
-#include "../System.h"
+#include "../SystemMasters.h"
 #include "../Assets/AssetManager.h"
-#include "MeshLoader.h"
-#include "PostProcessPass.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-constexpr auto kHoldConsole = false;
-
 glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, NEAR_PLANE_Z, FAR_PLANE_Z);
 
-EnvironmentArgs environmentArgs;
-
-void GraphicsMaster::registerComponent(GraphicsComponent* component, BasicMesh* mesh)
+void GraphicsMaster::registerComponent(GraphicsComponent* component, RenderObject* robject)
 {
-	auto renderer = component->getRendererType();
-	if (mesh == nullptr) {
-		if (component->getVertexType() == VertexType::POSITION_UV_NORMAL) {
-			renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-				component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFunc()));
-		}
-		else {
-			renderers_[renderer]->registerComponent(component, masters_.assetManager->meshLoader->loadMesh(
-				component->getMeshName(), *static_cast<ElementBufferInterface*>(renderers_[renderer]->getElementBuffer()), component->getLoadFuncOnlyPos()));
-		}
-	}
-	else {
-		renderers_[renderer]->registerComponent(component, mesh);
-	}
+	renderers_[component->getRendererType()]->registerComponent(component, robject);
 }
 
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
@@ -42,21 +25,14 @@ void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 	renderers_[type] = renderer;
 }
 
-void GraphicsMaster::attachPostProcessScript(Game::AtmosphereScript* script)
+ElementBufferObject* GraphicsMaster::getDynamicBuffer(RendererTypes type)
 {
-	auto pass = static_cast<PostProcessPass*>(swapChain_->getRenderPass(RenderPassTypes::POST_PROCESS));
-	pass->attachAtmosphereScript(script);
+	return renderers_[type]->getElementBuffer();
 }
 
-DynamicBufferInterface* GraphicsMaster::getDynamicBuffer(RendererTypes type)
+LogicalCamera* GraphicsMaster::getLogicalCamera(RendererTypes type)
 {
-	auto buf = renderers_[type]->getElementBuffer();
-	if (buf->bufferType() & BufferFlags::DYNAMIC) {
-		return dynamic_cast<DynamicBufferInterface*>(buf);
-	}
-	else {
-		return nullptr;
-	}
+	return nullptr;
 }
 
 const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)
@@ -69,9 +45,6 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 {
 	kProjectionMatrix[1][1] *= -1;
 	details_.master = this;
-	environmentArgs.numObjectsX = 10;
-	environmentArgs.numObjectsY = 10;
-	environmentArgs.numObjectsZ = 10;
 	std::vector<const char*> extensions;
 	uint32_t enabledLayerCount;
 	const char* const* enabledLayerNames;
@@ -88,8 +61,8 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
 	}
 
-	viewMatrix_ = new glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	camPosition_ = new glm::vec3(0.0f, 10.0f, 0.0f);
+	mainCamera_.viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+	mainCamera_.position = glm::vec3(0.0f, 10.0f, 0.0f);
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
@@ -101,7 +74,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	initDevices(surfaceCapabilities, enabledLayerCount, enabledLayerNames);
 
 	masters.assetManager->textureManager = new Graphics::TextureManager(details_.logicDevice, details_.logicDevice->getPrimaryDescriptor(),
-		MAX_DESCRIPTOR_INDEXED_TEXTURES, supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING));
+		MAX_DESCRIPTOR_INDEXED_TEXTURES, supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
 
 	swapChain_ = new SwapChain(this, details_.window, details_.surface, details_.logicDevice, surfaceCapabilities);
 	swapChain_->setCommandBuffers(std::vector<VkCommandBuffer>(details_.logicDevice->commandBuffers_.begin() + 1, details_.logicDevice->commandBuffers_.end()));
@@ -115,8 +88,6 @@ GraphicsMaster::~GraphicsMaster()
 
 	SAFE_DELETE(details_.physicalDevice);
 	SAFE_DELETE(validation_);
-	SAFE_DELETE(viewMatrix_);
-	SAFE_DELETE(camPosition_);
 
 	vkDestroySurfaceKHR(details_.instance, details_.surface, nullptr);
 	vkDestroyInstance(details_.instance, nullptr);
@@ -191,7 +162,7 @@ void GraphicsMaster::preframeSetup()
 	// NOTE that since the are renderers are stored in no order then it may not be the same key each time
 	int i = 0;
 	for (auto renderer : renderers_) {
-		renderer.second->preframeSetup(*viewMatrix_);
+		renderer.second->preframeSetup();
 		inputProfile_.profileBindings.push_back({ { GLFW_KEY_1 + i }, std::bind(&RendererBase::toggleWiremeshMode, renderer.second), 1.0f });
 		++i;
 	}
@@ -200,5 +171,5 @@ void GraphicsMaster::preframeSetup()
 
 void GraphicsMaster::loop()
 {
-	swapChain_->loop(getViewMatrix());
+	swapChain_->loop(mainCamera_);
 }

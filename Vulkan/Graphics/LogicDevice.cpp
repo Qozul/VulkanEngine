@@ -25,43 +25,15 @@ LogicDevice::LogicDevice(PhysicalDevice* physicalDevice, VkDevice device, const 
 	std::vector<uint32_t> indices, std::vector<VkQueue> handles)
 	: physicalDevice_(physicalDevice), device_(device), queueFamilyIndices_(indices), queueHandles_(handles)
 {
-	VkCommandPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = queueFamilyIndices_[static_cast<size_t>(QueueFamilyType::kGraphicsQueue)];
-
-	CHECK_VKRESULT(vkCreateCommandPool(device_, &poolInfo, nullptr, &primaryCommandPool_)); 
-
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = queueFamilyIndices_[static_cast<size_t>(QueueFamilyType::kComputeQueue)];
-
-	CHECK_VKRESULT(vkCreateCommandPool(device_, &poolInfo, nullptr, &computeCommandPool_));
+	createCommandPools(queueFamilyIndices_[static_cast<size_t>(QueueFamilyType::kGraphicsQueue)], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, &primaryCommandPool_);
+	createCommandPools(queueFamilyIndices_[static_cast<size_t>(QueueFamilyType::kComputeQueue)], VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, &computeCommandPool_);
 
 	createCommandBuffers(commandBuffers_, primaryCommandPool_, 4);
 	createCommandBuffers(computeCommandBuffers_, computeCommandPool_, 1);
 
-	std::vector<std::pair<VkDescriptorType, uint32_t>> descriptorTypes;
+	createPrimaryDescriptor();
 
-	int setCountTotal = 0;
-	std::ifstream requirementsFile("../descriptor-requirements.txt");
-	ASSERT(requirementsFile.is_open());
-	std::string line;
-	while (std::getline(requirementsFile, line)) {
-		// Ignore comments
-		if (line != "" && line.at(0) != '#') {
-			std::istringstream iss(line);
-			int descriptorType, count, setCount;
-			ASSERT(iss >> descriptorType >> count >> setCount);
-			setCountTotal += setCount;
-			descriptorTypes.emplace_back(static_cast<VkDescriptorType>(descriptorType), static_cast<uint32_t>(count));
-		}
-	}
-	requirementsFile.close();
-
-	primaryDescriptor_ = new Descriptor(this, static_cast<uint32_t>(setCountTotal), descriptorTypes);
-
-	// Need device memory before swap chain
-	deviceMemory_ = new DeviceMemory(physicalDevice, this, commandBuffers_[0], getQueueHandle(QueueFamilyType::kGraphicsQueue)); // TODO change to transfer queue
+	deviceMemory_ = new DeviceMemory(physicalDevice, this, commandBuffers_[0], getQueueHandle(QueueFamilyType::kGraphicsQueue));
 }
 
 LogicDevice::~LogicDevice()
@@ -73,6 +45,15 @@ LogicDevice::~LogicDevice()
 	vkFreeCommandBuffers(device_, computeCommandPool_, static_cast<uint32_t>(computeCommandBuffers_.size()), computeCommandBuffers_.data());
 	vkDestroyCommandPool(device_, computeCommandPool_, nullptr);
 	vkDestroyDevice(device_, nullptr);
+}
+
+void LogicDevice::createCommandPools(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags, VkCommandPool* commandPool)
+{
+	VkCommandPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = flags;
+	poolInfo.queueFamilyIndex = queueFamilyIndex;
+	CHECK_VKRESULT(vkCreateCommandPool(device_, &poolInfo, nullptr, commandPool));
 }
 
 void LogicDevice::createCommandBuffers(std::vector<VkCommandBuffer>& buffers, VkCommandPool pool, uint32_t count, VkCommandBufferLevel level)
@@ -88,6 +69,33 @@ void LogicDevice::createCommandBuffers(std::vector<VkCommandBuffer>& buffers, Vk
 	allocInfo.commandBufferCount = count;
 
 	CHECK_VKRESULT(vkAllocateCommandBuffers(device_, &allocInfo, &buffers[startSize]));
+}
+
+void LogicDevice::readDescriptorRequirements(std::vector<std::pair<VkDescriptorType, uint32_t>>& descriptorTypes, uint32_t& setCount)
+{
+	std::ifstream requirementsFile(kDescriptorRequirementsName);
+	ASSERT(requirementsFile.is_open());
+	std::string line;
+	while (std::getline(requirementsFile, line)) {
+		// Ignore comments
+		if (line != "" && line.at(0) != '#') {
+			std::istringstream iss(line);
+			int descriptorType, count, sCount;
+			ASSERT(iss >> descriptorType >> count >> sCount);
+			setCount += sCount;
+			descriptorTypes.emplace_back(static_cast<VkDescriptorType>(descriptorType), static_cast<uint32_t>(count));
+		}
+	}
+	requirementsFile.close();
+}
+
+void LogicDevice::createPrimaryDescriptor()
+{
+	std::vector<std::pair<VkDescriptorType, uint32_t>> descriptorTypes;
+	uint32_t setCount = 0;
+	readDescriptorRequirements(descriptorTypes, setCount);
+
+	primaryDescriptor_ = new Descriptor(this, setCount, descriptorTypes);
 }
 
 VkDevice LogicDevice::getLogicDevice() const
@@ -122,7 +130,7 @@ VkQueue LogicDevice::getQueueHandle(QueueFamilyType type) const
 	return queueHandles_[static_cast<size_t>(type)];
 }
 
-const bool LogicDevice::supportsOptionalExtension(OptionalExtensions ext)
+const bool LogicDevice::supportsOptionalExtension(OptionalExtensions ext) const
 {
-	return physicalDevice_->optionalExtensionsEnabled_[ext];
+	return physicalDevice_->optionalExtensionsEnabled_.at(ext);
 }

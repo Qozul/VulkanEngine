@@ -25,7 +25,7 @@ layout(push_constant) uniform PushConstants {
 	float tileLength;
 } PC;
 
-layout (binding = 0) uniform Params {
+layout (set = 0, binding = 0) uniform Params {
 	PerInstanceParams[SC_MAX_PARTICLE_SYSTEMS] params;
 } UBO_0;
 

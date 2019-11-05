@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
 
@@ -24,15 +26,7 @@ namespace QZL
 			}
 			VkDescriptorImageInfo getImageInfo();
 
-			static VkDescriptorSetLayoutBinding makeBinding(uint32_t b, VkShaderStageFlags flags, VkSampler* immutableSampler = nullptr) {
-				VkDescriptorSetLayoutBinding binding = {};
-				binding.binding = b;
-				binding.descriptorCount = 1;
-				binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				binding.pImmutableSamplers = immutableSampler;
-				binding.stageFlags = flags;
-				return binding;
-			}
+			static VkDescriptorSetLayoutBinding makeBinding(uint32_t b, VkShaderStageFlags flags, VkSampler* immutableSampler = nullptr);
 		private:
 			const LogicDevice* logicDevice_;
 			Image* texture_;

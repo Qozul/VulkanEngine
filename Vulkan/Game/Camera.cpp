@@ -36,7 +36,7 @@ void Camera::start()
 	*position_ = glm::vec3(136.6f, 83.3f, 20.1f);
 }
 
-void Camera::update(float dt)
+void Camera::update(float dt, const glm::mat4& parentMatrix)
 {
 	dt = glm::min(dt, MAX_ROTATION_DT);
 	yaw_ += static_cast<float>(inputManager_->getRelativeMousePos().x) * MOUSE_SENSITIVITY * dt; // movement around y axis

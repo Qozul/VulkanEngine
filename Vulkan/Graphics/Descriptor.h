@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
 
@@ -5,15 +7,6 @@ namespace QZL
 {
 	namespace Graphics {
 		class LogicDevice;
-
-		// Set = 0 (per renderer)
-		enum class ReservedGraphicsBindings0 : uint32_t {
-			PER_ENTITY_DATA = 0,
-			MATERIAL_DATA = 1,
-			TEXTURE_0 = 2,
-			TEXTURE_1 = 3,
-			UNRESERVED = 4
-		};
 
 		class Descriptor {
 		public:

@@ -1,5 +1,4 @@
 #include "Skysphere.h"
-#include "../Graphics/AtmosphereShaderParams.h"
 #include "AltAtmosphere.h"
 #include "../Graphics/Vertex.h"
 #include "../Game/GameScript.h"
@@ -14,17 +13,22 @@ Skysphere::Skysphere(const std::string name, const Graphics::LogicDevice* logicD
 	: Entity(name)
 {
 	initialiser.owner = this;
-	setGameScript(new AtmosphereScript(initialiser));
+	setGameScript(new AtmosphereScript(initialiser, sun));
 	auto script = static_cast<AtmosphereScript*>(getGameScript());
-	setGraphicsComponent(Graphics::RendererTypes::ATMOSPHERE, new Graphics::AtmosphereShaderParams(script->getTextures(), script->getMaterial(), sun), "skysphere", loadFunction);
+	setGraphicsComponent(Graphics::RendererTypes::kAtmosphere, script->getNewShaderParameters(), nullptr, script->getMaterial(), "skysphere", loadFunction);
 }
 
 Skysphere::~Skysphere()
 {
 }
 
-void Skysphere::loadFunction(std::vector<Graphics::IndexType>& indices, std::vector<Graphics::VertexOnlyPosition>& vertices)
+void Skysphere::loadFunction(uint32_t& count, std::vector<char>& indices, std::vector<char>& vertices)
 {
-	vertices = { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f) };
-	indices = { 0, 1, 3, 2 };
+	std::vector<uint16_t> inds = { 0, 1, 3, 2 };
+	std::vector<Graphics::VertexOnlyPosition> verts = { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f) };
+	count = static_cast<uint32_t>(inds.size());
+	indices.resize(inds.size() * sizeof(uint16_t));
+	vertices.resize(verts.size() * sizeof(Graphics::VertexOnlyPosition));
+	memcpy(indices.data(), inds.data(), inds.size() * sizeof(uint16_t));
+	memcpy(vertices.data(), verts.data(), verts.size() * sizeof(Graphics::VertexOnlyPosition));
 }

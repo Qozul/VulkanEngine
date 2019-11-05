@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "../Assets/Entity.h"
+#include "../Assets/Transform.h"
 
 using namespace QZL;
 using namespace Game;
@@ -115,7 +116,7 @@ void Scene::deleteHeirarchyRecursively(SceneHeirarchyNode* node)
 void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4 ctm, float dt)
 {
 	// Update might cause the entity to move, therefore calculate the concatenated model matrix after updating
-	node->entity->update(dt);
+	node->entity->update(dt, ctm);
 	// The final model matrix of the entity accounts for the transforms of itself and all parents
 	glm::mat4 m = ctm * node->entity->getTransform()->toModelMatrix();
 	node->entity->setModelMatrix(m);

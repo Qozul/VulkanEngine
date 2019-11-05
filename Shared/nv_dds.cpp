@@ -156,7 +156,7 @@
 //         image[0].get_mipmap(i).get_depth(), 0, image.get_format(),
 //         GL_UNSIGNED_BYTE, image[0].get_mipmap(i));
 // }
-
+#pragma warning (disable : 26451)
 #include "nv_dds.h"
 
 #include <cstring>

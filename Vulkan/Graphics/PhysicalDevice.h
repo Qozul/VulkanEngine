@@ -1,17 +1,16 @@
 #pragma once
 #include "VkUtil.h"
-#include "OptionalExtentions.h"
 
 namespace QZL
 {
 	namespace Graphics {
-		struct DeviceSurfaceCapabilities;
 		class LogicDevice;
+		struct DeviceSurfaceCapabilities;
 		struct GraphicsSystemDetails;
 
 		enum class QueueFamilyType : size_t;
 
-		/// Deals with Queue Families, Memory heap, and Memory types
+		// Deals with Queue Families, Memory heap, and Memory types
 		class PhysicalDevice {
 			friend class GraphicsMaster;
 			friend class LogicDevice;

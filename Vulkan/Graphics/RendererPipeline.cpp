@@ -1,7 +1,11 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
+
 #include "RendererPipeline.h"
 #include "LogicDevice.h"
 #include "Shader.h"
 #include "Vertex.h"
+#include "Validation.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -16,12 +20,12 @@ RendererPipeline::RendererPipeline(const LogicDevice* logicDevice, VkRenderPass 
 	shaderStageInfos.reserve(stages.size());
 
 	for (int i = 0; i < stages.size(); ++i) {
-		shaderModules.emplace_back(*logicDevice_, stages[i].name);
+		shaderModules.emplace_back(logicDevice_, stages[i].name);
 		shaderStageInfos.emplace_back(shaderModules[i].getCreateInfo(stages[i].stageFlag, stages[i].specConstants));
 	}
 
 	VkPipelineTessellationStateCreateInfo tessellationInfo = createTessellationStateInfo(patchVertexCount);
-	VkPipelineTessellationStateCreateInfo* tessInfoPtr = patchVertexCount == PrimitiveType::NONE ? nullptr : &tessellationInfo;
+	VkPipelineTessellationStateCreateInfo* tessInfoPtr = patchVertexCount == PrimitiveType::kNone ? nullptr : &tessellationInfo;
 	createPipeline(logicDevice, renderPass, layoutInfo, shaderStageInfos, createInputAssembly(pipelineCreateInfo.primitiveTopology, VK_FALSE), tessInfoPtr, pipelineCreateInfo);
 }
 
@@ -68,6 +72,18 @@ VkPipelineLayoutCreateInfo RendererPipeline::makeLayoutInfo(const uint32_t layou
 	pipelineLayoutInfo.pushConstantRangeCount = pushConstantCount;
 	pipelineLayoutInfo.pPushConstantRanges = pushConstantRange;
 	return pipelineLayoutInfo;
+}
+
+VkPipelineVertexInputStateCreateInfo RendererPipeline::makeVertexInputInfo(VkVertexInputBindingDescription& bindingDesc, std::vector<VkVertexInputAttributeDescription>& attribDescs)
+{
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribDescs.size());
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDesc;
+	vertexInputInfo.pVertexAttributeDescriptions = attribDescs.data();
+	return vertexInputInfo;
 }
 
 void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo,
@@ -154,7 +170,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.layout = layout_;
 	pipelineInfo.renderPass = renderPass;
-	pipelineInfo.subpass = 0;
+	pipelineInfo.subpass = pipelineCreateInfo.subpassIndex;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 	if (inputAssembly.topology == VK_PRIMITIVE_TOPOLOGY_PATCH_LIST && tessellationInfo != nullptr) {
@@ -162,21 +178,23 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	}
 
 	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline_));
+	Validation::addDebugName(logicDevice_, VK_OBJECT_TYPE_PIPELINE, (uint64_t)pipeline_, pipelineCreateInfo.debugName);
 
 	// Wiremesh mode for debugging
 	rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &wiremeshLayout_));
 	CHECK_VKRESULT(vkCreateGraphicsPipelines(*logicDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &wiremeshPipeline_));
+	Validation::addDebugName(logicDevice_, VK_OBJECT_TYPE_PIPELINE, (uint64_t)wiremeshPipeline_, pipelineCreateInfo.debugName + "Wiremesh");
 }
 
 VkPipelineShaderStageCreateInfo RendererPipeline::createShaderInfo(VkShaderModule module, VkShaderStageFlagBits stage)
 {
-	VkPipelineShaderStageCreateInfo info = {};
-	info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	info.stage = stage;
-	info.module = module;
-	info.pName = "main";
-	return info;
+	VkPipelineShaderStageCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	createInfo.stage = stage;
+	createInfo.module = module;
+	createInfo.pName = "main";
+	return createInfo;
 }
 
 VkPipelineInputAssemblyStateCreateInfo RendererPipeline::createInputAssembly(VkPrimitiveTopology topology, VkBool32 enablePrimitiveRestart)

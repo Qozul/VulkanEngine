@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "./alt_functions.glsl"
 
-#define TOTAL_INVOCATIONS vec3(32.0, 128.0, 64.0)
+#define TOTAL_INVOCATIONS vec3(32.0, 128.0, 32.0)
 
 layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_size_z = INVOCATION_SIZE) in;
 

@@ -1,13 +1,20 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 
 namespace QZL {
 	namespace Graphics {
 		enum class RendererTypes {
-			STATIC, TERRAIN, ATMOSPHERE, PARTICLE
+			kStatic,
+			kTerrain,
+			kAtmosphere,
+			kParticle,
+			kPostProcess
 		};
 
 		enum class RenderPassTypes : size_t {
-			GEOMETRY = 0, POST_PROCESS = 1
+			kGeometry,
+			kPostProcess
 		};
 	}
 }

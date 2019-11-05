@@ -1,13 +1,13 @@
+// Author: Ralph Ridley
+// Date: 04/11/19
 #include "SwapChain.h"
 #include "LogicDevice.h"
 #include "GeneralPass.h"
 #include "PostProcessPass.h"
 #include "RendererBase.h"
 #include "GlobalRenderData.h"
-#include "../SystemMasters.h"
-#include "../Assets/AssetManager.h"
-#include "TextureManager.h"
 #include "GraphicsMaster.h"
+#include "TextureManager.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -16,44 +16,45 @@ using namespace QZL::Graphics;
 
 size_t SwapChain::numSwapChainImages = 0;
 
-void SwapChain::loop(const glm::mat4& viewMatrix)
+void SwapChain::loop(LogicalCamera& camera)
 {
 	const uint32_t imgIdx = aquireImage();
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
+	vkResetCommandBuffer(commandBuffers_[imgIdx], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
+	LightingData lightingData = { glm::vec4(master_->getCamPos(), 0.0f), glm::vec4(glm::vec3(0.2f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
+	globalRenderData_->updateData(0, lightingData);
+
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
-	renderPasses_[0]->doFrame(viewMatrix, imgIdx, commandBuffers_[imgIdx]);
-	renderPasses_[1]->doFrame(viewMatrix, imgIdx, commandBuffers_[imgIdx]);
+	renderPasses_[0]->doFrame(camera, imgIdx, commandBuffers_[imgIdx]);
+	renderPasses_[1]->doFrame(camera, imgIdx, commandBuffers_[imgIdx]);
 
 	CHECK_VKRESULT(vkEndCommandBuffer(commandBuffers_[imgIdx]));
 
 	submitQueue(imgIdx, signalSemaphores);
 
 	present(imgIdx, signalSemaphores);
-
-	vkResetCommandBuffer(commandBuffers_[imgIdx], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 }
 
 SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities)
-	: logicDevice_(logicDevice)
+	: logicDevice_(logicDevice), master_(master)
 {
 	initSwapChain(window, surfaceCapabilities);
 	initSwapChainImages(window, surface, surfaceCapabilities);
 	numSwapChainImages = details_.images.size();
 	initImageViews();
-	if (master->supportsOptionalExtension(OptionalExtensions::DESCRIPTOR_INDEXING)) {
-		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().assetManager->textureManager->getSetlayoutBinding());
+	if (master->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
+		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().getTextureManager()->getSetlayoutBinding());
 	}
 	else {
 		globalRenderData_ = new GlobalRenderData(logicDevice);
 	}
-	LightingData lightingData = { glm::vec4(master->getCamPos(), 0.0f), glm::vec4(glm::vec3(0.2f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
-	globalRenderData_->updateData(0, lightingData);
+	
 	renderPasses_.push_back(new GeometryPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_.push_back(new PostProcessPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
@@ -221,7 +222,7 @@ void SwapChain::submitQueue(const uint32_t imgIdx, VkSemaphore signalSemaphores[
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
 	vkResetFences(*logicDevice_, 1, &inFlightFences_[currentFrame_]);
-	// TODO recover in case of device lost
+
 	CHECK_VKRESULT(vkQueueSubmit(logicDevice_->getQueueHandle(QueueFamilyType::kGraphicsQueue), 1, &submitInfo, inFlightFences_[currentFrame_]));
 }
 

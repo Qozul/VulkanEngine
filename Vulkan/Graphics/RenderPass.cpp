@@ -1,26 +1,14 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "RenderPass.h"
-#include "SwapChain.h"
+#include "SwapChainDetails.h"
 #include "LogicDevice.h"
-#include "Descriptor.h"
-#include "TexturedRenderer.h"
-#include "TerrainRenderer.h"
-#include "AtmosphereRenderer.h"
-#include "GraphicsMaster.h"
-#include "ElementBuffer.h"
-#include "MeshLoader.h"
-#include "GraphicsMaster.h"
-#include "StorageBuffer.h"
-#include "TextureManager.h"
-#include "../Assets/AssetManager.h"
-#include "../System.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-extern EnvironmentArgs environmentArgs;
-
 RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd)
-	: logicDevice_(logicDevice), swapChainDetails_(swapChainDetails), graphicsMaster_(master), globalRenderData_(grd), descriptor_(logicDevice->getPrimaryDescriptor())
+	: logicDevice_(logicDevice), swapChainDetails_(swapChainDetails), graphicsMaster_(master), globalRenderData_(grd), descriptor_(logicDevice->getPrimaryDescriptor()), renderPass_(VK_NULL_HANDLE)
 {
 }
 
@@ -35,7 +23,7 @@ RenderPass::~RenderPass()
 void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage)
 {
 	// Refer to https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#synchronization-access-types-supported in case of
-	// acces mask related errors
+	// access mask related errors
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = static_cast<uint32_t>(createInfo.attachments.size());

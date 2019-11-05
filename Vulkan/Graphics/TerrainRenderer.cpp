@@ -1,168 +1,126 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "TerrainRenderer.h"
-#include "ElementBuffer.h"
+#include "ElementBufferObject.h"
+#include "RenderStorage.h"
+#include "GlobalRenderData.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
-#include "TextureSampler.h"
-#include "TextureManager.h"
-#include "DeviceMemory.h"
 #include "RendererPipeline.h"
 #include "GraphicsComponent.h"
-#include "TerrainShaderParams.h"
-#include "TerrainRenderStorage.h"
-#include "SwapChain.h"
+#include "ShaderParams.h"
+#include "RenderObject.h"
+#include "Material.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace Graphics;
 
-TerrainRenderer::TerrainRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-	const std::string& vertexShader, const std::string& tessCtrlShader, const std::string& tessEvalShader, const std::string& fragmentShader, 
-	const uint32_t entityCount, const GlobalRenderData* globalRenderData)
-	: RendererBase(logicDevice), descriptor_(descriptor)
+TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
+		sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
 {
-	ASSERT(entityCount > 0);
-	renderStorage_ = new TerrainRenderStorage(textureManager, logicDevice, new ElementBuffer<Vertex>(logicDevice->getDeviceMemory()));
-
-	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::PER_ENTITY_DATA, 0,
-		sizeof(ElementData) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
-	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::MATERIAL_DATA, 0,
-		sizeof(MaterialStatic) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_FRAGMENT_BIT);
-	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)ReservedGraphicsBindings0::UNRESERVED, 0,
-		sizeof(TessControlInfo) * MAX_FRAMES_IN_FLIGHT, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-	storageBuffers_.push_back(mvpBuf);
-	storageBuffers_.push_back(matBuf);
-	storageBuffers_.push_back(tessBuf);
-	VkDescriptorSetLayout layout;
-	VkDescriptorSetLayoutBinding heightmapBinding = {};
-	heightmapBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_0;
-	heightmapBinding.descriptorCount = 1;
-	heightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	heightmapBinding.pImmutableSamplers = nullptr;
-	heightmapBinding.stageFlags = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-
-	VkDescriptorSetLayoutBinding debugDiffuseBinding = {};
-	debugDiffuseBinding.binding = (uint32_t)ReservedGraphicsBindings0::TEXTURE_1;
-	debugDiffuseBinding.descriptorCount = 1;
-	debugDiffuseBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	debugDiffuseBinding.pImmutableSamplers = nullptr;
-	debugDiffuseBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	layout = descriptor->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding(), heightmapBinding, debugDiffuseBinding });
-
-	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(globalRenderData->getLayout());
-
-	size_t idx = descriptor->createSets({ layout, layout, layout });
-	std::vector<VkWriteDescriptorSet> descWrites;
-	for (int i = 0; i < 3; ++i) {
-		descriptorSets_.push_back(descriptor->getSet(idx + i));
-		descriptorSets_.push_back(globalRenderData->getSet());
-		descWrites.push_back(mvpBuf->descriptorWrite(descriptor->getSet(idx + i)));
-		descWrites.push_back(matBuf->descriptorWrite(descriptor->getSet(idx + i)));
-		descWrites.push_back(tessBuf->descriptorWrite(descriptor->getSet(idx + i)));
-	}
-	descriptor->updateDescriptorSets(descWrites);
+	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
+	createDescriptors(createInfo.maxDrawnEntities);
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
+	pipelineLayouts_.push_back(TerrainMaterial::getLayout(descriptor_));
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
-	stageInfos.emplace_back(tessCtrlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, nullptr);
-	stageInfos.emplace_back(tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.tessControlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
+	pci.debugName = "Terrain";
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_TRUE;
-	pci.extent = swapChainExtent;
+	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<Vertex>(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(pipelineLayouts_.size(), pipelineLayouts_.data()), stageInfos, pci,
-		RendererPipeline::PrimitiveType::QUADS);
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
+		pipelineLayouts_.data()), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 TerrainRenderer::~TerrainRenderer()
 {
 }
 
-void TerrainRenderer::recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void TerrainRenderer::createDescriptors(const uint32_t entityCount)
+{
+	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
+		sizeof(ElementData) * 2, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "TerrainMVPBuffer"); // 2 = MAX_FRAMES_IN_FLIGHT
+	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
+		sizeof(StaticShaderParams::Params) * 2, VK_SHADER_STAGE_FRAGMENT_BIT, "TerrainParamsBuffer");
+	DescriptorBuffer* tessBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
+		sizeof(TessControlInfo) * 2, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "TerrainTessCtrlBuffer");
+	storageBuffers_.push_back(mvpBuf);
+	storageBuffers_.push_back(matBuf);
+	storageBuffers_.push_back(tessBuf);
+	VkDescriptorSetLayout layout;
+	layout = descriptor_->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding() });
+
+	pipelineLayouts_.push_back(layout);
+
+	size_t idx = descriptor_->createSets({ layout, layout, layout });
+	std::vector<VkWriteDescriptorSet> descWrites;
+	for (int i = 0; i < 3; ++i) {
+		descriptorSets_.push_back(descriptor_->getSet(idx + i));
+		descWrites.push_back(mvpBuf->descriptorWrite(descriptor_->getSet(idx + i)));
+		descWrites.push_back(matBuf->descriptorWrite(descriptor_->getSet(idx + i)));
+		descWrites.push_back(tessBuf->descriptorWrite(descriptor_->getSet(idx + i)));
+	}
+	descriptor_->updateDescriptorSets(descWrites);
+}
+
+void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	static_cast<ElementBufferInterface*>(renderStorage_->buf())->bind(cmdBuffer, idx);
+	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
-	updateBuffers(viewMatrix);
+	updateBuffers(camera);
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		auto srs = static_cast<TerrainRenderStorage*>(renderStorage_);
-		std::vector<VkWriteDescriptorSet> descWrites;
-		descWrites.push_back(srs->getParamData(i).heightMap->descriptorWrite(descriptorSets_[idx * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_0));
-		descWrites.push_back(srs->getParamData(i).diffuse->descriptorWrite(descriptorSets_[idx * 2], (uint32_t)ReservedGraphicsBindings0::TEXTURE_1));
-		descriptor_->updateDescriptorSets(descWrites);
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, &descriptorSets_[idx * 2], 0, nullptr);
+		VkDescriptorSet sets[3] = { descriptorSets_[1 + (size_t)idx], descriptorSets_[0], robject->getMaterial()->getTextureSet() };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
+
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
 }
 
-void TerrainRenderer::initialise(const glm::mat4& viewMatrix)
-{
-	if (renderStorage_->instanceCount() == 0)
-		return;
-	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
-	MaterialStatic* matDataPtr = static_cast<MaterialStatic*>(storageBuffers_[1]->bindRange());
-	auto instPtr = renderStorage_->instanceData();
-	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		matDataPtr[i] = static_cast<TerrainShaderParams*>((*(instPtr))->getShaderParams())->getMaterial();
-	}
-	glm::mat4 model = (*(instPtr))->getEntity()->getTransform()->toModelMatrix();
-	ElementData data = {
-			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
-	};
-	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-		eleDataPtr[i] = data;
-	}
-	storageBuffers_[0]->unbindRange();
-	storageBuffers_[1]->unbindRange();
-}
-
-void TerrainRenderer::updateBuffers(const glm::mat4& viewMatrix)
+void TerrainRenderer::updateBuffers(LogicalCamera& camera)
 {
 	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
 	TessControlInfo* tcPtr = static_cast<TessControlInfo*>(storageBuffers_[2]->bindRange());
 
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getTransform()->toModelMatrix();
-		glm::mat4 mvp = GraphicsMaster::kProjectionMatrix * viewMatrix * model;
+		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
+		glm::mat4 mvp = GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model;
 		eleDataPtr[i] = {
 			model, mvp
 		};
-		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 500.0f+
+		tcPtr[i].distanceFarMinusClose = 300.0f; // Implies far distance is 350.0f+
 		tcPtr[i].closeDistance = 50.0f;
 		tcPtr[i].patchRadius = 40.0f;
 		tcPtr[i].maxTessellationWeight = 4.0f;
-		tcPtr[i].frustumPlanes = calculateFrustumPlanes(mvp);
+		camera.calculateFrustumPlanes(mvp, tcPtr[i].frustumPlanes);
 	}
-
 	storageBuffers_[2]->unbindRange();
 	storageBuffers_[0]->unbindRange();
-}
 
-// Based on https://github.com/SaschaWillems/Vulkan/blob/master/base/frustum.hpp
-std::array<glm::vec4, 6> TerrainRenderer::calculateFrustumPlanes(const glm::mat4& matrix)
-{
-	std::array<glm::vec4, 6> planes;
-	float n = 0.0f;
-	for (int p = 0; p < 6; ++p) {
-		for (int i = 0; i < 4; ++i) {
-			planes[p][i] = matrix[i].w + matrix[i][(int)n];
-		}
-		n += 0.51f; // No need to worry about error over the 6 iterations used, but ensures integer cast is always right
-		// Normalize the plane
-		float length = std::sqrt(planes[p].x * planes[p].x + planes[p].y * planes[p].y + planes[p].z * planes[p].z);
-		planes[p] /= length;
+	StaticShaderParams::Params* matDataPtr = static_cast<StaticShaderParams::Params*>(storageBuffers_[1]->bindRange());
+	for (size_t i = 0; i < renderStorage_->meshCount(); ++i) {
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
+		matDataPtr[i] = static_cast<StaticShaderParams*>(robject->getParams())->params;
 	}
-	return planes;
+	storageBuffers_[1]->unbindRange();
 }

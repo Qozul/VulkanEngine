@@ -1,7 +1,7 @@
+// See https://www.saschawillems.de/blog/2016/08/13/vulkan-tutorial-on-rendering-a-fullscreen-quad-without-buffers/
+// for reference on this technique.
 #version 450
 
-//input is between -1 and 1
-layout(location = 0) in vec3 iPosition;
 layout(location = 0) out vec2 uv;
 
 out gl_PerVertex {
@@ -10,6 +10,6 @@ out gl_PerVertex {
 
 void main() 
 {
-	uv = iPosition.xy / 2.0 + 0.5;
-	gl_Position = vec4(iPosition.xy, 1.0, 1.0);
+	uv = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+    gl_Position = vec4(uv * 2.0f - 1.0f, 0.0f, 1.0f);
 }

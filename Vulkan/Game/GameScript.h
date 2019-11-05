@@ -25,7 +25,7 @@ namespace QZL {
 			virtual ~GameScript() { }
 
 			virtual void start() = 0;
-			virtual void update(float dt) = 0;
+			virtual void update(float dt, const glm::mat4& parentMatrix) = 0;
 			// Some scripts will create meshes differently to the default and will use this to make construct the mesh for graphics component.
 			virtual Graphics::BasicMesh* makeMesh() { return nullptr; }
 			Transform* transform();

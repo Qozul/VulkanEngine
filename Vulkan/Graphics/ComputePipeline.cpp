@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "ComputePipeline.h"
 #include "LogicDevice.h"
 #include "Shader.h"
@@ -10,7 +12,7 @@ ComputePipeline::ComputePipeline(const LogicDevice* logicDevice, VkPipelineLayou
 {
 	CHECK_VKRESULT(vkCreatePipelineLayout(*logicDevice_, &layoutInfo, nullptr, &layout_));
 
-	Shader module = { *logicDevice_, computeShader };
+	Shader module = { logicDevice_, computeShader };
 
 	VkPipelineShaderStageCreateInfo stageInfo;
 	stageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -34,6 +36,8 @@ ComputePipeline::ComputePipeline(const LogicDevice* logicDevice, VkPipelineLayou
 
 ComputePipeline::~ComputePipeline()
 {
+	vkDestroyPipeline(*logicDevice_, pipeline_, nullptr);
+	vkDestroyPipelineLayout(*logicDevice_, layout_, nullptr);
 }
 
 VkPipeline ComputePipeline::getPipeline()

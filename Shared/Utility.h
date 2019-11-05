@@ -19,6 +19,7 @@
 #include <functional>
 #include <algorithm>
 #include <random>
+#include <type_traits>
 
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
@@ -31,6 +32,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "PerfMeasurer.h"
+#pragma warning (disable : 4244)
 
 using uint = uint64_t;
 
@@ -49,8 +51,8 @@ using uint = uint64_t;
 #else
 #define DEBUG_LOG(m)
 #define DEBUG_ERR(m)
-#define ASSERT_DEBUG(post) post;
-#define EXPECTS(pre) pre;
+#define ASSERT_DEBUG(post)
+#define EXPECTS(pre)
 #endif
 
 inline std::string vecToString(glm::vec3& vec) {
@@ -75,11 +77,5 @@ namespace QZL
 		static std::mt19937 kRng(kRandDevice());
 		static std::uniform_int_distribution<size_t> kMeshDist(0, kMeshNames.size() - 1);
 		static std::uniform_int_distribution<size_t> kTextDist(0, kTextureNames.size() - 1);
-
-		inline void checkGLError() {
-			GLenum err = glGetError();
-			if (err != GL_NO_ERROR)
-				DEBUG_LOG("OpenGL Error " << std::hex << "0x" << err);
-		}
 	}
 }

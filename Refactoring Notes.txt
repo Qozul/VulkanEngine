@@ -1,0 +1,17 @@
+ - References
+
+TODO:
+ - Correct size buffers for each frame
+
+Possible future stuff:
+ - release material reference tracking
+ - vkCmdDrawIndexedIndirect
+ - Scene graph, adding and removing a "draw" bool, then when traversing the scene graph every frame, also perform some simple
+	culling and mark an object as draw or not.
+ 	 - Add a special SceneNode (derived) which is a SceneNodeGroup, and this marks more than a simple parent-child, but marks that they are the same "object"
+	   and when one of these fails their test, the whole branch is discarded.
+ 	 - If moving towards an indirect rendering model, when the scene graph is traversed, the commands could be constructed
+	 - If using sparse residency, could commit/uncommit textures based on scene graph traversal
+
+ - Terrain: Change to be a single grid with uniform buffer of x,z offsets, set up draw elements command each frame with the current amount of instances
+	    which offset themselves in the vshader, and tesselate, use offsets for uv coords.

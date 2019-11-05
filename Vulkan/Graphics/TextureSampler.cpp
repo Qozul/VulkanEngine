@@ -1,4 +1,5 @@
-// Ref https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "TextureSampler.h"
 #include "LogicDevice.h"
 #include "Image.h"
@@ -55,4 +56,15 @@ VkWriteDescriptorSet TextureSampler::descriptorWrite(VkDescriptorSet set, uint32
 VkDescriptorImageInfo TextureSampler::getImageInfo()
 {
 	return imageInfo_;
+}
+
+VkDescriptorSetLayoutBinding TextureSampler::makeBinding(uint32_t b, VkShaderStageFlags flags, VkSampler* immutableSampler)
+{
+	VkDescriptorSetLayoutBinding binding = {};
+	binding.binding = b;
+	binding.descriptorCount = 1;
+	binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	binding.pImmutableSamplers = immutableSampler;
+	binding.stageFlags = flags;
+	return binding;
 }

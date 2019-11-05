@@ -1,10 +1,11 @@
 /// Author: Ralph Ridley
 /// Date: 29/10/18
-/// Purpose: Definitions of Shader.h code
 #include "Shader.h"
+#include "Validation.h"
+#include "LogicDevice.h"
 
-#include <stdlib.h> // system() for runBatchCompilation
-#include <fstream> // for ifstream
+#include <stdlib.h>
+#include <fstream>
 #include <filesystem>
 
 using namespace QZL;
@@ -14,7 +15,7 @@ const std::string Shader::kPath = "../Data/Shaders/SPIRV/";
 const std::string Shader::kExt = ".spv";
 const char* Shader::kInsertionName = "main";
 
-Shader::Shader(VkDevice logicDevice, const std::string& fileName)
+Shader::Shader(const LogicDevice* logicDevice, const std::string& fileName)
 	: logicDevice_(logicDevice), module_(VK_NULL_HANDLE)
 {
 	createModule(fileName);
@@ -23,7 +24,7 @@ Shader::Shader(VkDevice logicDevice, const std::string& fileName)
 
 Shader::~Shader()
 {
-	vkDestroyShaderModule(logicDevice_, module_, nullptr);
+	vkDestroyShaderModule(*logicDevice_, module_, nullptr);
 }
 
 VkPipelineShaderStageCreateInfo Shader::getCreateInfo(VkShaderStageFlagBits stageFlagBit, VkSpecializationInfo* specConstants) const noexcept
@@ -53,7 +54,8 @@ void Shader::createModule(const std::string& fileName)
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = shaderCode.size();
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
-	CHECK_VKRESULT(vkCreateShaderModule(logicDevice_, &createInfo, nullptr, &module_));
+	CHECK_VKRESULT(vkCreateShaderModule(*logicDevice_, &createInfo, nullptr, &module_));
+	Validation::addDebugName(logicDevice_, VK_OBJECT_TYPE_SHADER_MODULE, (uint64_t)module_, fileName);
 }
 
 

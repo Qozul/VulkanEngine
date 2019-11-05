@@ -1,8 +1,8 @@
 #pragma once
 #include "VkUtil.h"
 #include "../InputManager.h"
-#include "OptionalExtentions.h"
 #include "GraphicsTypes.h"
+#include "LogicalCamera.h"
 
 namespace QZL
 {
@@ -12,25 +12,19 @@ namespace QZL
 		class AtmosphereScript;
 	}
 	namespace Graphics {
-
-		struct EnvironmentArgs {
-			int numObjectsX;
-			int numObjectsY;
-			int numObjectsZ;
-		};
-
-		struct DeviceSwapChainDetails;
 		class PhysicalDevice;
 		class LogicDevice;
 		class CommandPool;
 		class GraphicsComponent;
 		class RendererBase;
-		struct BasicMesh;
-		struct DeviceSurfaceCapabilities;
 		class GraphicsMaster;
 		class Validation;
 		class SwapChain;
-		class DynamicBufferInterface;
+		class RenderObject;
+		class ElementBufferObject;
+		struct BasicMesh;
+		struct DeviceSurfaceCapabilities;
+		struct DeviceSwapChainDetails;
 
 		struct GraphicsSystemDetails {
 			GLFWwindow* window = nullptr;
@@ -49,22 +43,28 @@ namespace QZL
 			static constexpr float NEAR_PLANE_Z = 0.1f;
 			static constexpr float FAR_PLANE_Z = 1000.0f;
 
-			void registerComponent(GraphicsComponent* component, BasicMesh* mesh = nullptr);
+			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
-			void attachPostProcessScript(Game::AtmosphereScript* script); // DEPRECATED
-			DynamicBufferInterface* getDynamicBuffer(RendererTypes type);
+			ElementBufferObject* getDynamicBuffer(RendererTypes type);
+			LogicalCamera* getLogicalCamera(RendererTypes type);
+
 			glm::mat4* getViewMatrixPtr() {
-				return viewMatrix_;
+				return &(mainCamera_.viewMatrix);
 			}
 			glm::vec3* getCamPosPtr() {
-				return camPosition_;
+				return &(mainCamera_.position);
 			}
 			const glm::mat4& getViewMatrix() {
-				return *viewMatrix_;
+				return mainCamera_.viewMatrix;
 			}
 			const glm::vec3& getCamPos() {
-				return *camPosition_;
+				return mainCamera_.position;
 			}
+
+			LogicalCamera* getMainCameraPtr() {
+				return &mainCamera_;
+			}
+
 			const LogicDevice* getLogicDevice() {
 				return details_.logicDevice;
 			}
@@ -88,16 +88,10 @@ namespace QZL
 
 			GraphicsSystemDetails details_;
 			Validation* validation_;
-
 			SwapChain* swapChain_;
-
 			std::unordered_map<RendererTypes, RendererBase*> renderers_;
-
-			glm::mat4* viewMatrix_;
-			glm::vec3* camPosition_;
-
+			LogicalCamera mainCamera_;
 			InputProfile inputProfile_;
-
 			const SystemMasters& masters_;
 
 			static const int kDefaultWidth = 800;

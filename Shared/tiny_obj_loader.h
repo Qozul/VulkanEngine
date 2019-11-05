@@ -49,6 +49,8 @@ THE SOFTWARE.
 //   #define TINYOBJLOADER_IMPLEMENTATION
 //   #include "tiny_obj_loader.h"
 //
+#pragma warning (disable : 26495)
+#pragma warning (disable : 26451)
 
 #ifndef TINY_OBJ_LOADER_H_
 #define TINY_OBJ_LOADER_H_
@@ -123,6 +125,7 @@ namespace tinyobj {
 //   -colorspace SPACE                      # Color space of the texture. e.g.
 //   'sRGB` or 'linear'
 //
+
 
 #ifdef TINYOBJLOADER_USE_DOUBLE
 //#pragma message "using double"

@@ -11,7 +11,7 @@ namespace QZL {
 			~Camera();
 		protected:
 			void start() override;
-			void update(float dt) override;
+			void update(float dt, const glm::mat4& parentMatrix) override;
 
 		private:
 			void moveLeft();

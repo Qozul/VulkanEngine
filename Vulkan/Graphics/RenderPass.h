@@ -1,20 +1,20 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
-#include "Mesh.h"
-#include "AtmosphereRenderer.h"
-#include "TerrainRenderer.h"
-#include "GraphicsMaster.h"
-#include "Image.h"
 
 namespace QZL
 {
 	namespace Graphics {
+		class GraphicsMaster;
 		class LogicDevice;
 		class Descriptor;
-		struct SwapChainDetails;
 		class GlobalRenderData;
 		class DescriptorBuffer;
 		class TextureSampler;
+		class Image;
+		struct LogicalCamera;
+		struct SwapChainDetails;
 
 		class RenderPass {
 			friend class SwapChain;
@@ -25,7 +25,7 @@ namespace QZL
 				std::vector<VkSubpassDependency> dependencies;
 			};
 
-			virtual void doFrame(const glm::mat4& viewMatrix, const uint32_t& idx, VkCommandBuffer cmdBuffer) = 0;
+			virtual void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) = 0;
 			virtual void createRenderers() = 0;
 			virtual void initRenderPassDependency(std::vector<Image*> dependencyAttachment) = 0;
 			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);

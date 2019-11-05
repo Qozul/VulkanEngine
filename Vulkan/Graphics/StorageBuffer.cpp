@@ -1,13 +1,13 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #include "StorageBuffer.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-void DescriptorBuffer::init(MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags)
+void DescriptorBuffer::init(MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags, std::string debugName)
 {
-	bufferDetails_ = logicDevice_->getDeviceMemory()->createBuffer(pattern, getUsageBits(), size_);
-	// TODO create staging buffer transfer alternative
-	//ENSURES(bufferDetails_.access == MemoryAccessType::kDirect || bufferDetails_.access == MemoryAccessType::kPersistant);
+	bufferDetails_ = logicDevice_->getDeviceMemory()->createBuffer(debugName, pattern, getUsageBits(), size_);
 
 	binding_ = {};
 	binding_.binding = bindingIdx_;

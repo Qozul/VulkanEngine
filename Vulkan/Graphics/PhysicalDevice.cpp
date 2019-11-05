@@ -40,7 +40,7 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 	deviceFeatures.tessellationShader = VK_TRUE;
 	deviceFeatures.fillModeNonSolid = VK_TRUE;
 	deviceFeatures.geometryShader = VK_TRUE;
-	// TODO sparse residency
+
 	VkDeviceCreateInfo deviceCreateInfo = {};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	deviceCreateInfo.pQueueCreateInfos = createInfos.data();
@@ -51,7 +51,7 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions_.size());
 	deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions_.data();
 
-	if (optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING]) {
+	if (optionalExtensionsEnabled_[OptionalExtensions::kDescriptorIndexing]) {
 		VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures = {};
 		descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 		descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
@@ -118,12 +118,12 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 {
 	auto availableExts = obtainVkData<VkExtensionProperties>(vkEnumerateDeviceExtensionProperties, device_, nullptr);
 	auto hasSwapchain = false;
-	optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = false;
+	optionalExtensionsEnabled_[OptionalExtensions::kDescriptorIndexing] = false;
 	for (auto& ext : availableExts) {
 		// Optional extensions
 		if (!strcmp(ext.extensionName, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) {
 			deviceExtensions_.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-			optionalExtensionsEnabled_[OptionalExtensions::DESCRIPTOR_INDEXING] = true;
+			optionalExtensionsEnabled_[OptionalExtensions::kDescriptorIndexing] = true;
 			DEBUG_LOG("Descriptor indexing is enabled.");
 		}
 		// Required

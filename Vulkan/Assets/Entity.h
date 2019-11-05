@@ -7,8 +7,8 @@ components.
 */
 #pragma once
 
-#include "../../Shared/Utility.h"
-#include "../Graphics/GraphicsMaster.h"
+#include "../Graphics/VkUtil.h"
+#include "../Graphics/GraphicsTypes.h"
 #include "../Graphics/GraphicsComponent.h"
 
 namespace QZL {
@@ -25,13 +25,12 @@ namespace QZL {
 		class Entity {
 			friend class AssetManager;
 		public:
-			virtual void update(float dt);
+			virtual void update(float dt, const glm::mat4& parentMatrix);
 			void start();
 
-			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName, 
-				Graphics::MeshLoaderFunction meshLoaderFunc = nullptr);
-			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* shaderParams, const std::string& meshName,
-				Graphics::MeshLoaderFunctionOnlyPos meshLoaderFunc);
+			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* perMeshParams, Graphics::ShaderParams* perInstanceParams,
+				Graphics::Material* material, const std::string& meshName, Graphics::MeshLoadFunc loadFunc = nullptr);
+			void setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::RenderObject* robject, Graphics::ShaderParams* perInstanceParams = nullptr);
 			void setGameScript(Game::GameScript* script);
 			Graphics::GraphicsComponent* getGraphicsComponent() {
 				return graphicsComponent_;

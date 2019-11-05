@@ -43,35 +43,11 @@
     <Filter Include="Source Files\System">
       <UniqueIdentifier>{adb9ecd8-ae96-4aed-a9ed-bf9d8e3df788}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Graphics\Renderers">
-      <UniqueIdentifier>{17835f3b-2be0-44ff-bb87-ffc701e1480b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Static">
-      <UniqueIdentifier>{27d16142-50af-4310-94bb-eba6db1f61b8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Terrain">
-      <UniqueIdentifier>{ed55afb5-7ad4-44ea-a2f2-f10c8f4e6023}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\RenderStorage">
-      <UniqueIdentifier>{27982c88-3cbf-441f-9c55-10afdb96712f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Textures">
-      <UniqueIdentifier>{383d9e9f-9b09-4c50-aec8-5011adbe5b40}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Atmosphere">
-      <UniqueIdentifier>{0f352c18-9a20-438f-8500-bbaa7dcb1a47}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Game\Scripts">
       <UniqueIdentifier>{a0844ff3-9432-4010-8dbb-0a422bd69453}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Game\Scripts">
       <UniqueIdentifier>{1aecc6ef-3646-41cb-98c7-5d7f64045594}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\RenderPasses">
-      <UniqueIdentifier>{eae44390-ffdf-4547-b43b-1b57afde13fa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics\Renderers\Particles">
-      <UniqueIdentifier>{ee73189d-8a04-455a-b22b-0a6954f3accc}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Assets\Specialised Entities">
       <UniqueIdentifier>{f2562f84-fb97-4d7f-bc60-873ed9400c7c}</UniqueIdentifier>
@@ -79,70 +55,64 @@
     <Filter Include="Header Files\Game\Scripts\Particles">
       <UniqueIdentifier>{ad8ad852-95a1-40e2-a505-7f7c181a0455}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Graphics\Compute">
+      <UniqueIdentifier>{6429a95a-486c-4e56-a799-98b6a2be9377}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Rendering">
+      <UniqueIdentifier>{3848fb75-9884-454d-9350-fbcca89b51f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Rendering\Renderers">
+      <UniqueIdentifier>{17835f3b-2be0-44ff-bb87-ffc701e1480b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Rendering\RenderPasses">
+      <UniqueIdentifier>{eae44390-ffdf-4547-b43b-1b57afde13fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Rendering\RenderStorage">
+      <UniqueIdentifier>{27982c88-3cbf-441f-9c55-10afdb96712f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Memory">
+      <UniqueIdentifier>{dc3b32a1-5b30-4ffe-8eb0-6a2e74e95957}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Memory\Textures">
+      <UniqueIdentifier>{383d9e9f-9b09-4c50-aec8-5011adbe5b40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Core">
+      <UniqueIdentifier>{a6272b4d-7246-412c-b61b-95778eea0d08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics\Memory\Mesh">
+      <UniqueIdentifier>{3b9a865f-4dd6-413e-9d95-9cc352aca37f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Compute">
+      <UniqueIdentifier>{a89cc4a5-4d8e-49e7-b196-8fb1e5394419}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Memory">
+      <UniqueIdentifier>{aa5fe8cf-019d-4be4-a7d0-95d699c42493}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Memory\Mesh">
+      <UniqueIdentifier>{91bb4ece-c0f7-4d8a-a63f-e32fb43c0edb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Memory\Textures">
+      <UniqueIdentifier>{47de5bcf-d45d-46c5-aa65-6e61d25c0e6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Rendering">
+      <UniqueIdentifier>{4b9b94a4-d508-4ec2-8f15-66dd21c2b58c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Rendering\Renderers">
+      <UniqueIdentifier>{9bcb9772-7c4e-49b4-8f82-7241bd817574}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Core">
+      <UniqueIdentifier>{39ee42ed-ed72-42de-9701-9c7948cf6a4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Rendering\RenderPasses">
+      <UniqueIdentifier>{2f024bfd-9d9b-4fe9-847b-ac1bc1b38796}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics\Rendering\RenderStorage">
+      <UniqueIdentifier>{0b65e16a-54cc-4a70-8cdf-3985630de066}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Graphics\Shader.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\StorageBuffer.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\SwapChain.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\Validation.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\Vertex.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\vk_mem_alloc.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\VkUtil.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ComputePipeline.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\Descriptor.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\DeviceMemory.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\DrawElementsCommand.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ElementBuffer.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\Image2D.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\LogicDevice.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\MemoryAllocation.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\Mesh.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\MeshLoader.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\PhysicalDevice.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\RendererPipeline.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Assets\Transform.h">
       <Filter>Header Files\Assets</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\GraphicsMaster.h">
-      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Physics\RigidBody.h">
       <Filter>Header Files\Physics</Filter>
@@ -162,71 +132,32 @@
     <ClInclude Include="System.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\GraphicsComponent.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Game\GameMaster.h">
       <Filter>Header Files\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\TexturedRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Static</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\StaticShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers\Static</Filter>
     </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\TerrainRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\TerrainShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers\Terrain</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\RenderStorage.h">
-      <Filter>Header Files\Graphics\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\StaticRenderStorage.h">
-      <Filter>Header Files\Graphics\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\TerrainRenderStorage.h">
-      <Filter>Header Files\Graphics\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\RenderStorageMeshParams.h">
-      <Filter>Header Files\Graphics\RenderStorage</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\OptionalExtentions.h">
-      <Filter>Header Files\Graphics</Filter>
+      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\TextureSampler.h">
-      <Filter>Header Files\Graphics\Textures</Filter>
+      <Filter>Header Files\Graphics\Memory\Textures</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\TextureLoader.h">
-      <Filter>Header Files\Graphics\Textures</Filter>
+      <Filter>Header Files\Graphics\Memory\Textures</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\TextureManager.h">
-      <Filter>Header Files\Graphics\Textures</Filter>
+      <Filter>Header Files\Graphics\Memory\Textures</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Material.h">
-      <Filter>Header Files\Graphics\Textures</Filter>
+      <Filter>Header Files\Graphics\Memory\Textures</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\RendererBase.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ElementBufferInterface.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\AtmosphereRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\AtmosphereShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers\Atmosphere</Filter>
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Image.h">
-      <Filter>Header Files\Graphics\Textures</Filter>
+      <Filter>Header Files\Graphics\Memory\Textures</Filter>
     </ClInclude>
     <ClInclude Include="Assets\AtmosphereParameters.h">
       <Filter>Header Files\Assets</Filter>
@@ -234,38 +165,23 @@
     <ClInclude Include="Game\Scene.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="SystemMasters.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Game\Camera.h">
-      <Filter>Header Files\Game\Scripts</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\SunScript.h">
       <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
     <ClInclude Include="Game\AtmosphereScript.h">
       <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\RenderPass.h">
-      <Filter>Header Files\Graphics\RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\GlobalRenderData.h">
-      <Filter>Header Files\Graphics</Filter>
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\GeneralPass.h">
-      <Filter>Header Files\Graphics\RenderPasses</Filter>
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\PostProcessPass.h">
-      <Filter>Header Files\Graphics\RenderPasses</Filter>
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\PostProcessRenderer.h">
-      <Filter>Header Files\Graphics\Renderers</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\GraphicsTypes.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\ParticleRenderer.h">
-      <Filter>Header Files\Graphics\Renderers\Particles</Filter>
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
     <ClInclude Include="Assets\Terrain.h">
       <Filter>Header Files\Assets\Specialised Entities</Filter>
@@ -273,80 +189,116 @@
     <ClInclude Include="Assets\Skysphere.h">
       <Filter>Header Files\Assets</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\ParticleShaderParams.h">
-      <Filter>Header Files\Graphics\Renderers\Particles</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\DynamicVertexBuffer.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Game\ParticleSystem.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="Game\FireSystem.h">
       <Filter>Header Files\Game\Scripts\Particles</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\AtmosphereRenderer.h">
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ParticleRenderer.h">
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TexturedRenderer.h">
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\TerrainRenderer.h">
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ComputePipeline.h">
+      <Filter>Header Files\Graphics\Compute</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GlobalRenderData.h">
+      <Filter>Header Files\Graphics\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Descriptor.h">
+      <Filter>Header Files\Graphics\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DeviceMemory.h">
+      <Filter>Header Files\Graphics\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DrawElementsCommand.h">
+      <Filter>Header Files\Graphics\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsComponent.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsMaster.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GraphicsTypes.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\LogicDevice.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\MemoryAllocation.h">
+      <Filter>Header Files\Graphics\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\PhysicalDevice.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RendererPipeline.h">
+      <Filter>Header Files\Graphics\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RenderObject.h">
+      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Mesh.h">
+      <Filter>Header Files\Graphics\Memory\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\MeshLoader.h">
+      <Filter>Header Files\Graphics\Memory\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Shader.h">
+      <Filter>Header Files\Graphics\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ShaderParams.h">
+      <Filter>Header Files\Graphics\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\StorageBuffer.h">
+      <Filter>Header Files\Graphics\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\SwapChain.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Validation.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Vertex.h">
+      <Filter>Header Files\Graphics\Memory\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\vk_mem_alloc.h">
+      <Filter>Header Files\Graphics\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\VkUtil.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\LogicalCamera.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\OptionalExtensions.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ElementBufferObject.h">
+      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\DynamicElementBuffer.h">
+      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\SunScript.h">
+      <Filter>Header Files\Game\Scripts\Particles</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\SwapChainDetails.h">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemMasters.h">
+      <Filter>Header Files\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Graphics\TexturedRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\TextureLoader.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\TextureSampler.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Validation.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Vertex.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\VkUtil.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\ComputePipeline.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Descriptor.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\DeviceMemory.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Image2D.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\LogicDevice.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\MeshLoader.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\PhysicalDevice.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\RendererPipeline.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\RenderPass.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\RenderStorage.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Shader.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\StorageBuffer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\SwapChain.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\GraphicsMaster.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Assets\Entity.cpp">
       <Filter>Source Files\Assets</Filter>
     </ClCompile>
@@ -359,32 +311,14 @@
     <ClCompile Include="Game\GameMaster.cpp">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\GraphicsComponent.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\StaticRenderStorage.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\TerrainRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Assets\Terrain.cpp">
       <Filter>Source Files\Assets</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\TerrainRenderStorage.cpp">
-      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Assets\Skysphere.cpp">
       <Filter>Source Files\Assets</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\AtmosphereRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\TextureManager.cpp">
       <Filter>Source Files\System</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Image.cpp">
-      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Game\Scene.cpp">
       <Filter>Source Files\Game</Filter>
@@ -401,23 +335,107 @@
     <ClCompile Include="Game\GameScript.cpp">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\GeneralPass.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\PostProcessRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\PostProcessPass.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\ParticleRenderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Game\ParticleSystem.cpp">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="Game\FireSystem.cpp">
       <Filter>Source Files\Game\Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\AtmosphereRenderer.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TerrainRenderer.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TexturedRenderer.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\PostProcessRenderer.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ParticleRenderer.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ComputePipeline.cpp">
+      <Filter>Source Files\Graphics\Compute</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\MeshLoader.cpp">
+      <Filter>Source Files\Graphics\Memory\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Material.cpp">
+      <Filter>Source Files\Graphics\Memory\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Descriptor.cpp">
+      <Filter>Source Files\Graphics\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DeviceMemory.cpp">
+      <Filter>Source Files\Graphics\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\GraphicsComponent.cpp">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\GraphicsMaster.cpp">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Image.cpp">
+      <Filter>Source Files\Graphics\Memory\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\LogicDevice.cpp">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\PhysicalDevice.cpp">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\PostProcessPass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\GeneralPass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\RendererPipeline.cpp">
+      <Filter>Source Files\Graphics\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\RenderPass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Shader.cpp">
+      <Filter>Source Files\Graphics\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\SwapChain.cpp">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TextureSampler.cpp">
+      <Filter>Source Files\Graphics\Memory\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\TextureLoader.cpp">
+      <Filter>Source Files\Graphics\Memory\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Validation.cpp">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\RenderStorage.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\StorageBuffer.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\VkUtil.cpp">
+      <Filter>Source Files\Graphics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\DynamicElementBuffer.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ElementBufferObject.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemMasters.cpp">
+      <Filter>Source Files\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\RendererBase.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\GlobalRenderData.cpp">
+      <Filter>Source Files\Graphics\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

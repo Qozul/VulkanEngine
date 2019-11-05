@@ -39,46 +39,40 @@
     <ClInclude Include="Game\Scene.h" />
     <ClInclude Include="Game\SunScript.h" />
     <ClInclude Include="Graphics\AtmosphereRenderer.h" />
-    <ClInclude Include="Graphics\AtmosphereShaderParams.h" />
     <ClInclude Include="Graphics\ComputePipeline.h" />
     <ClInclude Include="Graphics\Descriptor.h" />
     <ClInclude Include="Graphics\DeviceMemory.h" />
     <ClInclude Include="Graphics\DrawElementsCommand.h" />
-    <ClInclude Include="Graphics\DynamicVertexBuffer.h" />
-    <ClInclude Include="Graphics\ElementBuffer.h" />
-    <ClInclude Include="Graphics\ElementBufferInterface.h" />
+    <ClInclude Include="Graphics\DynamicElementBuffer.h" />
+    <ClInclude Include="Graphics\ElementBufferObject.h" />
     <ClInclude Include="Graphics\GeneralPass.h" />
     <ClInclude Include="Graphics\GlobalRenderData.h" />
     <ClInclude Include="Graphics\GraphicsComponent.h" />
     <ClInclude Include="Graphics\GraphicsMaster.h" />
     <ClInclude Include="Graphics\GraphicsTypes.h" />
     <ClInclude Include="Graphics\Image.h" />
-    <ClInclude Include="Graphics\Image2D.h" />
+    <ClInclude Include="Graphics\LogicalCamera.h" />
     <ClInclude Include="Graphics\LogicDevice.h" />
     <ClInclude Include="Graphics\Material.h" />
     <ClInclude Include="Graphics\MemoryAllocation.h" />
     <ClInclude Include="Graphics\Mesh.h" />
     <ClInclude Include="Graphics\MeshLoader.h" />
-    <ClInclude Include="Graphics\OptionalExtentions.h" />
+    <ClInclude Include="Graphics\OptionalExtensions.h" />
     <ClInclude Include="Graphics\ParticleRenderer.h" />
-    <ClInclude Include="Graphics\ParticleShaderParams.h" />
     <ClInclude Include="Graphics\PhysicalDevice.h" />
     <ClInclude Include="Graphics\PostProcessPass.h" />
     <ClInclude Include="Graphics\PostProcessRenderer.h" />
     <ClInclude Include="Graphics\RendererBase.h" />
     <ClInclude Include="Graphics\RendererPipeline.h" />
+    <ClInclude Include="Graphics\RenderObject.h" />
     <ClInclude Include="Graphics\RenderPass.h" />
     <ClInclude Include="Graphics\RenderStorage.h" />
-    <ClInclude Include="Graphics\RenderStorageMeshParams.h" />
     <ClInclude Include="Graphics\Shader.h" />
     <ClInclude Include="Graphics\ShaderParams.h" />
-    <ClInclude Include="Graphics\StaticRenderStorage.h" />
-    <ClInclude Include="Graphics\StaticShaderParams.h" />
     <ClInclude Include="Graphics\StorageBuffer.h" />
     <ClInclude Include="Graphics\SwapChain.h" />
+    <ClInclude Include="Graphics\SwapChainDetails.h" />
     <ClInclude Include="Graphics\TerrainRenderer.h" />
-    <ClInclude Include="Graphics\TerrainRenderStorage.h" />
-    <ClInclude Include="Graphics\TerrainShaderParams.h" />
     <ClInclude Include="Graphics\TexturedRenderer.h" />
     <ClInclude Include="Graphics\TextureLoader.h" />
     <ClInclude Include="Graphics\TextureManager.h" />
@@ -110,34 +104,36 @@
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />
     <ClCompile Include="Graphics\DeviceMemory.cpp" />
+    <ClCompile Include="Graphics\DynamicElementBuffer.cpp" />
+    <ClCompile Include="Graphics\ElementBufferObject.cpp" />
     <ClCompile Include="Graphics\GeneralPass.cpp" />
+    <ClCompile Include="Graphics\GlobalRenderData.cpp" />
     <ClCompile Include="Graphics\GraphicsComponent.cpp" />
     <ClCompile Include="Graphics\GraphicsMaster.cpp" />
     <ClCompile Include="Graphics\Image.cpp" />
-    <ClCompile Include="Graphics\Image2D.cpp" />
     <ClCompile Include="Graphics\LogicDevice.cpp" />
+    <ClCompile Include="Graphics\Material.cpp" />
     <ClCompile Include="Graphics\MeshLoader.cpp" />
     <ClCompile Include="Graphics\ParticleRenderer.cpp" />
     <ClCompile Include="Graphics\PhysicalDevice.cpp" />
     <ClCompile Include="Graphics\PostProcessPass.cpp" />
     <ClCompile Include="Graphics\PostProcessRenderer.cpp" />
+    <ClCompile Include="Graphics\RendererBase.cpp" />
     <ClCompile Include="Graphics\RendererPipeline.cpp" />
     <ClCompile Include="Graphics\RenderPass.cpp" />
     <ClCompile Include="Graphics\RenderStorage.cpp" />
     <ClCompile Include="Graphics\Shader.cpp" />
-    <ClCompile Include="Graphics\StaticRenderStorage.cpp" />
     <ClCompile Include="Graphics\StorageBuffer.cpp" />
     <ClCompile Include="Graphics\SwapChain.cpp" />
     <ClCompile Include="Graphics\TerrainRenderer.cpp" />
-    <ClCompile Include="Graphics\TerrainRenderStorage.cpp" />
     <ClCompile Include="Graphics\TexturedRenderer.cpp" />
     <ClCompile Include="Graphics\TextureLoader.cpp" />
     <ClCompile Include="Graphics\TextureManager.cpp" />
     <ClCompile Include="Graphics\TextureSampler.cpp" />
     <ClCompile Include="Graphics\Validation.cpp" />
-    <ClCompile Include="Graphics\Vertex.cpp" />
     <ClCompile Include="Graphics\VkUtil.cpp" />
     <ClCompile Include="System.cpp" />
+    <ClCompile Include="SystemMasters.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -241,13 +237,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.1.101.0\Include;$(SolutionDir)Lib\glfw\include;$(SolutionDir)Lib\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.1.121.2\Include;$(SolutionDir)Lib\glfw\include;$(SolutionDir)Lib\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.1.101.0\Lib;$(SolutionDir)Lib\glfw\lib-vc2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\VulkanSDK\1.1.121.2\Lib;$(SolutionDir)Lib\glfw\lib-vc2015;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>

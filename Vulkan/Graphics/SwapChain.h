@@ -1,6 +1,9 @@
+// Author: Ralph Ridley
+// Date: 04/11/19
 #pragma once
 #include "VkUtil.h"
 #include "GraphicsTypes.h"
+#include "SwapChainDetails.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -9,23 +12,15 @@ namespace QZL
 	namespace Graphics {
 		class LogicDevice;
 		class RenderPass;
-		struct DeviceSurfaceCapabilities;
 		class GlobalRenderData;
 		class GraphicsMaster;
-
-		struct SwapChainDetails {
-			VkSwapchainKHR swapChain;
-			VkSurfaceFormatKHR surfaceFormat;
-			VkPresentModeKHR presentMode;
-			VkExtent2D extent;
-			std::vector<VkImage> images;
-			std::vector<VkImageView> imageViews;
-		};
+		struct LogicalCamera;
+		struct DeviceSurfaceCapabilities;
 
 		class SwapChain {
 			friend class GraphicsMaster;
 		public:
-			void loop(const glm::mat4& viewMatrix);
+			void loop(LogicalCamera& camera);
 
 			static size_t numSwapChainImages;
 		private:
@@ -52,6 +47,7 @@ namespace QZL
 			uint32_t aquireImage();
 			void submitQueue(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
+			void createSyncObjects();
 
 			GlobalRenderData* globalRenderData_;
 
@@ -60,8 +56,8 @@ namespace QZL
 
 			SwapChainDetails details_;
 			LogicDevice* logicDevice_;
+			GraphicsMaster* master_;
 
-			void createSyncObjects();
 			std::vector<VkSemaphore> imageAvailableSemaphores_;
 			std::vector<VkSemaphore> renderFinishedSemaphores_;
 			std::vector<VkFence> inFlightFences_;

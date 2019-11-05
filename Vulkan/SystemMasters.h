@@ -8,6 +8,8 @@ namespace QZL {
 	}
 	namespace Graphics {
 		class GraphicsMaster;
+		class TextureManager;
+		class LogicDevice;
 	}
 	namespace Physics {
 		class PhysicsMaster;
@@ -22,5 +24,8 @@ namespace QZL {
 		Physics::PhysicsMaster* physicsMaster;
 		Graphics::GraphicsMaster* graphicsMaster;
 		Assets::AssetManager* assetManager;
+
+		const Graphics::LogicDevice* getLogicDevice() const;
+		Graphics::TextureManager* getTextureManager() const;
 	};
 }

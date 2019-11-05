@@ -4,10 +4,6 @@
 struct Material {
 	vec4 diffuseColour;
 	vec4 specularColour;
-	uint diffuseTextureIndex;
-	uint normalMapIndex;
-	float padding0;
-	float padding2;
 };
 
 layout(location = 0) out vec4 fragColor;
@@ -17,17 +13,17 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec3 worldPos;
 layout (location = 3) flat in int instanceIndex;
 
-layout(binding = 2) uniform sampler2D texSampler;
-layout(binding = 3) uniform sampler2D texSampler2;
+layout(set = 2, binding = 0) uniform sampler2D texSampler;
+layout(set = 2, binding = 1) uniform sampler2D texSampler2;
 
-layout(set = 1, binding = 0) uniform LightingData
+layout(set = 0, binding = 0) uniform LightingData
 {
 	vec4 cameraPosition;
 	vec4 ambientColour;
 	vec4 lightPositions[1];
 };
 
-layout(set = 0, binding = 1) readonly buffer MaterialData
+layout(set = 1, binding = 1) readonly buffer MaterialData
 {
 	Material materials[];
 };

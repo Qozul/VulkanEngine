@@ -1,22 +1,22 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "RendererBase.h"
 
 namespace QZL
 {
 	namespace Graphics {
-		class TextureSampler;
-		class DeviceMemory;
-		class TextureManager;
-
 		class TexturedRenderer : public RendererBase {
 		public:
-			TexturedRenderer(LogicDevice* logicDevice, TextureManager* textureManager, VkRenderPass renderPass, VkExtent2D swapChainExtent, Descriptor* descriptor,
-				const std::string& vertexShader, const std::string& fragmentShader, const uint32_t entityCount, const GlobalRenderData* globalRenderData);
+			TexturedRenderer(RendererCreateInfo& createInfo);
 			~TexturedRenderer();
-			void recordFrame(const glm::mat4& viewMatrix, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
-			void initialise(const glm::mat4& viewMatrix) override;
+			void createDescriptors(const uint32_t count) override;
+			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
+			void recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer);
+			void recordNormalFrame(const uint32_t idx, VkCommandBuffer cmdBuffer);
 		private:
-			Descriptor* descriptor_;
+			void updateBuffers(const glm::mat4& viewMatrix);
+			void updateDIBuffer();
 		};
 	}
 }

@@ -1,27 +1,25 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
-#include "ShaderParams.h"
-#include "../Graphics/MeshLoader.h"
+#include "GraphicsTypes.h"
 
 namespace QZL {
 	namespace Assets {
 		class Entity;
 	}
 	namespace Graphics {
+		struct ShaderParams;
+		class Material;
+		class RenderObject;
 		class GraphicsComponent {
 		public:
-			GraphicsComponent(Assets::Entity* owner, Graphics::RendererTypes type, ShaderParams* shaderParams, const std::string& meshName, MeshLoaderFunction loadFunc)
-				: rtype_(type), owningEntity_(owner), shaderParameters_(shaderParams), meshName_(meshName), loadFunc_(loadFunc), loadFuncOnlyPos_(nullptr) {
-				// Component renderer and shader params must agree for valid type casting by the graphics system
-				ASSERT(type == shaderParams->getRendererType());
-				vertexType_ = VertexType::POSITION_UV_NORMAL;
-			}
-			GraphicsComponent(Assets::Entity* owner, Graphics::RendererTypes type, ShaderParams* shaderParams, const std::string& meshName, MeshLoaderFunctionOnlyPos loadFunc)
-				: rtype_(type), owningEntity_(owner), shaderParameters_(shaderParams), meshName_(meshName), loadFunc_(nullptr), loadFuncOnlyPos_(loadFunc) {
-				ASSERT(type == shaderParams->getRendererType());
-				vertexType_ = VertexType::POSITION_ONLY;
-			}
+			GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
+				const std::string& meshName, MeshLoadFunc loadFunc, Material* material);
+			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
 			~GraphicsComponent();
+
+			std::string getParamsId();
 			const std::string& getMeshName() const {
 				return meshName_;
 			}
@@ -29,29 +27,29 @@ namespace QZL {
 				return owningEntity_;
 			}
 			ShaderParams* getShaderParams() {
-				return shaderParameters_;
+				return instanceParameters_;
+			}
+			Material* getMaterial() {
+				return material_;
+			}
+			ShaderParams* getPerMeshShaderParams() {
+				return meshParameters_;
 			}
 			const RendererTypes getRendererType() {
 				return rtype_;
 			}
-			MeshLoaderFunction getLoadFunc() {
+			MeshLoadFunc& getLoadInfo() {
 				return loadFunc_;
-			}
-			MeshLoaderFunctionOnlyPos getLoadFuncOnlyPos() {
-				return loadFuncOnlyPos_;
-			}
-			const VertexType getVertexType() const {
-				return vertexType_;
 			}
 			glm::mat4 getModelmatrix();
 		private:
-			Assets::Entity* owningEntity_; // does not own this object
+			Assets::Entity* owningEntity_;
 			RendererTypes rtype_;
 			const std::string meshName_;
-			MeshLoaderFunction loadFunc_;
-			MeshLoaderFunctionOnlyPos loadFuncOnlyPos_;
-			VertexType vertexType_;
-			ShaderParams* shaderParameters_;
+			MeshLoadFunc loadFunc_;
+			ShaderParams* instanceParameters_;
+			ShaderParams* meshParameters_;
+			Material* material_;
 		};
 	}
 }

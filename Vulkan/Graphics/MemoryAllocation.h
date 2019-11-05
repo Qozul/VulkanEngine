@@ -1,3 +1,5 @@
+// Author: Ralph Ridley
+// Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
 
@@ -28,7 +30,8 @@ namespace QZL
 			// Persistant mapping
 			kPersistant
 		};
-
+#pragma warning (push)
+#pragma warning (disable : 26595)
 		struct MemoryAllocationDetails {
 			union {
 				VkBuffer buffer;
@@ -39,5 +42,6 @@ namespace QZL
 			void* mappedData = nullptr; // Only used if access is kPersistant
 			VkDeviceSize size = 0;
 		};
+#pragma warning (pop)
 	}
 }
