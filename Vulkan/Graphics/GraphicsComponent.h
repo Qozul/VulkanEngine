@@ -15,7 +15,7 @@ namespace QZL {
 		class GraphicsComponent {
 		public:
 			GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
-				const std::string& meshName, MeshLoadFunc loadFunc, Material* material);
+				const std::string& meshName, MeshLoadFunc loadFunc, Material* material, bool overrideChecks = false);
 			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
 			~GraphicsComponent();
 

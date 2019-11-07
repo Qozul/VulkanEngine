@@ -55,6 +55,7 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObje
 
 	std::vector<IndexType> indices;
 	std::vector<Vertex> verts;
+	uint16_t count = 0;
 
 	for (const auto& shape : shapes) {
 		for (const auto& index : shape.mesh.indices) {
@@ -69,7 +70,7 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObje
 			vertex.nz = attrib.normals[3 * (size_t)index.normal_index + 2];
 
 			verts.push_back(vertex);
-			indices.push_back(static_cast<IndexType>(indices.size()));
+			indices.push_back(count++);
 		}
 	}
 	placeMeshInBuffer(meshName, eleBuf, static_cast<uint32_t>(indices.size()), indices.data(), verts.data(), indices.size() * sizeof(IndexType), verts.size() * sizeof(Vertex));

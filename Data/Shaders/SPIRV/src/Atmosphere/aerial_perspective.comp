@@ -13,85 +13,87 @@ const float STEP_SIZE = 1.0 / 16.0;
 
 layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_size_z = 1) in;
 
-// 128B, 16-byte aligned
-layout(push_constant) uniform PushConstants {
+// 84B, 16-byte aligned
+layout(push_constant) uniform Ubo {
 	vec3 camPos;
-	float p1;
+	float padding1;
+	vec3 zenithDir;
+	float cameraHeight;
 	vec3 sunDir;
 	float padding;
-	vec3 betaRay;
-	float planetRadius;
-	vec3 betaOzoneExt;
-	float rayleighScaleHeight;
-	float betaMie;
-	float betaMieExt;
-	float Hatm;
-	float mieScaleHeight;
 	mat4 inverseViewProj;
-} atmosphere;
+};
 
-layout(binding = 0) uniform sampler3D apTransmittanceTexture;
-layout(binding = 2, rgba16f) uniform writeonly image3D apScatteringTexture;
-layout(binding = 4) uniform sampler2D gatheringSum;
+layout (binding = 0) uniform Params {
+	AtmosphereParameters atmosphere;
+};
 
-const vec3 ZENITH_DIR = vec3(0.0, 1.0, 0.0);
+layout(binding = 1, rgba16f) uniform writeonly image3D aerialPerspectiveTexture;
+//layout(binding = 2) uniform sampler2D gatheringSum;
 
 void main()
 {
 	// uv in range [0, 1]
-	vec2 uv = gl_GlobalInvocationID.xy / totalInvocations.xy;
-	vec3 Pa = normalize((atmosphere.inverseViewProj * vec4(uv * 2.0 - 1.0, 1.0, 1.0)).xyz);
-	vec3 Pc = normalize((atmosphere.inverseViewProj * vec4(0.0, 0.0, 1.0, 1.0)).xyz * normalize(Pa) * -0.1);
+	vec2 uv =  gl_GlobalInvocationID.xy / totalInvocations.xy;
+	vec3 Pa = getNearPlaneWorldPosition(uv, inverseViewProj);
 	
-	vec3 V = normalize(Pc - Pa);
-	vec3 L = atmosphere.sunDir;
+	vec3 V = normalize(camPos - Pa);
+	vec3 L = sunDir;
 	
 	float mieDensitySum = 0.0;
 	float rayleighDensitySum = 0.0;
+	float ozoneDensitySum = 0.0;
 	float previousMieDensity = 0.0;
 	float previousRayleighDensity = 0.0;
+	float previousOzoneDensity = 0.0;
 	
 	vec3 transmittance = vec3(0.0);
 	float currentInscatteringMie = 0.0;
 	vec3 currentInscatteringRayleigh = vec3(0.0);
+
 	float previousInscatteringMie = 0.0;
 	vec3 previousInscatteringRayleigh = vec3(0.0);
+
 	float totalInscatteringMie = 0.0;
 	vec3 totalInscatteringRayleigh = vec3(0.0);
+
 	float completedInscatteringMie = 0.0;
 	vec3 completedInscatteringRayleigh = vec3(0.0);
-	float stepSize = 1000.0 / NUM_STEPS;
 	for (int s = 0; s < NUM_STEPS; ++s) {
-		vec3 P = Pc + stepSize * (s + 0.5) * V;
+		vec3 P = Pa + STEP_SIZE * s * V;
 		float h = clamp(P.y, 0.0, atmosphere.Hatm);
 		
 		float mieDensity = getDensity(h, atmosphere.mieScaleHeight);
 		float rayleighDensity = getDensity(h, atmosphere.rayleighScaleHeight);
-		
-		mieDensitySum += (mieDensity + previousMieDensity) / 2.0 * stepSize;
-		rayleighDensitySum += (rayleighDensity + previousRayleighDensity) / 2.0 * stepSize;
-		
+		float ozoneDensity = 6e-7 * rayleighDensity;
+
+		mieDensitySum += (mieDensity + previousMieDensity) / 2.0 * STEP_SIZE;
+		rayleighDensitySum += (rayleighDensity + previousRayleighDensity) / 2.0 * STEP_SIZE;
+		ozoneDensitySum += (ozoneDensity + previousOzoneDensity) / 2.0 * STEP_SIZE;
+
 		previousMieDensity = mieDensity;
 		previousRayleighDensity = rayleighDensity;
 		
-		vec4 gathered = texture(gatheringSum, vec2(h, CsToUs(dot(L, ZENITH_DIR))));
+		//vec4 gathered = texture(gatheringSum, vec2(h, CsToUs(dot(L, zenithDir))));
 		transmittance = exp(-(rayleighDensitySum * atmosphere.betaRay.rgb + mieDensitySum * atmosphere.betaMieExt));
-		transmittance *= texture(apTransmittanceTexture, vec3(uv, s / NUM_STEPS)).rgb;
+		transmittance *= exp(-(atmosphere.betaRay * rayleighDensitySum + 
+			atmosphere.betaMieExt * mieDensitySum + atmosphere.betaOzoneExt * ozoneDensitySum ));
 		
 		currentInscatteringMie = mieDensity * transmittance.r;
 		currentInscatteringRayleigh = rayleighDensity * transmittance;
 		
-		totalInscatteringMie += (currentInscatteringMie + previousInscatteringMie) / 2.0 * stepSize;
-		totalInscatteringRayleigh += (currentInscatteringRayleigh + previousInscatteringRayleigh) / 2.0 * stepSize;
+		totalInscatteringMie += (currentInscatteringMie + previousInscatteringMie) / 2.0 * STEP_SIZE;
+		totalInscatteringRayleigh += (currentInscatteringRayleigh + previousInscatteringRayleigh) / 2.0 * STEP_SIZE;
 		
 		previousInscatteringMie = currentInscatteringMie;
 		previousInscatteringRayleigh = currentInscatteringRayleigh;
+		previousOzoneDensity = ozoneDensity;
 		
 		completedInscatteringMie = totalInscatteringMie;
 		completedInscatteringRayleigh = totalInscatteringRayleigh;
 		completedInscatteringMie *= atmosphere.betaMie / (4.0 * PI);
 		completedInscatteringRayleigh *= atmosphere.betaRay / (4.0 * PI);
 		
-		imageStore(apScatteringTexture, ivec3(gl_GlobalInvocationID.xy, s), vec4(completedInscatteringRayleigh.rgb, completedInscatteringMie));
+		imageStore(aerialPerspectiveTexture, ivec3(gl_GlobalInvocationID.xy, s), vec4(completedInscatteringRayleigh.rgb, completedInscatteringMie));
 	}
 }

@@ -71,11 +71,11 @@ namespace QZL
 			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 
-			void registerComponent(GraphicsComponent* component, RenderObject* robject);
+			virtual void registerComponent(GraphicsComponent* component, RenderObject* robject);
 			ElementBufferObject* getElementBuffer();
 
 			void preframeSetup();
-			void toggleWiremeshMode();
+			virtual void toggleWiremeshMode();
 
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages);

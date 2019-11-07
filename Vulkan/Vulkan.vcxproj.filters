@@ -291,11 +291,11 @@
     <ClInclude Include="Game\SunScript.h">
       <Filter>Header Files\Game\Scripts\Particles</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\SwapChainDetails.h">
-      <Filter>Source Files\Graphics\Core</Filter>
-    </ClInclude>
     <ClInclude Include="SystemMasters.h">
       <Filter>Header Files\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\SwapChainDetails.h">
+      <Filter>Header Files\Graphics\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

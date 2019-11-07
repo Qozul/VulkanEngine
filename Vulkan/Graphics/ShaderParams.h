@@ -37,7 +37,6 @@ namespace QZL {
 				glm::vec3 betaRay;
 				float betaMie;
 
-				glm::vec3 cameraPosition;
 				float planetRadius;
 
 				glm::vec3* sunDirection;
@@ -45,6 +44,13 @@ namespace QZL {
 
 				glm::vec3* sunIntensity;
 				float g;
+
+				glm::vec3 betaOzoneExt;
+				float betaMieExt;
+
+				float mieScaleHeight;
+				float rayleighScaleHeight;
+				
 			} params;
 
 			const RendererTypes getRendererType() const override {

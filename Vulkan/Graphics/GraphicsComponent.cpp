@@ -10,18 +10,20 @@ using namespace QZL;
 using namespace Graphics;
 
 GraphicsComponent::GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
-	const std::string& meshName, MeshLoadFunc loadFunc, Material* material)
+	const std::string& meshName, MeshLoadFunc loadFunc, Material* material, bool overrideChecks)
 	: rtype_(type), owningEntity_(owner), meshParameters_(perMeshParams), instanceParameters_(perInstanceParams),
 	meshName_(meshName), loadFunc_(loadFunc), material_(material)
 {
-	if (material != nullptr) {
-		ASSERT(type == material->getRendererType());
-	}
-	if (perInstanceParams != nullptr) {
-		ASSERT(type == perInstanceParams->getRendererType());
-	}
-	if (perMeshParams != nullptr) {
-		ASSERT(type == perMeshParams->getRendererType());
+	if (!overrideChecks) {
+		if (material != nullptr) {
+			ASSERT(type == material->getRendererType());
+		}
+		if (perInstanceParams != nullptr) {
+			ASSERT(type == perInstanceParams->getRendererType());
+		}
+		if (perMeshParams != nullptr) {
+			ASSERT(type == perMeshParams->getRendererType());
+		}
 	}
 }
 

@@ -15,7 +15,7 @@ namespace QZL
 
 			VkPipeline getPipeline();
 			VkPipelineLayout getLayout();
-			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, std::vector<VkPushConstantRange> pushConstantRanges);
+			static VkPipelineLayoutCreateInfo makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, std::vector<VkPushConstantRange>& pushConstantRanges);
 		protected:
 			VkPipeline pipeline_;
 			VkPipelineLayout layout_;

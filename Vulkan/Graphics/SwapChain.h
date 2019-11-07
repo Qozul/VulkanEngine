@@ -14,6 +14,7 @@ namespace QZL
 		class RenderPass;
 		class GlobalRenderData;
 		class GraphicsMaster;
+		class RendererBase;
 		struct LogicalCamera;
 		struct DeviceSurfaceCapabilities;
 
@@ -53,6 +54,7 @@ namespace QZL
 
 			std::vector<VkCommandBuffer> commandBuffers_;
 			std::vector<RenderPass*> renderPasses_;
+			RendererBase* computePrePass_;
 
 			SwapChainDetails details_;
 			LogicDevice* logicDevice_;

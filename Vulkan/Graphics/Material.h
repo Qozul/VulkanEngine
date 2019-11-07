@@ -11,6 +11,7 @@ namespace QZL {
 		class Descriptor;
 		class TextureManager;
 		class TextureSampler;
+		class Image;
 		
 		// A material is a group of textures with an associated descriptor set.
 		class Material {
@@ -43,7 +44,8 @@ namespace QZL {
 
 			void makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers);
 
-			constexpr static VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler);
+			constexpr static VkDescriptorSetLayoutBinding makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler, 
+				VkDescriptorType type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
 			virtual std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) = 0;
 			virtual VkDescriptorSetLayout makeLayout(Descriptor* descriptor) = 0;
@@ -125,11 +127,8 @@ namespace QZL {
 
 		class AtmosphereMaterial : public Material {
 		public:
-			AtmosphereMaterial(const std::string materialFileName)
-				: Material(materialFileName), scatteringTexture_(nullptr) { }
-
 			AtmosphereMaterial(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
-				: Material(name, set, layout), scatteringTexture_(nullptr) { }
+				: Material(name, set, layout), scatteringTexture_(nullptr), transmittanceTexture_(nullptr) { }
 
 			~AtmosphereMaterial() { }
 
@@ -139,10 +138,11 @@ namespace QZL {
 				return RendererTypes::kAtmosphere;
 			}
 		protected:
-			std::vector<TextureSampler*> loadTextures(TextureManager* textureLoader, std::vector<std::string>& lines) override;
+			std::vector<TextureSampler*> loadTextures(TextureManager* textureLoader, std::vector<std::string>& lines) override { return { }; };
 			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
 			TextureSampler* scatteringTexture_;
+			TextureSampler* transmittanceTexture_;
 		};
 	}
 }

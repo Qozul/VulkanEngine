@@ -38,11 +38,16 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 	shaderParams_.params.g = 0.76f;
 	shaderParams_.params.sunDirection = sun->getSunDirection();
 	shaderParams_.params.sunIntensity = sun->getSunIntensity();
+	shaderParams_.params.betaMieExt = params_.betaMieExt;
+	shaderParams_.params.betaOzoneExt = params_.betaOzoneExt;
+	shaderParams_.params.mieScaleHeight = params_.mieScaleHeight;
+	shaderParams_.params.rayleighScaleHeight = params_.rayleighScaleHeight;
 
 	// Make the material, it only needs the scattering sampler
 	auto descriptor = logicDevice_->getPrimaryDescriptor();
 	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT);
-	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding });
+	VkDescriptorSetLayoutBinding transmittanceBinding = makeLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT);
+	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding, transmittanceBinding });
 	auto matSetIdx = descriptor->createSets({ matLayout });
 	auto matSet = descriptor->getSet(matSetIdx);
 	material_ = new AtmosphereMaterial("atmosphereMaterial", matSet, matLayout);
@@ -113,10 +118,11 @@ void AtmosphereScript::start()
 	buffer->unbindRange();
 
 	// Create the compute pipelines.
-	ComputePipeline transmittancePipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltTransmittance");
-	ComputePipeline singleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltScattering");
-	ComputePipeline gatheringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltGathering");
-	ComputePipeline multipleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltMultipleScattering");
+	std::vector<VkPushConstantRange> pcrs;
+	ComputePipeline transmittancePipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltTransmittance");
+	ComputePipeline singleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltScattering");
+	ComputePipeline gatheringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltGathering");
+	ComputePipeline multipleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltMultipleScattering");
 
 	// Record command buffer and execute on compute queue.
 	VkCommandBuffer cmdBuffer = logicDevice_->getComputeCommandBuffer();
@@ -145,7 +151,6 @@ void AtmosphereScript::start()
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, multipleScatteringPipeline.getPipeline());
 		vkCmdDispatch(cmdBuffer, SCATTERING_TEXTURE_WIDTH / INVOCATION_SIZE, SCATTERING_TEXTURE_HEIGHT / INVOCATION_SIZE, SCATTERING_TEXTURE_DEPTH / INVOCATION_SIZE);
 	}
-	//textures_.scatteringSumImage->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	CHECK_VKRESULT(vkEndCommandBuffer(cmdBuffer));
 
 	VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
@@ -157,7 +162,10 @@ void AtmosphereScript::start()
 
 	SAFE_DELETE(buffer);
 
-	std::vector<VkWriteDescriptorSet> materialWrites = { textures_.scatteringSum->descriptorWrite(material_->getTextureSet(), 0) };
+	std::vector<VkWriteDescriptorSet> materialWrites = { 
+		textures_.scatteringSum->descriptorWrite(material_->getTextureSet(), 0), 
+		textures_.transmittance->descriptorWrite(material_->getTextureSet(), 1) 
+	};
 	descriptor->updateDescriptorSets(materialWrites);
 }
 

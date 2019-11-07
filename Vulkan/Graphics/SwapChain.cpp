@@ -54,7 +54,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	else {
 		globalRenderData_ = new GlobalRenderData(logicDevice);
 	}
-	
+
 	renderPasses_.push_back(new GeometryPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_.push_back(new PostProcessPass(master, logicDevice, details_, globalRenderData_));
 	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
@@ -64,6 +64,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 SwapChain::~SwapChain()
 {
 	SAFE_DELETE(globalRenderData_);
+	SAFE_DELETE(computePrePass_);
 	for (size_t i = 0; i < renderPasses_.size(); ++i) {
 		SAFE_DELETE(renderPasses_[i]);
 	}

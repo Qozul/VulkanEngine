@@ -12,33 +12,35 @@ layout (constant_id = 1) const float SC_FAR_Z = 1000.0;
 
 const vec2 totalInvocations = vec2(31, 31);
 const float NUM_STEPS = 16.0;
-const float STEP_SIZE = 1.0 / 16.0;
+const float STEP_SIZE = 1.0 / 15.0;
 
 layout(local_size_x = INVOCATION_SIZE, local_size_y = INVOCATION_SIZE, local_size_z = 1) in;
 
-// 96B, 16-byte aligned
-layout(push_constant) uniform Ubo {
+// 128B, 16-byte aligned
+layout(push_constant) uniform PushConstants {
 	vec3 camPos;
-	float padding1;
-	vec3 zenithDir;
-	float cameraHeight;
+	float p1;
 	vec3 sunDir;
 	float padding;
+	vec3 betaRay;
+	float planetRadius;
+	vec3 betaOzoneExt;
+	float rayleighScaleHeight;
+	float betaMie;
+	float betaMieExt;
+	float Hatm;
+	float mieScaleHeight;
 	mat4 inverseViewProj;
-};
+} atmosphere;
 
-layout (binding = 0) uniform Params {
-	AtmosphereParameters atmosphere;
-};
-
-layout(binding = 1) uniform writeonly image3D apTransmittanceTexture;
+layout(binding = 3, rgba32f) uniform writeonly image3D apTransmittanceTexture;
 
 void main()
 {
 	vec2 uv =  gl_GlobalInvocationID.xy / totalInvocations.xy;
-	vec3 Pa = getNearPlaneWorldPosition(uv, inverseViewProj);
+	vec3 Pa = normalize((atmosphere.inverseViewProj * vec4(uv * 2.0 - 1.0, 1.0, 1.0)).xyz);
 	
-	vec3 v = normalize(Pa);
+	vec3 V = normalize(atmosphere.camPos - Pa);
 	
 	float mieDensitySum = 0.0;
 	float rayleighDensitySum = 0.0;
@@ -46,21 +48,22 @@ void main()
 	float previousMieDensity = 0.0;
 	float previousRayleighDensity = 0.0;
 	float previousOzoneDensity = 0.0;
+	float stepSize = (SC_FAR_Z - SC_NEAR_Z) / float(NUM_STEPS);
 	for (int s = 0; s < NUM_STEPS; ++s) {
-		vec3 P = Pa + STEP_SIZE * s * v; // Integration point
-		float h = cameraHeight;
+		vec3 P = Pa + stepSize * (s + 0.5) * V;
+		float h = clamp(P.y, 0.0, atmosphere.Hatm);
 		float mieDensity = getDensity(h, atmosphere.mieScaleHeight);
 		float rayleighDensity = getDensity(h, atmosphere.rayleighScaleHeight);
 		float ozoneDensity = 6e-7 * rayleighDensity;
-		mieDensitySum += (mieDensity + previousMieDensity) / 2.0 * STEP_SIZE;
-		rayleighDensitySum += (rayleighDensity + previousMieDensity) / 2.0 * STEP_SIZE;
-		ozoneDensitySum += (ozoneDensity + previousOzoneDensity) / 2.0 * STEP_SIZE;
+		mieDensitySum += (mieDensity + previousMieDensity) / 2.0 * stepSize;
+		rayleighDensitySum += (rayleighDensity + previousRayleighDensity) / 2.0 * stepSize;
+		ozoneDensitySum += (ozoneDensity + previousOzoneDensity) / 2.0 * stepSize;
 		previousMieDensity = mieDensity;
 		previousRayleighDensity = rayleighDensity;
 		previousOzoneDensity = ozoneDensity;
 		
 		vec3 result = exp(-(atmosphere.betaRay * rayleighDensitySum + 
-			atmosphere.betaMieExt * mieDensitySum + atmosphere.betaOzoneExt * ozoneDensitySum ));
+			atmosphere.betaMieExt * mieDensitySum + atmosphere.betaOzoneExt * ozoneDensitySum));
 	
 		imageStore(apTransmittanceTexture, ivec3(gl_GlobalInvocationID.xy, s), vec4(result, 1.0));
 	}

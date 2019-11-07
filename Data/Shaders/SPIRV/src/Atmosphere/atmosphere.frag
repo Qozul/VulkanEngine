@@ -35,7 +35,7 @@ float miePhase(float ctheta, float g)
 
 void calculateRayleighAndMie(in vec3 V, in vec3 L, in vec3 Z, out vec3 rayleigh, out vec3 mie) 
 {
-	float height = clamp(length(PC.cameraPosition.xyz), 0.0, PC.sunDirection.w);
+	float height = clamp(length(PC.cameraPosition.y), 0.0, PC.sunDirection.w);
 	float Cv = dot(V, Z);
 	float Cs = dot(L, Z);
 	// Fetch rayleigh and mie scattered light

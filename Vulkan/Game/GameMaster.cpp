@@ -14,6 +14,7 @@
 #include "AtmosphereScript.h"
 #include "Scene.h"
 #include "FireSystem.h"
+#include "../Graphics/GraphicsTypes.h"
 
 using namespace QZL;
 using namespace Game;
@@ -59,7 +60,7 @@ void GameMaster::loadGame()
 	auto sunRobject = sunScript->makeRenderObject("SunSystem");
 	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunRobject);
 
-	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>("sky", masters_.getLogicDevice(), sunScript, scriptInit);
+	Assets::Skysphere* skysphere = static_cast<Assets::Skysphere*>(masters_.assetManager->createEntity<Assets::Skysphere>("sky", masters_.getLogicDevice(), sunScript, scriptInit));
 
 	Assets::Entity* fire = masters_.assetManager->createEntity("firetest");
 	entities.push_back(fire);
@@ -82,6 +83,7 @@ void GameMaster::loadGame()
 	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
 	masters_.graphicsMaster->registerComponent(sun->getGraphicsComponent(), sunRobject);
 	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
+	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent(), nullptr, Graphics::RendererTypes::kPostProcess);
 	masters_.graphicsMaster->registerComponent(fire->getGraphicsComponent(), fireRobject);
 	masters_.graphicsMaster->registerComponent(teapot->getGraphicsComponent());
 }

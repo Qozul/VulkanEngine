@@ -62,3 +62,6 @@
 1 1 1
 # Atmosphere
 1 1 1
+# Aerial Perspective
+3 2 1
+3 1 0

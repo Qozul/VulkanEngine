@@ -8,12 +8,25 @@
 #include "TextureSampler.h"
 #include "RendererPipeline.h"
 #include "GraphicsMaster.h"
+#include "RenderObject.h"
+#include "ShaderParams.h"
+#include "GraphicsComponent.h"
 
 using namespace QZL;
 using namespace Graphics;
 
+struct PushConstants {
+	glm::mat4 inverseViewProj;
+	glm::vec3 camPos;
+	float Hatm;
+	glm::vec3 sunDir;
+	float planetRadius;
+	glm::vec3 betaRay;
+	float betaMie;
+};
+
 PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
-	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
+	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer), component_(nullptr)
 {
 	createDescriptors(createInfo.maxDrawnEntities);
 
@@ -40,6 +53,8 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, Texture
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &specConstants[0]);
 	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
 
+	auto pushConstRange = setupPushConstantRange<PushConstants>(VK_SHADER_STAGE_FRAGMENT_BIT);
+
 	PipelineCreateInfo pci = {};
 	pci.debugName = "PostProcess";
 	pci.enableDepthTest = VK_FALSE;
@@ -49,7 +64,8 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, Texture
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), pipelineLayouts_.data(), 0, nullptr), stageInfos, pci,
+	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
+		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci,
 		RendererPipeline::PrimitiveType::kQuads);
 }
 
@@ -65,6 +81,7 @@ void PostProcessRenderer::createDescriptors(const uint32_t entityCount)
 	VkDescriptorSetLayout layout = descriptor_->makeLayout({ gcbBinding, gdbBinding });
 
 	pipelineLayouts_.push_back(layout);
+	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor_));
 
 	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
 
@@ -78,8 +95,26 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 {
 	beginFrame(cmdBuffer);
 
-	VkDescriptorSet sets[1] = { descriptorSets_[0] };
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
+	VkDescriptorSet sets[2] = { descriptorSets_[0], material_->getTextureSet() };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
+
+	PushConstants pc;
+	pc.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * camera.viewMatrix);
+	pc.camPos = camera.position;
+	pc.Hatm = params_->params.Hatm;
+	pc.sunDir = *params_->params.sunDirection;
+	pc.planetRadius = params_->params.planetRadius;
+	pc.betaRay = params_->params.betaRay;
+	pc.betaMie = params_->params.betaMie;
+
+	vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pc);
 
 	vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
+}
+
+void PostProcessRenderer::registerComponent(GraphicsComponent* component, RenderObject* robject)
+{
+	params_ = static_cast<AtmosphereShaderParams*>(component->getPerMeshShaderParams());
+	material_ = component->getMaterial();
+	component_ = component;
 }

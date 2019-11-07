@@ -43,7 +43,7 @@ namespace QZL
 			static constexpr float NEAR_PLANE_Z = 0.1f;
 			static constexpr float FAR_PLANE_Z = 1000.0f;
 
-			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr);
+			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr, RendererTypes rtypeOverride = RendererTypes::kNone);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
 			ElementBufferObject* getDynamicBuffer(RendererTypes type);
 			LogicalCamera* getLogicalCamera(RendererTypes type);

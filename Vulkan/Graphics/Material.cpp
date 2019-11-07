@@ -4,7 +4,9 @@
 #include "Material.h"
 #include "TextureManager.h"
 #include "TextureSampler.h"
+#include "Image.h"
 #include "Descriptor.h"
+#include "LogicDevice.h"
 #include <fstream>
 #include <sstream>
 
@@ -47,12 +49,12 @@ void Material::makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler
 	}
 }
 
-constexpr VkDescriptorSetLayoutBinding QZL::Graphics::Material::makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler)
+constexpr VkDescriptorSetLayoutBinding QZL::Graphics::Material::makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler, VkDescriptorType type)
 {
 	VkDescriptorSetLayoutBinding layoutBinding = {};
 	layoutBinding.binding = idx;
 	layoutBinding.descriptorCount = 1;
-	layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	layoutBinding.descriptorType = type;
 	layoutBinding.pImmutableSamplers = sampler;
 	layoutBinding.stageFlags = stageFlags;
 	return layoutBinding;
@@ -145,17 +147,10 @@ VkDescriptorSetLayout TerrainMaterial::makeLayout(Descriptor* descriptor)
 
 VkDescriptorSetLayout AtmosphereMaterial::getLayout(Descriptor* descriptor)
 {
-	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
+	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr), makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
 }
 
-std::vector<TextureSampler*> AtmosphereMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
-{
-	ASSERT(lines.size() >= 1);
-	scatteringTexture_ = textureManager->requestTextureSeparate(lines[0]);
-	return { scatteringTexture_ };
-}
-
-VkDescriptorSetLayout QZL::Graphics::AtmosphereMaterial::makeLayout(Descriptor* descriptor)
+VkDescriptorSetLayout AtmosphereMaterial::makeLayout(Descriptor* descriptor)
 {
 	return getLayout(descriptor);
 }
