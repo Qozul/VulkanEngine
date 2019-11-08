@@ -35,7 +35,7 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 	shaderParams_.params.betaMie = params_.betaMie;
 	shaderParams_.params.planetRadius = params_.planetRadius;
 	shaderParams_.params.Hatm = params_.Hatm;
-	shaderParams_.params.g = 0.76f;
+	shaderParams_.params.g = 0.9f;
 	shaderParams_.params.sunDirection = sun->getSunDirection();
 	shaderParams_.params.sunIntensity = sun->getSunIntensity();
 	shaderParams_.params.betaMieExt = params_.betaMieExt;

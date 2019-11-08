@@ -23,7 +23,7 @@ const float maxHeight = 100.0;
 
 vec3 generateNormal(in vec3 worldPosition)
 {
-	vec3 normal;
+	vec3 normal = vec3(0.0, 1.0, 0.0);
 
 	// Do the thing derivatives in fragment shader
 	
