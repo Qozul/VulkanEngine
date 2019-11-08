@@ -4,6 +4,9 @@
 #include "../InputManager.h"
 
 namespace QZL {
+	namespace Graphics {
+		struct LogicalCamera;
+	}
 	namespace Game {
 		class Camera : public GameScript {
 		public:
@@ -25,9 +28,7 @@ namespace QZL {
 			void updatePosition();
 			void logPosition();
 
-			glm::mat4* viewMatrixPtr_;
-			glm::vec3* position_;
-			glm::vec3 lookPoint_;
+			Graphics::LogicalCamera* mainCamera_;
 			float yaw_;
 			float pitch_;
 			InputProfile inputProfile_;

@@ -77,8 +77,9 @@ void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, 
 		auto perMeshParams = static_cast<AtmosphereShaderParams*>(robject->getParams());
 		AtmosphereShaderParams::Params params = perMeshParams->params;
 
+		auto vm = glm::lookAt({ 0.0f, camera.position.y, 0.0f }, camera.lookPoint + glm::vec3(0.0f, camera.position.y, 0.0f), { 0.0f, 1.0f, 0.0f });
 		PushConstantExtent pce;
-		pce.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * camera.viewMatrix);
+		pce.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * vm);
 		pce.cameraPosition = camera.position;
 		pce.sunDirection = *params.sunDirection;
 		pce.sunIntensity = *params.sunIntensity;

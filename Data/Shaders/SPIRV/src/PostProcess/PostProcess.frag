@@ -1,7 +1,6 @@
 #version 450
 #extension GL_GOOGLE_include_directive : enable
 #include "../Atmosphere/alt_functions.glsl"
-#define INTEGRATION_STEPS_TRANSMITTANCE 30
 
 layout (constant_id = 0) const float SC_NEAR_Z = 0.1;
 layout (constant_id = 1) const float SC_FAR_Z = 1000.0;
@@ -22,6 +21,7 @@ layout(push_constant) uniform PushConstants {
 layout(set = 0, binding = 0) uniform sampler2D geometryColourTexture;
 layout(set = 0, binding = 1) uniform sampler2D geometryDepthTexture;
 layout(set = 1, binding = 0) uniform sampler3D scatteringTexture;
+layout(set = 1, binding = 1) uniform sampler2D transmittanceTexture;
 
 float linearizeDepth(float depth)
 {
@@ -38,56 +38,28 @@ float miePhase(float ctheta, float g)
 {
 	float g2 = g * g;
 	float c2theta = ctheta * ctheta;
-	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + ctheta) / pow(1.0 + g2 - 2.0 * g * ctheta, 1.5));
+	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + c2theta) / pow(1.0 + g2 - 2.0 * g * c2theta, 1.5));
 }
 
-const float mieScaleHeight = 1200.0;
-const float rayleighScaleHeight = 8000.0;
-const vec3 betaOzoneExt = vec3(5.09, 7.635, 0.2545);
-
-vec3 transmittanceToObject(in vec3 Pa, in vec3 Pb, in vec3 v)
-{
-	float mieDensitySum = 0.0;
-	float rayleighDensitySum = 0.0;
-	float ozoneDensitySum = 0.0;
-	float previousMieDensity = 0.0;
-	float previousRayleighDensity = 0.0;
-	float previousOzoneDensity = 0.0;
-	// Integrate along viewing ray from corresponding height
-	float stepSize = distance(Pa, Pb) / float(INTEGRATION_STEPS_TRANSMITTANCE);
-	// For each integration step, calculate the particle density of Mie and Rayleigh
-	for (int s = 0; s < INTEGRATION_STEPS_TRANSMITTANCE; ++s) {
-		vec3 P = Pa + stepSize * s * v; // Integration point
-		float h = clamp(P.y, 0.0, PC.Hatm);
-		float mieDensity = getDensity(h, mieScaleHeight);
-		float rayleighDensity = getDensity(h, rayleighScaleHeight);
-		float ozoneDensity = 6e-7 * rayleighDensity;
-		mieDensitySum += (mieDensity + previousMieDensity) / 2.0 * stepSize;
-		rayleighDensitySum += (rayleighDensity + previousMieDensity) / 2.0 * stepSize;
-		ozoneDensitySum += (ozoneDensity + previousOzoneDensity) / 2.0 * stepSize;
-		previousMieDensity = mieDensity;
-		previousRayleighDensity = rayleighDensity;
-		previousOzoneDensity = ozoneDensity;
-	}
-	return exp(-(PC.betaRay * rayleighDensitySum + 
-		(PC.betaMie / 0.9) * mieDensitySum + betaOzoneExt * ozoneDensitySum ));
-}
 const vec3 sunIntensity =  vec3(6.5e-7, 5.1e-7, 4.75e-7) * vec3(1e7);
 
 void funkyAP(in float linearDepth)
 {
+	float inverseLinearDepth = linearDepth;
+	inverseLinearDepth *= -1.0;
+	inverseLinearDepth += 1.0;
 	vec3 npwp = (PC.inverseViewProj * vec4(uv * 2.0 - 1.0, 1.0, 1.0)).xyz;
-	vec3 V = normalize(npwp);
+	vec3 Po = (PC.inverseViewProj * vec4(uv * 2.0 - 1.0, inverseLinearDepth * 2.0 - 1.0, 1.0)).xyz;
+	npwp.y = Po.y;
+	vec3 V = normalize(Po - npwp);
 	vec3 Z = vec3(0.0, 1.0, 0.0);
-	vec3 L = normalize(PC.sunDirection);
-	vec3 Pc = PC.camPos;
-	Pc.y = 0.0;
-	vec3 Po = PC.camPos + V * linearDepth * ((SC_FAR_Z - SC_NEAR_Z) + SC_NEAR_Z);
-	V = normalize(Po - Pc);
+	vec3 sDir = PC.sunDirection;
+	sDir.y = max(0.0, sDir.y);
+	vec3 L = normalize(sDir);
 	float Cv = dot(V, Z);
 	float Cs = dot(L, Z);
 	// 1
-	float height = Pc.y;
+	float height = 10.0f;
 	vec4 IabTab = texture(scatteringTexture, vec3(heightToUh(height, PC.Hatm), 
 		CvToUv(Cv, height, PC.planetRadius), CsToUs(Cs)));
 	// 2
@@ -95,23 +67,21 @@ void funkyAP(in float linearDepth)
 	vec4 IsbTsb = texture(scatteringTexture, vec3(heightToUh(height, PC.Hatm), 
 		CvToUv(Cv, height, PC.planetRadius), CsToUs(Cs)));
 	// 3
-	vec4 Tas = vec4(transmittanceToObject(Pc, Po, V), 1.0);
+	vec4 Tas = texture(transmittanceTexture, vec2(heightToUh(height, PC.Hatm), CvToUv(Cv, height, PC.planetRadius)));
 	vec4 IsbTab = Tas * IsbTsb;
 	// 4
-	vec4 IasTas = IabTab - IsbTab;
-	
-	vec3 rayleigh = IasTas.rgb;
-	vec3 mie = extractMieFromScattering(IasTas, PC.betaMie, PC.betaRay);
+	vec3 IasTas = (IabTab - IsbTab).rgb;
+
 	float ctheta = dot(V, L);
-	rayleigh *= rayleighPhase(ctheta);
-	mie *= miePhase(ctheta, 0.76);
-	vec4 inscattering = vec4(vec3(rayleigh * 20.0 + mie * 10.0), 1.0) * vec4(sunIntensity, 1.0);
-	colour = texture(geometryColourTexture, uv) * Tas + inscattering;
+	IasTas *= rayleighPhase(ctheta);
+	vec4 inscattering = clamp(vec4(IasTas, 1.0) * vec4(sunIntensity, 1.0), vec4(0.04), vec4(1.0));
+	inscattering = inscattering / (inscattering + vec4(1.0, 1.0, 1.0, 0.0));
+	inscattering.rgb = pow(inscattering.rgb, vec3(1.0/1.4));
+	colour = mix(texture(geometryColourTexture, uv), inscattering, linearDepth * linearDepth);
 }
 
 void main()
 {
-
 	float depth = texture(geometryDepthTexture, uv).r;
 	depth = clamp(linearizeDepth(depth), 0.0, 1.0);
 	if (depth >= 1.0) {
@@ -120,32 +90,4 @@ void main()
 	else {
 		funkyAP(depth);
 	}
-
-/*
-	vec4 geometryColour = texture(geometryColourTexture, uv);
-	float depth = texture(geometryDepthTexture, uv).r;
-	depth = clamp(linearizeDepth(depth), 0.0, 1.0);
-	if (depth >= 1.0) {
-		colour = geometryColour;
-	}
-	else {
-		vec3 V = normalize((PC.inverseViewProj * vec4(uv * 2.0 - 1.0, 1.0, 1.0)).xyz);
-		vec3 Pb = PC.camPos + V * depth * SC_FAR_Z;
-		V = normalize(vec3(V.x, Pb.y, V.z));
-		vec3 Z = vec3(0.0, 1.0, 0.0);
-		float height = clamp(Pb.y, 1.0, PC.Hatm);
-		float Cv = dot(V, Z);
-		float Cs = dot(normalize(PC.sunDirection), Z);
-		vec4 scattering = texture(scatteringTexture, vec3(heightToUh(height, PC.Hatm), 
-			CvToUv(Cv, height, PC.planetRadius), CsToUs(Cs)));
-		vec3 rayleigh = scattering.rgb;
-		vec3 mie = extractMieFromScattering(scattering, PC.betaMie, PC.betaRay);
-		float ctheta = dot(V, normalize(PC.sunDirection));
-		rayleigh *= rayleighPhase(ctheta);
-		mie *= miePhase(ctheta, PC.Hatm);
-		vec3 fogColour = vec3(rayleigh + mie) * vec3(6.5e-7, 5.1e-7, 4.75e-7) * vec3(1e7);
-		colour = mix(geometryColour, vec4(fogColour, 1.0), 1.0);
-		colour = colour / (colour + vec4(1.0, 1.0, 1.0, 0.0));
-		colour.rgb = pow(colour.rgb, vec3(1.0/2.2));
-	}*/
 }

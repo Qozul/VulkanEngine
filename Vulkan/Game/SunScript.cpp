@@ -5,7 +5,7 @@ using namespace QZL;
 using namespace QZL::Game;
 
 SunScript::SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf)
-	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(2.0f))
+	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(-10.0f))
 {
 }
 
@@ -52,8 +52,10 @@ void SunScript::update(float dt, const glm::mat4& parentMatrix)
 	}
 	transform()->rotationAngle = angle_;
 
+	transform()->position.y = parentMatrix[3][1];
 	// The direction from the sun particle to the centre point in world space, which in model space is +x
-	direction_ = glm::vec3(parentMatrix * (transform()->toModelMatrix() * glm::vec4(vertices_[0].position, 1.0)));
+	direction_ = glm::vec3((transform()->toModelMatrix() * glm::vec4(vertices_[0].position, 1.0)));
+	transform()->position.y = 0.0f;
 
 	static_cast<Graphics::ParticleShaderParams*>(owningEntity_->getGraphicsComponent()->getPerMeshShaderParams())->params.tint = glm::abs(glm::cos(angle_)) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 }

@@ -11,6 +11,7 @@ namespace QZL {
 		struct LogicalCamera {
 			glm::mat4 viewMatrix;
 			glm::vec3 position;
+			glm::vec3 lookPoint;
 			void calculateFrustumPlanes(const glm::mat4& mvp, std::array<glm::vec4, 6>& planes) {
 				// Based on https://github.com/SaschaWillems/Vulkan/blob/master/base/frustum.hpp
 				float n = 0.0f;

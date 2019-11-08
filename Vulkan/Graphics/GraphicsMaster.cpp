@@ -68,6 +68,7 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 
 	mainCamera_.viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 	mainCamera_.position = glm::vec3(0.0f, 10.0f, 0.0f);
+	mainCamera_.lookPoint = glm::vec3(0.0f, 0.0f, 10.0f);
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
