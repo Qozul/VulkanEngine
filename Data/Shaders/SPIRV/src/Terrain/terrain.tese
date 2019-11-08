@@ -21,6 +21,16 @@ layout(set = 2, binding = 0) uniform sampler2D heightmap;
 
 const float maxHeight = 100.0;
 
+vec3 generateNormal(in vec3 worldPosition)
+{
+	vec3 normal;
+
+	// Do the thing derivatives in fragment shader
+	
+
+	return normal;
+}
+
 void main(void)
 {
 	vec2 uv1 = mix(iTexUV[0], iTexUV[1], gl_TessCoord.x);
@@ -35,5 +45,5 @@ void main(void)
 	gl_Position = ubo.uElementData.mvp * position;
 	worldPos = (ubo.uElementData.model * position).xyz;
 	
-	normal = vec3(0,1,0);
+	normal = generateNormal(worldPos);
 }

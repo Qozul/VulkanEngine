@@ -43,13 +43,13 @@ float miePhase(float ctheta, float g)
 
 const vec3 sunIntensity =  vec3(6.5e-7, 5.1e-7, 4.75e-7) * vec3(1e7);
 
-void funkyAP(in float linearDepth)
+void funkyAP(in float nonLinearDepth, in float linearDepth)
 {
 	float inverseLinearDepth = linearDepth;
 	inverseLinearDepth *= -1.0;
 	inverseLinearDepth += 1.0;
 	vec3 npwp = (PC.inverseViewProj * vec4(uv * 2.0 - 1.0, 1.0, 1.0)).xyz;
-	vec3 Po = (PC.inverseViewProj * vec4(uv * 2.0 - 1.0, inverseLinearDepth * 2.0 - 1.0, 1.0)).xyz;
+	vec3 Po = (PC.inverseViewProj * vec4(uv * 2.0 - 1.0, nonLinearDepth, 1.0)).xyz;
 	npwp.y = Po.y;
 	vec3 V = normalize(Po - npwp);
 	vec3 Z = vec3(0.0, 1.0, 0.0);
@@ -83,11 +83,11 @@ void funkyAP(in float linearDepth)
 void main()
 {
 	float depth = texture(geometryDepthTexture, uv).r;
-	depth = clamp(linearizeDepth(depth), 0.0, 1.0);
+	float lDepth = clamp(linearizeDepth(depth), 0.0, 1.0);
 	if (depth >= 1.0) {
 		colour = texture(geometryColourTexture, uv);
 	}
 	else {
-		funkyAP(depth);
+		funkyAP(depth, lDepth);
 	}
 }

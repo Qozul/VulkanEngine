@@ -85,7 +85,7 @@ void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, 
 		pce.sunIntensity = *params.sunIntensity;
 		pce.betaMie = params.betaMie;
 		pce.betaRay = params.betaRay;
-		pce.g = params.g;
+		pce.g = 0.9;
 		pce.Hatm = params.Hatm;
 		pce.planetRadius = params.planetRadius;
 		VkDescriptorSet sets[1] = { robject->getMaterial()->getTextureSet() };
