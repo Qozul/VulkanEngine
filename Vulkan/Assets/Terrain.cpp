@@ -6,7 +6,6 @@
 #include "Transform.h"
 
 using namespace QZL;
-using namespace Assets;
 using namespace Graphics;
 
 Terrain::Terrain(const std::string name, TextureManager* textureManager)

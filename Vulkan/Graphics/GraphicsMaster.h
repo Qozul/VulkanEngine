@@ -74,7 +74,7 @@ namespace QZL
 			const bool supportsOptionalExtension(OptionalExtensions ext);
 			static glm::mat4 kProjectionMatrix;
 		private:
-			GraphicsMaster(const SystemMasters& masters);
+			GraphicsMaster(SystemMasters& masters);
 			~GraphicsMaster();
 
 			void initGlfw(std::vector<const char*>& extensions);

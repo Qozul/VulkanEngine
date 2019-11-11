@@ -16,6 +16,8 @@ namespace QZL {
 		// A material is a group of textures with an associated descriptor set.
 		class Material {
 		public:
+			static const size_t materialSizeLUT[(size_t)RendererTypes::kNone];
+
 			Material(const std::string materialFileName = "")
 				: materialFileName_(materialFileName), textureSet_(VK_NULL_HANDLE), layout_(VK_NULL_HANDLE)
 			{

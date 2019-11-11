@@ -49,7 +49,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	numSwapChainImages = details_.images.size();
 	initImageViews();
 	if (master->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
-		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().getTextureManager()->getSetlayoutBinding());
+		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().textureManager->getSetlayoutBinding());
 	}
 	else {
 		globalRenderData_ = new GlobalRenderData(logicDevice);

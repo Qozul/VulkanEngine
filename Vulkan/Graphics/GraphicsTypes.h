@@ -5,12 +5,11 @@
 namespace QZL {
 	namespace Graphics {
 		enum class RendererTypes {
-			kAerialPerspective,
 			kStatic,
 			kTerrain,
 			kAtmosphere,
 			kParticle,
-			kPostProcess,
+			kAtmospherePostProcess,
 			kNone
 		};
 

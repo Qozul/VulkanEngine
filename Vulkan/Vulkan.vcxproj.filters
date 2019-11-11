@@ -123,9 +123,6 @@
     <ClInclude Include="Game\GameScript.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
-    <ClInclude Include="Assets\AssetManager.h">
-      <Filter>Header Files\Assets</Filter>
-    </ClInclude>
     <ClInclude Include="Assets\Entity.h">
       <Filter>Header Files\Assets</Filter>
     </ClInclude>
@@ -297,12 +294,12 @@
     <ClInclude Include="Graphics\SwapChainDetails.h">
       <Filter>Header Files\Graphics\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\SceneDescriptorInfo.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp">
-      <Filter>Source Files\Assets</Filter>
-    </ClCompile>
-    <ClCompile Include="Assets\AssetManager.cpp">
       <Filter>Source Files\Assets</Filter>
     </ClCompile>
     <ClCompile Include="System.cpp">
@@ -435,6 +432,9 @@
       <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\GlobalRenderData.cpp">
+      <Filter>Source Files\Graphics\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ShaderParams.cpp">
       <Filter>Source Files\Graphics\Rendering</Filter>
     </ClCompile>
   </ItemGroup>

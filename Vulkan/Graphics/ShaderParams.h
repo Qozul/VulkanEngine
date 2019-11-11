@@ -13,6 +13,8 @@ namespace QZL {
 			ShaderParams(std::string id = "")
 				: id(id) { };
 			virtual const RendererTypes getRendererType() const = 0;
+
+			static const size_t shaderParamsLUT[(size_t)RendererTypes::kNone];
 		};
 
 		// Derived params need internal wrapping struct for correct use and sizing, since subclassing adds size and makes memory allocation in

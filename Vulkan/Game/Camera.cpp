@@ -9,8 +9,8 @@ const float Camera::SPEED = 20.0f;
 const float Camera::MOUSE_SENSITIVITY = 2000.0f;
 const float Camera::MAX_ROTATION_DT = 5e-4f;
 
-Camera::Camera(const GameScriptInitialiser& initialiser)
-	: GameScript(initialiser), mainCamera_(initialiser.system->getMasters().graphicsMaster->getMainCameraPtr()), pitch_(0.0f), yaw_(0.0f), speed_(SPEED)
+QZL::Game::Camera::Camera(const SystemMasters& initialiser)
+	: GameScript(initialiser), mainCamera_(sysMasters_->graphicsMaster->getMainCameraPtr()), pitch_(0.0f), yaw_(0.0f), speed_(SPEED)
 {
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_W }, std::bind(&Camera::moveForwards, this), 0.0f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_A }, std::bind(&Camera::moveLeft, this), 0.0f });

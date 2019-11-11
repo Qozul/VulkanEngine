@@ -1,6 +1,5 @@
  #include "GameMaster.h"
 #include "../System.h"
-#include "../Assets/AssetManager.h"
 #include "../Graphics/GraphicsMaster.h"
 #include "../Graphics/GraphicsComponent.h"
 #include "../Graphics/ShaderParams.h"
@@ -15,6 +14,10 @@
 #include "Scene.h"
 #include "FireSystem.h"
 #include "../Graphics/GraphicsTypes.h"
+#include "../Graphics/SceneDescriptorInfo.h"
+
+#include "../Graphics/StorageBuffer.h"
+#include "../Graphics/Descriptor.h"
 
 using namespace QZL;
 using namespace Game;
@@ -32,40 +35,57 @@ GameMaster::~GameMaster()
 	}
 }
 
+void GameMaster::loadDescriptors()
+{
+	Graphics::SceneDescriptorInfo info;
+	std::unordered_map<Graphics::RendererTypes, uint32_t> instancesMap;
+	scenes_[activeSceneIdx_]->findDescriptorRequirements(instancesMap);
+	size_t totalMVPSize = 0;
+	size_t totalParamsSize = 0;
+	for (auto& it : instancesMap) {
+		info.mvpOffsets[(size_t)it.first] = totalMVPSize;
+		info.paramsOffsets[(size_t)it.first] = totalParamsSize;
+		totalMVPSize += sizeof(glm::mat4) * it.second;
+		totalParamsSize += Graphics::Material::materialSizeLUT[(size_t)it.first] * it.second;
+	}
+	const size_t frameImageSize = 3;
+	info.paramsBuffer = Graphics::DescriptorBuffer::makeBuffer<Graphics::StorageBuffer>(masters_.getLogicDevice(), Graphics::MemoryAllocationPattern::kDynamicResource, 0, 0,
+		totalParamsSize * frameImageSize, VK_SHADER_STAGE_ALL_GRAPHICS, "ParamsBuffer");
+	info.mvpBuffer = Graphics::DescriptorBuffer::makeBuffer<Graphics::StorageBuffer>(masters_.getLogicDevice(), Graphics::MemoryAllocationPattern::kDynamicResource, 1, 0,
+		totalMVPSize * frameImageSize, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "MVPBuffer");
+
+	info.instanceDataLayout = masters_.getLogicDevice()->getPrimaryDescriptor()->makeLayout({ info.paramsBuffer->getBinding(), info.mvpBuffer->getBinding() });
+}
+
 void GameMaster::loadGame()
 {
-	std::vector<Assets::Entity*> entities;
 	GameScriptInitialiser scriptInit;
 	scriptInit.inputManager = masters_.inputManager;
 	scriptInit.system = masters_.system;
 
-	Assets::Entity* camera = masters_.assetManager->createEntity("mainCamera");
-	entities.push_back(camera);
+	Entity* camera = new Entity("mainCamera");
 	scriptInit.owner = camera;
-	camera->setGameScript(new Camera(scriptInit));
+	camera->setGameScript(new Camera(masters_));
 
-	Assets::Entity* teapot = masters_.assetManager->createEntity("Teapot");
+	Entity* teapot = new Entity("Teapot");
 	teapot->getTransform()->scale = glm::vec3(2.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
-		masters_.getTextureManager()->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot");
+		masters_.textureManager->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot");
 	
-	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>("terrain", masters_.getTextureManager());
-	entities.push_back(terrain);
+	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 
-	Assets::Entity* sun = masters_.assetManager->createEntity("sun");
-	entities.push_back(sun);
+	Entity* sun = new Entity("sun");
 	scriptInit.owner = sun;
-	auto sunScript = new SunScript(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle));
+	auto sunScript = new SunScript(masters_);
 	sun->setGameScript(sunScript);
 	auto sunRobject = sunScript->makeRenderObject("SunSystem");
 	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunRobject);
 
-	Assets::Skysphere* skysphere = static_cast<Assets::Skysphere*>(masters_.assetManager->createEntity<Assets::Skysphere>("sky", masters_.getLogicDevice(), sunScript, scriptInit));
+	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
-	Assets::Entity* fire = masters_.assetManager->createEntity("firetest");
-	entities.push_back(fire);
+	Entity* fire = new Entity("firetest");
 	scriptInit.owner = fire;
-	auto fireScript = new FireSystem(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle));
+	auto fireScript = new FireSystem(masters_);
 	fire->setGameScript(fireScript);
 	auto fireRobject = fireScript->makeRenderObject("FireSystem");
 	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireRobject);
@@ -83,7 +103,7 @@ void GameMaster::loadGame()
 	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
 	masters_.graphicsMaster->registerComponent(sun->getGraphicsComponent(), sunRobject);
 	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
-	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent(), nullptr, Graphics::RendererTypes::kPostProcess);
+	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent(), nullptr, Graphics::RendererTypes::kAtmospherePostProcess);
 	masters_.graphicsMaster->registerComponent(fire->getGraphicsComponent(), fireRobject);
 	masters_.graphicsMaster->registerComponent(teapot->getGraphicsComponent());
 }

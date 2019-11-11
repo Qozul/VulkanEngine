@@ -13,6 +13,8 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
+const size_t Material::materialSizeLUT[] = { sizeof(StaticMaterial), sizeof(TerrainMaterial), sizeof(AtmosphereMaterial), sizeof(ParticleMaterial), 0 };
+
 void Material::load(TextureManager* textureManager, Descriptor* descriptor)
 {
 	std::vector<std::string> lines;

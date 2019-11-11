@@ -1,6 +1,7 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #include "GraphicsMaster.h"
+#include "GraphicsComponent.h"
 #include "Validation.h"
 #include "PhysicalDevice.h"
 #include "LogicDevice.h"
@@ -8,7 +9,6 @@
 #include "RendererBase.h"
 #include "TextureManager.h"
 #include "../SystemMasters.h"
-#include "../Assets/AssetManager.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -45,7 +45,7 @@ const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)
 	return details_.physicalDevice->optionalExtensionsEnabled_[ext];
 }
 
-GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
+GraphicsMaster::GraphicsMaster(SystemMasters& masters)
 	: masters_(masters)
 {
 	kProjectionMatrix[1][1] *= -1;
@@ -78,9 +78,6 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 
 	DeviceSurfaceCapabilities surfaceCapabilities;
 	initDevices(surfaceCapabilities, enabledLayerCount, enabledLayerNames);
-
-	masters.assetManager->textureManager = new Graphics::TextureManager(details_.logicDevice, details_.logicDevice->getPrimaryDescriptor(),
-		MAX_DESCRIPTOR_INDEXED_TEXTURES, supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
 
 	swapChain_ = new SwapChain(this, details_.window, details_.surface, details_.logicDevice, surfaceCapabilities);
 	swapChain_->setCommandBuffers(std::vector<VkCommandBuffer>(details_.logicDevice->commandBuffers_.begin() + 1, details_.logicDevice->commandBuffers_.end()));

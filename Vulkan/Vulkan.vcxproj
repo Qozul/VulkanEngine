@@ -24,7 +24,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Assets\AssetManager.h" />
     <ClInclude Include="Assets\AtmosphereParameters.h" />
     <ClInclude Include="Assets\Entity.h" />
     <ClInclude Include="Assets\Skysphere.h" />
@@ -67,6 +66,7 @@
     <ClInclude Include="Graphics\RenderObject.h" />
     <ClInclude Include="Graphics\RenderPass.h" />
     <ClInclude Include="Graphics\RenderStorage.h" />
+    <ClInclude Include="Graphics\SceneDescriptorInfo.h" />
     <ClInclude Include="Graphics\Shader.h" />
     <ClInclude Include="Graphics\ShaderParams.h" />
     <ClInclude Include="Graphics\StorageBuffer.h" />
@@ -88,7 +88,6 @@
     <ClInclude Include="SystemMasters.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Assets\AssetManager.cpp" />
     <ClCompile Include="Assets\Entity.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />
@@ -123,6 +122,7 @@
     <ClCompile Include="Graphics\RenderPass.cpp" />
     <ClCompile Include="Graphics\RenderStorage.cpp" />
     <ClCompile Include="Graphics\Shader.cpp" />
+    <ClCompile Include="Graphics\ShaderParams.cpp" />
     <ClCompile Include="Graphics\StorageBuffer.cpp" />
     <ClCompile Include="Graphics\SwapChain.cpp" />
     <ClCompile Include="Graphics\TerrainRenderer.cpp" />

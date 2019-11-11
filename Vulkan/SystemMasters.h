@@ -3,9 +3,6 @@
 namespace QZL {
 	class System;
 	class InputManager;
-	namespace Assets {
-		class AssetManager;
-	}
 	namespace Graphics {
 		class GraphicsMaster;
 		class TextureManager;
@@ -23,9 +20,8 @@ namespace QZL {
 		Game::GameMaster* gameMaster;
 		Physics::PhysicsMaster* physicsMaster;
 		Graphics::GraphicsMaster* graphicsMaster;
-		Assets::AssetManager* assetManager;
+		Graphics::TextureManager* textureManager;
 
 		const Graphics::LogicDevice* getLogicDevice() const;
-		Graphics::TextureManager* getTextureManager() const;
 	};
 }

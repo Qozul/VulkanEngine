@@ -5,25 +5,24 @@
 #include "GraphicsTypes.h"
 
 namespace QZL {
-	namespace Assets {
-		class Entity;
-	}
+	class Entity;
 	namespace Graphics {
 		struct ShaderParams;
 		class Material;
 		class RenderObject;
 		class GraphicsComponent {
+			friend class Entity;
 		public:
-			GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
+			GraphicsComponent(Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
 				const std::string& meshName, MeshLoadFunc loadFunc, Material* material, bool overrideChecks = false);
-			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
+			GraphicsComponent(Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
 			~GraphicsComponent();
 
 			std::string getParamsId();
 			const std::string& getMeshName() const {
 				return meshName_;
 			}
-			Assets::Entity* getEntity() const {
+			Entity* getEntity() const {
 				return owningEntity_;
 			}
 			ShaderParams* getShaderParams() {
@@ -43,7 +42,7 @@ namespace QZL {
 			}
 			glm::mat4 getModelmatrix();
 		private:
-			Assets::Entity* owningEntity_;
+			Entity* owningEntity_;
 			RendererTypes rtype_;
 			const std::string meshName_;
 			MeshLoadFunc loadFunc_;

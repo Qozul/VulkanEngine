@@ -3,7 +3,6 @@
 #include "../Assets/Transform.h"
 
 using namespace QZL;
-using namespace Game;
 
 Scene::Scene()
 {
@@ -31,7 +30,7 @@ void Scene::start()
 	}
 }
 
-SceneHeirarchyNode* Scene::addEntity(Assets::Entity* entity, Assets::Entity* parent, SceneHeirarchyNode* hintNode)
+SceneHeirarchyNode* Scene::addEntity(Entity* entity, Entity* parent, SceneHeirarchyNode* hintNode)
 {
 	ASSERT(entity != nullptr);
 	ASSERT_DEBUG(findEntityNode(entity) == nullptr); // This check could be expensive, so only test in debug mode
@@ -48,7 +47,7 @@ SceneHeirarchyNode* Scene::addEntity(Assets::Entity* entity, Assets::Entity* par
 	return childNode;
 }
 
-void Scene::removeEntity(Assets::Entity* entity, bool reparent, SceneHeirarchyNode* hintNode)
+void Scene::removeEntity(Entity* entity, bool reparent, SceneHeirarchyNode* hintNode)
 {
 	ASSERT(entity != nullptr);
 	SceneHeirarchyNode* node = hintNode != nullptr ? hintNode : findEntityNode(entity);
@@ -68,7 +67,7 @@ void Scene::removeEntity(Assets::Entity* entity, bool reparent, SceneHeirarchyNo
 	}
 }
 
-SceneHeirarchyNode* Scene::findEntityNode(Assets::Entity* entity)
+SceneHeirarchyNode* Scene::findEntityNode(Entity* entity)
 {
 	// Beginning from the root node, check child nodes in order as a tree
 	if (entity == nullptr) {
@@ -83,7 +82,14 @@ SceneHeirarchyNode* Scene::findEntityNode(Assets::Entity* entity)
 	return nullptr;
 }
 
-SceneHeirarchyNode* Scene::findEntityNodeRecursively(Assets::Entity* entity, SceneHeirarchyNode* node)
+void Scene::findDescriptorRequirements(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount)
+{
+	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
+		findDescriptorRequirementsRecursively(instancesCount, rootNode_->childNodes[i]);
+	}
+}
+
+SceneHeirarchyNode* Scene::findEntityNodeRecursively(Entity* entity, SceneHeirarchyNode* node)
 {
 	if (node->entity == entity) {
 		return node;
@@ -110,6 +116,7 @@ void Scene::deleteHeirarchyRecursively(SceneHeirarchyNode* node)
 		parentChildren.erase(std::find(parentChildren.begin(), parentChildren.end(), node));
 		node->entity->setSceneNode(nullptr);
 	}
+	SAFE_DELETE(node->entity);
 	SAFE_DELETE(node);
 }
 
@@ -133,6 +140,16 @@ void Scene::startRecursively(SceneHeirarchyNode* node)
 	}
 }
 
+void Scene::findDescriptorRequirementsRecursively(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount, SceneHeirarchyNode* node)
+{
+	if (node->entity->getGraphicsComponent() != nullptr) {
+		instancesCount[node->entity->getGraphicsComponent()->getRendererType()]++;
+	}
+	for (size_t i = 0; i < node->childNodes.size(); ++i) {
+		findDescriptorRequirementsRecursively(instancesCount, node->childNodes[i]);
+	}
+}
+
 std::ostream& outputSceneRecursively(std::ostream& os, SceneHeirarchyNode* node, std::string depthIndicator) {
 	os << depthIndicator << node->entity->name() << std::endl;
 	for (auto child : node->childNodes) {
@@ -142,7 +159,7 @@ std::ostream& outputSceneRecursively(std::ostream& os, SceneHeirarchyNode* node,
 }
 
 // Display the entire scene graph
-std::ostream& QZL::Game::operator<<(std::ostream& os, Scene* scene)
+std::ostream& QZL::operator<<(std::ostream& os, Scene* scene)
 {
 	os << "Root node" << std::endl;
 	for (auto child : scene->rootNode_->childNodes) {

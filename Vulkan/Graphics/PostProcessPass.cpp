@@ -145,7 +145,7 @@ void PostProcessPass::createRenderers()
 	particleRenderer_ = new ParticleRenderer(createInfo);
 
 	graphicsMaster_->setRenderer(RendererTypes::kParticle, particleRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, postProcessRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kAtmospherePostProcess, postProcessRenderer_);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

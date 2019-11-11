@@ -3,8 +3,9 @@
 using namespace QZL;
 using namespace Game;
 
-FireSystem::FireSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf)
-	: ParticleSystem(initialiser, billboardPoint, buf, 10, 0.0f, (1.0f / 3.0f), "Fire")
+FireSystem::FireSystem(const SystemMasters& initialiser)
+	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), initialiser.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle),
+		10, 0.0f, (1.0f / 3.0f), "Fire")
 {
 }
 

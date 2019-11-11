@@ -1,11 +1,13 @@
 #include "SunScript.h"
 #include "../Assets/Entity.h"
+#include "../Graphics/GraphicsMaster.h"
 
 using namespace QZL;
 using namespace QZL::Game;
 
-SunScript::SunScript(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf)
-	: ParticleSystem(initialiser, billboardPoint, buf, 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(-10.0f))
+SunScript::SunScript(const SystemMasters& initialiser)
+	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), initialiser.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle),
+		2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(-10.0f))
 {
 }
 

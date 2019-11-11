@@ -4,8 +4,8 @@
 namespace QZL {
 	struct SystemMasters;
 	class System;
+	class Scene;
 	namespace Game {
-		class Scene;
 		class GameMaster final {
 			friend class QZL::System;
 		public:
@@ -16,6 +16,7 @@ namespace QZL {
 			GameMaster(const SystemMasters& masters);
 			~GameMaster();
 			void loadGame();
+			void loadDescriptors();
 			void update(float dt);
 
 			const SystemMasters& masters_;

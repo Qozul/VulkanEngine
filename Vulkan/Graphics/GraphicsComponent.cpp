@@ -9,7 +9,7 @@
 using namespace QZL;
 using namespace Graphics;
 
-GraphicsComponent::GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
+GraphicsComponent::GraphicsComponent(Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
 	const std::string& meshName, MeshLoadFunc loadFunc, Material* material, bool overrideChecks)
 	: rtype_(type), owningEntity_(owner), meshParameters_(perMeshParams), instanceParameters_(perInstanceParams),
 	meshName_(meshName), loadFunc_(loadFunc), material_(material)
@@ -27,7 +27,7 @@ GraphicsComponent::GraphicsComponent(Assets::Entity* owner, RendererTypes type, 
 	}
 }
 
-GraphicsComponent::GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams)
+GraphicsComponent::GraphicsComponent(Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams)
 	: rtype_(type), owningEntity_(owner), meshParameters_(robject->getParams()), instanceParameters_(perInstanceParams),
 	meshName_(robject->getMeshName()), loadFunc_(nullptr), material_(robject->getMaterial())
 {

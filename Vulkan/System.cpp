@@ -1,13 +1,15 @@
 #include "System.h"
 #include "Graphics/GraphicsMaster.h"
 #include "Game/GameMaster.h"
-#include "Assets/AssetManager.h"
 #include "Graphics/TextureLoader.h"
 #include "Graphics/LogicDevice.h"
 #include "InputManager.h"
+#include "Graphics/OptionalExtensions.h"
+#include "Graphics/TextureManager.h"
 #include <chrono>
 
 using namespace QZL;
+using namespace QZL::Graphics;
 using Clock = std::chrono::high_resolution_clock;
 
 int main(int argc, char** argv) {
@@ -21,22 +23,22 @@ float System::deltaTimeSeconds = 0.0f;
 
 System::System()
 {
-	// Asset manager must be created before graphics master
-	masters_.assetManager = new Assets::AssetManager(masters_);
-
-	// Graphics initialisation also initialises assetManager->textureManager
-	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
 	inputManager_ = new InputManager(masters_.graphicsMaster->details_.window);
 	masters_.system = this;
 	masters_.inputManager = inputManager_;
 	masters_.physicsMaster = nullptr;
 	masters_.gameMaster = new Game::GameMaster(masters_);
+
+	// Initialisation
+	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
+	masters_.textureManager = new Graphics::TextureManager(masters_.getLogicDevice(), masters_.getLogicDevice()->getPrimaryDescriptor(),
+		2, masters_.graphicsMaster->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
 }
 
 System::~System()
 {
 	SAFE_DELETE(masters_.gameMaster);
-	SAFE_DELETE(masters_.assetManager);
+	SAFE_DELETE(masters_.textureManager);
 	//SAFE_DELETE(masters_.physicsMaster);
 	SAFE_DELETE(masters_.graphicsMaster);
 }

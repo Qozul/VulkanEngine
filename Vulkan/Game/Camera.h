@@ -10,7 +10,7 @@ namespace QZL {
 	namespace Game {
 		class Camera : public GameScript {
 		public:
-			Camera(const GameScriptInitialiser& initialiser);
+			Camera(const SystemMasters& initialiser);
 			~Camera();
 		protected:
 			void start() override;

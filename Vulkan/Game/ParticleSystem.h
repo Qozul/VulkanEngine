@@ -48,8 +48,8 @@ namespace QZL {
 			Graphics::RenderObject* makeRenderObject(std::string name);
 		protected:
 			// Number of tiles on xy is identical for x and y, as textures must be square.
-			ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
-				size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName);
+			ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
+				size_t maxParticles, float updateInterval, float textureTileLength, const std::string materialName);
 			virtual ~ParticleSystem();
 			virtual void particleCreation(float dt, size_t expiredCount) = 0;
 			virtual void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex, float dt) = 0;

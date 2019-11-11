@@ -4,7 +4,6 @@
 #include "../Game/GameScript.h"
 
 using namespace QZL;
-using namespace QZL::Assets;
 
 void Entity::update(float dt, const glm::mat4& parentMatrix)
 {
@@ -20,6 +19,18 @@ void Entity::start()
 	}
 }
 
+void Entity::setGraphicsComponent(Graphics::GraphicsComponent* component)
+{
+	graphicsComponent_ = component;
+	graphicsComponent_->owningEntity_ = this;
+}
+
+void Entity::setGameScript(Game::GameScript* script)
+{
+	gameScript_ = script;
+	gameScript_->owningEntity_ = this;
+}
+
 void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* perMeshParams, Graphics::ShaderParams* perInstanceParams,
 	Graphics::Material* material, const std::string& meshName, Graphics::MeshLoadFunc loadFunc, bool overrideChecks)
 {
@@ -29,11 +40,6 @@ void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics:
 void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::RenderObject* robject, Graphics::ShaderParams* perInstanceParams)
 {
 	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, robject, perInstanceParams);
-}
-
-void Entity::setGameScript(Game::GameScript* script)
-{
-	gameScript_ = script;
 }
 
 bool Entity::isStatic() const

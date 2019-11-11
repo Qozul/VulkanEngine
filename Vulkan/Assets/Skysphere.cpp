@@ -5,7 +5,6 @@
 #include "../Game/AtmosphereScript.h"
 
 using namespace QZL;
-using namespace Assets;
 using namespace QZL::Game;
 using Vertex = QZL::Graphics::Vertex;
 

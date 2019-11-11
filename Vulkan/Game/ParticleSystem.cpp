@@ -1,7 +1,6 @@
 #include "ParticleSystem.h"
 #include "../Graphics/RenderObject.h"
 #include "../System.h"
-#include "../Assets/AssetManager.h"
 #include "../Graphics/TextureManager.h"
 
 using namespace QZL;
@@ -71,8 +70,8 @@ Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
 	return new Graphics::RenderObject(name, mesh, makeShaderParams(), material_);
 }
 
-ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
-	size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName)
+ParticleSystem::ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
+	size_t maxParticles, float updateInterval, float textureTileLength, const std::string materialName)
 	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
 	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0), tint_(0.0f)
 {
@@ -82,7 +81,7 @@ ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::ve
 	vertices_.resize(maxParticles);
 	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
 
-	material_ = initialiser.system->getMasters().assetManager->textureManager->requestMaterial<Graphics::ParticleMaterial>(materialName);
+	material_ = initialiser.textureManager->requestMaterial<Graphics::ParticleMaterial>(materialName);
 	textureTileLength_ = textureTileLength;
 }
 

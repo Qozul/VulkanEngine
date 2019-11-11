@@ -1,86 +1,26 @@
-ENTITY teapot {
-	Specialization NONE
-	Parent ROOT
-	x 0.0
-	y 0.0
-	z 0.0
-	a 0.0
-	ax 0.0
-	ay 1.0
-	az 0.0
-	sx 2.0
-	sy 2.0
-	sz 2.0
-}
-ENTITY terrain {
-	Specialization TERRAIN
-	Parent ROOT
-	x 0.0
-	y 0.0
-	z 0.0
-	a 0.0
-	ax 0.0
-	ay 1.0
-	az 0.0
-	sx 1.0
-	sy 1.0
-	sz 1.0
-}
 ENTITY camera {
-	Specialization NONE
 	Parent ROOT
-	x 0.0
-	y 0.0
-	z 0.0
-	a 0.0
-	ax 0.0
-	ay 1.0
-	az 0.0
-	sx 1.0
-	sy 1.0
-	sz 1.0
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
+}
+ENTITY defaultTerrain {
+	Parent ROOT
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
+}
+ENTITY teapot {
+	Parent defaultTerrain
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 2.0 2.0 2.0
 }
 ENTITY sun {
-	Specialization NONE
 	Parent camera
-	x 0.0
-	y 0.0
-	z 0.0
-	a 0.0
-	ax 0.0
-	ay 1.0
-	az 0.0
-	sx 1.0
-	sy 1.0
-	sz 1.0
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
 }
 ENTITY atmosphere {
-	Specialization ATMOSPHERE
 	Parent camera
-	x 0.0
-	y 0.0
-	z 0.0
-	a 0.0
-	ax 0.0
-	ay 1.0
-	az 0.0
-	sx 1.0
-	sy 1.0
-	sz 1.0
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
 }
 ENTITY fire {
-	Specialization NONE
-	Parent ROOT
-	x 0.0
-	y 0.0
-	z 0.0
-	a 0.0
-	ax 0.0
-	ay 1.0
-	az 0.0
-	sx 1.0
-	sy 1.0
-	sz 1.0
+	Parent defaultTerrain
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
 }
 
 GAME_SCRIPT camera {
@@ -94,10 +34,11 @@ GAME_SCRIPT fire {
 }
 GAME_SCRIPT atmosphere {
 	ScriptName AtmosphereScript
+	Ref SunScript
 }
 
 GRAPHICS teapot {
-	Rtype STATIC 
+	Rtype STATIC_FORWARD
 	Flags OPAQUE
 	Radius 5.0
 	MeshName Teapot
@@ -125,7 +66,7 @@ GRAPHICS sun {
 }
 GRAPHICS fire {
 	Rtype PARTICLE 
-	Flags TRANSPARENCY LIGHT_SOURCE
+	Flags TRANSPARENCY LIGHT_SOURCE 
 	Radius 5.0
 	MeshName FireMesh
 	MeshLoadingFunc ParticleLoader
