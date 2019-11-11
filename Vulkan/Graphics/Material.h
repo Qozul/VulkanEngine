@@ -108,7 +108,7 @@ namespace QZL {
 		class TerrainMaterial : public Material {
 		public:
 			TerrainMaterial(const std::string materialFileName)
-				: Material(materialFileName), heightmap_(nullptr), diffuse_(nullptr) { }
+				: Material(materialFileName), heightmap_(nullptr), diffuse_(nullptr), normalmap_(nullptr) { }
 
 			~TerrainMaterial();
 
@@ -123,6 +123,7 @@ namespace QZL {
 		private:
 			TextureSampler* heightmap_;
 			TextureSampler* diffuse_;
+			TextureSampler* normalmap_;
 		};
 
 		class AtmosphereMaterial : public Material {

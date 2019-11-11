@@ -127,16 +127,18 @@ VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor)
 {
 	return descriptor->makeLayout({
 		makeLayoutBinding(0, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr),
-		makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)
+		makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr),
+		makeLayoutBinding(2, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr)
 	});
 }
 
 std::vector<TextureSampler*> TerrainMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
-	ASSERT(lines.size() >= 2);
+	ASSERT(lines.size() >= 3);
 	heightmap_ = textureManager->requestTextureSeparate(lines[0]);
 	diffuse_ = textureManager->requestTextureSeparate(lines[1]);
-	return { heightmap_, diffuse_ };
+	normalmap_ = textureManager->requestTextureSeparate(lines[2]);
+	return { heightmap_, diffuse_, normalmap_ };
 }
 
 VkDescriptorSetLayout TerrainMaterial::makeLayout(Descriptor* descriptor)

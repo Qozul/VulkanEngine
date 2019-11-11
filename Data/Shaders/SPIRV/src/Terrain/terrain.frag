@@ -9,8 +9,8 @@ struct Material {
 layout(location = 0) out vec4 fragColor;
 
 layout (location = 0) in vec2 texUV;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec3 worldPos;
+layout (location = 1) in vec3 worldPos;
+layout (location = 2) in vec3 normal;
 
 layout(set = 2, binding = 1) uniform sampler2D diffuseSampler;
 
@@ -26,10 +26,19 @@ layout(set = 0, binding = 1) readonly buffer MaterialData
 	Material material;
 };
 
+vec3 calculateNormal()
+{
+	vec3 X = dFdx(worldPos);
+	vec3 Y = dFdy(worldPos);
+	return normalize(cross(X, Y));
+}
+
 void main() {
-	vec3 incident = normalize ( lightPositions[0].xyz - worldPos );
-	vec3 viewDir = normalize ( cameraPosition.xyz - worldPos );
-	vec3 halfDir = normalize ( incident + viewDir );
+	//vec3 normal = calculateNormal();
+	
+	vec3 incident = normalize(lightPositions[0].xyz - worldPos);
+	vec3 viewDir = normalize(cameraPosition.xyz - worldPos);
+	vec3 halfDir = normalize(incident + viewDir);
 	float dist = length(lightPositions[0].xyz - worldPos);
 	
 	float lambert = max(0.0, dot(incident, normal));
