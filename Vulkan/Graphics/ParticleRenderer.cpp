@@ -31,6 +31,8 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)),
 	  RenderStorage::InstanceUsage::kUnlimited))
 {
+	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 	createDescriptors(createInfo.maxDrawnEntities);
 
 	auto pushConstRange = setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT);
@@ -62,15 +64,18 @@ void ParticleRenderer::createDescriptors(const uint32_t particleSystemCount)
 	DescriptorBuffer* instBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
 		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "ParticleInstancesBuffer");
 	storageBuffers_.push_back(instBuf);
+	DescriptorBuffer* diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
+		sizeof(uint32_t) * particleSystemCount, VK_SHADER_STAGE_FRAGMENT_BIT, "ParticleDIBuffer");
+	storageBuffers_.push_back(diBuf);
 
-	VkDescriptorSetLayout layout = descriptor_->makeLayout({ instBuf->getBinding() });
+	VkDescriptorSetLayout layout = descriptor_->makeLayout({ instBuf->getBinding(), diBuf->getBinding() });
 
 	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(ParticleMaterial::getLayout(descriptor_));
 
 	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
 	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[0]));
+	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[1]));
+	descWrites.push_back(diBuf->descriptorWrite(descriptorSets_[1]));
 	descriptor_->updateDescriptorSets(descWrites);
 }
 
@@ -94,6 +99,13 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	}
 	storageBuffers_[0]->unbindRange();
 
+	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[1]->bindRange());
+	instPtr = renderStorage_->instanceData();
+	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
+		dataPtr[i] = static_cast<ParticleMaterial*>((*(instPtr + i))->getMaterial())->diffuse_;
+	}
+	storageBuffers_[1]->unbindRange();
+
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
@@ -103,7 +115,7 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		pcg.billboardPoint = camera.position;
 		pcg.tileLength = params->params.textureTileLength;
 		
-		VkDescriptorSet sets[2] = { descriptorSets_[0], robject->getMaterial()->getTextureSet() };
+		VkDescriptorSet sets[2] = { descriptorSets_[1], descriptorSets_[0] };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);

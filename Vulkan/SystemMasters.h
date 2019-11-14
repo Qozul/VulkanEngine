@@ -20,7 +20,7 @@ namespace QZL {
 		Game::GameMaster* gameMaster;
 		Physics::PhysicsMaster* physicsMaster;
 		Graphics::GraphicsMaster* graphicsMaster;
-		Graphics::TextureManager* textureManager;
+		mutable Graphics::TextureManager* textureManager;
 
 		const Graphics::LogicDevice* getLogicDevice() const;
 	};

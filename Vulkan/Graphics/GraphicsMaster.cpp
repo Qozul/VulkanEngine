@@ -70,6 +70,8 @@ GraphicsMaster::GraphicsMaster(SystemMasters& masters)
 	mainCamera_.position = glm::vec3(0.0f, 10.0f, 0.0f);
 	mainCamera_.lookPoint = glm::vec3(0.0f, 0.0f, 10.0f);
 
+
+
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
 
@@ -78,6 +80,9 @@ GraphicsMaster::GraphicsMaster(SystemMasters& masters)
 
 	DeviceSurfaceCapabilities surfaceCapabilities;
 	initDevices(surfaceCapabilities, enabledLayerCount, enabledLayerNames);
+
+	masters_.textureManager = new Graphics::TextureManager(getLogicDevice(), getLogicDevice()->getPrimaryDescriptor(),
+		7, supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
 
 	swapChain_ = new SwapChain(this, details_.window, details_.surface, details_.logicDevice, surfaceCapabilities);
 	swapChain_->setCommandBuffers(std::vector<VkCommandBuffer>(details_.logicDevice->commandBuffers_.begin() + 1, details_.logicDevice->commandBuffers_.end()));

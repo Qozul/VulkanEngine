@@ -6,8 +6,10 @@ layout(location = 1) in vec2 iTextureCoord;
 layout(location = 2) in vec3 iNormal;
 
 layout (location = 0) out vec2 texUV;
+layout (location = 1) flat out int instanceIndex;
 
 void main() {
+	instanceIndex = gl_InstanceIndex;
 	gl_Position = vec4(iPosition, 1.0);
 	texUV = iTextureCoord;
 }

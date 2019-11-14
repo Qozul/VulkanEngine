@@ -58,9 +58,10 @@ namespace QZL {
 		};
 
 		class ParticleMaterial : public Material {
+			friend class ParticleRenderer;
 		public:
 			ParticleMaterial(const std::string materialFileName)
-				: Material(materialFileName), diffuse_(nullptr) { }
+				: Material(materialFileName) { }
 			~ParticleMaterial();
 
 			static VkDescriptorSetLayout getLayout(Descriptor* descriptor);
@@ -73,17 +74,14 @@ namespace QZL {
 			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
 			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
-			TextureSampler* diffuse_;
+			uint32_t diffuse_;
 		};
 
 		class StaticMaterial : public Material {
 			friend class TexturedRenderer;
 		public:
 			StaticMaterial(const std::string materialFileName)
-				: Material(materialFileName), isUsingDI(false) {
-				diffuse_.diffuseSampler = nullptr;
-				normalMap_.normalMapSampler = nullptr;
-			}
+				: Material(materialFileName) { }
 
 			~StaticMaterial();
 
@@ -96,21 +94,15 @@ namespace QZL {
 			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
 			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
-			union {
-				uint32_t diffuseTextureIndex;
-				TextureSampler* diffuseSampler;
-			} diffuse_;
-			union {
-				uint32_t normalMapIndex;
-				TextureSampler* normalMapSampler;
-			} normalMap_;
-			bool isUsingDI;
+			uint32_t diffuseTextureIndex;
+			uint32_t normalMapIndex;
 		};
 
 		class TerrainMaterial : public Material {
+			friend class TerrainRenderer;
 		public:
 			TerrainMaterial(const std::string materialFileName)
-				: Material(materialFileName), heightmap_(nullptr), diffuse_(nullptr), normalmap_(nullptr) { }
+				: Material(materialFileName) { }
 
 			~TerrainMaterial();
 
@@ -123,9 +115,9 @@ namespace QZL {
 			std::vector<TextureSampler*> loadTextures(TextureManager* textureManager, std::vector<std::string>& lines) override;
 			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
 		private:
-			TextureSampler* heightmap_;
-			TextureSampler* diffuse_;
-			TextureSampler* normalmap_;
+			uint32_t heightmap_;
+			uint32_t diffuse_;
+			uint32_t normalmap_;
 		};
 
 		class AtmosphereMaterial : public Material {

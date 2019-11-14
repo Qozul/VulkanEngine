@@ -12,14 +12,23 @@ namespace QZL {
 		class Descriptor;
 		class TextureLoader;
 
+		struct SamplerInfo {
+			VkFilter magFilter = VK_FILTER_LINEAR;
+			VkFilter minFilter = VK_FILTER_LINEAR;
+			VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			float anisotropy = 8;
+			VkShaderStageFlags stages = VK_SHADER_STAGE_FRAGMENT_BIT;
+			SamplerInfo() { }
+			SamplerInfo(VkShaderStageFlags stages) : stages(stages) { }
+		};
+
 		class TextureManager {
 		public:
 			TextureManager(const LogicDevice* logicDevice, Descriptor* descriptor, uint32_t maxTextures, bool descriptorIndexing = false);
 			~TextureManager();
 			
 			// Returns the index of the texture sampler in the texture aray descriptor
-			uint32_t requestTexture(const std::string& name, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR,
-				VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT, float anisotropy = 8);
+			uint32_t requestTexture(const std::string& name, SamplerInfo samplerInfo = {});
 
 			// Returns a texture sampler and passes ownership of the sampler to the caller, which is expected to destroy the resource prior to this class
 			// destructor being called.

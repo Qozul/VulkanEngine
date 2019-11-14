@@ -56,21 +56,12 @@ void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 	storageBuffers_.push_back(paramsBuf);
 
 	VkDescriptorSetLayout layout;
-	DescriptorBuffer* diBuf = nullptr;
-	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
-		diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
-			sizeof(uint32_t) * 2 * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
-		storageBuffers_.push_back(diBuf);
-		layout = descriptor_->makeLayout({ mvpBuf->getBinding(), paramsBuf->getBinding(), diBuf->getBinding() });
-	}
-	else {
-		layout = descriptor_->makeLayout({ mvpBuf->getBinding(), paramsBuf->getBinding() });
-	}
+	DescriptorBuffer* diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
+		sizeof(uint32_t) * 2 * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
+	storageBuffers_.push_back(diBuf);
+	layout = descriptor_->makeLayout({ mvpBuf->getBinding(), paramsBuf->getBinding(), diBuf->getBinding() });
 
 	pipelineLayouts_.push_back(layout);
-	if (!logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
-		pipelineLayouts_.push_back(StaticMaterial::getLayout(descriptor_));
-	}
 
 	size_t setIdx = descriptor_->createSets({ layout, layout, layout });
 
@@ -79,9 +70,7 @@ void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 		descriptorSets_.push_back(descriptor_->getSet(setIdx + i));
 		descWrites.push_back(mvpBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
 		descWrites.push_back(paramsBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
-		if (diBuf != nullptr) {
-			descWrites.push_back(diBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
-		}
+		descWrites.push_back(diBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
 	}
 	descriptor_->updateDescriptorSets(descWrites);
 }
@@ -95,12 +84,7 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 
 	updateBuffers(camera.viewMatrix);
 
-	if (logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
-		recordDIFrame(idx, cmdBuffer);
-	}
-	else {
-		recordNormalFrame(idx, cmdBuffer);
-	}
+	recordDIFrame(idx, cmdBuffer);
 }
 
 void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
@@ -113,20 +97,6 @@ void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuff
 
 		VkDescriptorSet sets[2] = { descriptorSets_[0], descriptorSets_[1 + (size_t)idx] };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
-
-		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
-	}
-}
-
-void TexturedRenderer::recordNormalFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
-{
-	// Texture defined per mesh, not per instance
-	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		RenderObject* robject = renderStorage_->renderObjectData()[i];
-
-		VkDescriptorSet sets[3] = { descriptorSets_[0], descriptorSets_[1 + (size_t)idx], robject->getMaterial()->getTextureSet() };
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
@@ -155,8 +125,8 @@ void TexturedRenderer::updateDIBuffer()
 	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[2]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 2) {
-		dataPtr[i] = static_cast<StaticMaterial*>((*(instPtr + i))->getMaterial())->diffuse_.diffuseTextureIndex;
-		dataPtr[i + 1] = static_cast<StaticMaterial*>((*(instPtr + i))->getMaterial())->normalMap_.normalMapIndex;
+		dataPtr[i] = static_cast<StaticMaterial*>((*(instPtr + i))->getMaterial())->diffuseTextureIndex;
+		dataPtr[i + 1] = static_cast<StaticMaterial*>((*(instPtr + i))->getMaterial())->normalMapIndex;
 	}
 	storageBuffers_[2]->unbindRange();
 }

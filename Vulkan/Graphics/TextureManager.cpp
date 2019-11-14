@@ -19,7 +19,7 @@ TextureManager::TextureManager(const LogicDevice* logicDevice, Descriptor* descr
 	setLayoutBinding_.descriptorCount = maxTextures;
 	setLayoutBinding_.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	setLayoutBinding_.pImmutableSamplers = nullptr;
-	setLayoutBinding_.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	setLayoutBinding_.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
 
 	for (uint32_t i = 0; i < maxTextures; ++i) {
 		freeDescriptors_.push(i);
@@ -40,7 +40,7 @@ TextureManager::~TextureManager()
 	}
 }
 
-uint32_t TextureManager::requestTexture(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy)
+uint32_t TextureManager::requestTexture(const std::string& name, SamplerInfo samplerInfo)
 {
 	ASSERT(descriptorIndexingActive_);
 	// Reuse sampler if it already exists
@@ -48,7 +48,7 @@ uint32_t TextureManager::requestTexture(const std::string& name, VkFilter magFil
 		return textureSamplersDI_[name].second;
 	}
 	else {
-		auto sampler = requestTextureSeparate(name, magFilter, minFilter, addressMode, anisotropy);
+		auto sampler = requestTextureSeparate(name, samplerInfo.magFilter, samplerInfo.minFilter, samplerInfo.addressMode, samplerInfo.anisotropy);
 		textureSamplersDI_[name].first = sampler;
 
 		uint32_t arrayIdx = freeDescriptors_.front();

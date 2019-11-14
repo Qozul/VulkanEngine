@@ -23,6 +23,7 @@ float System::deltaTimeSeconds = 0.0f;
 
 System::System()
 {
+	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
 	inputManager_ = new InputManager(masters_.graphicsMaster->details_.window);
 	masters_.system = this;
 	masters_.inputManager = inputManager_;
@@ -30,9 +31,6 @@ System::System()
 	masters_.gameMaster = new Game::GameMaster(masters_);
 
 	// Initialisation
-	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
-	masters_.textureManager = new Graphics::TextureManager(masters_.getLogicDevice(), masters_.getLogicDevice()->getPrimaryDescriptor(),
-		2, masters_.graphicsMaster->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
 }
 
 System::~System()

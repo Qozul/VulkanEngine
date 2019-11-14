@@ -24,7 +24,7 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	createDescriptors(createInfo.maxDrawnEntities);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
-	pipelineLayouts_.push_back(TerrainMaterial::getLayout(descriptor_));
+	//pipelineLayouts_.push_back(TerrainMaterial::getLayout(descriptor_));
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
@@ -60,8 +60,11 @@ void TerrainRenderer::createDescriptors(const uint32_t entityCount)
 	storageBuffers_.push_back(mvpBuf);
 	storageBuffers_.push_back(matBuf);
 	storageBuffers_.push_back(tessBuf);
-	VkDescriptorSetLayout layout;
-	layout = descriptor_->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding() });
+	DescriptorBuffer* diBuf = nullptr;
+	diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 3, 0,
+		sizeof(uint32_t) * 3, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "TerrainDIBuffer");
+	storageBuffers_.push_back(diBuf);
+	VkDescriptorSetLayout layout = descriptor_->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), tessBuf->getBinding(), diBuf->getBinding() });
 
 	pipelineLayouts_.push_back(layout);
 
@@ -72,6 +75,7 @@ void TerrainRenderer::createDescriptors(const uint32_t entityCount)
 		descWrites.push_back(mvpBuf->descriptorWrite(descriptor_->getSet(idx + i)));
 		descWrites.push_back(matBuf->descriptorWrite(descriptor_->getSet(idx + i)));
 		descWrites.push_back(tessBuf->descriptorWrite(descriptor_->getSet(idx + i)));
+		descWrites.push_back(diBuf->descriptorWrite(descriptor_->getSet(idx + i)));
 	}
 	descriptor_->updateDescriptorSets(descWrites);
 }
@@ -84,13 +88,20 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
 	updateBuffers(camera);
-
+	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[3]->bindRange());
+	auto instPtr = renderStorage_->instanceData();
+	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 2) {
+		dataPtr[i] = static_cast<TerrainMaterial*>((*(instPtr + i))->getMaterial())->heightmap_;
+		dataPtr[i + 1] = static_cast<TerrainMaterial*>((*(instPtr + i))->getMaterial())->normalmap_;
+		dataPtr[i + 2] = static_cast<TerrainMaterial*>((*(instPtr + i))->getMaterial())->diffuse_;
+	}
+	storageBuffers_[3]->unbindRange();
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		VkDescriptorSet sets[3] = { descriptorSets_[1 + (size_t)idx], descriptorSets_[0], robject->getMaterial()->getTextureSet() };
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 3, sets, 0, nullptr);
+		VkDescriptorSet sets[2] = { descriptorSets_[1 + (size_t)idx], descriptorSets_[0] };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

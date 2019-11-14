@@ -64,7 +64,6 @@ constexpr VkDescriptorSetLayoutBinding QZL::Graphics::Material::makeLayoutBindin
 
 ParticleMaterial::~ParticleMaterial() 
 {
-	SAFE_DELETE(diffuse_);
 }
 
 VkDescriptorSetLayout ParticleMaterial::getLayout(Descriptor* descriptor)
@@ -75,8 +74,8 @@ VkDescriptorSetLayout ParticleMaterial::getLayout(Descriptor* descriptor)
 std::vector<TextureSampler*> ParticleMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
 	ASSERT(lines.size() >= 1);
-	diffuse_ = textureManager->requestTextureSeparate(lines[0]);
-	return { diffuse_ };
+	diffuse_ = textureManager->requestTexture(lines[0]);
+	return { };
 }
 
 VkDescriptorSetLayout ParticleMaterial::makeLayout(Descriptor* descriptor)
@@ -86,10 +85,6 @@ VkDescriptorSetLayout ParticleMaterial::makeLayout(Descriptor* descriptor)
 
 StaticMaterial::~StaticMaterial()
 {
-	if (!isUsingDI) {
-		SAFE_DELETE(diffuse_.diffuseSampler);
-		SAFE_DELETE(normalMap_.normalMapSampler);
-	}
 }
 
 VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor)
@@ -99,18 +94,10 @@ VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor)
 
 std::vector<TextureSampler*> StaticMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
-	isUsingDI = textureManager->descriptorIndexingEnabled();
 	ASSERT(lines.size() >= 2);
-	if (isUsingDI) {
-		diffuse_.diffuseTextureIndex = textureManager->requestTexture(lines[0]);
-		normalMap_.normalMapIndex = textureManager->requestTexture(lines[1]);
-		return {};
-	}
-	else {
-		diffuse_.diffuseSampler = textureManager->requestTextureSeparate(lines[0]);
-		normalMap_.normalMapSampler = textureManager->requestTextureSeparate(lines[1]);
-		return { diffuse_.diffuseSampler, normalMap_.normalMapSampler };
-	}
+	diffuseTextureIndex = textureManager->requestTexture(lines[0]);
+	normalMapIndex = textureManager->requestTexture(lines[1]);
+	return {};
 }
 
 VkDescriptorSetLayout StaticMaterial::makeLayout(Descriptor* descriptor)
@@ -121,8 +108,6 @@ VkDescriptorSetLayout StaticMaterial::makeLayout(Descriptor* descriptor)
 
 TerrainMaterial::~TerrainMaterial()
 {
-	SAFE_DELETE(heightmap_);
-	SAFE_DELETE(diffuse_);
 }
 
 VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor)
@@ -137,10 +122,10 @@ VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor)
 std::vector<TextureSampler*> TerrainMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
 {
 	ASSERT(lines.size() >= 3);
-	heightmap_ = textureManager->requestTextureSeparate(lines[0]);
-	diffuse_ = textureManager->requestTextureSeparate(lines[1]);
-	normalmap_ = textureManager->requestTextureSeparate(lines[2]);
-	return { heightmap_, diffuse_, normalmap_ };
+	heightmap_ = textureManager->requestTexture(lines[0], SamplerInfo(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT));
+	diffuse_ = textureManager->requestTexture(lines[1]);
+	normalmap_ = textureManager->requestTexture(lines[2], SamplerInfo(VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT));
+	return {  };
 }
 
 VkDescriptorSetLayout TerrainMaterial::makeLayout(Descriptor* descriptor)
