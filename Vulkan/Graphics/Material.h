@@ -8,11 +8,51 @@
 
 namespace QZL {
 	namespace Graphics {
-		class Descriptor;
 		class TextureManager;
-		class TextureSampler;
-		class Image;
+
+		enum class MaterialType {
+			kStatic, kTerrain, kAtmosphere, kParticle, kSize
+		};
 		
+		struct Material {
+			void* data;
+			size_t size;
+		};
+
+		class Materials {
+			using MaterialLoadingFunction = void(*)(TextureManager* texManager, void* data, std::vector<std::string>& lines);
+		public:
+			struct Static {
+				uint32_t albedoIdx;
+				uint32_t normalmapIdx;
+			};
+
+			struct Terrain {
+				uint32_t heightmapIdx;
+				uint32_t normalmapIdx;
+				uint32_t albedoIdx;
+			};
+
+			struct Atmosphere {
+				uint32_t scatteringIdx;
+			};
+
+			struct Particle {
+				uint32_t albedoIdx;
+			};
+			static void loadMaterial(TextureManager* texManager, MaterialType type, std::string fileName, void* data);
+			static MaterialType stringToType(std::string typeName);
+
+			static const size_t materialTextureCountLUT[(size_t)MaterialType::kSize];
+			static const size_t materialSizeLUT[(size_t)MaterialType::kSize];
+
+		private:
+			static MaterialLoadingFunction getLoadingFunction(MaterialType type);
+			static void loadStaticMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
+			static void loadTerrainMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
+			static void loadParticleMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
+		};
+		/*
 		// A material is a group of textures with an associated descriptor set.
 		class Material {
 		public:
@@ -22,11 +62,6 @@ namespace QZL {
 				: materialFileName_(materialFileName), textureSet_(VK_NULL_HANDLE), layout_(VK_NULL_HANDLE)
 			{
 			}
-
-			// This ctor is for when a material is created by the program (such as a game script). Note that care is taken with memory management
-			// and that by calling this ctor, the object and its samplers are *probably* not managed by the texture manager and must be deleted manually.
-			Material(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
-				: materialFileName_(name), textureSet_(set), layout_(layout) { }
 
 			virtual ~Material() {}
 
@@ -122,8 +157,8 @@ namespace QZL {
 
 		class AtmosphereMaterial : public Material {
 		public:
-			AtmosphereMaterial(const std::string name, VkDescriptorSet& set, VkDescriptorSetLayout& layout)
-				: Material(name, set, layout), scatteringTexture_(nullptr), transmittanceTexture_(nullptr) { }
+			AtmosphereMaterial(const std::string name, uint32_t idx)
+				: Material(name), scatteringTexture_(idx) { }
 
 			~AtmosphereMaterial() { }
 
@@ -132,12 +167,12 @@ namespace QZL {
 			const RendererTypes getRendererType() const override {
 				return RendererTypes::kAtmosphere;
 			}
+			uint32_t scatteringTexture_;
 		protected:
 			std::vector<TextureSampler*> loadTextures(TextureManager* textureLoader, std::vector<std::string>& lines) override { return { }; };
 			VkDescriptorSetLayout makeLayout(Descriptor* descriptor) override;
-		private:
-			TextureSampler* scatteringTexture_;
-			TextureSampler* transmittanceTexture_;
 		};
+		*/
+
 	}
 }

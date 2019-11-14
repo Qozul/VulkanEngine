@@ -36,7 +36,8 @@
 7 9 3
 
 # Particle Renderer: 1 uniform buffer
-6 1 0
+6 3 3
+7 3 0
 
 # Post Process Renderer: 5 combined image samplers, 2 storage images, and a uniform buffer
 #1 5 2

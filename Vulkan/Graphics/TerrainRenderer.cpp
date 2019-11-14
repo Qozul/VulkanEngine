@@ -24,7 +24,6 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	createDescriptors(createInfo.maxDrawnEntities);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
-	//pipelineLayouts_.push_back(TerrainMaterial::getLayout(descriptor_));
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
@@ -90,10 +89,8 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	updateBuffers(camera);
 	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[3]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
-	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 2) {
-		dataPtr[i] = static_cast<TerrainMaterial*>((*(instPtr + i))->getMaterial())->heightmap_;
-		dataPtr[i + 1] = static_cast<TerrainMaterial*>((*(instPtr + i))->getMaterial())->normalmap_;
-		dataPtr[i + 2] = static_cast<TerrainMaterial*>((*(instPtr + i))->getMaterial())->diffuse_;
+	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 3) {
+		memcpy((void*)&dataPtr[i], (*(instPtr + i))->getMaterial()->data, (*(instPtr + i))->getMaterial()->size);
 	}
 	storageBuffers_[3]->unbindRange();
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {

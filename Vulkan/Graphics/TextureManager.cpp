@@ -75,6 +75,37 @@ TextureSampler* TextureManager::requestTextureSeparate(const std::string& name, 
 	}
 }
 
+uint32_t TextureManager::allocateTexture(const std::string& name, Image*& imgPtr, VkImageCreateInfo createInfo, MemoryAllocationPattern allocationPattern, ImageParameters parameters, SamplerInfo samplerInfo)
+{
+	imgPtr = allocateImage(name, createInfo, allocationPattern, parameters);
+	textures_[name] = imgPtr;
+	return allocateTexture(name, imgPtr, samplerInfo);
+}
+
+uint32_t TextureManager::allocateTexture(const std::string& name, Image* img, SamplerInfo samplerInfo)
+{
+	uint32_t arrayIdx = freeDescriptors_.front();
+	freeDescriptors_.pop();
+	TextureSampler* sampler = img->createTextureSampler(name, samplerInfo.magFilter, samplerInfo.minFilter, samplerInfo.addressMode, samplerInfo.anisotropy);
+	descriptor_->updateDescriptorSets({ makeDescriptorWrite(sampler->getImageInfo(), arrayIdx, 1) });
+	textureSamplersDI_[name] = std::make_pair(sampler, arrayIdx);
+	return arrayIdx;
+}
+
+Material* TextureManager::requestMaterial(const MaterialType type, const std::string name)
+{
+	if (!materials_[name]) {
+		Material* mat = new Material();
+		size_t lastSize = materialData_.size();
+		materialData_.resize(lastSize + Materials::materialTextureCountLUT[(size_t)type]);
+		Materials::loadMaterial(this, type, name, &materialData_[lastSize]);
+		mat->data = lastSize;
+		mat->size = Materials::materialSizeLUT[(size_t)type];
+		materials_[name] = mat;
+	}
+	return materials_[name];
+}
+
 VkWriteDescriptorSet TextureManager::makeDescriptorWrite(VkDescriptorImageInfo imageInfo, uint32_t idx, uint32_t count)
 {
 	VkWriteDescriptorSet write = {};
@@ -87,4 +118,9 @@ VkWriteDescriptorSet TextureManager::makeDescriptorWrite(VkDescriptorImageInfo i
 	write.dstSet = descriptor_->getSet(descriptorSetIdx_);
 	write.pImageInfo = &imageInfo;
 	return write;
+}
+
+Image* TextureManager::allocateImage(std::string name, VkImageCreateInfo createInfo, MemoryAllocationPattern allocationPattern, ImageParameters parameters)
+{
+	return textures_.find(name) != textures_.end() ? nullptr : new Image(logicDevice_, createInfo, allocationPattern, parameters, name);
 }

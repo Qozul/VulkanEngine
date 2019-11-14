@@ -42,15 +42,9 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 	shaderParams_.params.betaOzoneExt = params_.betaOzoneExt;
 	shaderParams_.params.mieScaleHeight = params_.mieScaleHeight;
 	shaderParams_.params.rayleighScaleHeight = params_.rayleighScaleHeight;
-
-	// Make the material, it only needs the scattering sampler
-	auto descriptor = logicDevice_->getPrimaryDescriptor();
-	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT);
-	VkDescriptorSetLayoutBinding transmittanceBinding = makeLayoutBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT);
-	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding, transmittanceBinding });
-	auto matSetIdx = descriptor->createSets({ matLayout });
-	auto matSet = descriptor->getSet(matSetIdx);
-	material_ = new AtmosphereMaterial("atmosphereMaterial", matSet, matLayout);
+	material_ = new Material();
+	material_->data = &scatteringSumIdx_;
+	material_->size = Materials::materialSizeLUT[(size_t)Graphics::MaterialType::kAtmosphere];
 }
 
 AtmosphereScript::~AtmosphereScript()
@@ -63,8 +57,6 @@ AtmosphereScript::~AtmosphereScript()
 	SAFE_DELETE(textures_.gatheringImage);
 	SAFE_DELETE(textures_.gatheringSum);
 	SAFE_DELETE(textures_.gatheringSumImage);
-	SAFE_DELETE(textures_.scatteringSum);
-	SAFE_DELETE(textures_.scatteringSumImage);
 	SAFE_DELETE(material_);
 }
 
@@ -75,6 +67,13 @@ Graphics::ShaderParams* AtmosphereScript::getNewShaderParameters()
 
 void AtmosphereScript::start()
 {
+	textures_.scatteringSumImage = nullptr;
+	scatteringSumIdx_ = sysMasters_->textureManager->allocateTexture("ScatteringSum", textures_.scatteringSumImage, Image::makeCreateInfo(VK_IMAGE_TYPE_3D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL },
+		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT });
+	textures_.scatteringSum = sysMasters_->textureManager->getSampler("ScatteringSum");
+
 	// See http://publications.lib.chalmers.se/records/fulltext/203057/203057.pdf for reference.
 	initTextures(logicDevice_, textures_);
 
@@ -161,12 +160,6 @@ void AtmosphereScript::start()
 	CHECK_VKRESULT(vkQueueWaitIdle(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue)));
 
 	SAFE_DELETE(buffer);
-
-	std::vector<VkWriteDescriptorSet> materialWrites = { 
-		textures_.scatteringSum->descriptorWrite(material_->getTextureSet(), 0), 
-		textures_.transmittance->descriptorWrite(material_->getTextureSet(), 1) 
-	};
-	descriptor->updateDescriptorSets(materialWrites);
 }
 
 void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedTextures& finalTextures)
@@ -190,11 +183,6 @@ void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedT
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
 		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL }, "AtmosScattering");
 	finalTextures.scattering = finalTextures.scatteringImage->createTextureSampler("AtmosScattering", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
-
-	finalTextures.scatteringSumImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_3D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL }, "AtmosScatteringSum");
-	finalTextures.scatteringSum = finalTextures.scatteringSumImage->createTextureSampler("AtmosScatteringSum", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 }
 
 VkDescriptorSetLayoutBinding AtmosphereScript::makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers, VkShaderStageFlags stages)

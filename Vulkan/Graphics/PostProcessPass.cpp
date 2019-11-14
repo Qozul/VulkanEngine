@@ -8,6 +8,7 @@
 #include "ParticleRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
+#include "TextureManager.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -54,8 +55,8 @@ PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevic
 
 PostProcessPass::~PostProcessPass()
 {
-	SAFE_DELETE(gpColourBuffer_);
-	SAFE_DELETE(gpDepthBuffer_);
+	//SAFE_DELETE(gpColourBuffer_);
+	//SAFE_DELETE(gpDepthBuffer_);
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(depthBuffer_);
 	SAFE_DELETE(postProcessRenderer_);
@@ -123,8 +124,10 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 	ASSERT(dependencyAttachment.size() == 2);
 	geometryColourBuf_ = dependencyAttachment[0];
 	geometryDepthBuf_ = dependencyAttachment[1];
-	gpColourBuffer_ = new TextureSampler(logicDevice_, "gpColourBuffer", dependencyAttachment[0], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
-	gpDepthBuffer_ = new TextureSampler(logicDevice_, "gpDepthBuffer", dependencyAttachment[1], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
+	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
+	gpDepthBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_);
+	//gpColourBuffer_ = new TextureSampler(logicDevice_, "gpColourBuffer", dependencyAttachment[0], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
+	//gpDepthBuffer_ = new TextureSampler(logicDevice_, "gpDepthBuffer", dependencyAttachment[1], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 	createRenderers();
 }
 

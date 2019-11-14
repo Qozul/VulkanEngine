@@ -37,8 +37,8 @@ namespace QZL {
 			Image* geometryDepthBuf_;
 
 			// Samplers for the images produced in the GeometryPass render pass.
-			TextureSampler* gpColourBuffer_;
-			TextureSampler* gpDepthBuffer_;
+			uint32_t gpColourBuffer_;
+			uint32_t gpDepthBuffer_;
 		};
 	}
 }

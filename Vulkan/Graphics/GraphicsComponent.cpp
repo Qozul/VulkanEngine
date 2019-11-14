@@ -15,9 +15,6 @@ GraphicsComponent::GraphicsComponent(Entity* owner, RendererTypes type, ShaderPa
 	meshName_(meshName), loadFunc_(loadFunc), material_(material)
 {
 	if (!overrideChecks) {
-		if (material != nullptr) {
-			ASSERT(type == material->getRendererType());
-		}
 		if (perInstanceParams != nullptr) {
 			ASSERT(type == perInstanceParams->getRendererType());
 		}
@@ -31,9 +28,6 @@ GraphicsComponent::GraphicsComponent(Entity* owner, RendererTypes type, RenderOb
 	: rtype_(type), owningEntity_(owner), meshParameters_(robject->getParams()), instanceParameters_(perInstanceParams),
 	meshName_(robject->getMeshName()), loadFunc_(nullptr), material_(robject->getMaterial())
 {
-	if (robject->getMaterial() != nullptr) {
-		ASSERT(type == robject->getMaterial()->getRendererType());
-	}
 	if (perInstanceParams != nullptr) {
 		ASSERT(type == perInstanceParams->getRendererType());
 	}

@@ -14,14 +14,14 @@ namespace QZL
 
 		class PostProcessRenderer : public RendererBase {
 		public:
-			PostProcessRenderer(RendererCreateInfo& createInfo, TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer);
+			PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourBuffer, uint32_t geometryDepthBuffer);
 			~PostProcessRenderer();
 			void createDescriptors(const uint32_t entityCount) override;
 			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
 			void registerComponent(GraphicsComponent* component, RenderObject* robject) override;
 		private:
-			TextureSampler* geometryColourBuffer_;
-			TextureSampler* geometryDepthBuffer_;
+			uint32_t geometryColourBuffer_;
+			uint32_t geometryDepthBuffer_;
 			AtmosphereShaderParams* params_;
 			Material* material_;
 			GraphicsComponent* component_;

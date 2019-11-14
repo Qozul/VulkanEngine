@@ -67,6 +67,7 @@ namespace QZL {
 			Graphics::AtmosphereShaderParams shaderParams_;
 			PrecomputedTextures textures_;
 			Graphics::Material* material_;
+			uint32_t scatteringSumIdx_;
 
 			const Graphics::LogicDevice* logicDevice_;
 		};

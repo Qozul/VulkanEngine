@@ -1,4 +1,5 @@
 #version 450
+#extension GL_EXT_nonuniform_qualifier : require
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
 #include "./alt_functions.glsl"
@@ -15,9 +16,11 @@ layout(push_constant) uniform Params {
 	vec4 betaRay; // .w = float betaMie	
 	vec4 cameraPosition; // .w = float planetRadius
 	vec4 sunDirection; // .w = float Hatm
-	vec4 sunIntensity; // .w = float g
+	vec3 sunIntensity;
+	uint samplerIdx;
 } PC;
-layout(set = 0, binding = 0) uniform sampler3D scatteringTexture;
+//layout(set = 0, binding = 0) uniform sampler3D scatteringTexture;
+layout(set = 0, binding = 1) uniform sampler3D texSamplers[];
 
 // theta is the angle between the direction of the incident light and the direction of the scattered light
 float rayleighPhase(float ctheta)
@@ -39,7 +42,7 @@ void calculateRayleighAndMie(in vec3 V, in vec3 L, in vec3 Z, out vec3 rayleigh,
 	float Cv = dot(V, Z);
 	float Cs = dot(L, Z);
 	// Fetch rayleigh and mie scattered light
-	vec4 scattering = texture(scatteringTexture, vec3(heightToUh(height, PC.sunDirection.w), 
+	vec4 scattering = texture(texSamplers[nonuniformEXT(PC.samplerIdx)], vec3(heightToUh(height, PC.sunDirection.w), 
 		CvToUv(Cv, height, PC.cameraPosition.w), CsToUs(Cs)));
 	rayleigh = scattering.rgb;
 	
@@ -48,7 +51,7 @@ void calculateRayleighAndMie(in vec3 V, in vec3 L, in vec3 Z, out vec3 rayleigh,
 	// Apply phase functions
 	float ctheta = dot(V, L);
 	rayleigh *= rayleighPhase(ctheta);
-	mie *= miePhase(ctheta, PC.sunIntensity.w);
+	mie *= miePhase(ctheta, 0.9);
 }
 
 void main() 

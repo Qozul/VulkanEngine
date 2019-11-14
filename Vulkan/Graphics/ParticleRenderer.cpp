@@ -32,8 +32,8 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	  RenderStorage::InstanceUsage::kUnlimited))
 {
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
-	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 	createDescriptors(createInfo.maxDrawnEntities);
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
 	auto pushConstRange = setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT);
 
@@ -72,10 +72,13 @@ void ParticleRenderer::createDescriptors(const uint32_t particleSystemCount)
 
 	pipelineLayouts_.push_back(layout);
 
-	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
+	auto setIdx = descriptor_->createSets({ layout, layout, layout });
 	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[1]));
-	descWrites.push_back(diBuf->descriptorWrite(descriptorSets_[1]));
+	for (int i = 0; i < 3; ++i) {
+		descriptorSets_.push_back(descriptor_->getSet(setIdx + i));
+		descWrites.push_back(instBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
+		descWrites.push_back(diBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
+	}
 	descriptor_->updateDescriptorSets(descWrites);
 }
 
@@ -100,9 +103,8 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	storageBuffers_[0]->unbindRange();
 
 	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[1]->bindRange());
-	instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
-		dataPtr[i] = static_cast<ParticleMaterial*>((*(instPtr + i))->getMaterial())->diffuse_;
+		memcpy((void*)&dataPtr[i], (*(instPtr + i))->getMaterial()->data, (*(instPtr + i))->getMaterial()->size);
 	}
 	storageBuffers_[1]->unbindRange();
 
@@ -115,10 +117,10 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		pcg.billboardPoint = camera.position;
 		pcg.tileLength = params->params.textureTileLength;
 		
-		VkDescriptorSet sets[2] = { descriptorSets_[1], descriptorSets_[0] };
+		VkDescriptorSet sets[2] = { descriptorSets_[1 + (size_t)idx], descriptorSets_[0] };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
 
-		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);
+		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), VK_SHADER_STAGE_GEOMETRY_BIT, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);
 
 		vkCmdDraw(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

@@ -36,7 +36,7 @@ GameMaster::~GameMaster()
 }
 
 void GameMaster::loadDescriptors()
-{
+{/*
 	Graphics::SceneDescriptorInfo info;
 	std::unordered_map<Graphics::RendererTypes, uint32_t> instancesMap;
 	scenes_[activeSceneIdx_]->findDescriptorRequirements(instancesMap);
@@ -54,7 +54,7 @@ void GameMaster::loadDescriptors()
 	info.mvpBuffer = Graphics::DescriptorBuffer::makeBuffer<Graphics::StorageBuffer>(masters_.getLogicDevice(), Graphics::MemoryAllocationPattern::kDynamicResource, 1, 0,
 		totalMVPSize * frameImageSize, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "MVPBuffer");
 
-	info.instanceDataLayout = masters_.getLogicDevice()->getPrimaryDescriptor()->makeLayout({ info.paramsBuffer->getBinding(), info.mvpBuffer->getBinding() });
+	info.instanceDataLayout = masters_.getLogicDevice()->getPrimaryDescriptor()->makeLayout({ info.paramsBuffer->getBinding(), info.mvpBuffer->getBinding() });*/
 }
 
 void GameMaster::loadGame()
@@ -70,7 +70,7 @@ void GameMaster::loadGame()
 	Entity* teapot = new Entity("Teapot");
 	teapot->getTransform()->scale = glm::vec3(2.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
-		masters_.textureManager->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot");
+		masters_.textureManager->requestMaterial(Graphics::MaterialType::kStatic, "ExampleStatic"), "Teapot");
 	
 	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 

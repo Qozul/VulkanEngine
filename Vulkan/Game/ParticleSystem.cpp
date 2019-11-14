@@ -81,7 +81,7 @@ ParticleSystem::ParticleSystem(const SystemMasters& initialiser, glm::vec3* bill
 	vertices_.resize(maxParticles);
 	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
 
-	material_ = initialiser.textureManager->requestMaterial<Graphics::ParticleMaterial>(materialName);
+	material_ = initialiser.textureManager->requestMaterial(Graphics::MaterialType::kParticle, materialName);
 	textureTileLength_ = textureTileLength;
 }
 

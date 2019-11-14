@@ -23,12 +23,16 @@ struct PushConstants {
 	float planetRadius;
 	glm::vec3 betaRay;
 	float betaMie;
+	uint32_t colourIdx;
+	uint32_t depthIdx;
 };
 
-PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourBuffer, uint32_t geometryDepthBuffer)
 	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer), component_(nullptr)
 {
 	createDescriptors(createInfo.maxDrawnEntities);
+	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
 	std::array<VkSpecializationMapEntry, 2> specConstantEntries;
 	specConstantEntries[0].constantID = 0;
@@ -75,28 +79,14 @@ PostProcessRenderer::~PostProcessRenderer()
 
 void PostProcessRenderer::createDescriptors(const uint32_t entityCount)
 {
-	VkDescriptorSetLayoutBinding gcbBinding = TextureSampler::makeBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT);
-	VkDescriptorSetLayoutBinding gdbBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	VkDescriptorSetLayout layout = descriptor_->makeLayout({ gcbBinding, gdbBinding });
-
-	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(AtmosphereMaterial::getLayout(descriptor_));
-
-	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
-
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(geometryColourBuffer_->descriptorWrite(descriptorSets_[0], 0));
-	descWrites.push_back(geometryDepthBuffer_->descriptorWrite(descriptorSets_[0], 1));
-	descriptor_->updateDescriptorSets(descWrites);
 }
 
 void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	beginFrame(cmdBuffer);
 
-	VkDescriptorSet sets[2] = { descriptorSets_[0], material_->getTextureSet() };
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
+	VkDescriptorSet sets[2] = { descriptorSets_[0] };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
 
 	PushConstants pc;
 	pc.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * camera.viewMatrix);
@@ -106,6 +96,8 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 	pc.planetRadius = params_->params.planetRadius;
 	pc.betaRay = params_->params.betaRay;
 	pc.betaMie = params_->params.betaMie;
+	pc.colourIdx = geometryColourBuffer_;
+	pc.depthIdx = geometryDepthBuffer_;
 
 	vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pc);
 
