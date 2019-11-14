@@ -82,6 +82,7 @@ namespace QZL
 				const char* const*& enabledLayerNames);
 			void initDevices(DeviceSurfaceCapabilities& surfaceCapabilitie, uint32_t& enabledLayerCount, const char* const*& enabledLayerNames);
 
+			void initialiseRenderPath();
 			void preframeSetup();
 
 			void loop();

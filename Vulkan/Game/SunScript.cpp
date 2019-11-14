@@ -6,8 +6,7 @@ using namespace QZL;
 using namespace QZL::Game;
 
 SunScript::SunScript(const SystemMasters& initialiser)
-	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), initialiser.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle),
-		2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(-10.0f))
+	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(-10.0f))
 {
 }
 
@@ -27,6 +26,7 @@ glm::vec3* SunScript::getSunDirection()
 
 void SunScript::start()
 {
+	fetchDynamicBuffer();
 	// Ensure both sun and moon particles have zero velocity
 	particles_[0].reset();
 	particles_[1].reset();

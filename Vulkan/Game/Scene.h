@@ -4,6 +4,9 @@
 
 namespace QZL {
 	class Entity;
+	namespace Graphics {
+		class GraphicsComponent;
+	}
 	struct SceneHeirarchyNode {
 		SceneHeirarchyNode* parentNode;
 		Entity* entity;
@@ -13,11 +16,11 @@ namespace QZL {
 	class Scene {
 		friend std::ostream& operator<<(std::ostream& os, Scene* scene);
 	public:
-		Scene();
+		Scene(const SystemMasters* masters);
 		~Scene();
 		// Calls update on every entity in the scene hierarchy, giving a combined model matrix such that
 		// parents are the spatial root of their children.
-		void update(float dt);
+		void update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx);
 
 		void start();
 		/*  
@@ -40,6 +43,7 @@ namespace QZL {
 		SceneHeirarchyNode* findEntityNode(Entity* entity);
 
 		void findDescriptorRequirements(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount);
+		//Graphics::SceneGraphicsInfo* createDescriptors(const Graphics::LogicDevice* logicDevice, size_t numFrameImages, std::set<Graphics::MaterialJob>& materials);
 
 	private:
 		// Auxilliary recursive lookup
@@ -47,11 +51,12 @@ namespace QZL {
 		// Deletes the given node and all of its children
 		void deleteHeirarchyRecursively(SceneHeirarchyNode* node);
 
-		void updateRecursively(SceneHeirarchyNode* node, glm::mat4 modelMatrix, float dt);
+		void updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx);
 		void startRecursively(SceneHeirarchyNode* node);
 
 		void findDescriptorRequirementsRecursively(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount, SceneHeirarchyNode* node);
 
 		SceneHeirarchyNode* rootNode_;
+		const SystemMasters* masters_;
 	};
 }

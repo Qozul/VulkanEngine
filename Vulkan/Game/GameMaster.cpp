@@ -25,7 +25,7 @@ using namespace Game;
 GameMaster::GameMaster(const SystemMasters& masters) 
 	: masters_(masters), activeSceneIdx_(0)
 {
-	scenes_.push_back(new Scene()); // Default scene
+	scenes_.push_back(new Scene(&masters)); // Default scene
 }
 
 GameMaster::~GameMaster()
@@ -96,19 +96,16 @@ void GameMaster::loadGame()
 	scenes_[activeSceneIdx_]->addEntity(fire);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
 	scenes_[activeSceneIdx_]->addEntity(teapot);
-	scenes_[activeSceneIdx_]->start();
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
-
-	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
-	masters_.graphicsMaster->registerComponent(sun->getGraphicsComponent(), sunRobject);
-	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
-	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent(), nullptr, Graphics::RendererTypes::kAtmospherePostProcess);
-	masters_.graphicsMaster->registerComponent(fire->getGraphicsComponent(), fireRobject);
-	masters_.graphicsMaster->registerComponent(teapot->getGraphicsComponent());
 }
 
-void GameMaster::update(float dt)
+void GameMaster::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
 {
-	scenes_[activeSceneIdx_]->update(dt);
+	scenes_[activeSceneIdx_]->update(viewProjection, dt, frameIdx);
+}
+
+void GameMaster::start()
+{
+	scenes_[activeSceneIdx_]->start();
 }

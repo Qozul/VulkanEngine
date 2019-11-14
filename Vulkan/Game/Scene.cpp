@@ -1,10 +1,14 @@
 #include "Scene.h"
 #include "../Assets/Entity.h"
 #include "../Assets/Transform.h"
+#include "../SystemMasters.h"
+#include "../Graphics/GraphicsMaster.h"
+#include "ParticleSystem.h"
 
 using namespace QZL;
 
-Scene::Scene()
+Scene::Scene(const SystemMasters* masters)
+	: masters_(masters)
 {
 	rootNode_ = new SceneHeirarchyNode();
 	rootNode_->parentNode = nullptr;
@@ -16,10 +20,10 @@ Scene::~Scene()
 	deleteHeirarchyRecursively(rootNode_);
 }
 
-void Scene::update(float dt)
+void Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
 {
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
-		updateRecursively(rootNode_->childNodes[i], glm::mat4(), dt);
+		updateRecursively(rootNode_->childNodes[i], viewProjection, glm::mat4(), dt, frameIdx);
 	}
 }
 
@@ -120,7 +124,7 @@ void Scene::deleteHeirarchyRecursively(SceneHeirarchyNode* node)
 	SAFE_DELETE(node);
 }
 
-void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4 ctm, float dt)
+void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx)
 {
 	// Update might cause the entity to move, therefore calculate the concatenated model matrix after updating
 	node->entity->update(dt, ctm);
@@ -128,13 +132,22 @@ void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4 ctm, float dt)
 	glm::mat4 m = ctm * node->entity->getTransform()->toModelMatrix();
 	node->entity->setModelMatrix(m);
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
-		updateRecursively(node->childNodes[i], m, dt);
+		updateRecursively(node->childNodes[i], viewProjection, m, dt, frameIdx);
 	}
 }
 
 void Scene::startRecursively(SceneHeirarchyNode* node)
 {
 	node->entity->start();
+	auto graphicsComponent = node->entity->getGraphicsComponent();
+	if (graphicsComponent != nullptr) {
+		if (graphicsComponent->getRendererType() == Graphics::RendererTypes::kParticle) {
+			masters_->graphicsMaster->registerComponent(graphicsComponent, static_cast<Game::ParticleSystem*>(node->entity->getGameScript())->makeRenderObject(node->entity->name()));
+		}
+		else {
+			masters_->graphicsMaster->registerComponent(graphicsComponent);
+		}
+	}
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
 		startRecursively(node->childNodes[i]);
 	}

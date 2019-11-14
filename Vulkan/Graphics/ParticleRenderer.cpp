@@ -51,7 +51,7 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
+	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
 		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
 }
 
@@ -103,9 +103,8 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	storageBuffers_[0]->unbindRange();
 
 	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[1]->bindRange());
-	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
-		memcpy((void*)&dataPtr[i], (*(instPtr + i))->getMaterial()->data, (*(instPtr + i))->getMaterial()->size);
-	}
+	dataPtr[0] = 7;
+	dataPtr[1] = 9;
 	storageBuffers_[1]->unbindRange();
 
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {

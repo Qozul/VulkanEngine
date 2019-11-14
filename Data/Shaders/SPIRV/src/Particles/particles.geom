@@ -31,6 +31,7 @@ layout (set = 0, binding = 0) uniform Params {
 
 void createVertex(vec3 right, vec2 uv, float r, float u)
 {
+	outInstanceIndex = inInstanceIndex[0];
 	vec4 pos = vec4(inPosition[0] + (inScale[0] * (r * right + u * UP)), 1.0);
 	outUvCoords = uv;
 	gl_Position = UBO_0.params[inInstanceIndex[0]].mvp * pos;
@@ -43,7 +44,6 @@ void main()
 	vec3 modelSpaceBillboardPoint = (inverse(UBO_0.params[inInstanceIndex[0]].model) * vec4(PC.billboardPoint, 1.0)).xyz;
 	vec3 right = cross(normalize(modelSpaceBillboardPoint - inPosition[0]), UP);
 	
-	outInstanceIndex = inInstanceIndex[0];
 	createVertex(right, inTexOffset[0],	-0.5, -0.5);
 	createVertex(right, vec2(inTexOffset[0].x, inTexOffset[0].y + PC.tileLength), -0.5,  0.5);
 	createVertex(right, vec2(inTexOffset[0].x + PC.tileLength, inTexOffset[0].y),  0.5, -0.5);

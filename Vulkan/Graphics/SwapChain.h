@@ -50,6 +50,8 @@ namespace QZL
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void createSyncObjects();
 
+			void initialiseRenderPath();
+
 			GlobalRenderData* globalRenderData_;
 
 			std::vector<VkCommandBuffer> commandBuffers_;

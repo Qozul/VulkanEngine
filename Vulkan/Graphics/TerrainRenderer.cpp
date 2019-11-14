@@ -90,7 +90,9 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[3]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 3) {
-		memcpy((void*)&dataPtr[i], (*(instPtr + i))->getMaterial()->data, (*(instPtr + i))->getMaterial()->size);
+		dataPtr[i] = 2;
+		dataPtr[i + 1] = 4;
+		dataPtr[i + 2] = 3;
 	}
 	storageBuffers_[3]->unbindRange();
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {

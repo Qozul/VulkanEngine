@@ -99,7 +99,7 @@ Material* TextureManager::requestMaterial(const MaterialType type, const std::st
 		size_t lastSize = materialData_.size();
 		materialData_.resize(lastSize + Materials::materialTextureCountLUT[(size_t)type]);
 		Materials::loadMaterial(this, type, name, &materialData_[lastSize]);
-		mat->data = lastSize;
+		mat->data = &materialData_[lastSize];
 		mat->size = Materials::materialSizeLUT[(size_t)type];
 		materials_[name] = mat;
 	}

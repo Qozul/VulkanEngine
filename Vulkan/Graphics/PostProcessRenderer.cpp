@@ -16,19 +16,12 @@ using namespace QZL;
 using namespace Graphics;
 
 struct PushConstants {
-	glm::mat4 inverseViewProj;
-	glm::vec3 camPos;
-	float Hatm;
-	glm::vec3 sunDir;
-	float planetRadius;
-	glm::vec3 betaRay;
-	float betaMie;
 	uint32_t colourIdx;
 	uint32_t depthIdx;
 };
 
 PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourBuffer, uint32_t geometryDepthBuffer)
-	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer), component_(nullptr)
+	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
 {
 	createDescriptors(createInfo.maxDrawnEntities);
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
@@ -89,13 +82,6 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
 
 	PushConstants pc;
-	pc.inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * camera.viewMatrix);
-	pc.camPos = camera.position;
-	pc.Hatm = params_->params.Hatm;
-	pc.sunDir = *params_->params.sunDirection;
-	pc.planetRadius = params_->params.planetRadius;
-	pc.betaRay = params_->params.betaRay;
-	pc.betaMie = params_->params.betaMie;
 	pc.colourIdx = geometryColourBuffer_;
 	pc.depthIdx = geometryDepthBuffer_;
 
@@ -106,7 +92,4 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 
 void PostProcessRenderer::registerComponent(GraphicsComponent* component, RenderObject* robject)
 {
-	params_ = static_cast<AtmosphereShaderParams*>(component->getPerMeshShaderParams());
-	material_ = component->getMaterial();
-	component_ = component;
 }

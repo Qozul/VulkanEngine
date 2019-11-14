@@ -4,13 +4,13 @@ using namespace QZL;
 using namespace Game;
 
 FireSystem::FireSystem(const SystemMasters& initialiser)
-	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), initialiser.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle),
-		10, 0.0f, (1.0f / 3.0f), "Fire")
+	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), 10, 0.0f, (1.0f / 3.0f), "Fire")
 {
 }
 
 void FireSystem::start()
 {
+	fetchDynamicBuffer();
 	particleCreation(0, 10);
 	transform()->position = *billboardPoint_;
 	transform()->scale = glm::vec3(1.0f);

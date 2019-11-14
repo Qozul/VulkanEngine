@@ -22,9 +22,6 @@ namespace QZL
 		private:
 			uint32_t geometryColourBuffer_;
 			uint32_t geometryDepthBuffer_;
-			AtmosphereShaderParams* params_;
-			Material* material_;
-			GraphicsComponent* component_;
 		};
 	}
 }

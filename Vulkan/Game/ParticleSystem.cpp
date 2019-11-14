@@ -70,23 +70,26 @@ Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
 	return new Graphics::RenderObject(name, mesh, makeShaderParams(), material_);
 }
 
-ParticleSystem::ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
+ParticleSystem::ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint,
 	size_t maxParticles, float updateInterval, float textureTileLength, const std::string materialName)
 	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
-	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0), tint_(0.0f)
+	numDeadParticles_(maxParticles), currentActiveSize_(0), tint_(0.0f), materialName_(materialName), textureTileLength_(textureTileLength)
 {
 	ASSERT(billboardPoint_ != nullptr);
-	ASSERT(buf != nullptr);
 	particles_.resize(maxParticles);
 	vertices_.resize(maxParticles);
-	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
-
-	material_ = initialiser.textureManager->requestMaterial(Graphics::MaterialType::kParticle, materialName);
-	textureTileLength_ = textureTileLength;
 }
 
 ParticleSystem::~ParticleSystem()
 {
+}
+
+void ParticleSystem::fetchDynamicBuffer()
+{
+	buffer_ = sysMasters_->graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle);
+	subBufferRange_ = buffer_->allocateSubBufferRange(particles_.size());
+
+	material_ = sysMasters_->textureManager->requestMaterial(Graphics::MaterialType::kParticle, materialName_);
 }
 
 void ParticleSystem::nextTextureTile(glm::vec2& tileOffset)

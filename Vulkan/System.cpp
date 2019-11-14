@@ -29,21 +29,36 @@ System::System()
 	masters_.inputManager = inputManager_;
 	masters_.physicsMaster = nullptr;
 	masters_.gameMaster = new Game::GameMaster(masters_);
+	masters_.gameMaster->loadGame();
+	masters_.graphicsMaster->initialiseRenderPath();
+	masters_.gameMaster->start();
 
 	// Initialisation
+	/*
+	masters_.graphicsMaster = new Graphics::GraphicsMaster(masters_);
+	inputManager_ = new InputManager(masters_.graphicsMaster->details_.window);
+	masters_.system = this;
+	masters_.inputManager = inputManager_;
+	masters_.physicsMaster = nullptr;
+	masters_.gameMaster = new Game::GameMaster(masters_);
+	auto materials = masters_.gameMaster->loadGame();
+	descriptorInfo = masters_.gameMaster->createDescriptors(masters_.getLogicDevice(), masters_.graphicsMaster->getNumFrameImages(), materials);
+	masters_.textureManager = new Graphics::TextureManager(masters_.getLogicDevice(), masters_.getLogicDevice()->getPrimaryDescriptor(),
+		descriptorInfo->maxNumTextures, descriptorInfo->materialBuffer, descriptorInfo->materialsSet, materials);
+	masters_.graphicsMaster->initialiseRenderPath(*descriptorInfo);
+	masters_.gameMaster->start();
+	*/
 }
 
 System::~System()
 {
 	SAFE_DELETE(masters_.gameMaster);
 	SAFE_DELETE(masters_.textureManager);
-	//SAFE_DELETE(masters_.physicsMaster);
 	SAFE_DELETE(masters_.graphicsMaster);
 }
 
 void System::loop()
 {
-	masters_.gameMaster->loadGame();
 	masters_.graphicsMaster->preframeSetup();
 	Shared::PerfMeasurer perfMeasurer;
 	Clock::time_point lastTime = Clock::now();
@@ -57,7 +72,6 @@ void System::loop()
 
 		glfwPollEvents();
 		inputManager_->checkInput(deltaTimeSeconds);
-		masters_.gameMaster->update(deltaTimeSeconds);
 		perfMeasurer.startTime();
 		masters_.graphicsMaster->loop();
 		perfMeasurer.endTime();

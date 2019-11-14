@@ -122,11 +122,11 @@ void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
 
 void TexturedRenderer::updateDIBuffer()
 {
-	char* dataPtr = (char*)storageBuffers_[2]->bindRange();
+	uint32_t* dataPtr = (uint32_t*)storageBuffers_[2]->bindRange();
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
-		dataPtr += (*(instPtr + i))->getMaterial()->size;
-		memcpy((void*)dataPtr, (*(instPtr + i))->getMaterial()->data, (*(instPtr + i))->getMaterial()->size);
+		dataPtr[i] = 0;
+		dataPtr[i + 1] = 1;
 	}
 	storageBuffers_[2]->unbindRange();
 }

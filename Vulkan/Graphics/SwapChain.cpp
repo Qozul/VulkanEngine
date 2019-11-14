@@ -8,6 +8,8 @@
 #include "GlobalRenderData.h"
 #include "GraphicsMaster.h"
 #include "TextureManager.h"
+#include "../System.h"
+#include "../Game/GameMaster.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -19,6 +21,10 @@ size_t SwapChain::numSwapChainImages = 0;
 void SwapChain::loop(LogicalCamera& camera)
 {
 	const uint32_t imgIdx = aquireImage();
+
+	auto viewProj = master_->kProjectionMatrix * camera.viewMatrix;
+	master_->getMasters().gameMaster->update(viewProj, System::deltaTimeSeconds, imgIdx);
+
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
 	vkResetCommandBuffer(commandBuffers_[imgIdx], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
@@ -54,10 +60,6 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	else {
 		globalRenderData_ = new GlobalRenderData(logicDevice);
 	}
-
-	renderPasses_.push_back(new GeometryPass(master, logicDevice, details_, globalRenderData_));
-	renderPasses_.push_back(new PostProcessPass(master, logicDevice, details_, globalRenderData_));
-	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
 	createSyncObjects();
 }
 
@@ -264,4 +266,11 @@ void SwapChain::createSyncObjects() {
 		CHECK_VKRESULT(vkCreateSemaphore(*logicDevice_, &semaphoreInfo, nullptr, &renderFinishedSemaphores_[i]));
 		CHECK_VKRESULT(vkCreateFence(*logicDevice_, &fenceInfo, nullptr, &inFlightFences_[i]));
 	}
+}
+
+void SwapChain::initialiseRenderPath()
+{
+	renderPasses_.push_back(new GeometryPass(master_, logicDevice_, details_, globalRenderData_));
+	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_));
+	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
 }

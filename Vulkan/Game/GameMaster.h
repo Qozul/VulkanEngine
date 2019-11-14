@@ -1,5 +1,5 @@
 #pragma once
-#include <vector>
+#include "../Graphics/VkUtil.h"
 
 namespace QZL {
 	struct SystemMasters;
@@ -12,12 +12,13 @@ namespace QZL {
 			Scene* getActiveScene() {
 				return scenes_[activeSceneIdx_];
 			}
+			void update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx);
+			void start();
 		private:
 			GameMaster(const SystemMasters& masters);
 			~GameMaster();
 			void loadGame();
 			void loadDescriptors();
-			void update(float dt);
 
 			const SystemMasters& masters_;
 
