@@ -48,6 +48,16 @@ void RendererBase::toggleWiremeshMode()
 	pipeline_->switchMode();
 }
 
+VkSpecializationMapEntry RendererBase::makeSpecConstantEntry(uint32_t id, uint32_t offset, size_t size)
+{
+	return { id, offset, size };
+}
+
+VkSpecializationInfo RendererBase::setupSpecConstants(std::vector<VkSpecializationMapEntry>& entries, size_t dataSize, const void* data)
+{
+	return { (uint32_t)entries.size(), entries.data(), dataSize, data };
+}
+
 void RendererBase::beginFrame(VkCommandBuffer& cmdBuffer)
 {
 	EXPECTS(pipeline_ != nullptr);

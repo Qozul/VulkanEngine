@@ -12,6 +12,7 @@
 #include "ShaderParams.h"
 #include "Material.h"
 #include "RenderObject.h"
+#include "SceneDescriptorInfo.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
@@ -23,7 +24,13 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 {
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
-	createDescriptors(createInfo.maxDrawnEntities);
+	pipelineLayouts_.push_back(createInfo.graphicsInfo->layouts[(size_t)RendererTypes::kStatic]);
+	for (int i = 0; i < 3; ++i) {
+		descriptorSets_.push_back(descriptor_->getSet(createInfo.graphicsInfo->sets[(size_t)RendererTypes::kStatic] + i));
+	}
+	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer[(size_t)RendererTypes::kStatic]);
+	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffers[(size_t)RendererTypes::kStatic]);
+	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer[(size_t)RendererTypes::kStatic]);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
@@ -48,31 +55,6 @@ TexturedRenderer::~TexturedRenderer()
 
 void TexturedRenderer::createDescriptors(const uint32_t entityCount)
 {
-	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(ElementData) * entityCount, VK_SHADER_STAGE_VERTEX_BIT, "StaticMVPBuffer");
-	DescriptorBuffer* paramsBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
-		sizeof(StaticShaderParams::Params) * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticParamsBuffer");
-	storageBuffers_.push_back(mvpBuf);
-	storageBuffers_.push_back(paramsBuf);
-
-	VkDescriptorSetLayout layout;
-	DescriptorBuffer* diBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
-		sizeof(uint32_t) * 2 * entityCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
-	storageBuffers_.push_back(diBuf);
-	layout = descriptor_->makeLayout({ mvpBuf->getBinding(), paramsBuf->getBinding(), diBuf->getBinding() });
-
-	pipelineLayouts_.push_back(layout);
-
-	size_t setIdx = descriptor_->createSets({ layout, layout, layout });
-
-	std::vector<VkWriteDescriptorSet> descWrites;
-	for (int i = 0; i < 3; ++i) {
-		descriptorSets_.push_back(descriptor_->getSet(setIdx + i));
-		descWrites.push_back(mvpBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
-		descWrites.push_back(paramsBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
-		descWrites.push_back(diBuf->descriptorWrite(descriptor_->getSet(setIdx + i)));
-	}
-	descriptor_->updateDescriptorSets(descWrites);
 }
 
 void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
@@ -89,7 +71,6 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 
 void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
-	// Textures defined per instance using descriptor indexing
 	updateDIBuffer();
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
@@ -105,16 +86,17 @@ void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuff
 void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
 {
 	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
-	StaticShaderParams::Params* paramsPtr = static_cast<StaticShaderParams::Params*>(storageBuffers_[1]->bindRange());
+	StaticShaderParams* paramsPtr = static_cast<StaticShaderParams*>(storageBuffers_[1]->bindRange());
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
 		eleDataPtr[i] = {
-			model, GraphicsMaster::kProjectionMatrix * viewMatrix * model
+			GraphicsMaster::kProjectionMatrix * viewMatrix * model
 		};
 		paramsPtr[i] = {
-			static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())->params
+			*static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())
 		};
+		paramsPtr[i].model = model;
 	}
 	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();

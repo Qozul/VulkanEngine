@@ -1,6 +1,7 @@
 #pragma once
 #include "../Graphics/VkUtil.h"
 #include "../Graphics/GraphicsTypes.h"
+#include "../Graphics/SceneDescriptorInfo.h"
 
 namespace QZL {
 	class Entity;
@@ -43,7 +44,7 @@ namespace QZL {
 		SceneHeirarchyNode* findEntityNode(Entity* entity);
 
 		void findDescriptorRequirements(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount);
-		//Graphics::SceneGraphicsInfo* createDescriptors(const Graphics::LogicDevice* logicDevice, size_t numFrameImages, std::set<Graphics::MaterialJob>& materials);
+		Graphics::SceneGraphicsInfo* createDescriptors(size_t numFrameImages); // , std::set<Graphics::MaterialJob>& materials
 
 	private:
 		// Auxilliary recursive lookup
@@ -57,6 +58,7 @@ namespace QZL {
 		void findDescriptorRequirementsRecursively(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount, SceneHeirarchyNode* node);
 
 		SceneHeirarchyNode* rootNode_;
+		Graphics::SceneGraphicsInfo graphicsInfo_;
 		const SystemMasters* masters_;
 	};
 }

@@ -19,11 +19,13 @@ namespace QZL
 		class GlobalRenderData;
 		struct BasicMesh;
 		struct LogicalCamera;
+		struct SceneGraphicsInfo;
 
 		struct RendererCreateInfo {
 			LogicDevice* logicDevice;
 			Descriptor* descriptor;
 			GlobalRenderData* globalRenderData;
+			SceneGraphicsInfo* graphicsInfo;
 			VkRenderPass renderPass;
 			uint32_t subpassIndex;
 			VkExtent2D extent;
@@ -76,6 +78,9 @@ namespace QZL
 
 			void preframeSetup();
 			virtual void toggleWiremeshMode();
+
+			VkSpecializationMapEntry makeSpecConstantEntry(uint32_t id, uint32_t offset, size_t size);
+			VkSpecializationInfo setupSpecConstants(std::vector<VkSpecializationMapEntry>& entries, size_t dataSize, const void* data);
 
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages);

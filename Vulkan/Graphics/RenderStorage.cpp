@@ -48,7 +48,7 @@ void RenderStorage::addMeshOneInstance(GraphicsComponent* instance, RenderObject
 
 void RenderStorage::addMeshUnlimitedInstances(GraphicsComponent* instance, RenderObject* robject)
 {
-	auto paramsId = instance->getPerMeshShaderParams() != nullptr ? instance->getPerMeshShaderParams()->id : "";
+	auto paramsId = "";
 	auto key = instance->getMeshName() + paramsId;
 
 	auto keyIt = dataMap_.find(key);

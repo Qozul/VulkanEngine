@@ -24,14 +24,14 @@ layout(set = 1, binding = 0) uniform LightingData
 	vec4 lightPositions[1];
 };
 
-layout (set = 0, binding = 2) uniform TessellationInfo {
+layout(push_constant) uniform TessellationInfo {
 	float distanceFarMinusClose;
 	float closeDistance;
 	float patchRadius;
 	float maxTessellationWeight;
 	vec4 frustumPlanes[6];
 };
-layout(set = 0, binding = 3) readonly buffer TexIndices
+layout(set = 0, binding = 2) readonly buffer TexIndices
 {
 	TextureIndices textureIndices;
 };

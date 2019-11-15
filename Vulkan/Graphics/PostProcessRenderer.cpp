@@ -27,28 +27,15 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
-	std::array<VkSpecializationMapEntry, 2> specConstantEntries;
-	specConstantEntries[0].constantID = 0;
-	specConstantEntries[0].size = sizeof(float);
-	specConstantEntries[0].offset = 0;
-	specConstantEntries[1].constantID = 1;
-	specConstantEntries[1].size = sizeof(float);
-	specConstantEntries[1].offset = sizeof(float);
 	std::array<float, 2> specConstantValues;
 	specConstantValues[0] = GraphicsMaster::NEAR_PLANE_Z;
 	specConstantValues[1] = GraphicsMaster::FAR_PLANE_Z;
-
-	std::array<VkSpecializationInfo, 2> specConstants;
-	specConstants[0].mapEntryCount = 0;
-	specConstants[0].dataSize = 0;
-	specConstants[1].mapEntryCount = static_cast<uint32_t>(specConstantEntries.size());
-	specConstants[1].pMapEntries = specConstantEntries.data();
-	specConstants[1].dataSize = sizeof(specConstantValues);
-	specConstants[1].pData = specConstantValues.data();
+	std::vector<VkSpecializationMapEntry> specEntries = { makeSpecConstantEntry(0, 0, sizeof(float)), makeSpecConstantEntry(0, sizeof(float), sizeof(float)) };
+	VkSpecializationInfo specializationInfo = setupSpecConstants(specEntries, sizeof(float) * 2, specConstantValues.data());
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &specConstants[0]);
-	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstants[1]);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
 
 	auto pushConstRange = setupPushConstantRange<PushConstants>(VK_SHADER_STAGE_FRAGMENT_BIT);
 

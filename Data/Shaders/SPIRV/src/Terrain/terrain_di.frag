@@ -5,6 +5,7 @@
 struct Material {
 	vec4 diffuseColour;
 	vec4 specularColour;
+	mat4 model;
 };
 
 struct TextureIndices {
@@ -33,7 +34,7 @@ layout(set = 0, binding = 1) readonly buffer MaterialData
 {
 	Material material;
 };
-layout(set = 0, binding = 3) readonly buffer TexIndices
+layout(set = 0, binding = 2) readonly buffer TexIndices
 {
 	TextureIndices textureIndices;
 };

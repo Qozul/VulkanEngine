@@ -8,7 +8,7 @@ namespace QZL {
 	class Entity;
 	namespace Graphics {
 		struct ShaderParams;
-		class Material;
+		struct Material;
 		class RenderObject;
 		class GraphicsComponent {
 			friend class Entity;

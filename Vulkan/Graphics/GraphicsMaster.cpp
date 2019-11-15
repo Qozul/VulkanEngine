@@ -164,9 +164,9 @@ void GraphicsMaster::initDevices(DeviceSurfaceCapabilities& surfaceCapabilities,
 	throw std::runtime_error("Cannot create logic device");
 }
 
-void GraphicsMaster::initialiseRenderPath()
+void GraphicsMaster::initialiseRenderPath(SceneGraphicsInfo* graphicsInfo)
 {
-	swapChain_->initialiseRenderPath();
+	swapChain_->initialiseRenderPath(graphicsInfo);
 }
 
 void GraphicsMaster::preframeSetup()

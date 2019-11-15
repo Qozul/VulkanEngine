@@ -75,8 +75,7 @@ void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, 
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		auto perMeshParams = static_cast<AtmosphereShaderParams*>(robject->getParams());
-		AtmosphereShaderParams::Params params = perMeshParams->params;
+		AtmosphereShaderParams params = *static_cast<AtmosphereShaderParams*>(robject->getParams());
 
 		auto vm = glm::lookAt({ 0.0f, camera.position.y, 0.0f }, camera.lookPoint + glm::vec3(0.0f, camera.position.y, 0.0f), { 0.0f, 1.0f, 0.0f });
 		PushConstantExtent pce;

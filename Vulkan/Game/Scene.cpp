@@ -4,8 +4,11 @@
 #include "../SystemMasters.h"
 #include "../Graphics/GraphicsMaster.h"
 #include "ParticleSystem.h"
+#include "../Graphics/StorageBuffer.h"
+#include "../Graphics/Descriptor.h"
 
 using namespace QZL;
+using namespace Graphics;
 
 Scene::Scene(const SystemMasters* masters)
 	: masters_(masters)
@@ -91,6 +94,36 @@ void Scene::findDescriptorRequirements(std::unordered_map<Graphics::RendererType
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
 		findDescriptorRequirementsRecursively(instancesCount, rootNode_->childNodes[i]);
 	}
+}
+
+Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages)
+{
+	const LogicDevice* logicDevice = masters_->getLogicDevice();
+	Descriptor* descriptor = masters_->getLogicDevice()->getPrimaryDescriptor();
+	std::unordered_map<RendererTypes, uint32_t> instancesMap;
+	findDescriptorRequirements(instancesMap);
+
+	auto staticCount = instancesMap[RendererTypes::kStatic];
+	graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
+		sizeof(glm::mat4) * staticCount, VK_SHADER_STAGE_VERTEX_BIT, "StaticMVPBuffer");
+	graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 1, 0,
+		sizeof(StaticShaderParams) * staticCount, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "StaticParamsBuffer");
+	graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 2, 0,
+		sizeof(uint32_t) * 2 * staticCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
+	auto layout = descriptor->makeLayout({ graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->getBinding(),
+		graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->getBinding(), graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->getBinding() });
+	graphicsInfo_.layouts[(size_t)RendererTypes::kStatic] = layout;
+	graphicsInfo_.sets[(size_t)RendererTypes::kStatic] = descriptor->createSets({ layout, layout, layout });
+
+	std::vector<VkWriteDescriptorSet> descWrites;
+	for (int i = 0; i < 3; ++i) {
+		descWrites.push_back(graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i)));
+		descWrites.push_back(graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i)));
+		descWrites.push_back(graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i)));
+	}
+	descriptor->updateDescriptorSets(descWrites);
+
+	return &graphicsInfo_;
 }
 
 SceneHeirarchyNode* Scene::findEntityNodeRecursively(Entity* entity, SceneHeirarchyNode* node)

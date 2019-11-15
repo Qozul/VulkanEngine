@@ -59,5 +59,5 @@ void SunScript::update(float dt, const glm::mat4& parentMatrix)
 	direction_ = glm::vec3((transform()->toModelMatrix() * glm::vec4(vertices_[0].position, 1.0)));
 	transform()->position.y = 0.0f;
 
-	static_cast<Graphics::ParticleShaderParams*>(owningEntity_->getGraphicsComponent()->getPerMeshShaderParams())->params.tint = glm::abs(glm::cos(angle_)) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	static_cast<Graphics::ParticleShaderParams*>(owningEntity_->getGraphicsComponent()->getPerMeshShaderParams())->tint = glm::abs(glm::cos(angle_)) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 }

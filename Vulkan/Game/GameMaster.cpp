@@ -35,26 +35,9 @@ GameMaster::~GameMaster()
 	}
 }
 
-void GameMaster::loadDescriptors()
-{/*
-	Graphics::SceneDescriptorInfo info;
-	std::unordered_map<Graphics::RendererTypes, uint32_t> instancesMap;
-	scenes_[activeSceneIdx_]->findDescriptorRequirements(instancesMap);
-	size_t totalMVPSize = 0;
-	size_t totalParamsSize = 0;
-	for (auto& it : instancesMap) {
-		info.mvpOffsets[(size_t)it.first] = totalMVPSize;
-		info.paramsOffsets[(size_t)it.first] = totalParamsSize;
-		totalMVPSize += sizeof(glm::mat4) * it.second;
-		totalParamsSize += Graphics::Material::materialSizeLUT[(size_t)it.first] * it.second;
-	}
-	const size_t frameImageSize = 3;
-	info.paramsBuffer = Graphics::DescriptorBuffer::makeBuffer<Graphics::StorageBuffer>(masters_.getLogicDevice(), Graphics::MemoryAllocationPattern::kDynamicResource, 0, 0,
-		totalParamsSize * frameImageSize, VK_SHADER_STAGE_ALL_GRAPHICS, "ParamsBuffer");
-	info.mvpBuffer = Graphics::DescriptorBuffer::makeBuffer<Graphics::StorageBuffer>(masters_.getLogicDevice(), Graphics::MemoryAllocationPattern::kDynamicResource, 1, 0,
-		totalMVPSize * frameImageSize, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "MVPBuffer");
-
-	info.instanceDataLayout = masters_.getLogicDevice()->getPrimaryDescriptor()->makeLayout({ info.paramsBuffer->getBinding(), info.mvpBuffer->getBinding() });*/
+Graphics::SceneGraphicsInfo* GameMaster::loadDescriptors()
+{
+	return scenes_[activeSceneIdx_]->createDescriptors(3);
 }
 
 void GameMaster::loadGame()

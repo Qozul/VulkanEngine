@@ -10,6 +10,11 @@ struct TextureIndices {
 	uint normalmapIdx;
 	uint diffuseIdx;
 };
+struct Material {
+	vec4 diffuseColour;
+	vec4 specularColour;
+	mat4 model;
+};
 layout(quads, equal_spacing, cw) in;
 
 layout (location = 0) in vec2 iTexUV[];
@@ -21,7 +26,7 @@ layout (location = 2) out vec3 normal;
 layout (location = 3) flat out int outInstanceIndex;
 
 layout(set = 0, binding = 0) readonly buffer UniformBufferObject {
-    ElementData uElementData;
+    mat4 uElementData;
 } ubo;
 
 layout(set = 1, binding = 0) uniform LightingData
@@ -30,7 +35,13 @@ layout(set = 1, binding = 0) uniform LightingData
 	vec4 ambientColour;
 	vec4 lightPositions[1];
 };
-layout(set = 0, binding = 3) readonly buffer TexIndices
+
+layout(set = 0, binding = 1) readonly buffer MaterialData
+{
+	Material material;
+};
+
+layout(set = 0, binding = 2) readonly buffer TexIndices
 {
 	TextureIndices textureIndices;
 };
@@ -52,8 +63,8 @@ void main(void)
 	vec4 position = mix(pos1, pos2, gl_TessCoord.y);
 	position.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], texUV).r * maxHeight;
 	
-	gl_Position = ubo.uElementData.mvp * position;
-	worldPos = (ubo.uElementData.model * position).xyz;
+	gl_Position = ubo.uElementData * position;
+	worldPos = (material.model * position).xyz;
 	normal = texture(texSamplers[nonuniformEXT(texIndices.normalmapIdx)], texUV).rgb;
 	float tmp = normal.r;
 	normal.r = normal.g;

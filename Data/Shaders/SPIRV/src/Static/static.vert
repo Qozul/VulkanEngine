@@ -1,8 +1,12 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+struct Material {
+	vec4 diffuseColour;
+	vec4 specularColour;
+    mat4 model;
+};
 struct ElementData {
-	mat4 model;
     mat4 mvp;
 };
 
@@ -19,6 +23,11 @@ out gl_PerVertex {
 	vec4 gl_Position;
 };
 
+layout(set = 1, binding = 1) readonly buffer MaterialData
+{
+	Material materials[];
+};
+
 layout(set = 1, binding = 0) readonly buffer StorageBuffer {
     ElementData[] uElementData;
 } buf;
@@ -27,6 +36,6 @@ void main() {
 	instanceIndex = gl_InstanceIndex;
 	gl_Position = buf.uElementData[gl_InstanceIndex].mvp * vec4(iPosition, 1.0);
 	texUV = iTextureCoord;
-	worldPos = (buf.uElementData[gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;
-	normal = mat3(transpose(inverse(buf.uElementData[gl_InstanceIndex].model))) * iNormal;
+	worldPos = (materials[gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;
+	normal = mat3(transpose(inverse(materials[gl_InstanceIndex].model))) * iNormal;
 }

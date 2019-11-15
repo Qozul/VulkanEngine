@@ -8,6 +8,7 @@
 #include "GlobalRenderData.h"
 #include "GraphicsMaster.h"
 #include "TextureManager.h"
+#include "SceneDescriptorInfo.h"
 #include "../System.h"
 #include "../Game/GameMaster.h"
 
@@ -268,9 +269,9 @@ void SwapChain::createSyncObjects() {
 	}
 }
 
-void SwapChain::initialiseRenderPath()
+void SwapChain::initialiseRenderPath(SceneGraphicsInfo* graphicsInfo)
 {
-	renderPasses_.push_back(new GeometryPass(master_, logicDevice_, details_, globalRenderData_));
-	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_));
+	renderPasses_.push_back(new GeometryPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
+	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
 }

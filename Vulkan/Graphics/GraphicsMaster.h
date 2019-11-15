@@ -25,6 +25,7 @@ namespace QZL
 		struct BasicMesh;
 		struct DeviceSurfaceCapabilities;
 		struct DeviceSwapChainDetails;
+		struct SceneGraphicsInfo;
 
 		struct GraphicsSystemDetails {
 			GLFWwindow* window = nullptr;
@@ -82,7 +83,7 @@ namespace QZL
 				const char* const*& enabledLayerNames);
 			void initDevices(DeviceSurfaceCapabilities& surfaceCapabilitie, uint32_t& enabledLayerCount, const char* const*& enabledLayerNames);
 
-			void initialiseRenderPath();
+			void initialiseRenderPath(SceneGraphicsInfo* graphicsInfo);
 			void preframeSetup();
 
 			void loop();

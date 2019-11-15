@@ -17,6 +17,7 @@ namespace QZL
 		class RendererBase;
 		struct LogicalCamera;
 		struct DeviceSurfaceCapabilities;
+		struct SceneGraphicsInfo;
 
 		class SwapChain {
 			friend class GraphicsMaster;
@@ -50,7 +51,7 @@ namespace QZL
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void createSyncObjects();
 
-			void initialiseRenderPath();
+			void initialiseRenderPath(SceneGraphicsInfo* graphicsInfo);
 
 			GlobalRenderData* globalRenderData_;
 

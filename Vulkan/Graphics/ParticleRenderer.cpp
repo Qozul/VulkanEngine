@@ -97,7 +97,7 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		auto params = static_cast<ParticleShaderParams*>(comp->getPerMeshShaderParams());
 		glm::mat4 model = comp->getModelmatrix();
 		eleDataPtr[i] = {
-			model, GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model, params->params.tint
+			model, GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model, params->tint
 		};
 	}
 	storageBuffers_[0]->unbindRange();
@@ -114,7 +114,7 @@ void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		auto params = static_cast<ParticleShaderParams*>(robject->getParams());
 		PushConstantGeometry pcg;
 		pcg.billboardPoint = camera.position;
-		pcg.tileLength = params->params.textureTileLength;
+		pcg.tileLength = params->textureTileLength;
 		
 		VkDescriptorSet sets[2] = { descriptorSets_[1 + (size_t)idx], descriptorSets_[0] };
 		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);

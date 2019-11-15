@@ -15,6 +15,7 @@ namespace QZL
 		class Image;
 		struct LogicalCamera;
 		struct SwapChainDetails;
+		struct SceneGraphicsInfo;
 
 		class RenderPass {
 			friend class SwapChain;
@@ -28,7 +29,7 @@ namespace QZL
 			virtual void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) = 0;
 			virtual void createRenderers() = 0;
 			virtual void initRenderPassDependency(std::vector<Image*> dependencyAttachment) = 0;
-			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);
+			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			virtual ~RenderPass();
 
 			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage);
@@ -49,6 +50,7 @@ namespace QZL
 			GraphicsMaster* graphicsMaster_;
 			Descriptor* descriptor_;
 			GlobalRenderData* globalRenderData_;
+			SceneGraphicsInfo* graphicsInfo_;
 		};
 	}
 }

@@ -16,7 +16,7 @@ namespace QZL {
 				kSubpassCount
 			};
 		protected:
-			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);
+			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			~PostProcessPass();
 			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) override;
 			void createRenderers() override;

@@ -14,12 +14,10 @@ namespace QZL {
 			RenderObject(ElementBufferObject* meshBuffer, const std::string meshName, ShaderParams* params, MeshLoadFunc loadFunc, Material* material)
 				: meshName_(meshName), mesh_(MeshLoader::loadMesh(meshName, *meshBuffer, loadFunc)), params_(params), material_(material), deleteMesh_(false) {
 				key_ = material != nullptr ? meshName : meshName;
-				key_ = params != nullptr ? key_ + params->id : key_;
 			}
 			RenderObject(const std::string name, BasicMesh* mesh, ShaderParams* params, Material* material, bool deleteMesh = true)
 				: meshName_(name), mesh_(mesh), params_(params), material_(material), deleteMesh_(deleteMesh) {
 				key_ = material != nullptr ? name : name;
-				key_ = params != nullptr ? key_ + params->id : key_;
 			}
 			~RenderObject() {
 				if (deleteMesh_) {

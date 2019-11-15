@@ -14,7 +14,7 @@ namespace QZL {
 				kSubpassCount
 			};
 		protected:
-			GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);
+			GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			~GeometryPass();
 			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) override;
 			void createRenderers() override;

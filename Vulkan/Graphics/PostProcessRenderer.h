@@ -8,7 +8,7 @@ namespace QZL
 	namespace Graphics {
 		class DeviceMemory;
 		class TextureSampler;
-		class Material;
+		struct Material;
 		class GraphicsComponent;
 		struct AtmosphereShaderParams;
 

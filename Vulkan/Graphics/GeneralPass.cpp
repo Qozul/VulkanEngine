@@ -12,8 +12,8 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd)
-	: RenderPass(master, logicDevice, swapChainDetails, grd)
+GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
 {
 	CreateInfo createInfo = {};
 	createColourBuffer(logicDevice, swapChainDetails);
@@ -99,6 +99,7 @@ void GeometryPass::createRenderers()
 	createInfo.renderPass = renderPass_;
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
+	createInfo.graphicsInfo = graphicsInfo_;
 
 	createInfo.updateRendererSpecific(1, 1, "StaticVert", logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing) ? "StaticFrag_DI" : "StaticFrag");
 	texturedRenderer_ = new TexturedRenderer(createInfo);

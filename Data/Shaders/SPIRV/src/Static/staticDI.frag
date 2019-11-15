@@ -5,6 +5,7 @@
 struct Material {
 	vec4 diffuseColour;
 	vec4 specularColour;
+    mat4 model;
 };
 
 struct DescriptorIndexData {

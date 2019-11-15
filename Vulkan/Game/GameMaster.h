@@ -5,6 +5,9 @@ namespace QZL {
 	struct SystemMasters;
 	class System;
 	class Scene;
+	namespace Graphics {
+		struct SceneGraphicsInfo;
+	}
 	namespace Game {
 		class GameMaster final {
 			friend class QZL::System;
@@ -18,7 +21,7 @@ namespace QZL {
 			GameMaster(const SystemMasters& masters);
 			~GameMaster();
 			void loadGame();
-			void loadDescriptors();
+			Graphics::SceneGraphicsInfo* loadDescriptors();
 
 			const SystemMasters& masters_;
 
