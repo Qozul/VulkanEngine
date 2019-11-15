@@ -30,8 +30,8 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
 		sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
 {
-	pipelineLayouts_.push_back(createInfo.graphicsInfo->layouts[(size_t)RendererTypes::kTerrain]);
-	descriptorSets_.push_back(descriptor_->getSet(createInfo.graphicsInfo->sets[(size_t)RendererTypes::kTerrain]));
+	pipelineLayouts_.push_back(createInfo.graphicsInfo->layouts[(size_t)RendererTypes::kStatic]);
+	descriptorSets_.push_back(descriptor_->getSet(createInfo.graphicsInfo->sets[(size_t)RendererTypes::kStatic]));
 	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer[(size_t)RendererTypes::kStatic]);
 	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffers[(size_t)RendererTypes::kStatic]);
 	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer[(size_t)RendererTypes::kStatic]);
@@ -40,11 +40,22 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 
 	auto pushConstRange = setupPushConstantRange<TessCtrlPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
 
+	DescriptorOffsets offsetConstants;
+	offsetConstants.mvp = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
+	offsetConstants.params = graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain];
+	offsetConstants.material = graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain];
+	std::vector<VkSpecializationMapEntry> mapEntry = { 
+		makeSpecConstantEntry(0, 0,								 sizeof(offsetConstants.mvp)), 
+		makeSpecConstantEntry(1, sizeof(offsetConstants.mvp),	 sizeof(offsetConstants.params)),
+		makeSpecConstantEntry(2, sizeof(offsetConstants.params), sizeof(offsetConstants.material))
+	};
+	auto specConstant = setupSpecConstants(mapEntry, sizeof(DescriptorOffsets), &offsetConstants);
+
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
-	stageInfos.emplace_back(createInfo.tessControlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, nullptr);
-	stageInfos.emplace_back(createInfo.tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstant);
+	stageInfos.emplace_back(createInfo.tessControlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &specConstant);
+	stageInfos.emplace_back(createInfo.tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &specConstant);
 
 	PipelineCreateInfo pci = {};
 	pci.debugName = "Terrain";
@@ -80,8 +91,8 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] * idx
 	};
 
-	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) + dynamicOffsets[0]);
-	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + sizeof(StaticShaderParams) + dynamicOffsets[1]);
+	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
+	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
@@ -95,7 +106,7 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();
 
-	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + 16 + dynamicOffsets[2]);
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + dynamicOffsets[2]);
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 3) {
 		dataPtr[i] = 2;
 		dataPtr[i + 1] = 4;

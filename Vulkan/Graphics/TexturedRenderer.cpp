@@ -68,8 +68,8 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] * idx
 	};
 
-	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
-	StaticShaderParams* paramsPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + dynamicOffsets[1]);
+	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) + dynamicOffsets[0]);
+	StaticShaderParams* paramsPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + sizeof(StaticShaderParams) + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
@@ -83,7 +83,7 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	}
 	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();
-	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + dynamicOffsets[2]);
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + 2 * sizeof(Materials::Static) + dynamicOffsets[2]);
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
 		dataPtr[i] = 0;
 		dataPtr[i + 1] = 1;

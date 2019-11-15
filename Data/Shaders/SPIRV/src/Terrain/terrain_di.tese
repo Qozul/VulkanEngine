@@ -15,6 +15,11 @@ struct Material {
 	vec4 specularColour;
 	mat4 model;
 };
+
+layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
+layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
+layout(constant_id = 2) const uint SC_MATERIAL_OFFSET = 0;
+
 layout(quads, equal_spacing, cw) in;
 
 layout (location = 0) in vec2 iTexUV[];
@@ -26,7 +31,7 @@ layout (location = 2) out vec3 normal;
 layout (location = 3) flat out int outInstanceIndex;
 
 layout(set = 0, binding = 0) readonly buffer UniformBufferObject {
-    mat4 uElementData;
+    mat4 elementData[];
 } ubo;
 
 layout(set = 1, binding = 0) uniform LightingData
@@ -38,12 +43,12 @@ layout(set = 1, binding = 0) uniform LightingData
 
 layout(set = 0, binding = 1) readonly buffer MaterialData
 {
-	Material material;
+	Material materials[];
 };
 
 layout(set = 0, binding = 2) readonly buffer TexIndices
 {
-	TextureIndices textureIndices;
+	TextureIndices textureIndices[];
 };
 
 layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
@@ -53,7 +58,8 @@ const float maxHeight = 100.0;
 void main(void)
 {
 	outInstanceIndex = instanceIndex[0];
-	TextureIndices texIndices = textureIndices;
+	Material material = materials[instanceIndex[0]];
+	TextureIndices texIndices = textureIndices[instanceIndex[0]];
 	vec2 uv1 = mix(iTexUV[0], iTexUV[1], gl_TessCoord.x);
 	vec2 uv2 = mix(iTexUV[3], iTexUV[2], gl_TessCoord.x);
 	texUV = mix(uv1, uv2, gl_TessCoord.y);
@@ -63,7 +69,7 @@ void main(void)
 	vec4 position = mix(pos1, pos2, gl_TessCoord.y);
 	position.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], texUV).r * maxHeight;
 	
-	gl_Position = ubo.uElementData * position;
+	gl_Position = ubo.elementData[instanceIndex[0]] * position;
 	worldPos = (material.model * position).xyz;
 	normal = texture(texSamplers[nonuniformEXT(texIndices.normalmapIdx)], texUV).rgb;
 	float tmp = normal.r;

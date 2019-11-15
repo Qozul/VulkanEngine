@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_EXT_nonuniform_qualifier : require
 
-struct Material {
+struct Params {
 	vec4 diffuseColour;
 	vec4 specularColour;
 	mat4 model;
@@ -13,6 +13,10 @@ struct TextureIndices {
 	uint normalmapIdx;
 	uint diffuseIdx;
 };
+
+layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
+layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
+layout(constant_id = 2) const uint SC_MATERIAL_OFFSET = 0;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -30,26 +34,18 @@ layout(set = 1, binding = 0) uniform LightingData
 	vec4 lightPositions[1];
 };
 
-layout(set = 0, binding = 1) readonly buffer MaterialData
+layout(set = 0, binding = 1) readonly buffer ParamsData
 {
-	Material material;
+	Params params[];
 };
 layout(set = 0, binding = 2) readonly buffer TexIndices
 {
-	TextureIndices textureIndices;
+	TextureIndices textureIndices[];
 };
 
-vec3 calculateNormal()
-{
-	vec3 X = dFdx(worldPos);
-	vec3 Y = dFdy(worldPos);
-	return normalize(cross(X, Y));
-}
-
 void main() {
-	//vec3 normal = calculateNormal();
-	
-	TextureIndices texIndices = textureIndices;
+	Params param = params[instanceIndex];
+	TextureIndices texIndices = textureIndices[instanceIndex];
 	vec3 incident = normalize(lightPositions[0].xyz - worldPos);
 	vec3 viewDir = normalize(cameraPosition.xyz - worldPos);
 	vec3 halfDir = normalize(incident + viewDir);
@@ -57,12 +53,12 @@ void main() {
 	
 	float lambert = max(0.0, dot(incident, normal));
 	float rFactor = max(0.0, dot(halfDir, normal));
-	float sFactor = pow(rFactor , material.specularColour.w);
+	float sFactor = pow(rFactor , param.specularColour.w);
 	
 	vec4 texColour = texture(texSamplers[nonuniformEXT(texIndices.diffuseIdx)], texUV);
 	
 	vec3 ambient = texColour.rgb * ambientColour.xyz;
-	vec3 diffuse = texColour.rgb * material.diffuseColour.xyz * lambert;
-	vec3 specular = material.specularColour.xyz * sFactor * 0.05;
-	fragColor = vec4(ambient + diffuse + specular, min(texColour.a, material.diffuseColour.w));
+	vec3 diffuse = texColour.rgb * param.diffuseColour.xyz * lambert;
+	vec3 specular = param.specularColour.xyz * sFactor * 0.05;
+	fragColor = vec4(ambient + diffuse + specular, min(texColour.a, param.diffuseColour.w));
 }

@@ -40,7 +40,7 @@ layout(set = 1, binding = 2) readonly buffer DescriptorIndexBuffer
 };
 
 void main() {
-	Material mat = materials[instanceIndex];
+	Material mat = materials[1 + instanceIndex];
 	vec3 incident = normalize ( lightPositions[0].xyz - worldPos );
 	vec3 viewDir = normalize ( cameraPosition.xyz - worldPos );
 	vec3 halfDir = normalize ( incident + viewDir );
@@ -50,7 +50,7 @@ void main() {
 	float rFactor = max(0.0, dot(halfDir, normal));
 	float sFactor = pow(rFactor , mat.specularColour.w);
 	
-	DescriptorIndexData descriptorIndices = diData[instanceIndex];
+	DescriptorIndexData descriptorIndices = diData[2 + instanceIndex];
 	vec4 texColour = texture(texSamplers[nonuniformEXT(descriptorIndices.diffuseIdx)], texUV);
 	vec4 texColour2 = texture(texSamplers[nonuniformEXT(descriptorIndices.normalMapIdx)], texUV);
 	

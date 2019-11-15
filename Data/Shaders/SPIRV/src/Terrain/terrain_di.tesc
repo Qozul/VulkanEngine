@@ -4,11 +4,17 @@
 #extension GL_EXT_nonuniform_qualifier : require
 
 #define NUM_VERTS 4
+
 struct TextureIndices {
 	uint heightmapIdx;
 	uint normalmapIdx;
 	uint diffuseIdx;
 };
+
+layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
+layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
+layout(constant_id = 2) const uint SC_MATERIAL_OFFSET = 0;
+
 layout(vertices = NUM_VERTS) out;
 
 layout (location = 0) in vec2 iTexUV[];
@@ -33,7 +39,7 @@ layout(push_constant) uniform TessellationInfo {
 };
 layout(set = 0, binding = 2) readonly buffer TexIndices
 {
-	TextureIndices textureIndices;
+	TextureIndices textureIndices[];
 };
 
 layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
@@ -52,7 +58,7 @@ float calculateTessLevel(float d0, float d1)
 
 bool checkCulling()
 {
-	TextureIndices texIndices = textureIndices;
+	TextureIndices texIndices = textureIndices[instanceIndex[0]];
 	vec4 pos = gl_in[gl_InvocationID].gl_Position;
 	pos.y -= textureLod(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], iTexUV[0], 0.0).r * maxHeight;
 	for (int i = 0; i < 6; ++i) {
@@ -65,7 +71,7 @@ bool checkCulling()
 
 vec3 getVertexPosition(int i)
 {
-	TextureIndices texIndices = textureIndices;
+	TextureIndices texIndices = textureIndices[instanceIndex[0]];
 	vec3 pos = gl_in[i].gl_Position.xyz;
 	pos.y -= textureLod(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], iTexUV[i], 0.0).r * maxHeight;
 	return pos;

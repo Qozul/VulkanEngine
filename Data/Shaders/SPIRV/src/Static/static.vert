@@ -34,8 +34,8 @@ layout(set = 1, binding = 0) readonly buffer StorageBuffer {
 
 void main() {
 	instanceIndex = gl_InstanceIndex;
-	gl_Position = buf.uElementData[gl_InstanceIndex].mvp * vec4(iPosition, 1.0);
+	gl_Position = buf.uElementData[1 + gl_InstanceIndex].mvp * vec4(iPosition, 1.0);
 	texUV = iTextureCoord;
-	worldPos = (materials[gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;
+	worldPos = (materials[1 + gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;
 	normal = mat3(transpose(inverse(materials[gl_InstanceIndex].model))) * iNormal;
 }

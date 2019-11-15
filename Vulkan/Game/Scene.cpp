@@ -96,6 +96,51 @@ void Scene::findDescriptorRequirements(std::unordered_map<Graphics::RendererType
 	}
 }
 
+struct IN {
+	VkDeviceSize sizeMultiplier; // i.e. frameImageCount
+	VkDeviceSize deviceOffsetAlignment;
+	uint32_t binding;
+	std::string name;
+	VkShaderStageFlags stages;
+	std::vector<std::pair<VkDeviceSize, VkDeviceSize>> data;
+};
+
+struct OUT_YEAH {
+	DescriptorBuffer* buffer;
+	VkDeviceSize dynamicOffset;
+	std::vector<VkDeviceSize> dataOffsets; // In same order as passed in
+};
+
+bool compareFunc(std::pair<VkDeviceSize, VkDeviceSize>& a, std::pair<VkDeviceSize, VkDeviceSize>& b)
+{
+	return a.first > b.first;
+}
+
+OUT_YEAH coolDescriptor(IN info, const LogicDevice* logicDevice) {
+	ASSERT_DEBUG(info.data.size() > 0);
+	OUT_YEAH result;
+	result.dataOffsets.resize(info.data.size());
+	result.dataOffsets[0] = 0;
+	VkDeviceSize totalSize = 0;
+	if (info.data.size() == 1) {
+		totalSize = info.data[0].first * info.data[0].second;
+	}
+	else {
+		std::sort(info.data.begin(), info.data.end(), compareFunc);
+		for (int64_t i = 0; i < info.data.size() - 1; ++i) {
+			VkDeviceSize segmentSize = info.data[i].first * info.data[i].second;
+			int padding = info.data[i + 1].first * (segmentSize / info.data[i + 1].first + 1) - segmentSize;
+			segmentSize += padding;
+			result.dataOffsets[i + 1] = segmentSize / info.data[i + 1].first;
+		}
+	}
+	totalSize += glm::abs(info.deviceOffsetAlignment - totalSize % info.deviceOffsetAlignment);
+	result.dynamicOffset = totalSize;
+	result.buffer = DescriptorBuffer::makeBuffer<DynamicStorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, info.binding, 0,
+		totalSize * info.sizeMultiplier, info.stages | VK_SHADER_STAGE_FRAGMENT_BIT, info.name);
+	return result;
+}
+
 Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, const VkPhysicalDeviceLimits& limits)
 {
 	const LogicDevice* logicDevice = masters_->getLogicDevice();
@@ -103,9 +148,9 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 	std::unordered_map<RendererTypes, uint32_t> instancesMap;
 	findDescriptorRequirements(instancesMap);
 
-	VkDeviceSize Rs0, Rs1, Rs2;
-	VkDeviceSize Rt0, Rt1, Rt2;
-	VkDeviceSize Ot0, Ot1, Ot2;
+	VkDeviceSize Rs0, Rs1;
+	VkDeviceSize Rt0, Rt1;
+	VkDeviceSize Ot0, Ot1;
 
 	// ------------------------------- COMBINED MVP --------
 	{
@@ -140,24 +185,27 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 		graphicsInfo_.paramsOffsetSizes[(size_t)RendererTypes::kTerrain] = Rtotal;
 	}
 	// ------------------------------- COMBINED Materials --------
-	{
-		Rs2 = sizeof(Materials::Static) * instancesMap[RendererTypes::kStatic];
-		Rt2 = sizeof(Materials::Terrain) * instancesMap[RendererTypes::kTerrain];
-		Rs2 += glm::abs(limits.minStorageBufferOffsetAlignment - Rs2 % limits.minStorageBufferOffsetAlignment);
-		Rt2 += glm::abs(limits.minStorageBufferOffsetAlignment - Rt2 % limits.minStorageBufferOffsetAlignment);
-		VkDeviceSize Rtotal = Rs2 + Rt2;
-		VkDeviceSize Os = 0;
-		Ot2 = Rs2;
+	
+	auto result = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 2, "MaterialsBuffer", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+		{ { sizeof(Materials::Static), instancesMap[RendererTypes::kStatic] }, { sizeof(Materials::Terrain), instancesMap[RendererTypes::kTerrain] } } }, logicDevice);
+	graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic] = result.buffer;
+	graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kTerrain] = result.dataOffsets[1];
 
-		graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<DynamicStorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 2, 0,
-			Rtotal * numFrameImages, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT |  VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "MaterialsBuffer");
+	// ------------------------------------------------------------
+	
+	auto layout = descriptor->makeLayout({ graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->getBinding(),
+			graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->getBinding(), graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->getBinding() });
+	graphicsInfo_.layouts[(size_t)RendererTypes::kStatic] = layout;
+	graphicsInfo_.sets[(size_t)RendererTypes::kStatic] = descriptor->createSets({ layout });
 
-		graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kStatic] = Rtotal;
-		graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kTerrain] = Rtotal;
-	}
+	std::vector<VkWriteDescriptorSet> descWrites;
+	descWrites.push_back(graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic]), 0, Rs0 + Rt0));
+	descWrites.push_back(graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic]), 0, Rs1 + Rt1));
+	descWrites.push_back(graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic]), 0, result.dynamicOffset));
+	descriptor->updateDescriptorSets(descWrites);
 
 	// -------------------------------- STATIC ---------
-	{
+	/*{
 		auto layout = descriptor->makeLayout({ graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->getBinding(),
 			graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->getBinding(), graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->getBinding() });
 		graphicsInfo_.layouts[(size_t)RendererTypes::kStatic] = layout;
@@ -184,7 +232,7 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 		descWrites.push_back(graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kTerrain]), Ot1, Rt1));
 		descWrites.push_back(graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kTerrain]), Ot2, Rt2));
 		descriptor->updateDescriptorSets(descWrites);
-	}
+	}*/
 	// -----------------------------------------------------
 
 	return &graphicsInfo_;

@@ -49,6 +49,12 @@ namespace QZL
 			}
 		};
 
+		struct DescriptorOffsets {
+			uint32_t mvp;
+			uint32_t params;
+			uint32_t material;
+		};
+
 		struct ElementData {
 			glm::mat4 modelMatrix;
 			glm::mat4 mvpMatrix;
