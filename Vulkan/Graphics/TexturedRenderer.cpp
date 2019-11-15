@@ -68,7 +68,7 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] * idx
 	};
 
-	ElementData* eleDataPtr = (ElementData*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
+	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
 	StaticShaderParams* paramsPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {

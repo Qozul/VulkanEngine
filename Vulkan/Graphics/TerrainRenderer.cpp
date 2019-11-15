@@ -32,9 +32,9 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layouts[(size_t)RendererTypes::kTerrain]);
 	descriptorSets_.push_back(descriptor_->getSet(createInfo.graphicsInfo->sets[(size_t)RendererTypes::kTerrain]));
-	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer[(size_t)RendererTypes::kTerrain]);
-	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffers[(size_t)RendererTypes::kTerrain]);
-	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer[(size_t)RendererTypes::kTerrain]);
+	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer[(size_t)RendererTypes::kStatic]);
+	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffers[(size_t)RendererTypes::kStatic]);
+	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer[(size_t)RendererTypes::kStatic]);
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
@@ -65,28 +65,6 @@ TerrainRenderer::~TerrainRenderer()
 
 void TerrainRenderer::createDescriptors(const uint32_t entityCount)
 {
-	DescriptorBuffer* mvpBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(glm::mat4) * 2, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "TerrainMVPBuffer"); // 2 = MAX_FRAMES_IN_FLIGHT
-	DescriptorBuffer* matBuf = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 1, 0,
-		sizeof(StaticShaderParams) * 2, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "TerrainParamsBuffer");
-	storageBuffers_.push_back(mvpBuf);
-	storageBuffers_.push_back(matBuf);
-	DescriptorBuffer* diBuf =  DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 2, 0,
-		sizeof(uint32_t) * 3, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "TerrainDIBuffer");
-	storageBuffers_.push_back(diBuf);
-	VkDescriptorSetLayout layout = descriptor_->makeLayout({ mvpBuf->getBinding(), matBuf->getBinding(), diBuf->getBinding() });
-
-	pipelineLayouts_.push_back(layout);
-
-	size_t idx = descriptor_->createSets({ layout, layout, layout });
-	std::vector<VkWriteDescriptorSet> descWrites;
-	for (int i = 0; i < 3; ++i) {
-		descriptorSets_.push_back(descriptor_->getSet(idx + i));
-		descWrites.push_back(mvpBuf->descriptorWrite(descriptor_->getSet(idx + i)));
-		descWrites.push_back(matBuf->descriptorWrite(descriptor_->getSet(idx + i)));
-		descWrites.push_back(diBuf->descriptorWrite(descriptor_->getSet(idx + i)));
-	}
-	descriptor_->updateDescriptorSets(descWrites);
 }
 
 void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
@@ -97,13 +75,13 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain] * idx,
-		graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain] * idx,
-		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] * idx
+		graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic] * idx,
+		graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic] * idx,
+		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] * idx
 	};
 
-	ElementData* eleDataPtr = (ElementData*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
-	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + dynamicOffsets[1]);
+	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) + dynamicOffsets[0]);
+	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + sizeof(StaticShaderParams) + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
@@ -117,7 +95,7 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();
 
-	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + dynamicOffsets[2]);
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + 16 + dynamicOffsets[2]);
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 3) {
 		dataPtr[i] = 2;
 		dataPtr[i + 1] = 4;

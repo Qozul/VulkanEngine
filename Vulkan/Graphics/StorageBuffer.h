@@ -16,7 +16,7 @@ namespace QZL
 			virtual ~DescriptorBuffer();
 			void init( MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags, std::string debugName = "");
 			const VkDescriptorSetLayoutBinding& getBinding();
-			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set, VkDeviceSize offset = 0, VkDeviceSize range = 0);
+			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set, VkDeviceSize offset = 0, VkDeviceSize range = 0, uint32_t idx = 0);
 			template<typename DataType>
 			void uploadRange(DataType* data, VkDeviceSize size, VkDeviceSize offset);
 			// Alternative to uploading a range directly, these allow the mapping to last longer
