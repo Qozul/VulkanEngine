@@ -12,6 +12,7 @@
 #include "ShaderParams.h"
 #include "RenderObject.h"
 #include "Material.h"
+#include "SceneDescriptorInfo.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
@@ -29,8 +30,12 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
 		sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
 {
+	pipelineLayouts_.push_back(createInfo.graphicsInfo->layouts[(size_t)RendererTypes::kTerrain]);
+	descriptorSets_.push_back(descriptor_->getSet(createInfo.graphicsInfo->sets[(size_t)RendererTypes::kTerrain]));
+	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer[(size_t)RendererTypes::kTerrain]);
+	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffers[(size_t)RendererTypes::kTerrain]);
+	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer[(size_t)RendererTypes::kTerrain]);
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
-	createDescriptors(createInfo.maxDrawnEntities);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
 	auto pushConstRange = setupPushConstantRange<TessCtrlPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
@@ -91,9 +96,28 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	beginFrame(cmdBuffer);
 	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
-	updateBuffers(camera);
-	uint32_t* dataPtr = static_cast<uint32_t*>(storageBuffers_[2]->bindRange());
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain] * idx,
+		graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain] * idx,
+		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] * idx
+	};
+
+	ElementData* eleDataPtr = (ElementData*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
+	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
+	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
+		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
+		glm::mat4 mvp = GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model;
+		eleDataPtr[i] = {
+			mvp
+		};
+		matDataPtr[i] = *static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams());
+		matDataPtr[i].model = model;
+	}
+	storageBuffers_[1]->unbindRange();
+	storageBuffers_[0]->unbindRange();
+
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + dynamicOffsets[2]);
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 3) {
 		dataPtr[i] = 2;
 		dataPtr[i + 1] = 4;
@@ -111,8 +135,8 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 		pcs.maxTessellationWeight = 4.0f;
 		camera.calculateFrustumPlanes(GraphicsMaster::kProjectionMatrix * camera.viewMatrix, pcs.frustumPlanes);
 
-		VkDescriptorSet sets[2] = { descriptorSets_[1 + (size_t)idx], descriptorSets_[0] };
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
+		VkDescriptorSet sets[2] = { descriptorSets_[0], descriptorSets_[1] };
+		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 3, dynamicOffsets);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcs);
 
@@ -122,18 +146,4 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 
 void TerrainRenderer::updateBuffers(LogicalCamera& camera)
 {
-	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
-	StaticShaderParams* matDataPtr = static_cast<StaticShaderParams*>(storageBuffers_[1]->bindRange());
-	auto instPtr = renderStorage_->instanceData();
-	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
-		glm::mat4 mvp = GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model;
-		eleDataPtr[i] = {
-			mvp
-		};
-		matDataPtr[i] = *static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams());
-		matDataPtr[i].model = model;
-	}
-	storageBuffers_[1]->unbindRange();
-	storageBuffers_[0]->unbindRange();
 }
