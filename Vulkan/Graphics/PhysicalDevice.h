@@ -19,6 +19,7 @@ namespace QZL
 			LogicDevice* createLogicDevice(const GraphicsSystemDetails& sysDetails, DeviceSurfaceCapabilities& surfaceCapabilities,
 				uint32_t& enabledLayerCount, const char* const*& ppEnabledLayerNames);
 			VkPhysicalDevice getPhysicalDevice() const;
+			const VkPhysicalDeviceLimits& getDeviceLimits() const;
 
 		private:
 			PhysicalDevice(VkPhysicalDevice device, VkSurfaceKHR surface);

@@ -96,32 +96,46 @@ void Scene::findDescriptorRequirements(std::unordered_map<Graphics::RendererType
 	}
 }
 
-Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages)
+Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, const VkPhysicalDeviceLimits& limits)
 {
 	const LogicDevice* logicDevice = masters_->getLogicDevice();
 	Descriptor* descriptor = masters_->getLogicDevice()->getPrimaryDescriptor();
 	std::unordered_map<RendererTypes, uint32_t> instancesMap;
 	findDescriptorRequirements(instancesMap);
 
+	// -------------------------------- STATIC ---------
+
 	auto staticCount = instancesMap[RendererTypes::kStatic];
-	graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(glm::mat4) * staticCount, VK_SHADER_STAGE_VERTEX_BIT, "StaticMVPBuffer");
-	graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 1, 0,
-		sizeof(StaticShaderParams) * staticCount, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "StaticParamsBuffer");
-	graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<StorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 2, 0,
-		sizeof(uint32_t) * 2 * staticCount, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
+	graphicsInfo_.mvpOffsetSizes[(size_t)RendererTypes::kStatic] = sizeof(glm::mat4) * staticCount;
+	graphicsInfo_.paramsOffsetSizes[(size_t)RendererTypes::kStatic] = sizeof(StaticShaderParams) * staticCount;
+	graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kStatic] = sizeof(uint32_t) * 2 * staticCount;
+	VkDeviceSize mvpPaddingPerOffset = graphicsInfo_.mvpOffsetSizes[(size_t)RendererTypes::kStatic] % limits.minStorageBufferOffsetAlignment;
+	VkDeviceSize paramsPaddingPerOffset = graphicsInfo_.paramsOffsetSizes[(size_t)RendererTypes::kStatic] % limits.minStorageBufferOffsetAlignment;
+	VkDeviceSize materialPaddingPerOffset = graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kStatic] % limits.minStorageBufferOffsetAlignment;
+	graphicsInfo_.mvpOffsetSizes[(size_t)RendererTypes::kStatic] += mvpPaddingPerOffset;
+	graphicsInfo_.paramsOffsetSizes[(size_t)RendererTypes::kStatic] += paramsPaddingPerOffset;
+	graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kStatic] += materialPaddingPerOffset;
+
+	graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<DynamicStorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
+		graphicsInfo_.mvpOffsetSizes[(size_t)RendererTypes::kStatic] * numFrameImages + (mvpPaddingPerOffset * (numFrameImages - 1)), VK_SHADER_STAGE_VERTEX_BIT, "StaticMVPBuffer");
+	graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<DynamicStorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 1, 0,
+		graphicsInfo_.paramsOffsetSizes[(size_t)RendererTypes::kStatic] * numFrameImages + (paramsPaddingPerOffset * (numFrameImages - 1)), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "StaticParamsBuffer");
+	graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic] = DescriptorBuffer::makeBuffer<DynamicStorageBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 2, 0,
+		graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kStatic] * numFrameImages, VK_SHADER_STAGE_FRAGMENT_BIT, "StaticDIBuffer");
 	auto layout = descriptor->makeLayout({ graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->getBinding(),
 		graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->getBinding(), graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->getBinding() });
 	graphicsInfo_.layouts[(size_t)RendererTypes::kStatic] = layout;
-	graphicsInfo_.sets[(size_t)RendererTypes::kStatic] = descriptor->createSets({ layout, layout, layout });
+	graphicsInfo_.sets[(size_t)RendererTypes::kStatic] = descriptor->createSets({ layout });
 
 	std::vector<VkWriteDescriptorSet> descWrites;
-	for (int i = 0; i < 3; ++i) {
-		descWrites.push_back(graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i)));
-		descWrites.push_back(graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i)));
-		descWrites.push_back(graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i)));
+	for (int i = 0; i < 1; ++i) {
+		descWrites.push_back(graphicsInfo_.mvpBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i), 0, graphicsInfo_.mvpOffsetSizes[(size_t)RendererTypes::kStatic]));
+		descWrites.push_back(graphicsInfo_.paramsBuffers[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i), 0, graphicsInfo_.paramsOffsetSizes[(size_t)RendererTypes::kStatic]));
+		descWrites.push_back(graphicsInfo_.materialBuffer[(size_t)RendererTypes::kStatic]->descriptorWrite(descriptor->getSet(graphicsInfo_.sets[(size_t)RendererTypes::kStatic] + i), 0, graphicsInfo_.materialOffsetSizes[(size_t)RendererTypes::kStatic]));
 	}
 	descriptor->updateDescriptorSets(descWrites);
+
+	// ----------------------------------------------------
 
 	return &graphicsInfo_;
 }

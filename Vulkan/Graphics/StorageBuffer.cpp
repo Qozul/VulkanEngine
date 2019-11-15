@@ -27,12 +27,12 @@ const VkDescriptorSetLayoutBinding& DescriptorBuffer::getBinding()
 	return binding_;
 }
 
-VkWriteDescriptorSet DescriptorBuffer::descriptorWrite(VkDescriptorSet set)
+VkWriteDescriptorSet DescriptorBuffer::descriptorWrite(VkDescriptorSet set, VkDeviceSize offset, VkDeviceSize range)
 {
 	bufferInfo_ = {};
 	bufferInfo_.buffer = bufferDetails_.buffer;
-	bufferInfo_.offset = 0;
-	bufferInfo_.range = size_;
+	bufferInfo_.offset = offset;
+	bufferInfo_.range = range == 0 ? size_ : range;
 
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -42,7 +42,6 @@ VkWriteDescriptorSet DescriptorBuffer::descriptorWrite(VkDescriptorSet set)
 	descriptorWrite.descriptorType = getType();
 	descriptorWrite.descriptorCount = 1;
 	descriptorWrite.pBufferInfo = &bufferInfo_;
-
 	return descriptorWrite;
 }
 

@@ -57,6 +57,8 @@ Materials::MaterialLoadingFunction Materials::getLoadingFunction(MaterialType ty
 		return Materials::loadTerrainMaterial;
 	case MaterialType::kParticle:
 		return Materials::loadParticleMaterial;
+	default:
+		ASSERT(false);
 	}
 }
 

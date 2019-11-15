@@ -35,6 +35,8 @@
 # Static Renderer: 6 storage buffers
 7 9 3
 
+9 3 1
+
 # Particle Renderer: 1 uniform buffer
 6 3 3
 7 3 0

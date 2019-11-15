@@ -25,7 +25,7 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layouts[(size_t)RendererTypes::kStatic]);
-	for (int i = 0; i < 3; ++i) {
+	for (int i = 0; i < 1; ++i) {
 		descriptorSets_.push_back(descriptor_->getSet(createInfo.graphicsInfo->sets[(size_t)RendererTypes::kStatic] + i));
 	}
 	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer[(size_t)RendererTypes::kStatic]);
@@ -64,34 +64,13 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	beginFrame(cmdBuffer);
 	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
-	updateBuffers(camera.viewMatrix);
-
-	recordDIFrame(idx, cmdBuffer);
-}
-
-void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
-{
-	updateDIBuffer();
-	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		RenderObject* robject = renderStorage_->renderObjectData()[i];
-
-		VkDescriptorSet sets[2] = { descriptorSets_[0], descriptorSets_[1 + (size_t)idx] };
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
-
-		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
-	}
-}
-
-void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
-{
-	ElementData* eleDataPtr = static_cast<ElementData*>(storageBuffers_[0]->bindRange());
-	StaticShaderParams* paramsPtr = static_cast<StaticShaderParams*>(storageBuffers_[1]->bindRange());
+	ElementData* eleDataPtr = (ElementData*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + (graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic] * idx));
+	StaticShaderParams* paramsPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + (graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic] * idx));
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
 		eleDataPtr[i] = {
-			GraphicsMaster::kProjectionMatrix * viewMatrix * model
+			GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model
 		};
 		paramsPtr[i] = {
 			*static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())
@@ -100,15 +79,37 @@ void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
 	}
 	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();
-}
-
-void TexturedRenderer::updateDIBuffer()
-{
-	uint32_t* dataPtr = (uint32_t*)storageBuffers_[2]->bindRange();
-	auto instPtr = renderStorage_->instanceData();
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + (graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] * idx));
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
 		dataPtr[i] = 0;
 		dataPtr[i + 1] = 1;
 	}
 	storageBuffers_[2]->unbindRange();
+
+	const uint32_t dynamicOffsets[3] = { 
+		graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic] * idx, 
+		graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic] * idx, 
+		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] * idx
+	};
+	VkDescriptorSet sets[2] = { descriptorSets_[0], descriptorSets_[1] };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 3, dynamicOffsets);
+
+	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
+		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
+		RenderObject* robject = renderStorage_->renderObjectData()[i];
+
+		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+	}
+}
+
+void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
+{
+}
+
+void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
+{
+}
+
+void TexturedRenderer::updateDIBuffer()
+{
 }

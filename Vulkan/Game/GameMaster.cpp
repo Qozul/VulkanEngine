@@ -18,6 +18,8 @@
 
 #include "../Graphics/StorageBuffer.h"
 #include "../Graphics/Descriptor.h"
+#include "../Graphics/PhysicalDevice.h"
+#include "../Graphics/LogicDevice.h"
 
 using namespace QZL;
 using namespace Game;
@@ -37,7 +39,7 @@ GameMaster::~GameMaster()
 
 Graphics::SceneGraphicsInfo* GameMaster::loadDescriptors()
 {
-	return scenes_[activeSceneIdx_]->createDescriptors(3);
+	return scenes_[activeSceneIdx_]->createDescriptors(3, masters_.graphicsMaster->details_.physicalDevice->getDeviceLimits());
 }
 
 void GameMaster::loadGame()

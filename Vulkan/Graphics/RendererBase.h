@@ -65,9 +65,9 @@ namespace QZL
 		class RendererBase {
 		public:
 			RendererBase(RendererCreateInfo& createInfo, RenderStorage* renderStorage)
-				: pipeline_(nullptr), renderStorage_(renderStorage), logicDevice_(createInfo.logicDevice), descriptor_(createInfo.descriptor), pushConstantOffset_(0) {
-				ASSERT(createInfo.maxDrawnEntities > 0);
-			}
+				: pipeline_(nullptr), renderStorage_(renderStorage), logicDevice_(createInfo.logicDevice), descriptor_(createInfo.descriptor), pushConstantOffset_(0),
+				  graphicsInfo_(createInfo.graphicsInfo) { ASSERT(createInfo.maxDrawnEntities > 0); }
+
 			virtual ~RendererBase();
 			virtual void createDescriptors(const uint32_t count) = 0;
 			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
@@ -102,6 +102,7 @@ namespace QZL
 			RendererPipeline* pipeline_;
 			RenderStorage* renderStorage_;
 			Descriptor* descriptor_;
+			SceneGraphicsInfo* graphicsInfo_;
 			std::vector<DescriptorBuffer*> storageBuffers_;
 			std::vector<VkDescriptorSetLayout> pipelineLayouts_;
 			std::vector<VkDescriptorSet> descriptorSets_;

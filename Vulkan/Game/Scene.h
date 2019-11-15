@@ -44,7 +44,7 @@ namespace QZL {
 		SceneHeirarchyNode* findEntityNode(Entity* entity);
 
 		void findDescriptorRequirements(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount);
-		Graphics::SceneGraphicsInfo* createDescriptors(size_t numFrameImages); // , std::set<Graphics::MaterialJob>& materials
+		Graphics::SceneGraphicsInfo* createDescriptors(size_t numFrameImages, const VkPhysicalDeviceLimits& limits); // , std::set<Graphics::MaterialJob>& materials
 
 	private:
 		// Auxilliary recursive lookup
