@@ -18,14 +18,6 @@
 using namespace QZL;
 using namespace Graphics;
 
-struct TessCtrlPushConstants {
-	float distanceFarMinusClose = 0.0f;
-	float closeDistance = 0.0f;
-	float patchRadius = 0.0f;
-	float maxTessellationWeight = 0.0f;
-	std::array<glm::vec4, 6> frustumPlanes;
-};
-
 TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
 		sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
@@ -36,7 +28,10 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffer);
 	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer);
 
-	auto pushConstRange = setupPushConstantRange<TessCtrlPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	VkPushConstantRange pushConstants[2] = {
+		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT),
+		setupPushConstantRange<TessellationPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+	};
 
 	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] };
 	std::vector<VkSpecializationMapEntry> mapEntry = {
@@ -64,7 +59,7 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
-		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
+		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 TerrainRenderer::~TerrainRenderer()
@@ -88,8 +83,9 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 		graphicsInfo_->materialRange * idx
 	};
 
-	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) + dynamicOffsets[0]);
-	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + sizeof(StaticShaderParams) + dynamicOffsets[1]);
+	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) * graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain] + dynamicOffsets[0]);
+	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + 
+		sizeof(StaticShaderParams) * graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain] + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
@@ -103,7 +99,7 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();
 
-	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + dynamicOffsets[2]);
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + sizeof(Materials::Terrain) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] + dynamicOffsets[2]);
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i += 3) {
 		dataPtr[i] = 2;
 		dataPtr[i + 1] = 4;
@@ -114,14 +110,6 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
 
-		TessCtrlPushConstants pcs;
-		pcs.distanceFarMinusClose = 300.0f; // Implies far distance is 350.0f+
-		pcs.closeDistance = 50.0f;
-		pcs.patchRadius = 40.0f;
-		pcs.maxTessellationWeight = 4.0f;
-		camera.calculateFrustumPlanes(GraphicsMaster::kProjectionMatrix * camera.viewMatrix, pcs.frustumPlanes);
-
-		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcs);
 
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

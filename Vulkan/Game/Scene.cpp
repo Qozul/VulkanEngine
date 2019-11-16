@@ -21,6 +21,9 @@ Scene::Scene(const SystemMasters* masters)
 Scene::~Scene()
 {
 	deleteHeirarchyRecursively(rootNode_);
+	SAFE_DELETE(graphicsInfo_.mvpBuffer);
+	SAFE_DELETE(graphicsInfo_.paramsBuffer);
+	SAFE_DELETE(graphicsInfo_.materialBuffer);
 }
 
 void Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
@@ -153,24 +156,43 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 	std::unordered_map<RendererTypes, uint32_t> instancesMap;
 	findDescriptorRequirements(instancesMap);
 
-	auto mvpResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 0, "MVPBuffer", VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-		{ { (size_t)RendererTypes::kStatic, sizeof(glm::mat4), instancesMap[RendererTypes::kStatic] }, { (size_t)RendererTypes::kTerrain, sizeof(glm::mat4), instancesMap[RendererTypes::kTerrain] } } }, logicDevice);
+	auto mvpResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 0, "MVPBuffer", VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+		{ 
+			{ (size_t)RendererTypes::kStatic, sizeof(glm::mat4), instancesMap[RendererTypes::kStatic] }, 
+			{ (size_t)RendererTypes::kTerrain, sizeof(glm::mat4), instancesMap[RendererTypes::kTerrain] },
+			{ (size_t)RendererTypes::kParticle, sizeof(glm::mat4), instancesMap[RendererTypes::kParticle] } 
+		} }, logicDevice);
 	graphicsInfo_.mvpBuffer = mvpResult.buffer;
 	graphicsInfo_.mvpRange = mvpResult.dynamicOffset;
 
-	auto paramsResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 1, "ParamsBuffer", VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		{ { (size_t)RendererTypes::kStatic, sizeof(StaticShaderParams), instancesMap[RendererTypes::kStatic] }, { (size_t)RendererTypes::kTerrain, sizeof(StaticShaderParams), instancesMap[RendererTypes::kTerrain] } } }, logicDevice);
+	auto paramsResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 1, "ParamsBuffer", 
+		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+		{ 
+			{ (size_t)RendererTypes::kStatic, sizeof(StaticShaderParams), instancesMap[RendererTypes::kStatic] }, 
+			{ (size_t)RendererTypes::kTerrain, sizeof(StaticShaderParams), instancesMap[RendererTypes::kTerrain] },
+			{ (size_t)RendererTypes::kParticle, sizeof(ParticleShaderParams), instancesMap[RendererTypes::kParticle] },
+			{ (size_t)RendererTypes::kAtmosphere, sizeof(AtmosphereShaderParams), instancesMap[RendererTypes::kAtmosphere] }
+		} }, logicDevice);
 	graphicsInfo_.paramsBuffer = paramsResult.buffer;
 	graphicsInfo_.paramsRange = paramsResult.dynamicOffset;
 	
 	auto materialResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 2, "MaterialsBuffer", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		{ { (size_t)RendererTypes::kStatic, sizeof(Materials::Static), instancesMap[RendererTypes::kStatic] }, { (size_t)RendererTypes::kTerrain, sizeof(Materials::Terrain), instancesMap[RendererTypes::kTerrain] } } }, logicDevice);
+		{ 
+			{ (size_t)RendererTypes::kStatic, sizeof(Materials::Static), instancesMap[RendererTypes::kStatic] }, 
+			{ (size_t)RendererTypes::kTerrain, sizeof(Materials::Terrain), instancesMap[RendererTypes::kTerrain] },
+			{ (size_t)RendererTypes::kParticle, sizeof(Materials::Particle), instancesMap[RendererTypes::kParticle] },
+			{ (size_t)RendererTypes::kPostProcess, sizeof(Materials::PostProcess), 1 }
+		} }, logicDevice);
 	graphicsInfo_.materialBuffer = materialResult.buffer;
 	graphicsInfo_.materialRange = materialResult.dynamicOffset;
 
-	for (size_t i = 0; i < materialResult.dataOffsets.size(); ++i) {
+	for (size_t i = 0; i < mvpResult.dataOffsets.size(); ++i) {
 		graphicsInfo_.mvpOffsetSizes[mvpResult.dataOffsets[i].first] = mvpResult.dataOffsets[i].second;
+	}
+	for (size_t i = 0; i < paramsResult.dataOffsets.size(); ++i) {
 		graphicsInfo_.paramsOffsetSizes[paramsResult.dataOffsets[i].first] = paramsResult.dataOffsets[i].second;
+	}
+	for (size_t i = 0; i < materialResult.dataOffsets.size(); ++i) {
 		graphicsInfo_.materialOffsetSizes[materialResult.dataOffsets[i].first] = materialResult.dataOffsets[i].second;
 	}
 	

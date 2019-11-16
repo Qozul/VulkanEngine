@@ -11,7 +11,7 @@ namespace QZL {
 		class TextureManager;
 
 		enum struct MaterialType {
-			kStatic, kTerrain, kAtmosphere, kParticle, kSize
+			kStatic, kTerrain, kAtmosphere, kParticle, kPostProcess, kSize
 		};
 		
 		struct Material {
@@ -39,6 +39,11 @@ namespace QZL {
 
 			struct Particle {
 				uint32_t albedoIdx;
+			};
+
+			struct PostProcess {
+				uint32_t colourBufferIdx;
+				uint32_t depthBufferIdx;
 			};
 			static void loadMaterial(TextureManager* texManager, MaterialType type, std::string fileName, void* data);
 			static MaterialType stringToType(std::string typeName);

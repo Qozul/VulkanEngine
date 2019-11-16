@@ -11,6 +11,7 @@
 #include "RenderObject.h"
 #include "ShaderParams.h"
 #include "GraphicsComponent.h"
+#include "SceneDescriptorInfo.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -25,19 +26,33 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 {
 	createDescriptors(createInfo.maxDrawnEntities);
 	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
+	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
+	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer);
 
-	std::array<float, 2> specConstantValues;
-	specConstantValues[0] = GraphicsMaster::NEAR_PLANE_Z;
-	specConstantValues[1] = GraphicsMaster::FAR_PLANE_Z;
-	std::vector<VkSpecializationMapEntry> specEntries = { makeSpecConstantEntry(0, 0, sizeof(float)), makeSpecConstantEntry(0, sizeof(float), sizeof(float)) };
-	VkSpecializationInfo specializationInfo = setupSpecConstants(2, specEntries.data(), sizeof(float) * 2, specConstantValues.data());
+	VkPushConstantRange pushConstants[2] = {
+		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT),
+		setupPushConstantRange<TessellationPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+	};
+
+	struct Vals {
+		float nearPlane;
+		float farPlane;
+		uint32_t offset;
+	} specConstantValues;
+	specConstantValues.nearPlane = GraphicsMaster::NEAR_PLANE_Z;
+	specConstantValues.farPlane = GraphicsMaster::FAR_PLANE_Z;
+	specConstantValues.offset = graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess];
+	std::vector<VkSpecializationMapEntry> specEntries = { 
+		makeSpecConstantEntry(0, 0, sizeof(float)),
+		makeSpecConstantEntry(1, sizeof(float), sizeof(float)), 
+		makeSpecConstantEntry(2, sizeof(uint32_t) + sizeof(float), sizeof(uint32_t)) 
+	};
+	VkSpecializationInfo specializationInfo = setupSpecConstants(3, specEntries.data(), sizeof(Vals), &specConstantValues);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
 	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
-
-	auto pushConstRange = setupPushConstantRange<PushConstants>(VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	PipelineCreateInfo pci = {};
 	pci.debugName = "PostProcess";
@@ -49,8 +64,7 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
-		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci,
-		RendererPipeline::PrimitiveType::kQuads);
+		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 PostProcessRenderer::~PostProcessRenderer()
@@ -65,14 +79,15 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 {
 	beginFrame(cmdBuffer);
 
-	VkDescriptorSet sets[2] = { descriptorSets_[0] };
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 1, sets, 0, nullptr);
-
-	PushConstants pc;
-	pc.colourIdx = geometryColourBuffer_;
-	pc.depthIdx = geometryDepthBuffer_;
-
-	vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pc);
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpRange * idx,
+		graphicsInfo_->paramsRange * idx,
+		graphicsInfo_->materialRange * idx
+	};
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[0]->bindRange() + sizeof(Materials::PostProcess) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess] + dynamicOffsets[2]);
+	dataPtr[0] = 5;
+	dataPtr[1] = 6;
+	storageBuffers_[0]->unbindRange();
 
 	vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
 }

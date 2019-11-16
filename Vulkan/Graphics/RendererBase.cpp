@@ -10,9 +10,6 @@ using namespace QZL::Graphics;
 
 RendererBase::~RendererBase()
 {
-	for (auto& buffer : storageBuffers_) {
-		SAFE_DELETE(buffer);
-	}
 	SAFE_DELETE(renderStorage_);
 	SAFE_DELETE(pipeline_);
 }

@@ -18,14 +18,6 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-struct TessCtrlPushConstants {
-	float distanceFarMinusClose = 0.0f;
-	float closeDistance = 0.0f;
-	float patchRadius = 0.0f;
-	float maxTessellationWeight = 0.0f;
-	std::array<glm::vec4, 6> frustumPlanes;
-};
-
 TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), 
 		RenderStorage::InstanceUsage::kUnlimited))
@@ -35,8 +27,11 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer);
 	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffer);
 	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer);
-
-	auto pushConstRange = setupPushConstantRange<TessCtrlPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	
+	VkPushConstantRange pushConstants[2] = { 
+		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT), 
+		setupPushConstantRange<TessellationPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT) 
+	};
 
 	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] };
 	std::vector<VkSpecializationMapEntry> mapEntry = {
@@ -45,7 +40,6 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	};
 	auto vertSpecConstant = setupSpecConstants(2, mapEntry.data(), sizeof(uint32_t) * 2, &offsets[0]);
 	auto fragSpecConstant = setupSpecConstants(2, mapEntry.data(), sizeof(uint32_t) * 2, &offsets[1]);
-
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &vertSpecConstant);
@@ -61,7 +55,7 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
-		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
+		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci);
 }
 
 TexturedRenderer::~TexturedRenderer()
@@ -85,8 +79,8 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 		graphicsInfo_->materialRange * idx
 	};
 	
-	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
-	StaticShaderParams* paramsPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + dynamicOffsets[1]);
+	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) * graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic] + dynamicOffsets[0]);
+	StaticShaderParams* paramsPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + sizeof(StaticShaderParams) * graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic] + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
@@ -100,7 +94,7 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	}
 	storageBuffers_[1]->unbindRange();
 	storageBuffers_[0]->unbindRange();
-	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + 2 * sizeof(Materials::Static) + dynamicOffsets[2]);
+	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + sizeof(Materials::Static) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] + dynamicOffsets[2]);
 	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
 		dataPtr[i] = 0;
 		dataPtr[i + 1] = 1;

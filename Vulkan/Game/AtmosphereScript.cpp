@@ -36,12 +36,8 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 	shaderParams_.planetRadius = params_.planetRadius;
 	shaderParams_.Hatm = params_.Hatm;
 	shaderParams_.g = 0.9f;
-	shaderParams_.sunDirection = sun->getSunDirection();
-	shaderParams_.sunIntensity = sun->getSunIntensity();
-	shaderParams_.betaMieExt = params_.betaMieExt;
-	shaderParams_.betaOzoneExt = params_.betaOzoneExt;
-	shaderParams_.mieScaleHeight = params_.mieScaleHeight;
-	shaderParams_.rayleighScaleHeight = params_.rayleighScaleHeight;
+	shaderParams_.sunDirection = *sun->getSunDirection();
+	shaderParams_.sunIntensity = *sun->getSunIntensity();
 	material_ = new Material();
 	material_->data = &scatteringSumIdx_;
 	material_->size = Materials::materialSizeLUT[(size_t)Graphics::MaterialType::kAtmosphere];

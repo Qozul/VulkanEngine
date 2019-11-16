@@ -19,7 +19,7 @@ namespace QZL {
 			VkDeviceSize materialRange;
 			VkDeviceSize paramsOffsetSizes[(size_t)RendererTypes::kNone];
 			VkDeviceSize mvpOffsetSizes[(size_t)RendererTypes::kNone];
-			VkDeviceSize materialOffsetSizes[(size_t)MaterialType::kSize];
+			VkDeviceSize materialOffsetSizes[(size_t)RendererTypes::kNone];
 		};
 	}
 }

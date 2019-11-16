@@ -55,8 +55,6 @@ PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevic
 
 PostProcessPass::~PostProcessPass()
 {
-	//SAFE_DELETE(gpColourBuffer_);
-	//SAFE_DELETE(gpDepthBuffer_);
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(depthBuffer_);
 	SAFE_DELETE(postProcessRenderer_);
@@ -147,7 +145,7 @@ void PostProcessPass::createRenderers()
 	particleRenderer_ = new ParticleRenderer(createInfo);
 
 	graphicsMaster_->setRenderer(RendererTypes::kParticle, particleRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::kAtmospherePostProcess, postProcessRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, postProcessRenderer_);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

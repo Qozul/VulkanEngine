@@ -34,25 +34,22 @@ namespace QZL {
 				: albedoCol(albedo), alpha(alpha), specularCol(specular), specularExponent(specExponent) { }
 		};
 		struct AtmosphereShaderParams : ShaderParams {
+			glm::mat4 inverseViewProj;
 			glm::vec3 betaRay;
 			float betaMie;
+			glm::vec3 sunDirection;
 			float planetRadius;
-			glm::vec3* sunDirection;
+			glm::vec3 sunIntensity;
 			float Hatm;
-			glm::vec3* sunIntensity;
 			float g;
-			glm::vec3 betaOzoneExt;
-			float betaMieExt;
-			float mieScaleHeight;
-			float rayleighScaleHeight;
-			//uint32_t materialIdx;
+			uint32_t scatteringIdx;
 		};
 		struct ParticleShaderParams : ShaderParams {
-			float textureTileLength;
+			glm::mat4 modelMatrix;
 			glm::vec4 tint;
 			//uint32_t materialIdx;
-			ParticleShaderParams(float texTileLength, glm::vec4 tint)
-				: textureTileLength(texTileLength), tint(tint) { }
+			ParticleShaderParams(float texTileLength, glm::vec3 tint) : tint(tint, texTileLength) { }
+			ParticleShaderParams(glm::mat4 model, glm::vec4 tint) : modelMatrix(model), tint(tint) { }
 		};
 	}
 }

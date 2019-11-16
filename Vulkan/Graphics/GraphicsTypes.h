@@ -9,7 +9,7 @@ namespace QZL {
 			kTerrain,
 			kAtmosphere,
 			kParticle,
-			kAtmospherePostProcess,
+			kPostProcess,
 			kNone
 		};
 

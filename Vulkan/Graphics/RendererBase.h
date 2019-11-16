@@ -66,6 +66,19 @@ namespace QZL
 			VkMemoryBarrier barrier;
 			uint32_t offset;
 		};
+
+		struct TessellationPushConstants {
+			float distanceFarMinusClose = 0.0f;
+			float closeDistance = 0.0f;
+			float patchRadius = 0.0f;
+			float maxTessellationWeight = 0.0f;
+			std::array<glm::vec4, 6> frustumPlanes;
+		};
+
+		struct CameraPushConstants {
+			glm::vec4 cameraPosition;
+		};
+
 		constexpr uint32_t kMaxPushConstantSize = 128;
 
 		class RendererBase {

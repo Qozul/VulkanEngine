@@ -29,11 +29,11 @@ layout(set = 1, binding = 0) uniform LightingData
 };
 
 layout(push_constant) uniform TessellationInfo {
-	float distanceFarMinusClose;
-	float closeDistance;
-	float patchRadius;
-	float maxTessellationWeight;
-	vec4 frustumPlanes[6];
+	layout (offset = 16) float distanceFarMinusClose;
+	layout (offset = 20) float closeDistance;
+	layout (offset = 24) float patchRadius;
+	layout (offset = 28) float maxTessellationWeight;
+	layout (offset = 32) vec4 frustumPlanes[6];
 };
 layout(set = 0, binding = 2) readonly buffer TexIndices
 {
