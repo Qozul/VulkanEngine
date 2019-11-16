@@ -30,32 +30,29 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
 		sizeof(uint16_t)), RenderStorage::InstanceUsage::kUnlimited))
 {
-	pipelineLayouts_.push_back(createInfo.graphicsInfo->layouts[(size_t)RendererTypes::kStatic]);
-	descriptorSets_.push_back(descriptor_->getSet(createInfo.graphicsInfo->sets[(size_t)RendererTypes::kStatic]));
-	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer[(size_t)RendererTypes::kStatic]);
-	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffers[(size_t)RendererTypes::kStatic]);
-	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer[(size_t)RendererTypes::kStatic]);
-	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
+	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
+	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer);
+	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffer);
+	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer);
 
 	auto pushConstRange = setupPushConstantRange<TessCtrlPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
 
-	DescriptorOffsets offsetConstants;
-	offsetConstants.mvp = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
-	offsetConstants.params = graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain];
-	offsetConstants.material = graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain];
-	std::vector<VkSpecializationMapEntry> mapEntry = { 
-		makeSpecConstantEntry(0, 0,								 sizeof(offsetConstants.mvp)), 
-		makeSpecConstantEntry(1, sizeof(offsetConstants.mvp),	 sizeof(offsetConstants.params)),
-		makeSpecConstantEntry(2, sizeof(offsetConstants.params), sizeof(offsetConstants.material))
+	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] };
+	std::vector<VkSpecializationMapEntry> mapEntry = {
+		makeSpecConstantEntry(0, 0,	sizeof(uint32_t)),
+		makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
+		makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
 	};
-	auto specConstant = setupSpecConstants(mapEntry, sizeof(DescriptorOffsets), &offsetConstants);
+	auto tescSpecConstant = setupSpecConstants(1, mapEntry.data(), sizeof(uint32_t), &offsets[2]);
+	auto teseSpecConstant = setupSpecConstants(3, mapEntry.data(), sizeof(uint32_t) * 3, offsets);
+	auto fragSpecConstant = setupSpecConstants(2, mapEntry.data(), sizeof(uint32_t) * 2, &offsets[1]);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specConstant);
-	stageInfos.emplace_back(createInfo.tessControlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &specConstant);
-	stageInfos.emplace_back(createInfo.tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &specConstant);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &fragSpecConstant);
+	stageInfos.emplace_back(createInfo.tessControlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &tescSpecConstant);
+	stageInfos.emplace_back(createInfo.tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &teseSpecConstant);
 
 	PipelineCreateInfo pci = {};
 	pci.debugName = "Terrain";
@@ -86,13 +83,13 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic] * idx,
-		graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic] * idx,
-		graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] * idx
+		graphicsInfo_->mvpRange * idx,
+		graphicsInfo_->paramsRange * idx,
+		graphicsInfo_->materialRange * idx
 	};
 
-	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + dynamicOffsets[0]);
-	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + dynamicOffsets[1]);
+	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) + dynamicOffsets[0]);
+	StaticShaderParams* matDataPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + sizeof(StaticShaderParams) + dynamicOffsets[1]);
 	auto instPtr = renderStorage_->instanceData();
 	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
 		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
@@ -123,9 +120,6 @@ void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkC
 		pcs.patchRadius = 40.0f;
 		pcs.maxTessellationWeight = 4.0f;
 		camera.calculateFrustumPlanes(GraphicsMaster::kProjectionMatrix * camera.viewMatrix, pcs.frustumPlanes);
-
-		VkDescriptorSet sets[2] = { descriptorSets_[0], descriptorSets_[1] };
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 3, dynamicOffsets);
 
 		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcs);
 

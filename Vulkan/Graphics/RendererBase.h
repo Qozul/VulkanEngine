@@ -81,12 +81,13 @@ namespace QZL
 
 			virtual void registerComponent(GraphicsComponent* component, RenderObject* robject);
 			ElementBufferObject* getElementBuffer();
+			VkPipelineLayout getPipelineLayout();
 
 			void preframeSetup();
 			virtual void toggleWiremeshMode();
 
 			VkSpecializationMapEntry makeSpecConstantEntry(uint32_t id, uint32_t offset, size_t size);
-			VkSpecializationInfo setupSpecConstants(std::vector<VkSpecializationMapEntry>& entries, size_t dataSize, const void* data);
+			VkSpecializationInfo setupSpecConstants(uint32_t entryCount, VkSpecializationMapEntry* entryPtr, size_t dataSize, const void* data);
 
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages);

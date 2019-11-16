@@ -8,6 +8,8 @@
 #include "AtmosphereRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
+#include "SceneDescriptorInfo.h"
+#include "GlobalRenderData.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -84,6 +86,14 @@ void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommand
 
 	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpRange * idx,
+		graphicsInfo_->paramsRange * idx,
+		graphicsInfo_->materialRange * idx
+	};
+
+	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, texturedRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 	terrainRenderer_->recordFrame(camera, idx, cmdBuffer);
 	texturedRenderer_->recordFrame(camera, idx, cmdBuffer);
 

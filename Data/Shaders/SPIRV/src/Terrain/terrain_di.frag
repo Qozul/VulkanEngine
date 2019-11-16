@@ -14,9 +14,8 @@ struct TextureIndices {
 	uint diffuseIdx;
 };
 
-layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
-layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
-layout(constant_id = 2) const uint SC_MATERIAL_OFFSET = 0;
+layout(constant_id = 0) const uint SC_PARAMS_OFFSET = 0;
+layout(constant_id = 1) const uint SC_MATERIAL_OFFSET = 0;
 
 layout(location = 0) out vec4 fragColor;
 
@@ -44,8 +43,8 @@ layout(set = 0, binding = 2) readonly buffer TexIndices
 };
 
 void main() {
-	Params param = params[instanceIndex];
-	TextureIndices texIndices = textureIndices[instanceIndex];
+	Params param = params[SC_PARAMS_OFFSET + instanceIndex];
+	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex];
 	vec3 incident = normalize(lightPositions[0].xyz - worldPos);
 	vec3 viewDir = normalize(cameraPosition.xyz - worldPos);
 	vec3 halfDir = normalize(incident + viewDir);

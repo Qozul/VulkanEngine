@@ -36,6 +36,11 @@ ElementBufferObject* RendererBase::getElementBuffer()
 	return renderStorage_->buffer();
 }
 
+VkPipelineLayout RendererBase::getPipelineLayout()
+{
+	return pipeline_->getLayout();
+}
+
 void RendererBase::preframeSetup()
 {
 	if (renderStorage_ != nullptr) {
@@ -53,9 +58,9 @@ VkSpecializationMapEntry RendererBase::makeSpecConstantEntry(uint32_t id, uint32
 	return { id, offset, size };
 }
 
-VkSpecializationInfo RendererBase::setupSpecConstants(std::vector<VkSpecializationMapEntry>& entries, size_t dataSize, const void* data)
+VkSpecializationInfo RendererBase::setupSpecConstants(uint32_t entryCount, VkSpecializationMapEntry* entryPtr, size_t dataSize, const void* data)
 {
-	return { (uint32_t)entries.size(), entries.data(), dataSize, data };
+	return { entryCount, entryPtr, dataSize, data };
 }
 
 void RendererBase::beginFrame(VkCommandBuffer& cmdBuffer)

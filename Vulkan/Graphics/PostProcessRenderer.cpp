@@ -31,7 +31,7 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 	specConstantValues[0] = GraphicsMaster::NEAR_PLANE_Z;
 	specConstantValues[1] = GraphicsMaster::FAR_PLANE_Z;
 	std::vector<VkSpecializationMapEntry> specEntries = { makeSpecConstantEntry(0, 0, sizeof(float)), makeSpecConstantEntry(0, sizeof(float), sizeof(float)) };
-	VkSpecializationInfo specializationInfo = setupSpecConstants(specEntries, sizeof(float) * 2, specConstantValues.data());
+	VkSpecializationInfo specializationInfo = setupSpecConstants(2, specEntries.data(), sizeof(float) * 2, specConstantValues.data());
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);

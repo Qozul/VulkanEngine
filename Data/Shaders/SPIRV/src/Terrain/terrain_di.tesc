@@ -11,9 +11,7 @@ struct TextureIndices {
 	uint diffuseIdx;
 };
 
-layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
-layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
-layout(constant_id = 2) const uint SC_MATERIAL_OFFSET = 0;
+layout(constant_id = 0) const uint SC_MATERIAL_OFFSET = 0;
 
 layout(vertices = NUM_VERTS) out;
 
@@ -58,7 +56,7 @@ float calculateTessLevel(float d0, float d1)
 
 bool checkCulling()
 {
-	TextureIndices texIndices = textureIndices[instanceIndex[0]];
+	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec4 pos = gl_in[gl_InvocationID].gl_Position;
 	pos.y -= textureLod(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], iTexUV[0], 0.0).r * maxHeight;
 	for (int i = 0; i < 6; ++i) {
@@ -71,7 +69,7 @@ bool checkCulling()
 
 vec3 getVertexPosition(int i)
 {
-	TextureIndices texIndices = textureIndices[instanceIndex[0]];
+	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec3 pos = gl_in[i].gl_Position.xyz;
 	pos.y -= textureLod(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], iTexUV[i], 0.0).r * maxHeight;
 	return pos;

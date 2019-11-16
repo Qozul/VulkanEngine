@@ -58,8 +58,8 @@ const float maxHeight = 100.0;
 void main(void)
 {
 	outInstanceIndex = instanceIndex[0];
-	Material material = materials[instanceIndex[0]];
-	TextureIndices texIndices = textureIndices[instanceIndex[0]];
+	Material material = materials[SC_PARAMS_OFFSET + instanceIndex[0]];
+	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec2 uv1 = mix(iTexUV[0], iTexUV[1], gl_TessCoord.x);
 	vec2 uv2 = mix(iTexUV[3], iTexUV[2], gl_TessCoord.x);
 	texUV = mix(uv1, uv2, gl_TessCoord.y);
@@ -69,7 +69,7 @@ void main(void)
 	vec4 position = mix(pos1, pos2, gl_TessCoord.y);
 	position.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], texUV).r * maxHeight;
 	
-	gl_Position = ubo.elementData[instanceIndex[0]] * position;
+	gl_Position = ubo.elementData[SC_MVP_OFFSET + instanceIndex[0]] * position;
 	worldPos = (material.model * position).xyz;
 	normal = texture(texSamplers[nonuniformEXT(texIndices.normalmapIdx)], texUV).rgb;
 	float tmp = normal.r;
