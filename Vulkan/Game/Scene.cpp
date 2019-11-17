@@ -28,9 +28,16 @@ Scene::~Scene()
 
 void Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
 {
+	std::memset(graphicsWriteInfo_.offsets, 0, (size_t)Graphics::RendererTypes::kNone * sizeof(VkDeviceSize));
+	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->bindRange();
+	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->bindRange();
+	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->bindRange();
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
 		updateRecursively(rootNode_->childNodes[i], viewProjection, glm::mat4(), dt, frameIdx);
 	}
+	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->unbindRange();
+	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->unbindRange();
+	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->unbindRange();
 }
 
 void Scene::start()
@@ -239,6 +246,32 @@ void Scene::deleteHeirarchyRecursively(SceneHeirarchyNode* node)
 	SAFE_DELETE(node);
 }
 
+void Scene::writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4& viewProjection, glm::mat4& ctm, const uint32_t& frameIdx)
+{
+	auto rtype = component->getRendererType();
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_MVP) {
+		auto mvpPtr = (glm::mat4*)(graphicsWriteInfo_.mvpPtr + graphicsInfo_.mvpOffsetSizes[(size_t)rtype] * sizeof(glm::mat4) + frameIdx * graphicsInfo_.mvpRange);
+		mvpPtr[graphicsWriteInfo_.offsets[(size_t)rtype]] = viewProjection * ctm;
+	}
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_PARAMS) {
+		ShaderParams* tmpParams = component->getShaderParams();
+		size_t paramsSize = ShaderParams::shaderParamsLUT[(size_t)rtype];
+		if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::INCLUDE_MODEL) {
+			std::memcpy((char*)tmpParams, (char*)&ctm, sizeof(glm::mat4));
+		}
+		char* paramsPtr = graphicsWriteInfo_.paramsPtr + graphicsInfo_.paramsOffsetSizes[(size_t)rtype] * paramsSize + frameIdx * graphicsInfo_.paramsRange + graphicsWriteInfo_.offsets[(size_t)rtype] * paramsSize;
+		std::memcpy(paramsPtr, (char*)tmpParams, paramsSize);
+	}
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_MATERIAL) {
+		Material* tmpMaterial = component->getMaterial();
+		size_t materialSize = Materials::materialSizeLUT[(size_t)rtype];
+		auto materialPtr = graphicsWriteInfo_.materialPtr + graphicsInfo_.materialOffsetSizes[(size_t)rtype] * materialSize + frameIdx * graphicsInfo_.materialRange + graphicsWriteInfo_.offsets[(size_t)rtype] * materialSize;
+		uint32_t data0 = ((uint32_t*)tmpMaterial->data)[0];
+		std::memcpy(materialPtr, (char*)tmpMaterial->data, tmpMaterial->size);
+	}
+	++graphicsWriteInfo_.offsets[(size_t)rtype];
+}
+
 void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx)
 {
 	// Update might cause the entity to move, therefore calculate the concatenated model matrix after updating
@@ -246,6 +279,9 @@ void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjectio
 	// The final model matrix of the entity accounts for the transforms of itself and all parents
 	glm::mat4 m = ctm * node->entity->getTransform()->toModelMatrix();
 	node->entity->setModelMatrix(m);
+	if (node->entity->getGraphicsComponent() != nullptr) {
+		writeGraphicsData(node->entity->getGraphicsComponent(), viewProjection, m, frameIdx);
+	}
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
 		updateRecursively(node->childNodes[i], viewProjection, m, dt, frameIdx);
 	}

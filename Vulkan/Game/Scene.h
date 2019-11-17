@@ -13,6 +13,12 @@ namespace QZL {
 		Entity* entity;
 		std::vector<SceneHeirarchyNode*> childNodes;
 	};
+	struct GraphicsWriteInfo {
+		char* mvpPtr;
+		char* paramsPtr;
+		char* materialPtr;
+		VkDeviceSize offsets[(size_t)Graphics::RendererTypes::kNone];
+	};
 	// Encompasses a game scene, defining entities in a tree heirarchy with pointers to both parent and children.
 	class Scene {
 		friend std::ostream& operator<<(std::ostream& os, Scene* scene);
@@ -52,6 +58,7 @@ namespace QZL {
 		// Deletes the given node and all of its children
 		void deleteHeirarchyRecursively(SceneHeirarchyNode* node);
 
+		void writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4& viewProjection, glm::mat4& ctm, const uint32_t& frameIdx);
 		void updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx);
 		void startRecursively(SceneHeirarchyNode* node);
 
@@ -59,6 +66,7 @@ namespace QZL {
 
 		SceneHeirarchyNode* rootNode_;
 		Graphics::SceneGraphicsInfo graphicsInfo_;
+		GraphicsWriteInfo graphicsWriteInfo_;
 		const SystemMasters* masters_;
 	};
 }

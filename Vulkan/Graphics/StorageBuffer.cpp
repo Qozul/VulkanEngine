@@ -50,9 +50,10 @@ void* DescriptorBuffer::bindRange()
 	return logicDevice_->getDeviceMemory()->mapMemory(bufferDetails_.id);
 }
 
-void DescriptorBuffer::unbindRange()
+void* DescriptorBuffer::unbindRange()
 {
 	logicDevice_->getDeviceMemory()->unmapMemory(bufferDetails_.id);
+	return nullptr;
 }
 
 DescriptorBuffer::DescriptorBuffer(const LogicDevice* logicDevice, uint32_t binding, VkDeviceSize maxSize)

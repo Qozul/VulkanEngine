@@ -9,11 +9,8 @@ namespace QZL
 		class ParticleRenderer : public RendererBase {
 		public:
 			ParticleRenderer(RendererCreateInfo& createInfo);
-			~ParticleRenderer();
-			void createDescriptors(const uint32_t particleSystemCount) override;
+			~ParticleRenderer() = default;
 			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
-		private:
-			size_t staticParamsDescriptorSet_;
 		};
 	}
 }

@@ -2,9 +2,9 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 struct Material {
+    mat4 model;
 	vec4 diffuseColour;
 	vec4 specularColour;
-    mat4 model;
 };
 struct ElementData {
     mat4 mvp;

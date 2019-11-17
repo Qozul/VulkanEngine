@@ -4,6 +4,7 @@
 #include "VkUtil.h"
 #include "Material.h"
 #include "Image.h"
+#include "GraphicsTypes.h"
 
 namespace QZL {
 	namespace Graphics {
@@ -45,7 +46,7 @@ namespace QZL {
 				return textureSamplersDI_[name].first;
 			}
 			
-			Material* requestMaterial(const MaterialType type, const std::string name);
+			Material* requestMaterial(const RendererTypes type, const std::string name);
 
 			VkDescriptorSetLayoutBinding getSetlayoutBinding() {
 				return setLayoutBinding_;
@@ -75,8 +76,8 @@ namespace QZL {
 			std::unordered_map<std::string, TextureSampler*> texturesSamplers_;
 			std::unordered_map<std::string, std::pair<TextureSampler*, uint32_t>> textureSamplersDI_;
 			std::unordered_map<std::string, Material*> materials_;
-
 			std::queue<uint32_t> freeDescriptors_;
+			uint32_t materialCount_;
 		};
 	}
 }

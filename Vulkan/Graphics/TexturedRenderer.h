@@ -9,13 +9,8 @@ namespace QZL
 		class TexturedRenderer : public RendererBase {
 		public:
 			TexturedRenderer(RendererCreateInfo& createInfo);
-			~TexturedRenderer();
-			void createDescriptors(const uint32_t count) override;
+			~TexturedRenderer() = default;
 			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
-			void recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer);
-		private:
-			void updateBuffers(const glm::mat4& viewMatrix);
-			void updateDIBuffer();
 		};
 	}
 }

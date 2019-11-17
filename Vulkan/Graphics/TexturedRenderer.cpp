@@ -24,9 +24,6 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
-	storageBuffers_.push_back(createInfo.graphicsInfo->mvpBuffer);
-	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffer);
-	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer);
 	
 	VkPushConstantRange pushConstants[2] = { 
 		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT), 
@@ -58,14 +55,6 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci);
 }
 
-TexturedRenderer::~TexturedRenderer()
-{
-}
-
-void TexturedRenderer::createDescriptors(const uint32_t entityCount)
-{
-}
-
 void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
@@ -73,50 +62,8 @@ void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, Vk
 	beginFrame(cmdBuffer);
 	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
-	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * idx,
-		graphicsInfo_->paramsRange * idx,
-		graphicsInfo_->materialRange * idx
-	};
-	
-	glm::mat4* eleDataPtr = (glm::mat4*)(static_cast<char*>(storageBuffers_[0]->bindRange()) + sizeof(glm::mat4) * graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic] + dynamicOffsets[0]);
-	StaticShaderParams* paramsPtr = (StaticShaderParams*)(static_cast<char*>(storageBuffers_[1]->bindRange()) + sizeof(StaticShaderParams) * graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic] + dynamicOffsets[1]);
-	auto instPtr = renderStorage_->instanceData();
-	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		glm::mat4 model = (*(instPtr + i))->getEntity()->getModelMatrix();
-		eleDataPtr[i] = {
-			GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model
-		};
-		paramsPtr[i] = {
-			*static_cast<StaticShaderParams*>((*(instPtr + i))->getShaderParams())
-		};
-		paramsPtr[i].model = model;
-	}
-	storageBuffers_[1]->unbindRange();
-	storageBuffers_[0]->unbindRange();
-	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[2]->bindRange() + sizeof(Materials::Static) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] + dynamicOffsets[2]);
-	for (size_t i = 0; i < renderStorage_->instanceCount(); i++) {
-		dataPtr[i] = 0;
-		dataPtr[i + 1] = 1;
-	}
-	storageBuffers_[2]->unbindRange();
-
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		RenderObject* robject = renderStorage_->renderObjectData()[i];
-
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}
-}
-
-void TexturedRenderer::recordDIFrame(const uint32_t idx, VkCommandBuffer cmdBuffer)
-{
-}
-
-void TexturedRenderer::updateBuffers(const glm::mat4& viewMatrix)
-{
-}
-
-void TexturedRenderer::updateDIBuffer()
-{
 }

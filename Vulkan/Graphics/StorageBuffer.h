@@ -22,7 +22,7 @@ namespace QZL
 			// Alternative to uploading a range directly, these allow the mapping to last longer
 			// But if bind is called the caller must ensure unbind is also called
 			void* bindRange();
-			void unbindRange();
+			void* unbindRange();
 			const MemoryAllocationDetails& getBufferDetails() { return bufferDetails_; }
 
 			template<typename T>

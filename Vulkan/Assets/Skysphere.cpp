@@ -14,7 +14,7 @@ Skysphere::Skysphere(const std::string name, const Graphics::LogicDevice* logicD
 	initialiser.owner = this;
 	setGameScript(new AtmosphereScript(initialiser, sun));
 	auto script = static_cast<AtmosphereScript*>(getGameScript());
-	setGraphicsComponent(Graphics::RendererTypes::kAtmosphere, script->getNewShaderParameters(), nullptr, script->getMaterial(), "skysphere", loadFunction, true);
+	setGraphicsComponent(Graphics::RendererTypes::kAtmosphere, nullptr, script->getNewShaderParameters(), script->getMaterial(), "skysphere", loadFunction, true);
 }
 
 Skysphere::~Skysphere()

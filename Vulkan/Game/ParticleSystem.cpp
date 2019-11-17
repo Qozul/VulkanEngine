@@ -78,6 +78,8 @@ ParticleSystem::ParticleSystem(const SystemMasters& initialiser, glm::vec3* bill
 	ASSERT(billboardPoint_ != nullptr);
 	particles_.resize(maxParticles);
 	vertices_.resize(maxParticles);
+
+	material_ = sysMasters_->textureManager->requestMaterial(Graphics::RendererTypes::kParticle, materialName_);
 }
 
 ParticleSystem::~ParticleSystem()
@@ -88,8 +90,6 @@ void ParticleSystem::fetchDynamicBuffer()
 {
 	buffer_ = sysMasters_->graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle);
 	subBufferRange_ = buffer_->allocateSubBufferRange(particles_.size());
-
-	material_ = sysMasters_->textureManager->requestMaterial(Graphics::MaterialType::kParticle, materialName_);
 }
 
 void ParticleSystem::nextTextureTile(glm::vec2& tileOffset)

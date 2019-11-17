@@ -3,9 +3,9 @@
 #extension GL_EXT_nonuniform_qualifier : require
 
 struct Material {
+    mat4 model;
 	vec4 diffuseColour;
 	vec4 specularColour;
-    mat4 model;
 };
 
 struct DescriptorIndexData {

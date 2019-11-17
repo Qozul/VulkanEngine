@@ -14,14 +14,9 @@ namespace QZL
 
 		class PostProcessRenderer : public RendererBase {
 		public:
-			PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourBuffer, uint32_t geometryDepthBuffer);
-			~PostProcessRenderer();
-			void createDescriptors(const uint32_t entityCount) override;
+			PostProcessRenderer(RendererCreateInfo& createInfo);
+			~PostProcessRenderer() = default;
 			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
-			void registerComponent(GraphicsComponent* component, RenderObject* robject) override;
-		private:
-			uint32_t geometryColourBuffer_;
-			uint32_t geometryDepthBuffer_;
 		};
 	}
 }

@@ -20,6 +20,7 @@
 #include "../Graphics/Descriptor.h"
 #include "../Graphics/PhysicalDevice.h"
 #include "../Graphics/LogicDevice.h"
+#include "../Graphics/RenderObject.h"
 
 using namespace QZL;
 using namespace Game;
@@ -55,7 +56,7 @@ void GameMaster::loadGame()
 	Entity* teapot = new Entity("Teapot");
 	teapot->getTransform()->scale = glm::vec3(2.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
-		masters_.textureManager->requestMaterial(Graphics::MaterialType::kStatic, "ExampleStatic"), "Teapot");
+		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 	
 	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 
@@ -64,7 +65,7 @@ void GameMaster::loadGame()
 	auto sunScript = new SunScript(masters_);
 	sun->setGameScript(sunScript);
 	auto sunRobject = sunScript->makeRenderObject("SunSystem");
-	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunRobject);
+	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunRobject, sunRobject->getParams());
 
 	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
@@ -73,7 +74,7 @@ void GameMaster::loadGame()
 	auto fireScript = new FireSystem(masters_);
 	fire->setGameScript(fireScript);
 	auto fireRobject = fireScript->makeRenderObject("FireSystem");
-	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireRobject);
+	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireRobject, fireRobject->getParams());
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);

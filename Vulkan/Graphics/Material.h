@@ -9,10 +9,6 @@
 namespace QZL {
 	namespace Graphics {
 		class TextureManager;
-
-		enum struct MaterialType {
-			kStatic, kTerrain, kAtmosphere, kParticle, kPostProcess, kSize
-		};
 		
 		struct Material {
 			void* data;
@@ -45,14 +41,14 @@ namespace QZL {
 				uint32_t colourBufferIdx;
 				uint32_t depthBufferIdx;
 			};
-			static void loadMaterial(TextureManager* texManager, MaterialType type, std::string fileName, void* data);
-			static MaterialType stringToType(std::string typeName);
+			static void loadMaterial(TextureManager* texManager, RendererTypes type, std::string fileName, void* data);
+			static RendererTypes stringToType(std::string typeName);
 
-			static const size_t materialTextureCountLUT[(size_t)MaterialType::kSize];
-			static const size_t materialSizeLUT[(size_t)MaterialType::kSize];
+			static const size_t materialTextureCountLUT[(size_t)RendererTypes::kNone];
+			static const size_t materialSizeLUT[(size_t)RendererTypes::kNone];
 
 		private:
-			static MaterialLoadingFunction getLoadingFunction(MaterialType type);
+			static MaterialLoadingFunction getLoadingFunction(RendererTypes type);
 			static void loadStaticMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
 			static void loadTerrainMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
 			static void loadParticleMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);

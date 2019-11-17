@@ -139,7 +139,7 @@ void PostProcessPass::createRenderers()
 	createInfo.graphicsInfo = graphicsInfo_;
 
 	createInfo.updateRendererSpecific(0, 1, "PPVert", "PPFrag");
-	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthBuffer_);
+	postProcessRenderer_ = new PostProcessRenderer(createInfo);
 
 	createInfo.updateRendererSpecific(0, 2, "ParticlesVert", "ParticlesFrag", "ParticlesGeom");
 	particleRenderer_ = new ParticleRenderer(createInfo);

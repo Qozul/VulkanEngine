@@ -11,9 +11,9 @@ struct TextureIndices {
 	uint diffuseIdx;
 };
 struct Material {
+	mat4 model;
 	vec4 diffuseColour;
 	vec4 specularColour;
-	mat4 model;
 };
 
 layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;

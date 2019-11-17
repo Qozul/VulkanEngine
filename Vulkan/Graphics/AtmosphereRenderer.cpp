@@ -55,14 +55,6 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-AtmosphereRenderer::~AtmosphereRenderer()
-{
-}
-
-void AtmosphereRenderer::createDescriptors(const uint32_t entityCount)
-{
-}
-
 void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	if (renderStorage_->instanceCount() == 0)
@@ -78,23 +70,23 @@ void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, 
 	};
 
 	auto vm = glm::lookAt({ 0.0f, camera.position.y, 0.0f }, camera.lookPoint + glm::vec3(0.0f, camera.position.y, 0.0f), { 0.0f, 1.0f, 0.0f });
+	AtmosphereShaderParams* paramsPtr = (AtmosphereShaderParams*)(static_cast<char*>(storageBuffers_[0]->bindRange()) +
+		sizeof(AtmosphereShaderParams) * graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kAtmosphere] + dynamicOffsets[1]);
+	AtmosphereShaderParams* params = static_cast<AtmosphereShaderParams*>(renderStorage_->instanceData()[0]->getShaderParams());
+	paramsPtr->betaMie = params->betaMie;
+	paramsPtr->betaRay = params->betaRay;
+	paramsPtr->g = params->g;
+	paramsPtr->Hatm = params->Hatm;
+	paramsPtr->planetRadius = params->planetRadius;
+	paramsPtr->sunDirection = glm::vec3(0.0f, 1.0f, 0.0f);
+	paramsPtr->sunIntensity = glm::vec3(6.5e-7, 5.1e-7, 4.75e-7) * glm::vec3(1e7);
+	paramsPtr->inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * vm);
+	paramsPtr->scatteringIdx = 9;
+	storageBuffers_[0]->unbindRange();
+
 	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
 		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
 		RenderObject* robject = renderStorage_->renderObjectData()[i];
-
-		AtmosphereShaderParams* params = static_cast<AtmosphereShaderParams*>(robject->getParams());
-		AtmosphereShaderParams* paramsPtr = (AtmosphereShaderParams*)(static_cast<char*>(storageBuffers_[0]->bindRange()) +
-			sizeof(AtmosphereShaderParams) * graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kAtmosphere] + dynamicOffsets[1]);
-		paramsPtr[i].betaMie = params->betaMie;
-		paramsPtr[i].betaRay = params->betaRay;
-		paramsPtr[i].g = params->g;
-		paramsPtr[i].Hatm = params->Hatm;
-		paramsPtr[i].planetRadius = params->planetRadius;
-		paramsPtr[i].sunDirection = glm::vec3(0.0f, 1.0f, 0.0f);
-		paramsPtr[i].sunIntensity = glm::vec3(6.5e-7, 5.1e-7, 4.75e-7) * glm::vec3(1e7);
-		paramsPtr[i].inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * vm);
-		paramsPtr[i].scatteringIdx = 8;
-		storageBuffers_[0]->unbindRange();
 		
 		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
 	}

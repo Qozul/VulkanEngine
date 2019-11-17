@@ -12,6 +12,7 @@ namespace QZL {
 			static const size_t shaderParamsLUT[(size_t)RendererTypes::kNone];
 		};
 		struct StaticShaderParams : ShaderParams {
+			glm::mat4 model;
 			float diffuseX = 0.7f;
 			float diffuseY = 0.7f;
 			float diffuseZ = 0.7f;
@@ -20,15 +21,14 @@ namespace QZL {
 			float specularY = 0.7f;
 			float specularZ = 0.7f;
 			float specularExponent = 41.0f;
-			glm::mat4 model;
 			//uint32_t materialIdx;
 		};
 		struct TerrainShaderParams : ShaderParams {
+			glm::mat4 model;
 			glm::vec3 albedoCol;
 			float alpha = 1.0f;
 			glm::vec3 specularCol;
 			float specularExponent = 1.0f;
-			glm::mat4 model;
 			//uint32_t materialIdx;
 			TerrainShaderParams(glm::vec3 albedo, glm::vec3 specular, float alpha, float specExponent)
 				: albedoCol(albedo), alpha(alpha), specularCol(specular), specularExponent(specExponent) { }

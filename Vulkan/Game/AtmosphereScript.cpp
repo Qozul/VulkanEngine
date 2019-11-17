@@ -40,7 +40,7 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 	shaderParams_.sunIntensity = *sun->getSunIntensity();
 	material_ = new Material();
 	material_->data = &scatteringSumIdx_;
-	material_->size = Materials::materialSizeLUT[(size_t)Graphics::MaterialType::kAtmosphere];
+	material_->size = Materials::materialSizeLUT[(size_t)Graphics::RendererTypes::kAtmosphere];
 }
 
 AtmosphereScript::~AtmosphereScript()

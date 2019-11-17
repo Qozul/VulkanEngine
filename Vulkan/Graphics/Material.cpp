@@ -13,10 +13,10 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-const size_t Materials::materialTextureCountLUT[(size_t)MaterialType::kSize] = { 2, 3, 1, 1 };
-const size_t Materials::materialSizeLUT[(size_t)MaterialType::kSize] = { sizeof(Static), sizeof(Terrain), sizeof(Atmosphere), sizeof(Particle) };
+const size_t Materials::materialTextureCountLUT[(size_t)RendererTypes::kNone] = { 2, 3, 1, 1 };
+const size_t Materials::materialSizeLUT[(size_t)RendererTypes::kNone] = { sizeof(Static), sizeof(Terrain), sizeof(Atmosphere), sizeof(Particle), sizeof(PostProcess) };
 
-void Materials::loadMaterial(TextureManager* texManager, MaterialType type, std::string fileName, void* data)
+void Materials::loadMaterial(TextureManager* texManager, RendererTypes type, std::string fileName, void* data)
 {
 	std::vector<std::string> lines;
 
@@ -36,26 +36,28 @@ void Materials::loadMaterial(TextureManager* texManager, MaterialType type, std:
 	}
 }
 
-MaterialType Materials::stringToType(std::string typeName)
+RendererTypes Materials::stringToType(std::string typeName)
 {
 	if (typeName == "STATIC")
-		return MaterialType::kStatic;
+		return RendererTypes::kStatic;
 	else if (typeName == "TERRAIN")
-		return MaterialType::kTerrain;
+		return RendererTypes::kTerrain;
 	else if (typeName == "PARTICLE")
-		return MaterialType::kParticle;
+		return RendererTypes::kParticle;
 	else if (typeName == "ATMOSPHERE")
-		return MaterialType::kAtmosphere;
+		return RendererTypes::kAtmosphere;
+	else if (typeName == "POST_PROCESS")
+		return RendererTypes::kPostProcess;
 }
 
-Materials::MaterialLoadingFunction Materials::getLoadingFunction(MaterialType type)
+Materials::MaterialLoadingFunction Materials::getLoadingFunction(RendererTypes type)
 {
 	switch (type) {
-	case MaterialType::kStatic:
+	case RendererTypes::kStatic:
 		return Materials::loadStaticMaterial;
-	case MaterialType::kTerrain:
+	case RendererTypes::kTerrain:
 		return Materials::loadTerrainMaterial;
-	case MaterialType::kParticle:
+	case RendererTypes::kParticle:
 		return Materials::loadParticleMaterial;
 	default:
 		ASSERT(false);
@@ -76,8 +78,8 @@ void Materials::loadTerrainMaterial(TextureManager* texManager, void* data, std:
 	ASSERT(lines.size() >= 3);
 	Terrain material = {};
 	material.heightmapIdx = texManager->requestTexture(lines[0]);
-	material.normalmapIdx = texManager->requestTexture(lines[1]);
-	material.albedoIdx = texManager->requestTexture(lines[2]);
+	material.normalmapIdx = texManager->requestTexture(lines[2]);
+	material.albedoIdx = texManager->requestTexture(lines[1]);
 	memcpy(data, &material, sizeof(Terrain));
 }
 
@@ -86,5 +88,5 @@ void Materials::loadParticleMaterial(TextureManager* texManager, void* data, std
 	ASSERT(lines.size() >= 1);
 	Particle material = {};
 	material.albedoIdx = texManager->requestTexture(lines[0]);
-	memcpy(data, &material, sizeof(Atmosphere));
+	memcpy(data, &material, sizeof(Particle));
 }

@@ -16,16 +16,9 @@
 using namespace QZL;
 using namespace Graphics;
 
-struct PushConstants {
-	uint32_t colourIdx;
-	uint32_t depthIdx;
-};
-
-PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourBuffer, uint32_t geometryDepthBuffer)
-	: RendererBase(createInfo, nullptr), geometryColourBuffer_(geometryColourBuffer), geometryDepthBuffer_(geometryDepthBuffer)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo)
+	: RendererBase(createInfo, nullptr)
 {
-	createDescriptors(createInfo.maxDrawnEntities);
-	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer);
@@ -67,14 +60,6 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-PostProcessRenderer::~PostProcessRenderer()
-{
-}
-
-void PostProcessRenderer::createDescriptors(const uint32_t entityCount)
-{
-}
-
 void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
 {
 	beginFrame(cmdBuffer);
@@ -85,13 +70,9 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 		graphicsInfo_->materialRange * idx
 	};
 	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[0]->bindRange() + sizeof(Materials::PostProcess) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess] + dynamicOffsets[2]);
-	dataPtr[0] = 5;
-	dataPtr[1] = 6;
+	dataPtr[0] = 7;
+	dataPtr[1] = 8;
 	storageBuffers_[0]->unbindRange();
 
 	vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
-}
-
-void PostProcessRenderer::registerComponent(GraphicsComponent* component, RenderObject* robject)
-{
 }

@@ -24,6 +24,9 @@ TextureManager::TextureManager(const LogicDevice* logicDevice, Descriptor* descr
 	for (uint32_t i = 0; i < maxTextures; ++i) {
 		freeDescriptors_.push(i);
 	}
+
+	materialCount_ = 0;
+	materialData_.resize(36);
 }
 
 TextureManager::~TextureManager()
@@ -92,15 +95,15 @@ uint32_t TextureManager::allocateTexture(const std::string& name, Image* img, Sa
 	return arrayIdx;
 }
 
-Material* TextureManager::requestMaterial(const MaterialType type, const std::string name)
+Material* TextureManager::requestMaterial(const RendererTypes type, const std::string name)
 {
 	if (!materials_[name]) {
 		Material* mat = new Material();
-		size_t lastSize = materialData_.size();
-		materialData_.resize(lastSize + Materials::materialTextureCountLUT[(size_t)type]);
-		Materials::loadMaterial(this, type, name, &materialData_[lastSize]);
-		mat->data = &materialData_[lastSize];
+		Materials::loadMaterial(this, type, name, &materialData_[materialCount_]);
+		mat->data = &materialData_[materialCount_];
 		mat->size = Materials::materialSizeLUT[(size_t)type];
+
+		materialCount_ += mat->size;
 		materials_[name] = mat;
 	}
 	return materials_[name];
