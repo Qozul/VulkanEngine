@@ -46,7 +46,7 @@ void SunScript::start()
 	intensity_ = glm::vec3(6.5e-7, 5.1e-7, 4.75e-7) * glm::vec3(1e7);
 }
 
-void SunScript::update(float dt, const glm::mat4& parentMatrix)
+void SunScript::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
 	angle_ += DISTANCE_PER_SECOND * dt;
 	if (angle_ > TWO_PI) {

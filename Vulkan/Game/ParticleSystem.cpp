@@ -6,7 +6,7 @@
 using namespace QZL;
 using namespace QZL::Game;
 
-void ParticleSystem::update(float dt, const glm::mat4& parentMatrix)
+void ParticleSystem::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
 	elapsedUpdateTime_ += dt;
 	if (elapsedUpdateTime_ >= updateInterval_) {

@@ -70,7 +70,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(atmosphereRenderer_);
 }
 
-void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer)
+void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
 {
 	std::array<VkClearValue, 2> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -105,11 +105,11 @@ void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommand
 
 	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, sizeof(glm::vec4), sizeof(TessellationPushConstants), &pcs);
 
-	atmosphereRenderer_->recordFrame(camera, idx, cmdBuffer);
+	atmosphereRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kAtmosphere]);
 
 	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
-	terrainRenderer_->recordFrame(camera, idx, cmdBuffer);
-	texturedRenderer_->recordFrame(camera, idx, cmdBuffer);
+	terrainRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
+	texturedRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }

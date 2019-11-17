@@ -24,7 +24,7 @@ void SwapChain::loop(LogicalCamera& camera)
 	const uint32_t imgIdx = aquireImage();
 
 	auto viewProj = master_->kProjectionMatrix * camera.viewMatrix;
-	master_->getMasters().gameMaster->update(viewProj, System::deltaTimeSeconds, imgIdx);
+	auto commandLists = master_->getMasters().gameMaster->update(viewProj, System::deltaTimeSeconds, imgIdx);
 
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
@@ -38,8 +38,8 @@ void SwapChain::loop(LogicalCamera& camera)
 
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
-	renderPasses_[0]->doFrame(camera, imgIdx, commandBuffers_[imgIdx]);
-	renderPasses_[1]->doFrame(camera, imgIdx, commandBuffers_[imgIdx]);
+	renderPasses_[0]->doFrame(camera, imgIdx, commandBuffers_[imgIdx], commandLists);
+	renderPasses_[1]->doFrame(camera, imgIdx, commandBuffers_[imgIdx], commandLists);
 
 	CHECK_VKRESULT(vkEndCommandBuffer(commandBuffers_[imgIdx]));
 

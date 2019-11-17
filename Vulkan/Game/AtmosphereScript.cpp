@@ -12,13 +12,14 @@
 #include "../Graphics/Descriptor.h"
 #include "../System.h"
 #include "SunScript.h"
+#include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace QZL::Game;
 using namespace QZL::Graphics;
 
 AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, SunScript* sun)
-	: GameScript(initialiser)
+	: GameScript(initialiser), sun_(sun)
 {
 	logicDevice_ = initialiser.system->getMasters().graphicsMaster->getLogicDevice();
 
@@ -156,6 +157,17 @@ void AtmosphereScript::start()
 	CHECK_VKRESULT(vkQueueWaitIdle(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue)));
 
 	SAFE_DELETE(buffer);
+}
+
+void AtmosphereScript::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
+{
+	// TODO, pass all camera info rather than just viewProjection?
+	// auto vm = glm::lookAt({ 0.0f, camera.position.y, 0.0f }, camera.lookPoint + glm::vec3(0.0f, camera.position.y, 0.0f), { 0.0f, 1.0f, 0.0f });
+	AtmosphereShaderParams* params = static_cast<AtmosphereShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams());
+	params->sunDirection = *sun_->getSunDirection();
+	params->sunIntensity = *sun_->getSunIntensity();
+	params->inverseViewProj = glm::inverse(viewProjection);
+	params->scatteringIdx = scatteringSumIdx_;
 }
 
 void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedTextures& finalTextures)

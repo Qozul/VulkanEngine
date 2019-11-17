@@ -14,11 +14,14 @@ namespace QZL {
 		};
 
 		enum class RendererFlags : size_t {
-			FULLSCREEN = 1, 
+			FULLSCREEN = 1,
 			INCLUDE_MODEL = 2, 
 			DESCRIPTOR_MVP = 4,
 			DESCRIPTOR_PARAMS = 8, 
-			DESCRIPTOR_MATERIAL = 16
+			DESCRIPTOR_MATERIAL = 16,
+			INSTANCED = 32,
+			NON_INDEXED = 64,
+			DYNAMIC = 128
 		};
 		
 		inline constexpr RendererFlags operator|(RendererFlags a, RendererFlags b)
@@ -40,9 +43,9 @@ namespace QZL {
 		constexpr RendererFlags kRendererTypeFlags[(size_t)RendererTypes::kNone] = { 
 			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL,
 			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL,
-			RendererFlags::DESCRIPTOR_PARAMS,
-			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL,
-			RendererFlags::DESCRIPTOR_MATERIAL
+			RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::FULLSCREEN,
+			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::NON_INDEXED | RendererFlags::DYNAMIC,
+			RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::FULLSCREEN
 		};
 	}
 }

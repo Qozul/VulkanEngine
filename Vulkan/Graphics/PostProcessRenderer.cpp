@@ -16,8 +16,8 @@
 using namespace QZL;
 using namespace Graphics;
 
-PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, nullptr)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture, uint32_t geometryDepthTexture)
+	: RendererBase(createInfo, nullptr), geometryColourTexture_(geometryColourTexture), geometryDepthTexture_(geometryDepthTexture)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -60,7 +60,7 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
 	beginFrame(cmdBuffer);
 
@@ -70,8 +70,8 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 		graphicsInfo_->materialRange * idx
 	};
 	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[0]->bindRange() + sizeof(Materials::PostProcess) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess] + dynamicOffsets[2]);
-	dataPtr[0] = 7;
-	dataPtr[1] = 8;
+	dataPtr[0] = geometryColourTexture_;
+	dataPtr[1] = geometryDepthTexture_;
 	storageBuffers_[0]->unbindRange();
 
 	vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);

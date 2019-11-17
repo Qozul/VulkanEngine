@@ -10,7 +10,7 @@ namespace QZL
 		public:
 			ParticleRenderer(RendererCreateInfo& createInfo);
 			~ParticleRenderer() = default;
-			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
+			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) override;
 		};
 	}
 }

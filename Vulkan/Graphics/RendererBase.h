@@ -88,7 +88,7 @@ namespace QZL
 				  graphicsInfo_(createInfo.graphicsInfo) { ASSERT(createInfo.maxDrawnEntities > 0); }
 
 			virtual ~RendererBase();
-			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
+			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) = 0;
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 
 			virtual void registerComponent(GraphicsComponent* component, RenderObject* robject);

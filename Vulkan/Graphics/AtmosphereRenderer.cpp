@@ -19,13 +19,10 @@ using namespace Graphics;
 
 AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), 
-		sizeof(VertexOnlyPosition), sizeof(uint16_t)), RenderStorage::InstanceUsage::kOne))
+		sizeof(VertexOnlyPosition), sizeof(uint16_t))))
 {
-	descriptorSets_.push_back(createInfo.graphicsInfo->set);
-	descriptorSets_.push_back(createInfo.globalRenderData->getSet());
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
-	storageBuffers_.push_back(createInfo.graphicsInfo->paramsBuffer);
 
 	VkPushConstantRange pushConstants[2] = {
 		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT),
@@ -55,39 +52,14 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
-	if (renderStorage_->instanceCount() == 0)
+	if (renderStorage_->meshCount() == 0)
 		return;
 
 	beginFrame(cmdBuffer);
 	bindEBO(cmdBuffer, idx);
-
-	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * idx,
-		graphicsInfo_->paramsRange * idx,
-		graphicsInfo_->materialRange * idx
-	};
-
-	auto vm = glm::lookAt({ 0.0f, camera.position.y, 0.0f }, camera.lookPoint + glm::vec3(0.0f, camera.position.y, 0.0f), { 0.0f, 1.0f, 0.0f });
-	AtmosphereShaderParams* paramsPtr = (AtmosphereShaderParams*)(static_cast<char*>(storageBuffers_[0]->bindRange()) +
-		sizeof(AtmosphereShaderParams) * graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kAtmosphere] + dynamicOffsets[1]);
-	AtmosphereShaderParams* params = static_cast<AtmosphereShaderParams*>(renderStorage_->instanceData()[0]->getShaderParams());
-	paramsPtr->betaMie = params->betaMie;
-	paramsPtr->betaRay = params->betaRay;
-	paramsPtr->g = params->g;
-	paramsPtr->Hatm = params->Hatm;
-	paramsPtr->planetRadius = params->planetRadius;
-	paramsPtr->sunDirection = glm::vec3(0.0f, 1.0f, 0.0f);
-	paramsPtr->sunIntensity = glm::vec3(6.5e-7, 5.1e-7, 4.75e-7) * glm::vec3(1e7);
-	paramsPtr->inverseViewProj = glm::inverse(GraphicsMaster::kProjectionMatrix * vm);
-	paramsPtr->scatteringIdx = 9;
-	storageBuffers_[0]->unbindRange();
-
-	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		RenderObject* robject = renderStorage_->renderObjectData()[i];
-		
-		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+	for (auto& cmd : *commandList) {
+		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}
 }

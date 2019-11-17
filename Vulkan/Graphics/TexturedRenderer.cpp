@@ -19,8 +19,7 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)), 
-		RenderStorage::InstanceUsage::kUnlimited))
+	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t))))
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -55,15 +54,14 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci);
 }
 
-void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
+void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
-	if (renderStorage_->instanceCount() == 0)
+	if (renderStorage_->meshCount() == 0)
 		return;
 	beginFrame(cmdBuffer);
 	renderStorage_->buffer()->bind(cmdBuffer, idx);
 
-	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		vkCmdDrawIndexed(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.firstIndex, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+	for (auto& cmd : *commandList) {
+		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}
 }

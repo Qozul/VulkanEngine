@@ -5,6 +5,7 @@
 #include "RenderObject.h"
 #include "Material.h"
 #include "../Assets/Entity.h"
+#include "Mesh.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -18,7 +19,7 @@ GraphicsComponent::GraphicsComponent(Entity* owner, RendererTypes type, ShaderPa
 
 GraphicsComponent::GraphicsComponent(Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams)
 	: rtype_(type), owningEntity_(owner), meshParameters_(robject->getParams()), instanceParameters_(perInstanceParams),
-	meshName_(robject->getMeshName()), loadFunc_(nullptr), material_(robject->getMaterial())
+	meshName_(robject->getMeshName()), loadFunc_(nullptr), material_(robject->getMaterial()), mesh_(robject->getMesh())
 {
 }
 

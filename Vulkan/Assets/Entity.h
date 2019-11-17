@@ -25,7 +25,7 @@ namespace QZL {
 		friend class Game::GameScript;
 		friend class Graphics::GraphicsComponent;
 	public:
-		virtual void update(float dt, const glm::mat4& parentMatrix);
+		virtual void update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix);
 		void start();
 
 		void setGraphicsComponent(Graphics::GraphicsComponent* component);

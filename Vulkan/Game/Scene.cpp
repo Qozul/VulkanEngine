@@ -6,6 +6,7 @@
 #include "ParticleSystem.h"
 #include "../Graphics/StorageBuffer.h"
 #include "../Graphics/Descriptor.h"
+#include "../Graphics/Mesh.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -26,8 +27,11 @@ Scene::~Scene()
 	SAFE_DELETE(graphicsInfo_.materialBuffer);
 }
 
-void Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
+std::vector<VkDrawIndexedIndirectCommand>* Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
 {
+	for (auto& cmdList : graphicsCommandLists_) {
+		cmdList.clear();
+	}
 	std::memset(graphicsWriteInfo_.offsets, 0, (size_t)Graphics::RendererTypes::kNone * sizeof(VkDeviceSize));
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->bindRange();
 	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->bindRange();
@@ -38,6 +42,7 @@ void Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->unbindRange();
 	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->unbindRange();
 	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->unbindRange();
+	return graphicsCommandLists_;
 }
 
 void Scene::start()
@@ -275,12 +280,13 @@ void Scene::writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4&
 void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx)
 {
 	// Update might cause the entity to move, therefore calculate the concatenated model matrix after updating
-	node->entity->update(dt, ctm);
+	node->entity->update(dt, viewProjection, ctm);
 	// The final model matrix of the entity accounts for the transforms of itself and all parents
 	glm::mat4 m = ctm * node->entity->getTransform()->toModelMatrix();
 	node->entity->setModelMatrix(m);
 	if (node->entity->getGraphicsComponent() != nullptr) {
 		writeGraphicsData(node->entity->getGraphicsComponent(), viewProjection, m, frameIdx);
+		addToCommandList(node->entity->getGraphicsComponent()); // TODO view frustum cull
 	}
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
 		updateRecursively(node->childNodes[i], viewProjection, m, dt, frameIdx);
@@ -311,6 +317,24 @@ void Scene::findDescriptorRequirementsRecursively(std::unordered_map<Graphics::R
 	}
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
 		findDescriptorRequirementsRecursively(instancesCount, node->childNodes[i]);
+	}
+}
+
+void Scene::addToCommandList(Graphics::GraphicsComponent* component)
+{
+	auto rtype = component->getRendererType();
+	BasicMesh* mesh;
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DYNAMIC) {
+		mesh = component->getMesh();
+	}
+	else {
+		mesh = masters_->graphicsMaster->getDynamicBuffer(rtype)->getMesh(component->getMeshName());
+	}
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::NON_INDEXED) {
+		graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, 0, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
+	}
+	else {
+		graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
 	}
 }
 

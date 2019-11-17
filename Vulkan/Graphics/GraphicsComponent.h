@@ -9,6 +9,7 @@ namespace QZL {
 	namespace Graphics {
 		struct ShaderParams;
 		struct Material;
+		struct BasicMesh;
 		class RenderObject;
 		class GraphicsComponent {
 			friend class Entity;
@@ -40,11 +41,15 @@ namespace QZL {
 			MeshLoadFunc& getLoadInfo() {
 				return loadFunc_;
 			}
+			BasicMesh* getMesh() {
+				return mesh_;
+			}
 			glm::mat4 getModelmatrix();
 		private:
 			Entity* owningEntity_;
 			RendererTypes rtype_;
 			const std::string meshName_;
+			BasicMesh* mesh_;
 			MeshLoadFunc loadFunc_;
 			ShaderParams* instanceParameters_;
 			ShaderParams* meshParameters_;

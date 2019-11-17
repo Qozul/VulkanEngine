@@ -18,7 +18,7 @@ namespace QZL {
 		protected:
 			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			~PostProcessPass();
-			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) override;
+			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) override;
 			void createRenderers() override;
 			// Dependency on the general pass to produce depth and colour of the scene.
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;

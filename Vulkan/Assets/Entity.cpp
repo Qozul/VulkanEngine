@@ -5,10 +5,10 @@
 
 using namespace QZL;
 
-void Entity::update(float dt, const glm::mat4& parentMatrix)
+void Entity::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
 	if (gameScript_ != nullptr) {
-		gameScript_->update(dt, parentMatrix);
+		gameScript_->update(dt, viewProjection, parentMatrix);
 	}
 }
 

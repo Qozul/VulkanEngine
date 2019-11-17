@@ -61,7 +61,7 @@ PostProcessPass::~PostProcessPass()
 	SAFE_DELETE(particleRenderer_);
 }
 
-void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer)
+void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
 {
 	VkOffset3D imageOffset = {};
 	imageOffset.x = 0;
@@ -110,9 +110,9 @@ void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkComm
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	postProcessRenderer_->recordFrame(camera, idx, cmdBuffer);
+	postProcessRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kPostProcess]);
 
-	particleRenderer_->recordFrame(camera, idx, cmdBuffer);
+	particleRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kParticle]);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -139,7 +139,7 @@ void PostProcessPass::createRenderers()
 	createInfo.graphicsInfo = graphicsInfo_;
 
 	createInfo.updateRendererSpecific(0, 1, "PPVert", "PPFrag");
-	postProcessRenderer_ = new PostProcessRenderer(createInfo);
+	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthBuffer_);
 
 	createInfo.updateRendererSpecific(0, 2, "ParticlesVert", "ParticlesFrag", "ParticlesGeom");
 	particleRenderer_ = new ParticleRenderer(createInfo);

@@ -86,9 +86,9 @@ void GameMaster::loadGame()
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
 }
 
-void GameMaster::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
+std::vector<VkDrawIndexedIndirectCommand>* GameMaster::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
 {
-	scenes_[activeSceneIdx_]->update(viewProjection, dt, frameIdx);
+	return scenes_[activeSceneIdx_]->update(viewProjection, dt, frameIdx);
 }
 
 void GameMaster::start()

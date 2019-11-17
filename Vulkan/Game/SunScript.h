@@ -18,7 +18,7 @@ namespace QZL {
 
 		protected:
 			void start() override;
-			void update(float dt, const glm::mat4& parentMatrix) override;
+			void update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix) override;
 			// Ignore the particle system default behaviour
 			void particleCreation(float dt, size_t expiredCount) override {};
 			void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex, float dt) override {}
