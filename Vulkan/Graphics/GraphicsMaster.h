@@ -6,6 +6,7 @@
 
 namespace QZL
 {
+	class Scene;
 	struct SystemMasters;
 	namespace Game {
 		class GameMaster;
@@ -46,25 +47,8 @@ namespace QZL
 
 			void setRenderer(RendererTypes type, RendererBase* renderer);
 			ElementBufferObject* getDynamicBuffer(RendererTypes type);
-			LogicalCamera* getLogicalCamera(RendererTypes type);
 
-			glm::mat4* getViewMatrixPtr() {
-				return &(mainCamera_.viewMatrix);
-			}
-			glm::vec3* getCamPosPtr() {
-				return &(mainCamera_.position);
-			}
-			const glm::mat4& getViewMatrix() {
-				return mainCamera_.viewMatrix;
-			}
-			const glm::vec3& getCamPos() {
-				return mainCamera_.position;
-			}
-
-			LogicalCamera* getMainCameraPtr() {
-				return &mainCamera_;
-			}
-
+			LogicalCamera* getCamera(size_t idx);
 			const LogicDevice* getLogicDevice() {
 				return details_.logicDevice;
 			}
@@ -72,7 +56,6 @@ namespace QZL
 				return masters_;
 			}
 			const bool supportsOptionalExtension(OptionalExtensions ext);
-			static glm::mat4 kProjectionMatrix;
 		private:
 			GraphicsMaster(SystemMasters& masters);
 			~GraphicsMaster();
@@ -82,7 +65,7 @@ namespace QZL
 				const char* const*& enabledLayerNames);
 			void initDevices(DeviceSurfaceCapabilities& surfaceCapabilitie, uint32_t& enabledLayerCount, const char* const*& enabledLayerNames);
 
-			void initialiseRenderPath(SceneGraphicsInfo* graphicsInfo);
+			void initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsInfo);
 			void preframeSetup();
 
 			void loop();
@@ -91,7 +74,6 @@ namespace QZL
 			Validation* validation_;
 			SwapChain* swapChain_;
 			std::unordered_map<RendererTypes, RendererBase*> renderers_;
-			LogicalCamera mainCamera_;
 			InputProfile inputProfile_;
 			const SystemMasters& masters_;
 

@@ -3,6 +3,8 @@
 #pragma once
 #include "RenderPass.h"
 
+#define SHADOW_DIMENSIONS 2048
+
 namespace QZL {
 	namespace Graphics {
 		class RendererBase;

@@ -119,7 +119,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = pipelineCreateInfo.frontFace;
-	rasterizer.depthBiasEnable = VK_FALSE;
+	rasterizer.depthBiasEnable = pipelineCreateInfo.depthBiasEnable;
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -130,7 +130,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	depthStencil.depthTestEnable = pipelineCreateInfo.enableDepthTest;
 	depthStencil.depthWriteEnable = pipelineCreateInfo.enableDepthWrite;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthCompareOp = pipelineCreateInfo.depthCompareOp;
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.stencilTestEnable = VK_FALSE;
 
@@ -148,7 +148,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = 1;
+	colorBlending.attachmentCount = pipelineCreateInfo.colourAttachmentCount;
 	colorBlending.pAttachments = &colorBlendAttachment;
 	colorBlending.blendConstants[0] = 0.0f;
 	colorBlending.blendConstants[1] = 0.0f;
@@ -172,6 +172,14 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = pipelineCreateInfo.subpassIndex;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+	VkDynamicState dynamicState;
+	VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo;
+	if (pipelineCreateInfo.depthBiasEnable) {
+		dynamicState = VK_DYNAMIC_STATE_DEPTH_BIAS;
+		dynamicStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, nullptr, 0, 1, &dynamicState };
+		pipelineInfo.pDynamicState = &dynamicStateCreateInfo;
+	}
 
 	if (inputAssembly.topology == VK_PRIMITIVE_TOPOLOGY_PATCH_LIST && tessellationInfo != nullptr) {
 		pipelineInfo.pTessellationState = tessellationInfo;

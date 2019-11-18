@@ -13,6 +13,7 @@
 #include "AtmosphereScript.h"
 #include "Scene.h"
 #include "FireSystem.h"
+#include "TerrainScript.h"
 #include "../Graphics/GraphicsTypes.h"
 #include "../Graphics/SceneDescriptorInfo.h"
 
@@ -60,6 +61,7 @@ void GameMaster::loadGame()
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 	
 	Entity* terrain = new Terrain("terrain", masters_.textureManager);
+	terrain->setGameScript(new TerrainScript(masters_));
 
 	Entity* sun = new Entity("sun");
 	scriptInit.owner = sun;
@@ -83,11 +85,6 @@ void GameMaster::loadGame()
 	scenes_[activeSceneIdx_]->addEntity(teapot);
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
-}
-
-std::vector<VkDrawIndexedIndirectCommand>* GameMaster::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera)
-{
-	return scenes_[activeSceneIdx_]->update(viewProjection, dt, frameIdx, mainCamera);
 }
 
 void GameMaster::start()

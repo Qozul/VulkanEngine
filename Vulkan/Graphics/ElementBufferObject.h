@@ -27,6 +27,7 @@ namespace QZL {
 			friend class MeshLoader;
 		public:
 			ElementBufferObject(DeviceMemory* deviceMemory, size_t sizeOfVertices, size_t sizeOfIndices = 0);
+			ElementBufferObject(DeviceMemory* deviceMemory);
 			virtual ~ElementBufferObject();
 
 			virtual void bind(VkCommandBuffer cmdBuffer, const size_t idx);

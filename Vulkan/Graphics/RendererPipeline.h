@@ -25,7 +25,10 @@ namespace QZL
 			VkFrontFace frontFace;
 			VkBool32 enableDepthTest;
 			VkBool32 enableDepthWrite;
+			VkCompareOp depthCompareOp = VK_COMPARE_OP_LESS;
 			uint32_t subpassIndex;
+			uint32_t colourAttachmentCount = 1;
+			VkBool32 depthBiasEnable = VK_FALSE;
 		};
 
 		class RendererPipeline {

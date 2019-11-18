@@ -10,6 +10,8 @@ namespace QZL {
 	namespace Graphics {
 		struct LogicalCamera {
 			glm::mat4 viewMatrix;
+			glm::mat4 projectionMatrix;
+			glm::mat4 viewProjection;
 			glm::vec3 position;
 			glm::vec3 lookPoint;
 			void calculateFrustumPlanes(const glm::mat4& mvp, std::array<glm::vec4, 6>& planes) {

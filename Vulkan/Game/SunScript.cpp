@@ -1,12 +1,13 @@
 #include "SunScript.h"
 #include "../Assets/Entity.h"
 #include "../Graphics/GraphicsMaster.h"
+#include "../Graphics/LogicalCamera.h"
 
 using namespace QZL;
 using namespace QZL::Game;
 
 SunScript::SunScript(const SystemMasters& initialiser)
-	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(-10.0f))
+	: ParticleSystem(initialiser, &initialiser.graphicsMaster->getCamera(0)->position, 2, 0.0f, (1.0f / 1.0f), "SunMoon"), angle_(glm::radians(-10.0f))
 {
 }
 

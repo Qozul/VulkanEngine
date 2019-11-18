@@ -31,7 +31,7 @@ System::System()
 	masters_.gameMaster = new Game::GameMaster(masters_);
 	masters_.gameMaster->loadGame();
 	Graphics::SceneGraphicsInfo* graphicsInfo = masters_.gameMaster->loadDescriptors();
-	masters_.graphicsMaster->initialiseRenderPath(graphicsInfo);
+	masters_.graphicsMaster->initialiseRenderPath(masters_.gameMaster->getActiveScene(), graphicsInfo);
 	masters_.gameMaster->start();
 }
 

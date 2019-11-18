@@ -6,6 +6,7 @@
 namespace QZL {
 	namespace Graphics {
 		class RendererBase;
+		class ElementBufferObject;
 		class GeometryPass : public RenderPass {
 			friend class SwapChain;
 			enum class SubPass : uint32_t {
@@ -19,7 +20,7 @@ namespace QZL {
 			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) override;
 			void createRenderers() override;
 			// No dependency
-			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override { }
+			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 			VkFormat createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
@@ -30,6 +31,8 @@ namespace QZL {
 
 			Image* colourBuffer_;
 			Image* depthBuffer_;
+			Image* shadowDepthBuf_;
+			uint32_t shadowDepthTexture_;
 		};
 	}
 }

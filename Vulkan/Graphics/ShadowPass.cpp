@@ -8,6 +8,7 @@
 #include "LogicDevice.h"
 #include "SceneDescriptorInfo.h"
 #include "GlobalRenderData.h"
+#include "ElementBufferObject.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -29,13 +30,13 @@ ShadowPass::ShadowPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
 		0,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
+		VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
 	);
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		0,
 		VK_SUBPASS_EXTERNAL,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT));
 
 	std::vector<VkImageView> attachmentImages = { depthBuffer_->getImageView() };
@@ -60,11 +61,25 @@ void ShadowPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBu
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	uint32_t mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic] + graphicsInfo_->mvpRange * 3;
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpRange * (idx + 3),
+		graphicsInfo_->paramsRange * (idx + 3),
+		graphicsInfo_->materialRange * (idx + 3)
+	};
+
+	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shadowRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
+	
+	vkCmdSetDepthBias(cmdBuffer, 1.25f, 0.0f, 1.75f);
+
+	uint32_t mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic];
 	vkCmdPushConstants(cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
+	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kStatic]->bind(cmdBuffer, idx);
 	shadowRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
-	mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain] + graphicsInfo_->mvpRange * 3;
+
+	mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
 	vkCmdPushConstants(cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
+	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(cmdBuffer, idx);
 	shadowRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
 
 	vkCmdEndRenderPass(cmdBuffer);
@@ -100,7 +115,7 @@ VkFormat ShadowPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChain
 	ASSERT(imageFormat != VkFormat::VK_FORMAT_UNDEFINED);
 
 	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, imageFormat, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, SHADOW_DIMENSIONS, SHADOW_DIMENSIONS, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
 	depthBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	return imageFormat;

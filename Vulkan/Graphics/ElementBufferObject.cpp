@@ -22,6 +22,12 @@ ElementBufferObject::ElementBufferObject(DeviceMemory* deviceMemory, size_t size
 	indexBufferDetails_.buffer = VK_NULL_HANDLE;
 }
 
+ElementBufferObject::ElementBufferObject(DeviceMemory* deviceMemory)
+	: deviceMemory_(deviceMemory), sizeOfVertices_(0), sizeOfIndices_(0), isDynamic_(false), isCommitted_(true), indexCount_(0), vertexCount_(0), indexType_(VK_INDEX_TYPE_NONE_NV)
+{
+	vertexBufferDetails_ = deviceMemory_->createBuffer("EBO VertexBuffer", MemoryAllocationPattern::kStaticResource, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 1);
+}
+
 ElementBufferObject::~ElementBufferObject()
 {
 	if (isCommitted_) {

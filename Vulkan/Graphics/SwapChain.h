@@ -4,26 +4,27 @@
 #include "VkUtil.h"
 #include "GraphicsTypes.h"
 #include "SwapChainDetails.h"
+#include "LogicalCamera.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
 namespace QZL
 {
+	class Scene;
 	namespace Graphics {
 		class LogicDevice;
 		class RenderPass;
 		class GlobalRenderData;
 		class GraphicsMaster;
 		class RendererBase;
-		struct LogicalCamera;
 		struct DeviceSurfaceCapabilities;
 		struct SceneGraphicsInfo;
 
 		class SwapChain {
 			friend class GraphicsMaster;
 		public:
-			void loop(LogicalCamera& camera);
-
+			LogicalCamera* getCamera(size_t idx);
+			void loop();
 			static size_t numSwapChainImages;
 		private:
 			SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities);
@@ -51,7 +52,7 @@ namespace QZL
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void createSyncObjects();
 
-			void initialiseRenderPath(SceneGraphicsInfo* graphicsInfo);
+			void initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsInfo);
 
 			GlobalRenderData* globalRenderData_;
 
@@ -62,6 +63,8 @@ namespace QZL
 			SwapChainDetails details_;
 			LogicDevice* logicDevice_;
 			GraphicsMaster* master_;
+			Scene* activeScene_;
+			LogicalCamera cameras_[NUM_CAMERAS]; // Main, Shadow (Main light)
 
 			std::vector<VkSemaphore> imageAvailableSemaphores_;
 			std::vector<VkSemaphore> renderFinishedSemaphores_;

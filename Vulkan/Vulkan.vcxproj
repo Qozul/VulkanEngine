@@ -37,6 +37,7 @@
     <ClInclude Include="Game\ParticleSystem.h" />
     <ClInclude Include="Game\Scene.h" />
     <ClInclude Include="Game\SunScript.h" />
+    <ClInclude Include="Game\TerrainScript.h" />
     <ClInclude Include="Graphics\AtmosphereRenderer.h" />
     <ClInclude Include="Graphics\ComputePipeline.h" />
     <ClInclude Include="Graphics\Descriptor.h" />
@@ -100,6 +101,7 @@
     <ClCompile Include="Game\ParticleSystem.cpp" />
     <ClCompile Include="Game\Scene.cpp" />
     <ClCompile Include="Game\SunScript.cpp" />
+    <ClCompile Include="Game\TerrainScript.cpp" />
     <ClCompile Include="Graphics\AtmosphereRenderer.cpp" />
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />

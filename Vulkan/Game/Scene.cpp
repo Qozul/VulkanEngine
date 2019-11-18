@@ -29,7 +29,7 @@ Scene::~Scene()
 	SAFE_DELETE(graphicsInfo_.materialBuffer);
 }
 
-std::vector<VkDrawIndexedIndirectCommand>* Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, LogicalCamera& mainCamera)
+std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras, const size_t cameraCount, float dt, const uint32_t& frameIdx)
 {
 	for (auto& cmdList : graphicsCommandLists_) {
 		cmdList.clear();
@@ -38,17 +38,26 @@ std::vector<VkDrawIndexedIndirectCommand>* Scene::update(glm::mat4& viewProjecti
 		distances.clear(); // TODO use these for sorting the commands and data
 	}
 	std::memset(graphicsWriteInfo_.offsets, 0, (size_t)Graphics::RendererTypes::kNone * sizeof(VkDeviceSize));
-	std::memset(graphicsWriteInfo_.graphicsMVPData.data(), 0, graphicsInfo_.mvpRange);
+	for (size_t i = 0; i < NUM_CAMERAS; ++i) {
+		std::memset(graphicsWriteInfo_.graphicsMVPData[i].data(), 0, graphicsInfo_.mvpRange);
+	}
 	std::memset(graphicsWriteInfo_.graphicsParamsData.data(), 0, graphicsInfo_.paramsRange);
 	std::memset(graphicsWriteInfo_.graphicsMaterialData.data(), 0, graphicsInfo_.materialRange);
 
+	for (size_t i = 0; i < cameraCount; ++i) {
+		cameras[i].viewProjection = cameras[i].projectionMatrix * cameras[i].viewMatrix;
+	}
+
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
-		updateRecursively(rootNode_->childNodes[i], viewProjection, glm::mat4(), dt, frameIdx, mainCamera);
+		updateRecursively(rootNode_->childNodes[i], cameras, cameraCount, glm::mat4(), dt, frameIdx);
 	}
 
 	// Write frame's data to the gpu buffers
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->bindRange();
-	std::memcpy(graphicsWriteInfo_.mvpPtr + frameIdx * graphicsInfo_.mvpRange, graphicsWriteInfo_.graphicsMVPData.data(), graphicsInfo_.mvpRange);
+	for (size_t i = 0; i < NUM_CAMERAS; ++i) {
+		std::memcpy(graphicsWriteInfo_.mvpPtr + frameIdx * graphicsInfo_.mvpRange + graphicsInfo_.numFrameIndices * graphicsInfo_.mvpRange * i, 
+			graphicsWriteInfo_.graphicsMVPData[i].data(), graphicsInfo_.mvpRange);
+	}
 	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->bindRange();
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->unbindRange();
 	std::memcpy(graphicsWriteInfo_.paramsPtr + frameIdx * graphicsInfo_.paramsRange, graphicsWriteInfo_.graphicsParamsData.data(), graphicsInfo_.paramsRange);
@@ -129,36 +138,37 @@ void Scene::findDescriptorRequirements(std::unordered_map<Graphics::RendererType
 	}
 }
 
-struct Data {
+struct DescriptorData {
 	int id;
 	VkDeviceSize size;
 	size_t count;
 };
 
-struct IN {
+struct DynamicDescriptorInput {
 	VkDeviceSize sizeMultiplier; // i.e. frameImageCount
 	VkDeviceSize deviceOffsetAlignment;
 	uint32_t binding;
 	std::string name;
 	VkShaderStageFlags stages;
-	std::vector<Data> data;
+	std::vector<DescriptorData> data;
 };
 
-struct OUT_YEAH {
+struct DynamicDescriptorInfo {
 	DescriptorBuffer* buffer;
 	VkDeviceSize dynamicOffset;
 	std::vector<std::pair<size_t, VkDeviceSize>> dataOffsets;
 };
 
-bool compareFunc(Data& a, Data& b)
+bool compareFunc(DescriptorData& a, DescriptorData& b)
 {
 	return a.size > b.size;
 }
 
-OUT_YEAH coolDescriptor(IN info, const LogicDevice* logicDevice) {
+DynamicDescriptorInfo makeDynamicDescriptor(DynamicDescriptorInput info, const LogicDevice* logicDevice) 
+{
 	ASSERT_DEBUG(info.data.size() > 0);
 	std::sort(info.data.begin(), info.data.end(), compareFunc);
-	OUT_YEAH result;
+	DynamicDescriptorInfo result;
 	result.dataOffsets.resize(info.data.size());
 	VkDeviceSize totalSize = info.data[0].size * info.data[0].count;
 	result.dataOffsets[0] = std::make_pair(info.data[0].id, 0);
@@ -179,6 +189,17 @@ OUT_YEAH coolDescriptor(IN info, const LogicDevice* logicDevice) {
 	return result;
 }
 
+void addDynamicDescriptor(DescriptorBuffer*& buffer, VkDeviceSize& range, VkDeviceSize offsets[(size_t)RendererTypes::kNone], std::vector<DescriptorData> data,
+	size_t numFrameImages, VkDeviceSize alignment, uint32_t bindingIdx, std::string name, VkShaderStageFlags flags, const LogicDevice* logicDevice) 
+{
+	auto result = makeDynamicDescriptor({ numFrameImages, alignment, bindingIdx, name, flags, data }, logicDevice);
+	buffer = result.buffer;
+	range = result.dynamicOffset;
+	for (size_t i = 0; i < result.dataOffsets.size(); ++i) {
+		offsets[result.dataOffsets[i].first] = result.dataOffsets[i].second;
+	}
+}
+
 Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, const VkPhysicalDeviceLimits& limits)
 {
 	const LogicDevice* logicDevice = masters_->getLogicDevice();
@@ -186,46 +207,31 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 	std::unordered_map<RendererTypes, uint32_t> instancesMap;
 	findDescriptorRequirements(instancesMap);
 
-	auto mvpResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 0, "MVPBuffer", VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-		{ 
+	graphicsInfo_.numFrameIndices = numFrameImages;
+
+	addDynamicDescriptor(graphicsInfo_.mvpBuffer, graphicsInfo_.mvpRange, graphicsInfo_.mvpOffsetSizes, {
 			{ (size_t)RendererTypes::kStatic, sizeof(glm::mat4), instancesMap[RendererTypes::kStatic] }, 
 			{ (size_t)RendererTypes::kTerrain, sizeof(glm::mat4), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(glm::mat4), instancesMap[RendererTypes::kParticle] } 
-		} }, logicDevice);
-	graphicsInfo_.mvpBuffer = mvpResult.buffer;
-	graphicsInfo_.mvpRange = mvpResult.dynamicOffset;
+		}, numFrameImages * NUM_CAMERAS, limits.minStorageBufferOffsetAlignment, 0, "MVPBuffer",
+		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, logicDevice);
 
-	auto paramsResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 1, "ParamsBuffer", 
-		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		{ 
-			{ (size_t)RendererTypes::kStatic, sizeof(StaticShaderParams), instancesMap[RendererTypes::kStatic] }, 
+	addDynamicDescriptor(graphicsInfo_.paramsBuffer, graphicsInfo_.paramsRange, graphicsInfo_.paramsOffsetSizes, { 
+			{ (size_t)RendererTypes::kStatic, sizeof(StaticShaderParams), instancesMap[RendererTypes::kStatic] },
 			{ (size_t)RendererTypes::kTerrain, sizeof(StaticShaderParams), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(ParticleShaderParams), instancesMap[RendererTypes::kParticle] },
 			{ (size_t)RendererTypes::kAtmosphere, sizeof(AtmosphereShaderParams), instancesMap[RendererTypes::kAtmosphere] }
-		} }, logicDevice);
-	graphicsInfo_.paramsBuffer = paramsResult.buffer;
-	graphicsInfo_.paramsRange = paramsResult.dynamicOffset;
-	
-	auto materialResult = coolDescriptor({ numFrameImages, limits.minStorageBufferOffsetAlignment, 2, "MaterialsBuffer", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		{ 
-			{ (size_t)RendererTypes::kStatic, sizeof(Materials::Static), instancesMap[RendererTypes::kStatic] }, 
+		}, numFrameImages, limits.minStorageBufferOffsetAlignment, 1, "ParamsBuffer",
+		VK_SHADER_STAGE_ALL_GRAPHICS, logicDevice);
+
+	addDynamicDescriptor(graphicsInfo_.materialBuffer, graphicsInfo_.materialRange, graphicsInfo_.materialOffsetSizes, {
+			{ (size_t)RendererTypes::kStatic, sizeof(Materials::Static), instancesMap[RendererTypes::kStatic] },
 			{ (size_t)RendererTypes::kTerrain, sizeof(Materials::Terrain), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(Materials::Particle), instancesMap[RendererTypes::kParticle] },
 			{ (size_t)RendererTypes::kPostProcess, sizeof(Materials::PostProcess), 1 }
-		} }, logicDevice);
-	graphicsInfo_.materialBuffer = materialResult.buffer;
-	graphicsInfo_.materialRange = materialResult.dynamicOffset;
+		}, numFrameImages, limits.minStorageBufferOffsetAlignment, 2, "MaterialBuffer",
+		VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, logicDevice);
 
-	for (size_t i = 0; i < mvpResult.dataOffsets.size(); ++i) {
-		graphicsInfo_.mvpOffsetSizes[mvpResult.dataOffsets[i].first] = mvpResult.dataOffsets[i].second;
-	}
-	for (size_t i = 0; i < paramsResult.dataOffsets.size(); ++i) {
-		graphicsInfo_.paramsOffsetSizes[paramsResult.dataOffsets[i].first] = paramsResult.dataOffsets[i].second;
-	}
-	for (size_t i = 0; i < materialResult.dataOffsets.size(); ++i) {
-		graphicsInfo_.materialOffsetSizes[materialResult.dataOffsets[i].first] = materialResult.dataOffsets[i].second;
-	}
-	
 	graphicsInfo_.layout = descriptor->makeLayout({ graphicsInfo_.mvpBuffer->getBinding(), graphicsInfo_.paramsBuffer->getBinding(), graphicsInfo_.materialBuffer->getBinding() });
 	graphicsInfo_.set = descriptor->getSet(descriptor->createSets({ graphicsInfo_.layout }));
 
@@ -235,7 +241,9 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 	descWrites.push_back(graphicsInfo_.materialBuffer->descriptorWrite(graphicsInfo_.set, 0, graphicsInfo_.materialRange));
 	descriptor->updateDescriptorSets(descWrites);
 
-	graphicsWriteInfo_.graphicsMVPData.resize(graphicsInfo_.mvpRange);
+	for (size_t i = 0; i < NUM_CAMERAS; ++i) {
+		graphicsWriteInfo_.graphicsMVPData[i].resize(graphicsInfo_.mvpRange);
+	}
 	graphicsWriteInfo_.graphicsParamsData.resize(graphicsInfo_.paramsRange);
 	graphicsWriteInfo_.graphicsMaterialData.resize(graphicsInfo_.materialRange);
 
@@ -273,19 +281,19 @@ void Scene::deleteHeirarchyRecursively(SceneHeirarchyNode* node)
 	SAFE_DELETE(node);
 }
 
-void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx, LogicalCamera& mainCamera)
+void Scene::updateRecursively(SceneHeirarchyNode* node, LogicalCamera* cameras, const size_t cameraCount, glm::mat4 ctm, float dt, const uint32_t& frameIdx)
 {
 	// Update might cause the entity to move, therefore calculate the concatenated model matrix after updating
-	node->entity->update(dt, viewProjection, ctm);
+	node->entity->update(dt, cameras[0].viewProjection, ctm);
 	// The final model matrix of the entity accounts for the transforms of itself and all parents
 	glm::mat4 m = ctm * node->entity->getTransform()->toModelMatrix();
 	node->entity->setModelMatrix(m);
 	if (node->entity->getGraphicsComponent() != nullptr) {
-		writeGraphicsData(node->entity->getGraphicsComponent(), viewProjection, m, frameIdx);
-		addToCommandList(node->entity->getGraphicsComponent(), mainCamera); // TODO view frustum cull
+		writeGraphicsData(node->entity->getGraphicsComponent(), cameras, cameraCount, m, frameIdx);
+		addToCommandList(node->entity->getGraphicsComponent(), cameras[0]); // TODO view frustum cull
 	}
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
-		updateRecursively(node->childNodes[i], viewProjection, m, dt, frameIdx, mainCamera);
+		updateRecursively(node->childNodes[i], cameras, cameraCount, m, dt, frameIdx);
 	}
 }
 
@@ -335,13 +343,15 @@ void Scene::addToCommandList(Graphics::GraphicsComponent* component, LogicalCame
 	}
 }
 
-void Scene::writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4& viewProjection, glm::mat4& ctm, const uint32_t& frameIdx)
+void Scene::writeGraphicsData(Graphics::GraphicsComponent* component, LogicalCamera* cameras, size_t cameraCount, glm::mat4& ctm, const uint32_t& frameIdx)
 {
 	auto rtype = component->getRendererType();
 	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_MVP) {
-		auto offset = (graphicsInfo_.mvpOffsetSizes[(size_t)rtype] + graphicsWriteInfo_.offsets[(size_t)rtype]) * sizeof(glm::mat4);
-		auto mvp = viewProjection * ctm;
-		std::memcpy(&graphicsWriteInfo_.graphicsMVPData.data()[offset], (char*)&mvp, sizeof(glm::mat4));
+		for (size_t i = 0; i < cameraCount; ++i) {
+			auto offset = (graphicsInfo_.mvpOffsetSizes[(size_t)rtype] + graphicsWriteInfo_.offsets[(size_t)rtype]) * sizeof(glm::mat4);
+			auto mvp = cameras[i].viewProjection * ctm;
+			std::memcpy(&graphicsWriteInfo_.graphicsMVPData[i].data()[offset], (char*)&mvp, sizeof(glm::mat4));
+		}
 	}
 	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_PARAMS) {
 		ShaderParams* tmpParams = component->getShaderParams();

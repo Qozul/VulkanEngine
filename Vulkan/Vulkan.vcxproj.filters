@@ -300,6 +300,9 @@
     <ClInclude Include="Graphics\ShadowRenderer.h">
       <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
+    <ClInclude Include="Game\TerrainScript.h">
+      <Filter>Header Files\Game\Scripts</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp">
@@ -437,11 +440,14 @@
     <ClCompile Include="Graphics\ShaderParams.cpp">
       <Filter>Source Files\Graphics\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\ShadowPass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\ShadowRenderer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ShadowPass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\TerrainScript.cpp">
+      <Filter>Source Files\Game\Scripts</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -16,7 +16,6 @@ namespace QZL {
 			Scene* getActiveScene() {
 				return scenes_[activeSceneIdx_];
 			}
-			std::vector<VkDrawIndexedIndirectCommand>* update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera);
 			void start();
 		private:
 			GameMaster(const SystemMasters& masters);

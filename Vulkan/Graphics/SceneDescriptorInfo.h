@@ -10,18 +10,23 @@ namespace QZL {
 		class DescriptorBuffer;
 		class ElementBufferObject;
 		struct SceneGraphicsInfo {
-			ElementBufferObject* shadowCastingEBOs[(size_t)RendererTypes::kNone];
+			size_t numFrameIndices;
 			VkDescriptorSet set;
 			VkDescriptorSetLayout layout;
-			DescriptorBuffer* paramsBuffer;
-			DescriptorBuffer* mvpBuffer;
-			DescriptorBuffer* materialBuffer;
-			VkDeviceSize paramsRange;
-			VkDeviceSize mvpRange;
-			VkDeviceSize materialRange;
-			VkDeviceSize paramsOffsetSizes[(size_t)RendererTypes::kNone];
+
 			VkDeviceSize mvpOffsetSizes[(size_t)RendererTypes::kNone];
+			DescriptorBuffer* mvpBuffer;
+			VkDeviceSize mvpRange;
+
+			DescriptorBuffer* paramsBuffer;
+			VkDeviceSize paramsRange;
+			VkDeviceSize paramsOffsetSizes[(size_t)RendererTypes::kNone];
+
+			DescriptorBuffer* materialBuffer;
+			VkDeviceSize materialRange;
 			VkDeviceSize materialOffsetSizes[(size_t)RendererTypes::kNone];
+
+			ElementBufferObject* shadowCastingEBOs[(size_t)RendererTypes::kNone];
 		};
 	}
 }

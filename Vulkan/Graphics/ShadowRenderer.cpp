@@ -23,24 +23,30 @@ struct PushConstants {
 ShadowRenderer::ShadowRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, nullptr)
 {
+	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
+
 	VkPushConstantRange pushConstants[1] = {
 		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT)
 	};
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	//stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 
 	PipelineCreateInfo pci = {};
-	pci.debugName = "Particle";
-	pci.enableDepthTest = VK_TRUE;
+	pci.debugName = "Shadow";
+	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
+	pci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+	pci.depthBiasEnable = VK_TRUE;
+	pci.colourAttachmentCount = 0;
 
-	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
+	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci);
 }
 

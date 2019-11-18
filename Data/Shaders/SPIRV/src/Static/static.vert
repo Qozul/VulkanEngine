@@ -10,6 +10,12 @@ struct ElementData {
     mat4 mvp;
 };
 
+const mat4 biasMat = mat4( 
+	0.5, 0.0, 0.0, 0.0,
+	0.0, 0.5, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.5, 0.5, 0.0, 1.0 );
+
 layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
 layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
 

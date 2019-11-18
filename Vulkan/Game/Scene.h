@@ -19,7 +19,7 @@ namespace QZL {
 		char* paramsPtr;
 		char* materialPtr;
 		VkDeviceSize offsets[(size_t)Graphics::RendererTypes::kNone];
-		std::vector<char> graphicsMVPData;
+		std::vector<char> graphicsMVPData[NUM_CAMERAS];
 		std::vector<char> graphicsParamsData;
 		std::vector<char> graphicsMaterialData;
 		std::vector<float> distances[(size_t)Graphics::RendererTypes::kNone];
@@ -32,7 +32,7 @@ namespace QZL {
 		~Scene();
 		// Calls update on every entity in the scene hierarchy, giving a combined model matrix such that
 		// parents are the spatial root of their children.
-		std::vector<VkDrawIndexedIndirectCommand>* update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera);
+		std::vector<VkDrawIndexedIndirectCommand>* update(Graphics::LogicalCamera* cameras, const size_t cameraCount, float dt, const uint32_t& frameIdx);
 
 		void start();
 		/*  
@@ -63,12 +63,12 @@ namespace QZL {
 		// Deletes the given node and all of its children
 		void deleteHeirarchyRecursively(SceneHeirarchyNode* node);
 
-		void updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera);
+		void updateRecursively(SceneHeirarchyNode* node, Graphics::LogicalCamera* cameras, const size_t cameraCount, glm::mat4 ctm, float dt, const uint32_t& frameIdx);
 		void startRecursively(SceneHeirarchyNode* node);
 
 		void findDescriptorRequirementsRecursively(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount, SceneHeirarchyNode* node);
 		void addToCommandList(Graphics::GraphicsComponent* component, Graphics::LogicalCamera& mainCamera);
-		void writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4& viewProjection, glm::mat4& ctm, const uint32_t& frameIdx);
+		void writeGraphicsData(Graphics::GraphicsComponent* component, Graphics::LogicalCamera* cameras, size_t cameraCount, glm::mat4& ctm, const uint32_t& frameIdx);
 
 		SceneHeirarchyNode* rootNode_;
 		Graphics::SceneGraphicsInfo graphicsInfo_;

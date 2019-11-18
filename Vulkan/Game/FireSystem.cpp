@@ -1,10 +1,11 @@
 #include "FireSystem.h"
+#include "../Graphics/LogicalCamera.h"
 
 using namespace QZL;
 using namespace Game;
 
 FireSystem::FireSystem(const SystemMasters& initialiser)
-	: ParticleSystem(initialiser, initialiser.graphicsMaster->getCamPosPtr(), 10, 0.0f, (1.0f / 3.0f), "Fire")
+	: ParticleSystem(initialiser, &initialiser.graphicsMaster->getCamera(0)->position, 10, 0.0f, (1.0f / 3.0f), "Fire")
 {
 }
 

@@ -78,6 +78,12 @@ namespace QZL
 			glm::vec4 cameraPosition;
 		};
 
+		struct VertexPushConstants {
+			glm::mat4 shadowMatrix;
+			glm::vec3 mainLightPosition;
+			uint32_t shadowTextureIdx;
+		};
+
 		constexpr uint32_t kMaxPushConstantSize = 128;
 
 		class RendererBase {

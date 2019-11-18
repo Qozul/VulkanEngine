@@ -10,6 +10,8 @@
 #include "LogicDevice.h"
 #include "SceneDescriptorInfo.h"
 #include "GlobalRenderData.h"
+#include "TextureManager.h"
+#include "ElementBufferObject.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -58,7 +60,6 @@ GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 
 	std::vector<VkImageView> attachmentImages = { colourBuffer_->getImageView(), depthBuffer_->getImageView() };
 	createRenderPass(createInfo, attachmentImages, false);
-	createRenderers();
 }
 
 GeometryPass::~GeometryPass()
@@ -91,7 +92,11 @@ void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommand
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
 	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, texturedRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
-	// TODO combine push constants
+	/*VertexPushConstants vpc;
+	vpc.mainLightPosition = ; // TODO get mainLight position
+	vpc.shadowMatrix = ; // TODO get cameras_[1].viewProjection
+	vpc.shadowTextureIdx = shadowDepthTexture_;*/
+
 	CameraPushConstants pc;
 	pc.cameraPosition = glm::vec4(camera.position, 1.0f);
 	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &pc);
@@ -101,10 +106,9 @@ void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommand
 	pcs.closeDistance = 50.0f;
 	pcs.patchRadius = 40.0f;
 	pcs.maxTessellationWeight = 4.0f;
-	camera.calculateFrustumPlanes(GraphicsMaster::kProjectionMatrix * camera.viewMatrix, pcs.frustumPlanes);
+	camera.calculateFrustumPlanes(camera.viewProjection, pcs.frustumPlanes); // TODO calculate in terrain update and use as shader params
 
 	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, sizeof(glm::vec4), sizeof(TessellationPushConstants), &pcs);
-
 	atmosphereRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kAtmosphere]);
 
 	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
@@ -137,6 +141,14 @@ void GeometryPass::createRenderers()
 	graphicsMaster_->setRenderer(RendererTypes::kStatic, texturedRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kTerrain, terrainRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kAtmosphere, atmosphereRenderer_);
+}
+
+void GeometryPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
+{
+	ASSERT(dependencyAttachment.size() == 1);
+	shadowDepthBuf_ = dependencyAttachment[0];
+	shadowDepthTexture_ = graphicsMaster_->getMasters().textureManager->allocateTexture("shadowDepth", shadowDepthBuf_);
+	createRenderers();
 }
 
 void GeometryPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
