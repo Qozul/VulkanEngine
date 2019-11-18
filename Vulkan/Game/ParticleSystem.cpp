@@ -1,17 +1,15 @@
 #include "ParticleSystem.h"
 #include "../Graphics/RenderObject.h"
 #include "../System.h"
-#include "../Assets/AssetManager.h"
 #include "../Graphics/TextureManager.h"
 
 using namespace QZL;
 using namespace QZL::Game;
 
-void ParticleSystem::update(float dt, const glm::mat4& parentMatrix)
+void ParticleSystem::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
 	elapsedUpdateTime_ += dt;
 	if (elapsedUpdateTime_ >= updateInterval_) {
-
 		if (!alwaysAliveAndUnordered_) {
 			// Update or free every particle that is currently active
 			size_t i = 0;
@@ -63,33 +61,35 @@ void ParticleSystem::update(float dt, const glm::mat4& parentMatrix)
 	}
 }
 
-Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
+Graphics::BasicMesh* ParticleSystem::makeMesh()
 {
 	Graphics::BasicMesh* mesh = new Graphics::BasicMesh();
 	mesh->count = static_cast<uint32_t>(subBufferRange_.count);
 	mesh->vertexOffset = static_cast<uint32_t>(subBufferRange_.first / sizeof(Graphics::ParticleVertex));
 	mesh->indexOffset = 0;
-	return new Graphics::RenderObject(name, mesh, makeShaderParams(), material_);
+	return mesh;
 }
 
-ParticleSystem::ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
-	size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName)
+ParticleSystem::ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint,
+	size_t maxParticles, float updateInterval, float textureTileLength, const std::string materialName)
 	: GameScript(initialiser), updateInterval_(updateInterval), billboardPoint_(billboardPoint), elapsedUpdateTime_(0.0f), alwaysAliveAndUnordered_(false),
-	numDeadParticles_(maxParticles), buffer_(buf), currentActiveSize_(0)
+	numDeadParticles_(maxParticles), currentActiveSize_(0), tint_(0.0f), materialName_(materialName), textureTileLength_(textureTileLength)
 {
 	ASSERT(billboardPoint_ != nullptr);
-	ASSERT(buf != nullptr);
 	particles_.resize(maxParticles);
 	vertices_.resize(maxParticles);
-	subBufferRange_ = buf->allocateSubBufferRange(maxParticles);
 
-	material_ = initialiser.system->getMasters().assetManager->textureManager->requestMaterial<Graphics::ParticleMaterial>(materialName);
-	tint_ = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	textureTileLength_ = textureTileLength;
+	material_ = sysMasters_->textureManager->requestMaterial(Graphics::RendererTypes::kParticle, materialName_);
 }
 
 ParticleSystem::~ParticleSystem()
 {
+}
+
+void ParticleSystem::fetchDynamicBuffer()
+{
+	buffer_ = sysMasters_->graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle);
+	subBufferRange_ = buffer_->allocateSubBufferRange(particles_.size());
 }
 
 void ParticleSystem::nextTextureTile(glm::vec2& tileOffset)

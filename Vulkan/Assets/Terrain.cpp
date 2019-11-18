@@ -6,14 +6,13 @@
 #include "Transform.h"
 
 using namespace QZL;
-using namespace Assets;
 using namespace Graphics;
 
 Terrain::Terrain(const std::string name, TextureManager* textureManager)
 	: Entity(name)
 {
-	setGraphicsComponent(Graphics::RendererTypes::kTerrain, new TerrainShaderParams(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f), nullptr,
-		textureManager->requestMaterial<TerrainMaterial>("ExampleTerrain"), "terrain", loadFunction);
+	setGraphicsComponent(Graphics::RendererTypes::kTerrain, nullptr, new TerrainShaderParams(glm::vec3(1.0f), glm::vec3(0.8f), 1.0f, 10.0f),
+		textureManager->requestMaterial(Graphics::RendererTypes::kTerrain, "ExampleTerrain"), "terrain", loadFunction);
 	transform_->position.y = 100.0f;
 }
 

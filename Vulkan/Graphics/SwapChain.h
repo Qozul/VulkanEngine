@@ -14,8 +14,10 @@ namespace QZL
 		class RenderPass;
 		class GlobalRenderData;
 		class GraphicsMaster;
+		class RendererBase;
 		struct LogicalCamera;
 		struct DeviceSurfaceCapabilities;
+		struct SceneGraphicsInfo;
 
 		class SwapChain {
 			friend class GraphicsMaster;
@@ -49,10 +51,13 @@ namespace QZL
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void createSyncObjects();
 
+			void initialiseRenderPath(SceneGraphicsInfo* graphicsInfo);
+
 			GlobalRenderData* globalRenderData_;
 
 			std::vector<VkCommandBuffer> commandBuffers_;
 			std::vector<RenderPass*> renderPasses_;
+			RendererBase* computePrePass_;
 
 			SwapChainDetails details_;
 			LogicDevice* logicDevice_;

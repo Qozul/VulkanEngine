@@ -10,9 +10,8 @@ namespace QZL
 		class AtmosphereRenderer : public RendererBase {
 		public:
 			AtmosphereRenderer(RendererCreateInfo& createInfo);
-			~AtmosphereRenderer();
-			void createDescriptors(const uint32_t entityCount) override;
-			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
+			~AtmosphereRenderer() = default;
+			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) override;
 		};
 	}
 }

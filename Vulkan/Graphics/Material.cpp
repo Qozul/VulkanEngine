@@ -4,158 +4,89 @@
 #include "Material.h"
 #include "TextureManager.h"
 #include "TextureSampler.h"
+#include "Image.h"
 #include "Descriptor.h"
+#include "LogicDevice.h"
 #include <fstream>
 #include <sstream>
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-void Material::load(TextureManager* textureManager, Descriptor* descriptor)
+const size_t Materials::materialTextureCountLUT[(size_t)RendererTypes::kNone] = { 2, 3, 1, 1 };
+const size_t Materials::materialSizeLUT[(size_t)RendererTypes::kNone] = { sizeof(Static), sizeof(Terrain), sizeof(Atmosphere), sizeof(Particle), sizeof(PostProcess) };
+
+void Materials::loadMaterial(TextureManager* texManager, RendererTypes type, std::string fileName, void* data)
 {
 	std::vector<std::string> lines;
-	readFile(lines);
-	layout_ = makeLayout(descriptor);
-	makeTextureSet(descriptor, loadTextures(textureManager, lines));
-}
 
-void Material::readFile(std::vector<std::string>& lines)
-{
-	// Validation is deferred
-	std::ifstream file("../Data/Materials/" + materialFileName_ + ".qmat");
-	ASSERT(file.is_open());
-	size_t count;
-	file >> count;
-	lines.reserve(count + 1);
-	std::string line;
-	while (line != "END") {
-		file >> line;
-		lines.emplace_back(line);
-	}
-	file.close();
-}
-
-void Material::makeTextureSet(Descriptor* descriptor, std::vector<TextureSampler*> samplers)
-{
-	if (samplers.size() > 0) {
-		textureSet_ = descriptor->getSet(descriptor->createSets({ layout_ }));
-		std::vector<VkWriteDescriptorSet> setWrites(samplers.size());
-		for (size_t i = 0; i < samplers.size(); ++i) {
-			setWrites[i] = samplers[i]->descriptorWrite(textureSet_, static_cast<uint32_t>(i));
+	if (fileName != "") {
+		std::ifstream file("../Data/Materials/" + fileName + ".qmat");
+		ASSERT(file.is_open());
+		size_t count;
+		file >> count;
+		lines.reserve(count + 1);
+		std::string line;
+		while (line != "END") {
+			file >> line;
+			lines.emplace_back(line);
 		}
-		descriptor->updateDescriptorSets(setWrites);
+		file.close();
+		(*getLoadingFunction(type))(texManager, data, lines);
 	}
 }
 
-constexpr VkDescriptorSetLayoutBinding QZL::Graphics::Material::makeLayoutBinding(uint32_t idx, VkShaderStageFlags stageFlags, VkSampler* sampler)
+RendererTypes Materials::stringToType(std::string typeName)
 {
-	VkDescriptorSetLayoutBinding layoutBinding = {};
-	layoutBinding.binding = idx;
-	layoutBinding.descriptorCount = 1;
-	layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	layoutBinding.pImmutableSamplers = sampler;
-	layoutBinding.stageFlags = stageFlags;
-	return layoutBinding;
+	if (typeName == "STATIC")
+		return RendererTypes::kStatic;
+	else if (typeName == "TERRAIN")
+		return RendererTypes::kTerrain;
+	else if (typeName == "PARTICLE")
+		return RendererTypes::kParticle;
+	else if (typeName == "ATMOSPHERE")
+		return RendererTypes::kAtmosphere;
+	else if (typeName == "POST_PROCESS")
+		return RendererTypes::kPostProcess;
 }
 
-ParticleMaterial::~ParticleMaterial() 
+Materials::MaterialLoadingFunction Materials::getLoadingFunction(RendererTypes type)
 {
-	SAFE_DELETE(diffuse_);
-}
-
-VkDescriptorSetLayout ParticleMaterial::getLayout(Descriptor* descriptor)
-{
-	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
-}
-
-std::vector<TextureSampler*> ParticleMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
-{
-	ASSERT(lines.size() >= 1);
-	diffuse_ = textureManager->requestTextureSeparate(lines[0]);
-	return { diffuse_ };
-}
-
-VkDescriptorSetLayout ParticleMaterial::makeLayout(Descriptor* descriptor)
-{
-	return getLayout(descriptor);
-}
-
-StaticMaterial::~StaticMaterial()
-{
-	if (!isUsingDI) {
-		SAFE_DELETE(diffuse_.diffuseSampler);
-		SAFE_DELETE(normalMap_.normalMapSampler);
+	switch (type) {
+	case RendererTypes::kStatic:
+		return Materials::loadStaticMaterial;
+	case RendererTypes::kTerrain:
+		return Materials::loadTerrainMaterial;
+	case RendererTypes::kParticle:
+		return Materials::loadParticleMaterial;
+	default:
+		ASSERT(false);
 	}
 }
 
-VkDescriptorSetLayout StaticMaterial::getLayout(Descriptor* descriptor)
-{
-	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr), makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
-}
-
-std::vector<TextureSampler*> StaticMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
-{
-	isUsingDI = textureManager->descriptorIndexingEnabled();
-	ASSERT(lines.size() >= 2);
-	if (isUsingDI) {
-		diffuse_.diffuseTextureIndex = textureManager->requestTexture(lines[0]);
-		normalMap_.normalMapIndex = textureManager->requestTexture(lines[1]);
-		return {};
-	}
-	else {
-		diffuse_.diffuseSampler = textureManager->requestTextureSeparate(lines[0]);
-		normalMap_.normalMapSampler = textureManager->requestTextureSeparate(lines[1]);
-		return { diffuse_.diffuseSampler, normalMap_.normalMapSampler };
-	}
-}
-
-VkDescriptorSetLayout StaticMaterial::makeLayout(Descriptor* descriptor)
-{
-	return getLayout(descriptor);
-}
-
-
-TerrainMaterial::~TerrainMaterial()
-{
-	SAFE_DELETE(heightmap_);
-	SAFE_DELETE(diffuse_);
-}
-
-VkDescriptorSetLayout TerrainMaterial::getLayout(Descriptor* descriptor)
-{
-	return descriptor->makeLayout({
-		makeLayoutBinding(0, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr),
-		makeLayoutBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr)
-	});
-}
-
-std::vector<TextureSampler*> TerrainMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
+void Materials::loadStaticMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines)
 {
 	ASSERT(lines.size() >= 2);
-	heightmap_ = textureManager->requestTextureSeparate(lines[0]);
-	diffuse_ = textureManager->requestTextureSeparate(lines[1]);
-	return { heightmap_, diffuse_ };
+	Static material = {};
+	material.albedoIdx = texManager->requestTexture(lines[0]);
+	material.normalmapIdx = texManager->requestTexture(lines[1]);
+	memcpy(data, &material, sizeof(Static));
 }
 
-VkDescriptorSetLayout TerrainMaterial::makeLayout(Descriptor* descriptor)
+void Materials::loadTerrainMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines)
 {
-	return getLayout(descriptor);
+	ASSERT(lines.size() >= 3);
+	Terrain material = {};
+	material.heightmapIdx = texManager->requestTexture(lines[0]);
+	material.normalmapIdx = texManager->requestTexture(lines[2]);
+	material.albedoIdx = texManager->requestTexture(lines[1]);
+	memcpy(data, &material, sizeof(Terrain));
 }
 
-
-VkDescriptorSetLayout AtmosphereMaterial::getLayout(Descriptor* descriptor)
-{
-	return descriptor->makeLayout({ makeLayoutBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr) });
-}
-
-std::vector<TextureSampler*> AtmosphereMaterial::loadTextures(TextureManager* textureManager, std::vector<std::string>& lines)
+void Materials::loadParticleMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines)
 {
 	ASSERT(lines.size() >= 1);
-	scatteringTexture_ = textureManager->requestTextureSeparate(lines[0]);
-	return { scatteringTexture_ };
-}
-
-VkDescriptorSetLayout QZL::Graphics::AtmosphereMaterial::makeLayout(Descriptor* descriptor)
-{
-	return getLayout(descriptor);
+	Particle material = {};
+	material.albedoIdx = texManager->requestTexture(lines[0]);
+	memcpy(data, &material, sizeof(Particle));
 }

@@ -1,6 +1,5 @@
  #include "GameMaster.h"
 #include "../System.h"
-#include "../Assets/AssetManager.h"
 #include "../Graphics/GraphicsMaster.h"
 #include "../Graphics/GraphicsComponent.h"
 #include "../Graphics/ShaderParams.h"
@@ -14,6 +13,14 @@
 #include "AtmosphereScript.h"
 #include "Scene.h"
 #include "FireSystem.h"
+#include "../Graphics/GraphicsTypes.h"
+#include "../Graphics/SceneDescriptorInfo.h"
+
+#include "../Graphics/StorageBuffer.h"
+#include "../Graphics/Descriptor.h"
+#include "../Graphics/PhysicalDevice.h"
+#include "../Graphics/LogicDevice.h"
+#include "../Graphics/RenderObject.h"
 
 using namespace QZL;
 using namespace Game;
@@ -21,7 +28,7 @@ using namespace Game;
 GameMaster::GameMaster(const SystemMasters& masters) 
 	: masters_(masters), activeSceneIdx_(0)
 {
-	scenes_.push_back(new Scene()); // Default scene
+	scenes_.push_back(new Scene(&masters)); // Default scene
 }
 
 GameMaster::~GameMaster()
@@ -31,43 +38,42 @@ GameMaster::~GameMaster()
 	}
 }
 
+Graphics::SceneGraphicsInfo* GameMaster::loadDescriptors()
+{
+	return scenes_[activeSceneIdx_]->createDescriptors(3, masters_.graphicsMaster->details_.physicalDevice->getDeviceLimits());
+}
+
 void GameMaster::loadGame()
 {
-	std::vector<Assets::Entity*> entities;
 	GameScriptInitialiser scriptInit;
 	scriptInit.inputManager = masters_.inputManager;
 	scriptInit.system = masters_.system;
 
-	Assets::Entity* camera = masters_.assetManager->createEntity("mainCamera");
-	entities.push_back(camera);
+	Entity* camera = new Entity("mainCamera");
 	scriptInit.owner = camera;
-	camera->setGameScript(new Camera(scriptInit));
+	camera->setGameScript(new Camera(masters_));
 
-	Assets::Entity* teapot = masters_.assetManager->createEntity("Teapot");
-	teapot->getTransform()->scale = glm::vec3(2.0f);
+	Entity* teapot = new Entity("Teapot");
+	teapot->getTransform()->scale = glm::vec3(1.0f);
+	teapot->getTransform()->position = glm::vec3(100.0f, 50.0f, 100.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
-		masters_.getTextureManager()->requestMaterial<Graphics::StaticMaterial>("ExampleStatic"), "Teapot");
+		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 	
-	Assets::Entity* terrain = masters_.assetManager->createEntity<Assets::Terrain>("terrain", masters_.getTextureManager());
-	entities.push_back(terrain);
+	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 
-	Assets::Entity* sun = masters_.assetManager->createEntity("sun");
-	entities.push_back(sun);
+	Entity* sun = new Entity("sun");
 	scriptInit.owner = sun;
-	auto sunScript = new SunScript(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle));
+	auto sunScript = new SunScript(masters_);
 	sun->setGameScript(sunScript);
-	auto sunRobject = sunScript->makeRenderObject("SunSystem");
-	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunRobject);
+	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunScript->makeShaderParams(), "sun", sunScript->getMaterial());
 
-	Assets::Entity* skysphere = masters_.assetManager->createEntity<Assets::Skysphere>("sky", masters_.getLogicDevice(), sunScript, scriptInit);
+	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
-	Assets::Entity* fire = masters_.assetManager->createEntity("firetest");
-	entities.push_back(fire);
+	Entity* fire = new Entity("firetest");
 	scriptInit.owner = fire;
-	auto fireScript = new FireSystem(scriptInit, masters_.graphicsMaster->getCamPosPtr(), masters_.graphicsMaster->getDynamicBuffer(Graphics::RendererTypes::kParticle));
+	auto fireScript = new FireSystem(masters_);
 	fire->setGameScript(fireScript);
-	auto fireRobject = fireScript->makeRenderObject("FireSystem");
-	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireRobject);
+	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireScript->makeShaderParams(), "fire", fireScript->getMaterial());
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
@@ -75,18 +81,16 @@ void GameMaster::loadGame()
 	scenes_[activeSceneIdx_]->addEntity(fire);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
 	scenes_[activeSceneIdx_]->addEntity(teapot);
-	scenes_[activeSceneIdx_]->start();
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
-
-	masters_.graphicsMaster->registerComponent(terrain->getGraphicsComponent());
-	masters_.graphicsMaster->registerComponent(sun->getGraphicsComponent(), sunRobject);
-	masters_.graphicsMaster->registerComponent(skysphere->getGraphicsComponent());
-	masters_.graphicsMaster->registerComponent(fire->getGraphicsComponent(), fireRobject);
-	masters_.graphicsMaster->registerComponent(teapot->getGraphicsComponent());
 }
 
-void GameMaster::update(float dt)
+std::vector<VkDrawIndexedIndirectCommand>* GameMaster::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera)
 {
-	scenes_[activeSceneIdx_]->update(dt);
+	return scenes_[activeSceneIdx_]->update(viewProjection, dt, frameIdx, mainCamera);
+}
+
+void GameMaster::start()
+{
+	scenes_[activeSceneIdx_]->start();
 }

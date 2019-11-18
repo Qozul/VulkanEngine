@@ -8,16 +8,18 @@ namespace QZL
 	namespace Graphics {
 		class DeviceMemory;
 		class TextureSampler;
+		struct Material;
+		class GraphicsComponent;
+		struct AtmosphereShaderParams;
 
 		class PostProcessRenderer : public RendererBase {
 		public:
-			PostProcessRenderer(RendererCreateInfo& createInfo, TextureSampler* geometryColourBuffer, TextureSampler* geometryDepthBuffer);
-			~PostProcessRenderer();
-			void createDescriptors(const uint32_t entityCount) override;
-			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) override;
+			PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture, uint32_t geometryDepthTexture);
+			~PostProcessRenderer() = default;
+			void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) override;
 		private:
-			TextureSampler* geometryColourBuffer_;
-			TextureSampler* geometryDepthBuffer_;
+			uint32_t geometryColourTexture_;
+			uint32_t geometryDepthTexture_;
 		};
 	}
 }

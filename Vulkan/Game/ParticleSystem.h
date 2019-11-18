@@ -9,6 +9,7 @@ namespace QZL {
 	namespace Graphics {
 		class DynamicBufferInterface;
 		class RenderObject;
+		struct BasicMesh;
 	}
 	namespace Game {
 		// Particles are a special kind of entity made only of points, and expanded to billboarded textured quads in a shader.
@@ -41,16 +42,21 @@ namespace QZL {
 			// initialise the particle state.
 			virtual void start() = 0;
 			// Update can be overriden by a derived class when needed, however this provides the basic particle system logic
-			virtual void update(float dt, const glm::mat4& parentMatrix) override;
+			virtual void update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix) override;
 			Graphics::ParticleShaderParams* makeShaderParams() {
 				return new Graphics::ParticleShaderParams(textureTileLength_, tint_);
 			}
-			Graphics::RenderObject* makeRenderObject(std::string name);
+			Graphics::BasicMesh* makeMesh();
+			Graphics::Material* getMaterial() {
+				return material_;
+			}
 		protected:
 			// Number of tiles on xy is identical for x and y, as textures must be square.
-			ParticleSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf,
-				size_t maxParticles, float updateInterval, float textureTileLength, const std::string& materialName);
+			ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint,
+				size_t maxParticles, float updateInterval, float textureTileLength, const std::string materialName);
 			virtual ~ParticleSystem();
+			void fetchDynamicBuffer();
+
 			virtual void particleCreation(float dt, size_t expiredCount) = 0;
 			virtual void updateParticle(Particle& particle, Graphics::ParticleVertex& vertex, float dt) = 0;
 
@@ -83,6 +89,7 @@ namespace QZL {
 			Graphics::SubBufferRange subBufferRange_;
 			Graphics::ElementBufferObject* buffer_;
 
+			std::string materialName_;
 			size_t numDeadParticles_;
 			std::vector<Particle> particles_;
 			std::vector<Graphics::ParticleVertex> vertices_;

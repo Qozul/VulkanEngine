@@ -1,6 +1,7 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
 #include "GraphicsMaster.h"
+#include "GraphicsComponent.h"
 #include "Validation.h"
 #include "PhysicalDevice.h"
 #include "LogicDevice.h"
@@ -8,17 +9,11 @@
 #include "RendererBase.h"
 #include "TextureManager.h"
 #include "../SystemMasters.h"
-#include "../Assets/AssetManager.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
 glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, NEAR_PLANE_Z, FAR_PLANE_Z);
-
-void GraphicsMaster::registerComponent(GraphicsComponent* component, RenderObject* robject)
-{
-	renderers_[component->getRendererType()]->registerComponent(component, robject);
-}
 
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 {
@@ -40,7 +35,7 @@ const bool GraphicsMaster::supportsOptionalExtension(OptionalExtensions ext)
 	return details_.physicalDevice->optionalExtensionsEnabled_[ext];
 }
 
-GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
+GraphicsMaster::GraphicsMaster(SystemMasters& masters)
 	: masters_(masters)
 {
 	kProjectionMatrix[1][1] *= -1;
@@ -63,6 +58,9 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 
 	mainCamera_.viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 	mainCamera_.position = glm::vec3(0.0f, 10.0f, 0.0f);
+	mainCamera_.lookPoint = glm::vec3(0.0f, 0.0f, 10.0f);
+
+
 
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
@@ -73,8 +71,8 @@ GraphicsMaster::GraphicsMaster(const SystemMasters& masters)
 	DeviceSurfaceCapabilities surfaceCapabilities;
 	initDevices(surfaceCapabilities, enabledLayerCount, enabledLayerNames);
 
-	masters.assetManager->textureManager = new Graphics::TextureManager(details_.logicDevice, details_.logicDevice->getPrimaryDescriptor(),
-		MAX_DESCRIPTOR_INDEXED_TEXTURES, supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
+	masters_.textureManager = new Graphics::TextureManager(getLogicDevice(), getLogicDevice()->getPrimaryDescriptor(),
+		10, supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing));
 
 	swapChain_ = new SwapChain(this, details_.window, details_.surface, details_.logicDevice, surfaceCapabilities);
 	swapChain_->setCommandBuffers(std::vector<VkCommandBuffer>(details_.logicDevice->commandBuffers_.begin() + 1, details_.logicDevice->commandBuffers_.end()));
@@ -154,6 +152,11 @@ void GraphicsMaster::initDevices(DeviceSurfaceCapabilities& surfaceCapabilities,
 		}
 	}
 	throw std::runtime_error("Cannot create logic device");
+}
+
+void GraphicsMaster::initialiseRenderPath(SceneGraphicsInfo* graphicsInfo)
+{
+	swapChain_->initialiseRenderPath(graphicsInfo);
 }
 
 void GraphicsMaster::preframeSetup()

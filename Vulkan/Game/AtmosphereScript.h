@@ -55,7 +55,7 @@ namespace QZL {
 			}
 		protected:
 			void start() override;
-			void update(float dt, const glm::mat4& parentMatrix) override { }
+			void update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix) override;
 		private:
 			// Creates temporary textures, returned via reference argument. Also creates the member textures.
 			void initTextures(const Graphics::LogicDevice* logicDevice, PrecomputedTextures& finalTextures);
@@ -67,6 +67,8 @@ namespace QZL {
 			Graphics::AtmosphereShaderParams shaderParams_;
 			PrecomputedTextures textures_;
 			Graphics::Material* material_;
+			uint32_t scatteringSumIdx_;
+			SunScript* sun_;
 
 			const Graphics::LogicDevice* logicDevice_;
 		};

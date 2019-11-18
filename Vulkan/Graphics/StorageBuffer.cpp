@@ -27,22 +27,21 @@ const VkDescriptorSetLayoutBinding& DescriptorBuffer::getBinding()
 	return binding_;
 }
 
-VkWriteDescriptorSet DescriptorBuffer::descriptorWrite(VkDescriptorSet set)
+VkWriteDescriptorSet DescriptorBuffer::descriptorWrite(VkDescriptorSet set, VkDeviceSize offset, VkDeviceSize range, uint32_t idx)
 {
 	bufferInfo_ = {};
 	bufferInfo_.buffer = bufferDetails_.buffer;
-	bufferInfo_.offset = 0;
-	bufferInfo_.range = size_;
+	bufferInfo_.offset = offset;
+	bufferInfo_.range = range == 0 ? size_ : range;
 
 	VkWriteDescriptorSet descriptorWrite = {};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = set;
-	descriptorWrite.dstBinding = bindingIdx_;
+	descriptorWrite.dstBinding = idx == 0 ? bindingIdx_ : idx;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = getType();
 	descriptorWrite.descriptorCount = 1;
 	descriptorWrite.pBufferInfo = &bufferInfo_;
-
 	return descriptorWrite;
 }
 
@@ -51,9 +50,10 @@ void* DescriptorBuffer::bindRange()
 	return logicDevice_->getDeviceMemory()->mapMemory(bufferDetails_.id);
 }
 
-void DescriptorBuffer::unbindRange()
+void* DescriptorBuffer::unbindRange()
 {
 	logicDevice_->getDeviceMemory()->unmapMemory(bufferDetails_.id);
+	return nullptr;
 }
 
 DescriptorBuffer::DescriptorBuffer(const LogicDevice* logicDevice, uint32_t binding, VkDeviceSize maxSize)

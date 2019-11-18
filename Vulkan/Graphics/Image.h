@@ -10,6 +10,7 @@ namespace QZL {
 			VkImageViewType type;
 			VkImageAspectFlagBits aspectBits;
 			VkImageLayout newLayout;
+			ImageParameters(VkImageViewType vt, VkImageAspectFlagBits ab, VkImageLayout l) : type(vt), aspectBits(ab), newLayout(l) { }
 		};
 
 		class LogicDevice;

@@ -78,6 +78,11 @@ VkPhysicalDevice PhysicalDevice::getPhysicalDevice() const
 	return device_;
 }
 
+const VkPhysicalDeviceLimits& PhysicalDevice::getDeviceLimits() const
+{
+	return properties_.limits;
+}
+
 bool PhysicalDevice::findIndices(VkPhysicalDevice& device, VkSurfaceKHR& surface)
 {
 	EXPECTS(device != VK_NULL_HANDLE && surface != VK_NULL_HANDLE);

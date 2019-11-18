@@ -16,9 +16,9 @@ namespace QZL {
 				kSubpassCount
 			};
 		protected:
-			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);
+			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			~PostProcessPass();
-			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) override;
+			void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) override;
 			void createRenderers() override;
 			// Dependency on the general pass to produce depth and colour of the scene.
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
@@ -37,8 +37,8 @@ namespace QZL {
 			Image* geometryDepthBuf_;
 
 			// Samplers for the images produced in the GeometryPass render pass.
-			TextureSampler* gpColourBuffer_;
-			TextureSampler* gpDepthBuffer_;
+			uint32_t gpColourBuffer_;
+			uint32_t gpDepthBuffer_;
 		};
 	}
 }

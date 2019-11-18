@@ -51,6 +51,7 @@ Image* TextureLoader::loadTexture(const std::string& fileName, VkShaderStageFlag
 
 VkFormat TextureLoader::convertToVkFormat(unsigned int oldFormat)
 {
+	// TODO gamme correction, e.g. VK_FORMAT_BC1_RGB_SRGB_BLOCK
 	switch (oldFormat) {
 	case 33777:
 		return VK_FORMAT_BC1_RGB_UNORM_BLOCK;

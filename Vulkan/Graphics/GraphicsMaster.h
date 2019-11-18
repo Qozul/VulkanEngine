@@ -25,6 +25,7 @@ namespace QZL
 		struct BasicMesh;
 		struct DeviceSurfaceCapabilities;
 		struct DeviceSwapChainDetails;
+		struct SceneGraphicsInfo;
 
 		struct GraphicsSystemDetails {
 			GLFWwindow* window = nullptr;
@@ -43,7 +44,6 @@ namespace QZL
 			static constexpr float NEAR_PLANE_Z = 0.1f;
 			static constexpr float FAR_PLANE_Z = 1000.0f;
 
-			void registerComponent(GraphicsComponent* component, RenderObject* robject = nullptr);
 			void setRenderer(RendererTypes type, RendererBase* renderer);
 			ElementBufferObject* getDynamicBuffer(RendererTypes type);
 			LogicalCamera* getLogicalCamera(RendererTypes type);
@@ -74,7 +74,7 @@ namespace QZL
 			const bool supportsOptionalExtension(OptionalExtensions ext);
 			static glm::mat4 kProjectionMatrix;
 		private:
-			GraphicsMaster(const SystemMasters& masters);
+			GraphicsMaster(SystemMasters& masters);
 			~GraphicsMaster();
 
 			void initGlfw(std::vector<const char*>& extensions);
@@ -82,6 +82,7 @@ namespace QZL
 				const char* const*& enabledLayerNames);
 			void initDevices(DeviceSurfaceCapabilities& surfaceCapabilitie, uint32_t& enabledLayerCount, const char* const*& enabledLayerNames);
 
+			void initialiseRenderPath(SceneGraphicsInfo* graphicsInfo);
 			void preframeSetup();
 
 			void loop();

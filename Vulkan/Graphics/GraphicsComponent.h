@@ -5,25 +5,25 @@
 #include "GraphicsTypes.h"
 
 namespace QZL {
-	namespace Assets {
-		class Entity;
-	}
+	class Entity;
 	namespace Graphics {
 		struct ShaderParams;
-		class Material;
+		struct Material;
+		struct BasicMesh;
 		class RenderObject;
 		class GraphicsComponent {
+			friend class Entity;
 		public:
-			GraphicsComponent(Assets::Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
+			GraphicsComponent(Entity* owner, RendererTypes type, ShaderParams* perMeshParams, ShaderParams* perInstanceParams,
 				const std::string& meshName, MeshLoadFunc loadFunc, Material* material);
-			GraphicsComponent(Assets::Entity* owner, RendererTypes type, RenderObject* robject, ShaderParams* perInstanceParams = nullptr);
+			GraphicsComponent(Entity* owner, RendererTypes type, ShaderParams* params,const std::string& meshName, Material* material);
 			~GraphicsComponent();
 
 			std::string getParamsId();
 			const std::string& getMeshName() const {
 				return meshName_;
 			}
-			Assets::Entity* getEntity() const {
+			Entity* getEntity() const {
 				return owningEntity_;
 			}
 			ShaderParams* getShaderParams() {
@@ -41,11 +41,18 @@ namespace QZL {
 			MeshLoadFunc& getLoadInfo() {
 				return loadFunc_;
 			}
+			BasicMesh* getMesh() {
+				return mesh_;
+			}
+			void setMesh(BasicMesh* mesh) {
+				mesh_ = mesh;
+			}
 			glm::mat4 getModelmatrix();
 		private:
-			Assets::Entity* owningEntity_;
+			Entity* owningEntity_;
 			RendererTypes rtype_;
 			const std::string meshName_;
+			BasicMesh* mesh_;
 			MeshLoadFunc loadFunc_;
 			ShaderParams* instanceParameters_;
 			ShaderParams* meshParameters_;

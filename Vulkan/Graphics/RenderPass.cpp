@@ -7,8 +7,9 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd)
-	: logicDevice_(logicDevice), swapChainDetails_(swapChainDetails), graphicsMaster_(master), globalRenderData_(grd), descriptor_(logicDevice->getPrimaryDescriptor()), renderPass_(VK_NULL_HANDLE)
+RenderPass::RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
+	: logicDevice_(logicDevice), swapChainDetails_(swapChainDetails), graphicsMaster_(master), globalRenderData_(grd), descriptor_(logicDevice->getPrimaryDescriptor()), renderPass_(VK_NULL_HANDLE),
+	graphicsInfo_(graphicsInfo)
 {
 }
 
@@ -22,8 +23,6 @@ RenderPass::~RenderPass()
 
 void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage)
 {
-	// Refer to https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#synchronization-access-types-supported in case of
-	// access mask related errors
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = static_cast<uint32_t>(createInfo.attachments.size());
@@ -90,6 +89,15 @@ VkSubpassDescription RenderPass::makeSubpass(VkPipelineBindPoint pipelineType, s
 	atmosphereSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	atmosphereSubpass.colorAttachmentCount = static_cast<uint32_t>(colourReferences.size());
 	atmosphereSubpass.pColorAttachments = colourReferences.data();
+	atmosphereSubpass.pDepthStencilAttachment = depthReference;
+	return atmosphereSubpass;
+}
+VkSubpassDescription RenderPass::makeSubpass(VkPipelineBindPoint pipelineType, VkAttachmentReference* depthReference)
+{
+	VkSubpassDescription atmosphereSubpass = {};
+	atmosphereSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	atmosphereSubpass.colorAttachmentCount = 0;
+	atmosphereSubpass.pColorAttachments = nullptr;
 	atmosphereSubpass.pDepthStencilAttachment = depthReference;
 	return atmosphereSubpass;
 }

@@ -4,14 +4,17 @@
 #include "../InputManager.h"
 
 namespace QZL {
+	namespace Graphics {
+		struct LogicalCamera;
+	}
 	namespace Game {
 		class Camera : public GameScript {
 		public:
-			Camera(const GameScriptInitialiser& initialiser);
+			Camera(const SystemMasters& initialiser);
 			~Camera();
 		protected:
 			void start() override;
-			void update(float dt, const glm::mat4& parentMatrix) override;
+			void update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix) override;
 
 		private:
 			void moveLeft();
@@ -25,9 +28,7 @@ namespace QZL {
 			void updatePosition();
 			void logPosition();
 
-			glm::mat4* viewMatrixPtr_;
-			glm::vec3* position_;
-			glm::vec3 lookPoint_;
+			Graphics::LogicalCamera* mainCamera_;
 			float yaw_;
 			float pitch_;
 			InputProfile inputProfile_;

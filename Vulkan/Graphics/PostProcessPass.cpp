@@ -8,12 +8,13 @@
 #include "ParticleRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
+#include "TextureManager.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd)
-	: RenderPass(master, logicDevice, swapChainDetails, grd)
+PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
 {
 	// Setup the actual render pass.
 	CreateInfo createInfo = {};
@@ -54,15 +55,13 @@ PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevic
 
 PostProcessPass::~PostProcessPass()
 {
-	SAFE_DELETE(gpColourBuffer_);
-	SAFE_DELETE(gpDepthBuffer_);
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(depthBuffer_);
 	SAFE_DELETE(postProcessRenderer_);
 	SAFE_DELETE(particleRenderer_);
 }
 
-void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer)
+void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
 {
 	VkOffset3D imageOffset = {};
 	imageOffset.x = 0;
@@ -111,9 +110,9 @@ void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkComm
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	postProcessRenderer_->recordFrame(camera, idx, cmdBuffer);
+	postProcessRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kPostProcess]);
 
-	particleRenderer_->recordFrame(camera, idx, cmdBuffer);
+	particleRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kParticle]);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -123,8 +122,8 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 	ASSERT(dependencyAttachment.size() == 2);
 	geometryColourBuf_ = dependencyAttachment[0];
 	geometryDepthBuf_ = dependencyAttachment[1];
-	gpColourBuffer_ = new TextureSampler(logicDevice_, "gpColourBuffer", dependencyAttachment[0], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
-	gpDepthBuffer_ = new TextureSampler(logicDevice_, "gpDepthBuffer", dependencyAttachment[1], VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
+	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
+	gpDepthBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_);
 	createRenderers();
 }
 
@@ -137,6 +136,7 @@ void PostProcessPass::createRenderers()
 	createInfo.renderPass = renderPass_;
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
+	createInfo.graphicsInfo = graphicsInfo_;
 
 	createInfo.updateRendererSpecific(0, 1, "PPVert", "PPFrag");
 	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthBuffer_);

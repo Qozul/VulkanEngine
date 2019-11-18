@@ -8,12 +8,14 @@
 #include "AtmosphereRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
+#include "SceneDescriptorInfo.h"
+#include "GlobalRenderData.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd)
-	: RenderPass(master, logicDevice, swapChainDetails, grd)
+GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
 {
 	CreateInfo createInfo = {};
 	createColourBuffer(logicDevice, swapChainDetails);
@@ -68,7 +70,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(atmosphereRenderer_);
 }
 
-void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer)
+void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
 {
 	std::array<VkClearValue, 2> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -80,12 +82,34 @@ void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommand
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	atmosphereRenderer_->recordFrame(camera, idx, cmdBuffer);
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpRange * idx,
+		graphicsInfo_->paramsRange * idx,
+		graphicsInfo_->materialRange * idx
+	};
+
+	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
+	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, texturedRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
+
+	// TODO combine push constants
+	CameraPushConstants pc;
+	pc.cameraPosition = glm::vec4(camera.position, 1.0f);
+	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &pc);
+
+	TessellationPushConstants pcs;
+	pcs.distanceFarMinusClose = 300.0f; // Implies far distance is 350.0f+
+	pcs.closeDistance = 50.0f;
+	pcs.patchRadius = 40.0f;
+	pcs.maxTessellationWeight = 4.0f;
+	camera.calculateFrustumPlanes(GraphicsMaster::kProjectionMatrix * camera.viewMatrix, pcs.frustumPlanes);
+
+	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, sizeof(glm::vec4), sizeof(TessellationPushConstants), &pcs);
+
+	atmosphereRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kAtmosphere]);
 
 	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
-
-	terrainRenderer_->recordFrame(camera, idx, cmdBuffer);
-	texturedRenderer_->recordFrame(camera, idx, cmdBuffer);
+	terrainRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
+	texturedRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -99,6 +123,7 @@ void GeometryPass::createRenderers()
 	createInfo.renderPass = renderPass_;
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
+	createInfo.graphicsInfo = graphicsInfo_;
 
 	createInfo.updateRendererSpecific(1, 1, "StaticVert", logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing) ? "StaticFrag_DI" : "StaticFrag");
 	texturedRenderer_ = new TexturedRenderer(createInfo);

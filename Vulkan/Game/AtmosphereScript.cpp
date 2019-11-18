@@ -12,40 +12,36 @@
 #include "../Graphics/Descriptor.h"
 #include "../System.h"
 #include "SunScript.h"
+#include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace QZL::Game;
 using namespace QZL::Graphics;
 
 AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, SunScript* sun)
-	: GameScript(initialiser)
+	: GameScript(initialiser), sun_(sun)
 {
 	logicDevice_ = initialiser.system->getMasters().graphicsMaster->getLogicDevice();
 
 	params_.betaRay = calculateBetaRayeligh(1.0003, 2.545e25, { 6.5e-7, 5.1e-7, 4.75e-7 });// glm::vec3(6.55e-6f, 1.73e-5f, 2.30e-5f);
-	params_.betaMie = 2e-6f;
-	params_.betaMieExt = params_.betaMie / 0.9f;
-	params_.planetRadius = 6371e3f;
-	params_.Hatm = 80000.0f;
-	params_.mieScaleHeight = 1200.0f;
-	params_.rayleighScaleHeight = 8000.0f;
-	params_.betaOzoneExt = glm::vec3(5.09f, 7.635f, 0.2545f);
+	params_.betaMie = 2e-6;
+	params_.betaMieExt = params_.betaMie / 0.9;
+	params_.planetRadius = 6371e3;
+	params_.Hatm = 80000.0;
+	params_.mieScaleHeight = 1200.0;
+	params_.rayleighScaleHeight = 8000.0;
+	params_.betaOzoneExt = glm::vec3(5.09, 7.635, 0.2545);
 
-	shaderParams_.params.betaRay = params_.betaRay;
-	shaderParams_.params.betaMie = params_.betaMie;
-	shaderParams_.params.planetRadius = params_.planetRadius;
-	shaderParams_.params.Hatm = params_.Hatm;
-	shaderParams_.params.g = 0.76f;
-	shaderParams_.params.sunDirection = sun->getSunDirection();
-	shaderParams_.params.sunIntensity = sun->getSunIntensity();
-
-	// Make the material, it only needs the scattering sampler
-	auto descriptor = logicDevice_->getPrimaryDescriptor();
-	VkDescriptorSetLayoutBinding scatteringBinding = makeLayoutBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nullptr, VK_SHADER_STAGE_FRAGMENT_BIT);
-	VkDescriptorSetLayout matLayout = descriptor->makeLayout({ scatteringBinding });
-	auto matSetIdx = descriptor->createSets({ matLayout });
-	auto matSet = descriptor->getSet(matSetIdx);
-	material_ = new AtmosphereMaterial("atmosphereMaterial", matSet, matLayout);
+	shaderParams_.betaRay = params_.betaRay;
+	shaderParams_.betaMie = params_.betaMie;
+	shaderParams_.planetRadius = params_.planetRadius;
+	shaderParams_.Hatm = params_.Hatm;
+	shaderParams_.g = 0.9f;
+	shaderParams_.sunDirection = *sun->getSunDirection();
+	shaderParams_.sunIntensity = *sun->getSunIntensity();
+	material_ = new Material();
+	material_->data = &scatteringSumIdx_;
+	material_->size = Materials::materialSizeLUT[(size_t)Graphics::RendererTypes::kAtmosphere];
 }
 
 AtmosphereScript::~AtmosphereScript()
@@ -58,8 +54,6 @@ AtmosphereScript::~AtmosphereScript()
 	SAFE_DELETE(textures_.gatheringImage);
 	SAFE_DELETE(textures_.gatheringSum);
 	SAFE_DELETE(textures_.gatheringSumImage);
-	SAFE_DELETE(textures_.scatteringSum);
-	SAFE_DELETE(textures_.scatteringSumImage);
 	SAFE_DELETE(material_);
 }
 
@@ -70,8 +64,14 @@ Graphics::ShaderParams* AtmosphereScript::getNewShaderParameters()
 
 void AtmosphereScript::start()
 {
+	textures_.scatteringSumImage = nullptr;
+	scatteringSumIdx_ = sysMasters_->textureManager->allocateTexture("ScatteringSum", textures_.scatteringSumImage, Image::makeCreateInfo(VK_IMAGE_TYPE_3D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL },
+		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT });
+	textures_.scatteringSum = sysMasters_->textureManager->getSampler("ScatteringSum");
+
 	// See http://publications.lib.chalmers.se/records/fulltext/203057/203057.pdf for reference.
-	// Create the textures. Need a total of 8 textures, with 3 permanent for rendering and 5 temporary.
 	initTextures(logicDevice_, textures_);
 
 	// Create the uniform buffer for required parameters.
@@ -114,10 +114,11 @@ void AtmosphereScript::start()
 	buffer->unbindRange();
 
 	// Create the compute pipelines.
-	ComputePipeline transmittancePipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltTransmittance");
-	ComputePipeline singleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltScattering");
-	ComputePipeline gatheringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltGathering");
-	ComputePipeline multipleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, {}), "AtmosphereAltMultipleScattering");
+	std::vector<VkPushConstantRange> pcrs;
+	ComputePipeline transmittancePipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltTransmittance");
+	ComputePipeline singleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltScattering");
+	ComputePipeline gatheringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltGathering");
+	ComputePipeline multipleScatteringPipeline = ComputePipeline(logicDevice_, ComputePipeline::makeLayoutInfo(1, &layout, pcrs), "AtmosphereAltMultipleScattering");
 
 	// Record command buffer and execute on compute queue.
 	VkCommandBuffer cmdBuffer = logicDevice_->getComputeCommandBuffer();
@@ -146,7 +147,6 @@ void AtmosphereScript::start()
 		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, multipleScatteringPipeline.getPipeline());
 		vkCmdDispatch(cmdBuffer, SCATTERING_TEXTURE_WIDTH / INVOCATION_SIZE, SCATTERING_TEXTURE_HEIGHT / INVOCATION_SIZE, SCATTERING_TEXTURE_DEPTH / INVOCATION_SIZE);
 	}
-	//textures_.scatteringSumImage->changeLayout(cmdBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 	CHECK_VKRESULT(vkEndCommandBuffer(cmdBuffer));
 
 	VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
@@ -157,9 +157,17 @@ void AtmosphereScript::start()
 	CHECK_VKRESULT(vkQueueWaitIdle(logicDevice_->getQueueHandle(QueueFamilyType::kComputeQueue)));
 
 	SAFE_DELETE(buffer);
+}
 
-	std::vector<VkWriteDescriptorSet> materialWrites = { textures_.scatteringSum->descriptorWrite(material_->getTextureSet(), 0) };
-	descriptor->updateDescriptorSets(materialWrites);
+void AtmosphereScript::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
+{
+	// TODO, pass all camera info rather than just viewProjection?
+	// auto vm = glm::lookAt({ 0.0f, camera.position.y, 0.0f }, camera.lookPoint + glm::vec3(0.0f, camera.position.y, 0.0f), { 0.0f, 1.0f, 0.0f });
+	AtmosphereShaderParams* params = static_cast<AtmosphereShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams());
+	params->sunDirection = *sun_->getSunDirection();
+	params->sunIntensity = *sun_->getSunIntensity();
+	params->inverseViewProj = glm::inverse(viewProjection);
+	params->scatteringIdx = scatteringSumIdx_;
 }
 
 void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedTextures& finalTextures)
@@ -183,11 +191,6 @@ void AtmosphereScript::initTextures(const LogicDevice* logicDevice, PrecomputedT
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
 		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL }, "AtmosScattering");
 	finalTextures.scattering = finalTextures.scatteringImage->createTextureSampler("AtmosScattering", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
-
-	finalTextures.scatteringSumImage = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_3D, 1, 1, VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT, VK_SAMPLE_COUNT_1_BIT, SCATTERING_TEXTURE_WIDTH, SCATTERING_TEXTURE_HEIGHT, SCATTERING_TEXTURE_DEPTH),
-		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_GENERAL }, "AtmosScatteringSum");
-	finalTextures.scatteringSum = finalTextures.scatteringSumImage->createTextureSampler("AtmosScatteringSum", VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1);
 }
 
 VkDescriptorSetLayoutBinding AtmosphereScript::makeLayoutBinding(const uint32_t binding, VkDescriptorType type, const VkSampler* immutableSamplers, VkShaderStageFlags stages)

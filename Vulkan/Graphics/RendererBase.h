@@ -11,7 +11,6 @@ namespace QZL
 	namespace Graphics {
 		class LogicDevice;
 		class Descriptor;
-		class RenderStorage;
 		class RenderObject;
 		class GraphicsComponent;
 		class ElementBufferObject;
@@ -19,11 +18,13 @@ namespace QZL
 		class GlobalRenderData;
 		struct BasicMesh;
 		struct LogicalCamera;
+		struct SceneGraphicsInfo;
 
 		struct RendererCreateInfo {
 			LogicDevice* logicDevice;
 			Descriptor* descriptor;
 			GlobalRenderData* globalRenderData;
+			SceneGraphicsInfo* graphicsInfo;
 			VkRenderPass renderPass;
 			uint32_t subpassIndex;
 			VkExtent2D extent;
@@ -47,6 +48,12 @@ namespace QZL
 			}
 		};
 
+		struct DescriptorOffsets {
+			uint32_t mvp;
+			uint32_t params;
+			uint32_t material;
+		};
+
 		struct ElementData {
 			glm::mat4 modelMatrix;
 			glm::mat4 mvpMatrix;
@@ -58,24 +65,39 @@ namespace QZL
 			VkMemoryBarrier barrier;
 			uint32_t offset;
 		};
+
+		struct TessellationPushConstants {
+			float distanceFarMinusClose = 0.0f;
+			float closeDistance = 0.0f;
+			float patchRadius = 0.0f;
+			float maxTessellationWeight = 0.0f;
+			std::array<glm::vec4, 6> frustumPlanes;
+		};
+
+		struct CameraPushConstants {
+			glm::vec4 cameraPosition;
+		};
+
 		constexpr uint32_t kMaxPushConstantSize = 128;
 
 		class RendererBase {
 		public:
-			RendererBase(RendererCreateInfo& createInfo, RenderStorage* renderStorage)
-				: pipeline_(nullptr), renderStorage_(renderStorage), logicDevice_(createInfo.logicDevice), descriptor_(createInfo.descriptor), pushConstantOffset_(0) {
-				ASSERT(createInfo.maxDrawnEntities > 0);
-			}
+			RendererBase(RendererCreateInfo& createInfo, ElementBufferObject* ebo)
+				: pipeline_(nullptr), ebo_(ebo), logicDevice_(createInfo.logicDevice), descriptor_(createInfo.descriptor), pushConstantOffset_(0),
+				  graphicsInfo_(createInfo.graphicsInfo) { }
+
 			virtual ~RendererBase();
-			virtual void createDescriptors(const uint32_t count) = 0;
-			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer) = 0;
+			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) = 0;
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 
-			void registerComponent(GraphicsComponent* component, RenderObject* robject);
 			ElementBufferObject* getElementBuffer();
+			VkPipelineLayout getPipelineLayout();
 
 			void preframeSetup();
-			void toggleWiremeshMode();
+			virtual void toggleWiremeshMode();
+
+			VkSpecializationMapEntry makeSpecConstantEntry(uint32_t id, uint32_t offset, size_t size);
+			VkSpecializationInfo setupSpecConstants(uint32_t entryCount, VkSpecializationMapEntry* entryPtr, size_t dataSize, const void* data);
 
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages);
@@ -95,8 +117,9 @@ namespace QZL
 
 			LogicDevice* logicDevice_;
 			RendererPipeline* pipeline_;
-			RenderStorage* renderStorage_;
+			ElementBufferObject* ebo_;
 			Descriptor* descriptor_;
+			SceneGraphicsInfo* graphicsInfo_;
 			std::vector<DescriptorBuffer*> storageBuffers_;
 			std::vector<VkDescriptorSetLayout> pipelineLayouts_;
 			std::vector<VkDescriptorSet> descriptorSets_;

@@ -1,0 +1,75 @@
+ENTITY camera {
+	Parent ROOT
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
+}
+ENTITY defaultTerrain {
+	Parent ROOT
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
+}
+ENTITY teapot {
+	Parent defaultTerrain
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 2.0 2.0 2.0
+}
+ENTITY sun {
+	Parent camera
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
+}
+ENTITY atmosphere {
+	Parent camera
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
+}
+ENTITY fire {
+	Parent defaultTerrain
+	Transform 0.0 0.0 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0
+}
+
+GAME_SCRIPT camera {
+	ScriptName CameraScript
+}
+GAME_SCRIPT sun {
+	ScriptName SunScript
+}
+GAME_SCRIPT fire {
+	ScriptName FireSystem
+}
+GAME_SCRIPT atmosphere {
+	ScriptName AtmosphereScript
+	Ref SunScript
+}
+
+GRAPHICS teapot {
+	Rtype STATIC_FORWARD
+	Flags OPAQUE
+	Radius 5.0
+	MeshName Teapot
+	MeshLoadingFunc OBJLoader
+	MaterialName ExampleStatic
+	Params 
+}
+GRAPHICS terrain {
+	Rtype TERRAIN
+	Flags OPAQUE
+	Radius -1.0
+	MeshName TerrainTile
+	MeshLoadingFunc TerrainLoader
+	MaterialName ExampleTerrain
+	Params 
+}
+GRAPHICS sun {
+	Rtype PARTICLE 
+	Flags TRANSPARENCY LIGHT_SOURCE
+	Radius 1.0
+	MeshName SunMesh
+	MeshLoadingFunc ParticleLoader
+	MaterialName SunMoon
+	Params 1.0 0.0 0.0 0.0 0.0
+}
+GRAPHICS fire {
+	Rtype PARTICLE 
+	Flags TRANSPARENCY LIGHT_SOURCE 
+	Radius 5.0
+	MeshName FireMesh
+	MeshLoadingFunc ParticleLoader
+	MaterialName Fire
+	Params 1.0 0.0 0.0 0.0 0.0
+}

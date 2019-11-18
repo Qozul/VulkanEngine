@@ -16,13 +16,13 @@ namespace QZL
 			virtual ~DescriptorBuffer();
 			void init( MemoryAllocationPattern pattern, VkBufferUsageFlags flags, VkShaderStageFlags stageFlags, std::string debugName = "");
 			const VkDescriptorSetLayoutBinding& getBinding();
-			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set);
+			VkWriteDescriptorSet descriptorWrite(VkDescriptorSet set, VkDeviceSize offset = 0, VkDeviceSize range = 0, uint32_t idx = 0);
 			template<typename DataType>
 			void uploadRange(DataType* data, VkDeviceSize size, VkDeviceSize offset);
 			// Alternative to uploading a range directly, these allow the mapping to last longer
 			// But if bind is called the caller must ensure unbind is also called
 			void* bindRange();
-			void unbindRange();
+			void* unbindRange();
 			const MemoryAllocationDetails& getBufferDetails() { return bufferDetails_; }
 
 			template<typename T>
@@ -110,6 +110,22 @@ namespace QZL
 			}
 			virtual VkDescriptorType getType() override {
 				return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			}
+		};
+
+		class DynamicStorageBuffer : public DescriptorBuffer {
+			template<typename T>
+			friend DescriptorBuffer* DescriptorBuffer::makeBuffer(const LogicDevice* logicDevice, MemoryAllocationPattern pattern, uint32_t binding,
+				VkBufferUsageFlags flags, VkDeviceSize maxSize, VkShaderStageFlags stageFlags, std::string debugName);
+		protected:
+			DynamicStorageBuffer(const LogicDevice* logicDevice, uint32_t binding, VkDeviceSize maxSize)
+				: DescriptorBuffer(logicDevice, binding, maxSize) { }
+
+			virtual VkBufferUsageFlagBits getUsageBits() override {
+				return VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+			}
+			virtual VkDescriptorType getType() override {
+				return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 			}
 		};
 	}

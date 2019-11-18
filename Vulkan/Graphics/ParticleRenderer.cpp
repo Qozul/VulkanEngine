@@ -4,41 +4,41 @@
 #include "ParticleRenderer.h"
 #include "DynamicElementBuffer.h"
 #include "StorageBuffer.h"
-#include "RenderStorage.h"
 #include "GlobalRenderData.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
 #include "ShaderParams.h"
 #include "RenderObject.h"
 #include "Material.h"
+#include "SceneDescriptorInfo.h"
 #include "../Assets/Entity.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
-struct PushConstantGeometry {
-	glm::vec3 billboardPoint;
-	float tileLength = 0.0f;
-};
-
-struct PerInstanceParams {
-	glm::mat4 model;
-	glm::mat4 mvp;
-	glm::vec4 tint;
-};
-
 ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)),
-	  RenderStorage::InstanceUsage::kUnlimited))
+	: RendererBase(createInfo, new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)))
 {
-	createDescriptors(createInfo.maxDrawnEntities);
+	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
+	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
-	auto pushConstRange = setupPushConstantRange<PushConstantGeometry>(VK_SHADER_STAGE_GEOMETRY_BIT);
+	VkPushConstantRange pushConstants[2] = {
+		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT),
+		setupPushConstantRange<TessellationPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+	};
+
+	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kParticle], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kParticle], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kParticle] };
+	std::vector<VkSpecializationMapEntry> mapEntry = {
+		makeSpecConstantEntry(0, 0,	sizeof(uint32_t)),
+		makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t))
+	};
+	auto geomSpecConstant = setupSpecConstants(2, mapEntry.data(), sizeof(uint32_t) * 2, &offsets[0]);
+	auto fragSpecConstant = setupSpecConstants(2, mapEntry.data(), sizeof(uint32_t) * 2, &offsets[1]);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
-	stageInfos.emplace_back(createInfo.geometryShader, VK_SHADER_STAGE_GEOMETRY_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &fragSpecConstant);
+	stageInfos.emplace_back(createInfo.geometryShader, VK_SHADER_STAGE_GEOMETRY_BIT, &geomSpecConstant);
 
 	PipelineCreateInfo pci = {};
 	pci.debugName = "Particle";
@@ -49,65 +49,18 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
-		pipelineLayouts_.data(), 1, &pushConstRange), stageInfos, pci);
+	createPipeline<ParticleVertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
+		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci);
 }
 
-ParticleRenderer::~ParticleRenderer()
+void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
-}
-
-void ParticleRenderer::createDescriptors(const uint32_t particleSystemCount)
-{
-	DescriptorBuffer* instBuf = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice_, MemoryAllocationPattern::kDynamicResource, 0, 0,
-		sizeof(PerInstanceParams) * particleSystemCount, VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, "ParticleInstancesBuffer");
-	storageBuffers_.push_back(instBuf);
-
-	VkDescriptorSetLayout layout = descriptor_->makeLayout({ instBuf->getBinding() });
-
-	pipelineLayouts_.push_back(layout);
-	pipelineLayouts_.push_back(ParticleMaterial::getLayout(descriptor_));
-
-	descriptorSets_.push_back(descriptor_->getSet(descriptor_->createSets({ layout })));
-	std::vector<VkWriteDescriptorSet> descWrites;
-	descWrites.push_back(instBuf->descriptorWrite(descriptorSets_[0]));
-	descriptor_->updateDescriptorSets(descWrites);
-}
-
-void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer)
-{
-	if (renderStorage_->instanceCount() == 0)
+	if (commandList->size() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	renderStorage_->buffer()->updateBuffer(cmdBuffer, idx);
+	ebo_->updateBuffer(cmdBuffer, idx);
 	bindEBO(cmdBuffer, idx);
-
-	PerInstanceParams* eleDataPtr = static_cast<PerInstanceParams*>(storageBuffers_[0]->bindRange());
-	auto instPtr = renderStorage_->instanceData();
-	for (size_t i = 0; i < renderStorage_->instanceCount(); ++i) {
-		auto comp = (*(instPtr + i));
-		auto params = static_cast<ParticleShaderParams*>(comp->getPerMeshShaderParams());
-		glm::mat4 model = comp->getModelmatrix();
-		eleDataPtr[i] = {
-			model, GraphicsMaster::kProjectionMatrix * camera.viewMatrix * model, params->params.tint
-		};
-	}
-	storageBuffers_[0]->unbindRange();
-
-	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		RenderObject* robject = renderStorage_->renderObjectData()[i];
-
-		auto params = static_cast<ParticleShaderParams*>(robject->getParams());
-		PushConstantGeometry pcg;
-		pcg.billboardPoint = camera.position;
-		pcg.tileLength = params->params.textureTileLength;
-		
-		VkDescriptorSet sets[2] = { descriptorSets_[0], robject->getMaterial()->getTextureSet() };
-		vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_->getLayout(), 0, 2, sets, 0, nullptr);
-
-		vkCmdPushConstants(cmdBuffer, pipeline_->getLayout(), pushConstantInfos_[0].stages, pushConstantInfos_[0].offset, pushConstantInfos_[0].size, &pcg);
-
-		vkCmdDraw(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.baseVertex, drawElementCmd.baseInstance);
+	for (auto& cmd : *commandList) {
+		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}
 }

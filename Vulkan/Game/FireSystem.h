@@ -5,7 +5,7 @@ namespace QZL {
 	namespace Game {
 		class FireSystem : public ParticleSystem {
 		public:
-			FireSystem(const GameScriptInitialiser& initialiser, glm::vec3* billboardPoint, Graphics::ElementBufferObject* buf);
+			FireSystem(const SystemMasters& initialiser);
 			void start() override;
 		protected:
 			void particleCreation(float dt, size_t expiredCount) override;

@@ -15,6 +15,7 @@ namespace QZL
 		class Image;
 		struct LogicalCamera;
 		struct SwapChainDetails;
+		struct SceneGraphicsInfo;
 
 		class RenderPass {
 			friend class SwapChain;
@@ -25,10 +26,10 @@ namespace QZL
 				std::vector<VkSubpassDependency> dependencies;
 			};
 
-			virtual void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer) = 0;
+			virtual void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) = 0;
 			virtual void createRenderers() = 0;
 			virtual void initRenderPassDependency(std::vector<Image*> dependencyAttachment) = 0;
-			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd);
+			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			virtual ~RenderPass();
 
 			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage);
@@ -39,6 +40,7 @@ namespace QZL
 			VkAttachmentDescription makeAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
 				VkAttachmentLoadOp stencilLoadOp, VkAttachmentStoreOp stencilStoreOp, VkImageLayout initialLayout, VkImageLayout finalLayout);
 			VkSubpassDescription makeSubpass(VkPipelineBindPoint pipelineType, std::vector<VkAttachmentReference>& colourReferences, VkAttachmentReference* depthReference);
+			VkSubpassDescription makeSubpass(VkPipelineBindPoint pipelineType, VkAttachmentReference* depthReference);
 			VkSubpassDependency makeSubpassDependency(uint32_t srcIdx, uint32_t dstIdx, VkPipelineStageFlags srcStage,
 				VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
 
@@ -49,6 +51,7 @@ namespace QZL
 			GraphicsMaster* graphicsMaster_;
 			Descriptor* descriptor_;
 			GlobalRenderData* globalRenderData_;
+			SceneGraphicsInfo* graphicsInfo_;
 		};
 	}
 }

@@ -50,7 +50,7 @@ VkPipelineLayout ComputePipeline::getLayout()
 	return layout_;
 }
 
-VkPipelineLayoutCreateInfo ComputePipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, std::vector<VkPushConstantRange> pushConstantRanges)
+VkPipelineLayoutCreateInfo ComputePipeline::makeLayoutInfo(const uint32_t layoutCount, const VkDescriptorSetLayout* layouts, std::vector<VkPushConstantRange>& pushConstantRanges)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

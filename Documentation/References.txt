@@ -1,0 +1,5 @@
+Fullscreen quad without vertex buffers: https://www.saschawillems.de/blog/2016/08/13/vulkan-tutorial-on-rendering-a-fullscreen-quad-without-buffers/
+
+.obj loading: https://github.com/syoyo/tinyobjloader
+
+Atmospheric Scattering: http://publications.lib.chalmers.se/records/fulltext/203057/203057.pdf and https://github.com/Ralith/fuzzyblue

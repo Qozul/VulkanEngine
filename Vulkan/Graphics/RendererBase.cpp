@@ -1,5 +1,4 @@
 #include "RendererBase.h"
-#include "RenderStorage.h"
 #include "ElementBufferObject.h"
 #include "GraphicsComponent.h"
 #include "StorageBuffer.h"
@@ -10,10 +9,7 @@ using namespace QZL::Graphics;
 
 RendererBase::~RendererBase()
 {
-	for (auto& buffer : storageBuffers_) {
-		SAFE_DELETE(buffer);
-	}
-	SAFE_DELETE(renderStorage_);
+	SAFE_DELETE(ebo_);
 	SAFE_DELETE(pipeline_);
 }
 
@@ -26,26 +22,36 @@ std::vector<VkWriteDescriptorSet> RendererBase::getDescriptorWrites(uint32_t fra
 	return writes;
 }
 
-void RendererBase::registerComponent(GraphicsComponent* component, RenderObject* robject)
-{
-	renderStorage_->addMesh(component, robject);
-}
-
 ElementBufferObject* RendererBase::getElementBuffer()
 {
-	return renderStorage_->buffer();
+	return ebo_;
+}
+
+VkPipelineLayout RendererBase::getPipelineLayout()
+{
+	return pipeline_->getLayout();
 }
 
 void RendererBase::preframeSetup()
 {
-	if (renderStorage_ != nullptr) {
-		renderStorage_->buffer()->commit();
+	if (ebo_ != nullptr) {
+		ebo_->commit();
 	}
 }
 
 void RendererBase::toggleWiremeshMode()
 {
 	pipeline_->switchMode();
+}
+
+VkSpecializationMapEntry RendererBase::makeSpecConstantEntry(uint32_t id, uint32_t offset, size_t size)
+{
+	return { id, offset, size };
+}
+
+VkSpecializationInfo RendererBase::setupSpecConstants(uint32_t entryCount, VkSpecializationMapEntry* entryPtr, size_t dataSize, const void* data)
+{
+	return { entryCount, entryPtr, dataSize, data };
 }
 
 void RendererBase::beginFrame(VkCommandBuffer& cmdBuffer)
@@ -56,7 +62,7 @@ void RendererBase::beginFrame(VkCommandBuffer& cmdBuffer)
 
 void RendererBase::bindEBO(VkCommandBuffer& cmdBuffer, uint32_t idx)
 {
-	renderStorage_->buffer()->bind(cmdBuffer, idx);
+	ebo_->bind(cmdBuffer, idx);
 }
 
 void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages,

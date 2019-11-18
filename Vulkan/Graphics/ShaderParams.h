@@ -9,83 +9,47 @@
 namespace QZL {
 	namespace Graphics {
 		struct ShaderParams {
-			std::string id;
-			ShaderParams(std::string id = "")
-				: id(id) { };
-			virtual const RendererTypes getRendererType() const = 0;
+			static const size_t shaderParamsLUT[(size_t)RendererTypes::kNone];
 		};
-
-		// Derived params need internal wrapping struct for correct use and sizing, since subclassing adds size and makes memory allocation in
-		// the renderers more complicated.
-
-		struct ParticleShaderParams : public ShaderParams {
-			struct Params {
-				float textureTileLength;
-				glm::vec4 tint;
-			} params;
-
-			ParticleShaderParams(float tileLength, glm::vec4 tint)
-				: params({ tileLength, tint }) { }
-
-			const RendererTypes getRendererType() const override {
-				return RendererTypes::kParticle;
-			}
+		struct StaticShaderParams : ShaderParams {
+			glm::mat4 model;
+			float diffuseX = 0.7f;
+			float diffuseY = 0.7f;
+			float diffuseZ = 0.7f;
+			float alpha = 1.0f;
+			float specularX = 0.7f;
+			float specularY = 0.7f;
+			float specularZ = 0.7f;
+			float specularExponent = 41.0f;
+			//uint32_t materialIdx;
 		};
-
-		struct AtmosphereShaderParams : public ShaderParams {
-			struct Params {
-				glm::vec3 betaRay;
-				float betaMie;
-
-				glm::vec3 cameraPosition;
-				float planetRadius;
-
-				glm::vec3* sunDirection;
-				float Hatm;
-
-				glm::vec3* sunIntensity;
-				float g;
-			} params;
-
-			const RendererTypes getRendererType() const override {
-				return RendererTypes::kAtmosphere;
-			}
+		struct TerrainShaderParams : ShaderParams {
+			glm::mat4 model;
+			glm::vec3 albedoCol;
+			float alpha = 1.0f;
+			glm::vec3 specularCol;
+			float specularExponent = 1.0f;
+			//uint32_t materialIdx;
+			TerrainShaderParams(glm::vec3 albedo, glm::vec3 specular, float alpha, float specExponent)
+				: albedoCol(albedo), alpha(alpha), specularCol(specular), specularExponent(specExponent) { }
 		};
-
-		struct StaticShaderParams : public ShaderParams {
-			struct Params {
-				float diffuseX = 0.7f;
-				float diffuseY = 0.7f;
-				float diffuseZ = 0.7f;
-				float alpha = 1.0f;
-				float specularX = 0.7f;
-				float specularY = 0.7f;
-				float specularZ = 0.7f;
-				float specularExponent = 41.0f;
-			} params;
-
-			const RendererTypes getRendererType() const override {
-				return RendererTypes::kStatic;
-			}
+		struct AtmosphereShaderParams : ShaderParams {
+			glm::mat4 inverseViewProj;
+			glm::vec3 betaRay;
+			float betaMie;
+			glm::vec3 sunDirection;
+			float planetRadius;
+			glm::vec3 sunIntensity;
+			float Hatm;
+			float g;
+			uint32_t scatteringIdx;
 		};
-
-		struct TerrainShaderParams : public ShaderParams {
-			struct Params {
-				glm::vec3 diffuseColour;
-				float alpha = 1.0f;
-				glm::vec3 specularColour;
-				float specularExponent = 1.0f;
-			} params;
-
-			TerrainShaderParams(glm::vec3 diffuseColour, glm::vec3 specularColour, float alpha, float specularExponent) {
-				params.diffuseColour = diffuseColour;
-				params.alpha = alpha;
-				params.specularColour = specularColour;
-				params.specularExponent = specularExponent;
-			}
-			const RendererTypes getRendererType() const override {
-				return RendererTypes::kTerrain;
-			}
+		struct ParticleShaderParams : ShaderParams {
+			glm::mat4 modelMatrix;
+			glm::vec4 tint;
+			//uint32_t materialIdx;
+			ParticleShaderParams(float texTileLength, glm::vec3 tint) : tint(tint, texTileLength) { }
+			ParticleShaderParams(glm::mat4 model, glm::vec4 tint) : modelMatrix(model), tint(tint) { }
 		};
 	}
 }
