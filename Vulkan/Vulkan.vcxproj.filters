@@ -135,9 +135,6 @@
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\System</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\RenderStorage.h">
-      <Filter>Header Files\Graphics\Rendering\RenderStorage</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\TextureSampler.h">
       <Filter>Header Files\Graphics\Memory\Textures</Filter>
     </ClInclude>
@@ -297,6 +294,12 @@
     <ClInclude Include="Graphics\SceneDescriptorInfo.h">
       <Filter>Header Files\Graphics\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\ShadowPass.h">
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\ShadowRenderer.h">
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp">
@@ -410,9 +413,6 @@
     <ClCompile Include="Graphics\Validation.cpp">
       <Filter>Source Files\Graphics\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\RenderStorage.cpp">
-      <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\StorageBuffer.cpp">
       <Filter>Source Files\Graphics\Rendering\RenderStorage</Filter>
     </ClCompile>
@@ -436,6 +436,12 @@
     </ClCompile>
     <ClCompile Include="Graphics\ShaderParams.cpp">
       <Filter>Source Files\Graphics\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ShadowPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\ShadowRenderer.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

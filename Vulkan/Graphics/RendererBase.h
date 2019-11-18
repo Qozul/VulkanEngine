@@ -11,7 +11,6 @@ namespace QZL
 	namespace Graphics {
 		class LogicDevice;
 		class Descriptor;
-		class RenderStorage;
 		class RenderObject;
 		class GraphicsComponent;
 		class ElementBufferObject;
@@ -83,15 +82,14 @@ namespace QZL
 
 		class RendererBase {
 		public:
-			RendererBase(RendererCreateInfo& createInfo, RenderStorage* renderStorage)
-				: pipeline_(nullptr), renderStorage_(renderStorage), logicDevice_(createInfo.logicDevice), descriptor_(createInfo.descriptor), pushConstantOffset_(0),
-				  graphicsInfo_(createInfo.graphicsInfo) { ASSERT(createInfo.maxDrawnEntities > 0); }
+			RendererBase(RendererCreateInfo& createInfo, ElementBufferObject* ebo)
+				: pipeline_(nullptr), ebo_(ebo), logicDevice_(createInfo.logicDevice), descriptor_(createInfo.descriptor), pushConstantOffset_(0),
+				  graphicsInfo_(createInfo.graphicsInfo) { }
 
 			virtual ~RendererBase();
 			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) = 0;
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 
-			virtual void registerComponent(GraphicsComponent* component, RenderObject* robject);
 			ElementBufferObject* getElementBuffer();
 			VkPipelineLayout getPipelineLayout();
 
@@ -119,7 +117,7 @@ namespace QZL
 
 			LogicDevice* logicDevice_;
 			RendererPipeline* pipeline_;
-			RenderStorage* renderStorage_;
+			ElementBufferObject* ebo_;
 			Descriptor* descriptor_;
 			SceneGraphicsInfo* graphicsInfo_;
 			std::vector<DescriptorBuffer*> storageBuffers_;

@@ -9,6 +9,7 @@ namespace QZL {
 	namespace Graphics {
 		class DynamicBufferInterface;
 		class RenderObject;
+		struct BasicMesh;
 	}
 	namespace Game {
 		// Particles are a special kind of entity made only of points, and expanded to billboarded textured quads in a shader.
@@ -45,7 +46,10 @@ namespace QZL {
 			Graphics::ParticleShaderParams* makeShaderParams() {
 				return new Graphics::ParticleShaderParams(textureTileLength_, tint_);
 			}
-			Graphics::RenderObject* makeRenderObject(std::string name);
+			Graphics::BasicMesh* makeMesh();
+			Graphics::Material* getMaterial() {
+				return material_;
+			}
 		protected:
 			// Number of tiles on xy is identical for x and y, as textures must be square.
 			ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint,

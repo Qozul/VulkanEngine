@@ -7,6 +7,7 @@ namespace QZL {
 	class Entity;
 	namespace Graphics {
 		class GraphicsComponent;
+		struct LogicalCamera;
 	}
 	struct SceneHeirarchyNode {
 		SceneHeirarchyNode* parentNode;
@@ -18,6 +19,10 @@ namespace QZL {
 		char* paramsPtr;
 		char* materialPtr;
 		VkDeviceSize offsets[(size_t)Graphics::RendererTypes::kNone];
+		std::vector<char> graphicsMVPData;
+		std::vector<char> graphicsParamsData;
+		std::vector<char> graphicsMaterialData;
+		std::vector<float> distances[(size_t)Graphics::RendererTypes::kNone];
 	};
 	// Encompasses a game scene, defining entities in a tree heirarchy with pointers to both parent and children.
 	class Scene {
@@ -27,7 +32,7 @@ namespace QZL {
 		~Scene();
 		// Calls update on every entity in the scene hierarchy, giving a combined model matrix such that
 		// parents are the spatial root of their children.
-		std::vector<VkDrawIndexedIndirectCommand>* update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx);
+		std::vector<VkDrawIndexedIndirectCommand>* update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera);
 
 		void start();
 		/*  
@@ -58,17 +63,18 @@ namespace QZL {
 		// Deletes the given node and all of its children
 		void deleteHeirarchyRecursively(SceneHeirarchyNode* node);
 
-		void updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx);
+		void updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera);
 		void startRecursively(SceneHeirarchyNode* node);
 
 		void findDescriptorRequirementsRecursively(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount, SceneHeirarchyNode* node);
-		void addToCommandList(Graphics::GraphicsComponent* component);
+		void addToCommandList(Graphics::GraphicsComponent* component, Graphics::LogicalCamera& mainCamera);
 		void writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4& viewProjection, glm::mat4& ctm, const uint32_t& frameIdx);
 
 		SceneHeirarchyNode* rootNode_;
 		Graphics::SceneGraphicsInfo graphicsInfo_;
 		GraphicsWriteInfo graphicsWriteInfo_;
 		std::vector<VkDrawIndexedIndirectCommand> graphicsCommandLists_[(size_t)Graphics::RendererTypes::kNone];
+		
 		const SystemMasters* masters_;
 	};
 }

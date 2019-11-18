@@ -54,7 +54,8 @@ void GameMaster::loadGame()
 	camera->setGameScript(new Camera(masters_));
 
 	Entity* teapot = new Entity("Teapot");
-	teapot->getTransform()->scale = glm::vec3(2.0f);
+	teapot->getTransform()->scale = glm::vec3(1.0f);
+	teapot->getTransform()->position = glm::vec3(100.0f, 50.0f, 100.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 	
@@ -64,8 +65,7 @@ void GameMaster::loadGame()
 	scriptInit.owner = sun;
 	auto sunScript = new SunScript(masters_);
 	sun->setGameScript(sunScript);
-	auto sunRobject = sunScript->makeRenderObject("SunSystem");
-	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunRobject, sunRobject->getParams());
+	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunScript->makeShaderParams(), "sun", sunScript->getMaterial());
 
 	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
@@ -73,8 +73,7 @@ void GameMaster::loadGame()
 	scriptInit.owner = fire;
 	auto fireScript = new FireSystem(masters_);
 	fire->setGameScript(fireScript);
-	auto fireRobject = fireScript->makeRenderObject("FireSystem");
-	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireRobject, fireRobject->getParams());
+	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireScript->makeShaderParams(), "fire", fireScript->getMaterial());
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
@@ -86,9 +85,9 @@ void GameMaster::loadGame()
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
 }
 
-std::vector<VkDrawIndexedIndirectCommand>* GameMaster::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
+std::vector<VkDrawIndexedIndirectCommand>* GameMaster::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, Graphics::LogicalCamera& mainCamera)
 {
-	return scenes_[activeSceneIdx_]->update(viewProjection, dt, frameIdx);
+	return scenes_[activeSceneIdx_]->update(viewProjection, dt, frameIdx, mainCamera);
 }
 
 void GameMaster::start()

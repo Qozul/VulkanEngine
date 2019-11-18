@@ -7,6 +7,8 @@
 #include "../Graphics/StorageBuffer.h"
 #include "../Graphics/Descriptor.h"
 #include "../Graphics/Mesh.h"
+#include "../Graphics/LogicalCamera.h"
+#include "../Graphics/MeshLoader.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -27,26 +29,42 @@ Scene::~Scene()
 	SAFE_DELETE(graphicsInfo_.materialBuffer);
 }
 
-std::vector<VkDrawIndexedIndirectCommand>* Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx)
+std::vector<VkDrawIndexedIndirectCommand>* Scene::update(glm::mat4& viewProjection, float dt, const uint32_t& frameIdx, LogicalCamera& mainCamera)
 {
 	for (auto& cmdList : graphicsCommandLists_) {
 		cmdList.clear();
 	}
-	std::memset(graphicsWriteInfo_.offsets, 0, (size_t)Graphics::RendererTypes::kNone * sizeof(VkDeviceSize));
-	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->bindRange();
-	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->bindRange();
-	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->bindRange();
-	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
-		updateRecursively(rootNode_->childNodes[i], viewProjection, glm::mat4(), dt, frameIdx);
+	for (auto& distances : graphicsWriteInfo_.distances) {
+		distances.clear(); // TODO use these for sorting the commands and data
 	}
+	std::memset(graphicsWriteInfo_.offsets, 0, (size_t)Graphics::RendererTypes::kNone * sizeof(VkDeviceSize));
+	std::memset(graphicsWriteInfo_.graphicsMVPData.data(), 0, graphicsInfo_.mvpRange);
+	std::memset(graphicsWriteInfo_.graphicsParamsData.data(), 0, graphicsInfo_.paramsRange);
+	std::memset(graphicsWriteInfo_.graphicsMaterialData.data(), 0, graphicsInfo_.materialRange);
+
+	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
+		updateRecursively(rootNode_->childNodes[i], viewProjection, glm::mat4(), dt, frameIdx, mainCamera);
+	}
+
+	// Write frame's data to the gpu buffers
+	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->bindRange();
+	std::memcpy(graphicsWriteInfo_.mvpPtr + frameIdx * graphicsInfo_.mvpRange, graphicsWriteInfo_.graphicsMVPData.data(), graphicsInfo_.mvpRange);
+	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->bindRange();
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->unbindRange();
+	std::memcpy(graphicsWriteInfo_.paramsPtr + frameIdx * graphicsInfo_.paramsRange, graphicsWriteInfo_.graphicsParamsData.data(), graphicsInfo_.paramsRange);
 	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->unbindRange();
+	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->bindRange();
+	std::memcpy(graphicsWriteInfo_.materialPtr + frameIdx * graphicsInfo_.materialRange, graphicsWriteInfo_.graphicsMaterialData.data(), graphicsInfo_.materialRange);
 	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->unbindRange();
+
 	return graphicsCommandLists_;
 }
 
 void Scene::start()
 {
+	for (size_t i = 0; i < (size_t)RendererTypes::kNone; ++i) {
+		graphicsInfo_.shadowCastingEBOs[i] = kRendererTypeFlags[i] & RendererFlags::CASTS_SHADOWS ? masters_->graphicsMaster->getDynamicBuffer((RendererTypes)i) : nullptr;
+	}
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
 		startRecursively(rootNode_->childNodes[i]);
 	}
@@ -217,6 +235,10 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 	descWrites.push_back(graphicsInfo_.materialBuffer->descriptorWrite(graphicsInfo_.set, 0, graphicsInfo_.materialRange));
 	descriptor->updateDescriptorSets(descWrites);
 
+	graphicsWriteInfo_.graphicsMVPData.resize(graphicsInfo_.mvpRange);
+	graphicsWriteInfo_.graphicsParamsData.resize(graphicsInfo_.paramsRange);
+	graphicsWriteInfo_.graphicsMaterialData.resize(graphicsInfo_.materialRange);
+
 	return &graphicsInfo_;
 }
 
@@ -251,33 +273,7 @@ void Scene::deleteHeirarchyRecursively(SceneHeirarchyNode* node)
 	SAFE_DELETE(node);
 }
 
-void Scene::writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4& viewProjection, glm::mat4& ctm, const uint32_t& frameIdx)
-{
-	auto rtype = component->getRendererType();
-	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_MVP) {
-		auto mvpPtr = (glm::mat4*)(graphicsWriteInfo_.mvpPtr + graphicsInfo_.mvpOffsetSizes[(size_t)rtype] * sizeof(glm::mat4) + frameIdx * graphicsInfo_.mvpRange);
-		mvpPtr[graphicsWriteInfo_.offsets[(size_t)rtype]] = viewProjection * ctm;
-	}
-	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_PARAMS) {
-		ShaderParams* tmpParams = component->getShaderParams();
-		size_t paramsSize = ShaderParams::shaderParamsLUT[(size_t)rtype];
-		if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::INCLUDE_MODEL) {
-			std::memcpy((char*)tmpParams, (char*)&ctm, sizeof(glm::mat4));
-		}
-		char* paramsPtr = graphicsWriteInfo_.paramsPtr + graphicsInfo_.paramsOffsetSizes[(size_t)rtype] * paramsSize + frameIdx * graphicsInfo_.paramsRange + graphicsWriteInfo_.offsets[(size_t)rtype] * paramsSize;
-		std::memcpy(paramsPtr, (char*)tmpParams, paramsSize);
-	}
-	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_MATERIAL) {
-		Material* tmpMaterial = component->getMaterial();
-		size_t materialSize = Materials::materialSizeLUT[(size_t)rtype];
-		auto materialPtr = graphicsWriteInfo_.materialPtr + graphicsInfo_.materialOffsetSizes[(size_t)rtype] * materialSize + frameIdx * graphicsInfo_.materialRange + graphicsWriteInfo_.offsets[(size_t)rtype] * materialSize;
-		uint32_t data0 = ((uint32_t*)tmpMaterial->data)[0];
-		std::memcpy(materialPtr, (char*)tmpMaterial->data, tmpMaterial->size);
-	}
-	++graphicsWriteInfo_.offsets[(size_t)rtype];
-}
-
-void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx)
+void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjection, glm::mat4 ctm, float dt, const uint32_t& frameIdx, LogicalCamera& mainCamera)
 {
 	// Update might cause the entity to move, therefore calculate the concatenated model matrix after updating
 	node->entity->update(dt, viewProjection, ctm);
@@ -286,10 +282,10 @@ void Scene::updateRecursively(SceneHeirarchyNode* node, glm::mat4& viewProjectio
 	node->entity->setModelMatrix(m);
 	if (node->entity->getGraphicsComponent() != nullptr) {
 		writeGraphicsData(node->entity->getGraphicsComponent(), viewProjection, m, frameIdx);
-		addToCommandList(node->entity->getGraphicsComponent()); // TODO view frustum cull
+		addToCommandList(node->entity->getGraphicsComponent(), mainCamera); // TODO view frustum cull
 	}
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
-		updateRecursively(node->childNodes[i], viewProjection, m, dt, frameIdx);
+		updateRecursively(node->childNodes[i], viewProjection, m, dt, frameIdx, mainCamera);
 	}
 }
 
@@ -299,10 +295,13 @@ void Scene::startRecursively(SceneHeirarchyNode* node)
 	auto graphicsComponent = node->entity->getGraphicsComponent();
 	if (graphicsComponent != nullptr) {
 		if (graphicsComponent->getRendererType() == Graphics::RendererTypes::kParticle) {
-			masters_->graphicsMaster->registerComponent(graphicsComponent, static_cast<Game::ParticleSystem*>(node->entity->getGameScript())->makeRenderObject(node->entity->name()));
+			graphicsComponent->setMesh(static_cast<Game::ParticleSystem*>(node->entity->getGameScript())->makeMesh());
 		}
 		else {
-			masters_->graphicsMaster->registerComponent(graphicsComponent);
+			if (!(kRendererTypeFlags[(size_t)graphicsComponent->getRendererType()] & RendererFlags::FULLSCREEN)) {
+				auto buffer = masters_->graphicsMaster->getDynamicBuffer(graphicsComponent->getRendererType());
+				graphicsComponent->setMesh(MeshLoader::loadMesh(graphicsComponent->getMeshName(), *buffer, graphicsComponent->getLoadInfo()));
+			}
 		}
 	}
 	for (size_t i = 0; i < node->childNodes.size(); ++i) {
@@ -320,22 +319,46 @@ void Scene::findDescriptorRequirementsRecursively(std::unordered_map<Graphics::R
 	}
 }
 
-void Scene::addToCommandList(Graphics::GraphicsComponent* component)
+void Scene::addToCommandList(Graphics::GraphicsComponent* component, LogicalCamera& mainCamera)
 {
 	auto rtype = component->getRendererType();
-	BasicMesh* mesh;
-	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DYNAMIC) {
-		mesh = component->getMesh();
+	if (!(kRendererTypeFlags[(size_t)rtype] & RendererFlags::FULLSCREEN)) {
+		BasicMesh* mesh = component->getMesh();
+		if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::NON_INDEXED) {
+			graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, 0, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
+		}
+		else {
+			graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
+		}
+
+		graphicsWriteInfo_.distances[(size_t)rtype].push_back(glm::distance(component->getEntity()->getTransform()->position, mainCamera.position));
 	}
-	else {
-		mesh = masters_->graphicsMaster->getDynamicBuffer(rtype)->getMesh(component->getMeshName());
+}
+
+void Scene::writeGraphicsData(Graphics::GraphicsComponent* component, glm::mat4& viewProjection, glm::mat4& ctm, const uint32_t& frameIdx)
+{
+	auto rtype = component->getRendererType();
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_MVP) {
+		auto offset = (graphicsInfo_.mvpOffsetSizes[(size_t)rtype] + graphicsWriteInfo_.offsets[(size_t)rtype]) * sizeof(glm::mat4);
+		auto mvp = viewProjection * ctm;
+		std::memcpy(&graphicsWriteInfo_.graphicsMVPData.data()[offset], (char*)&mvp, sizeof(glm::mat4));
 	}
-	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::NON_INDEXED) {
-		graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, 0, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_PARAMS) {
+		ShaderParams* tmpParams = component->getShaderParams();
+		size_t paramsSize = ShaderParams::shaderParamsLUT[(size_t)rtype];
+		if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::INCLUDE_MODEL) {
+			std::memcpy((char*)tmpParams, (char*)&ctm, sizeof(glm::mat4));
+		}
+		auto offset = (graphicsWriteInfo_.offsets[(size_t)rtype] + graphicsInfo_.paramsOffsetSizes[(size_t)rtype]) * paramsSize;
+		std::memcpy(&graphicsWriteInfo_.graphicsParamsData.data()[offset], (char*)tmpParams, paramsSize);
 	}
-	else {
-		graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
+	if (kRendererTypeFlags[(size_t)rtype] & RendererFlags::DESCRIPTOR_MATERIAL) {
+		Material* tmpMaterial = component->getMaterial();
+		size_t materialSize = Materials::materialSizeLUT[(size_t)rtype];
+		auto offset = (graphicsInfo_.materialOffsetSizes[(size_t)rtype] + graphicsWriteInfo_.offsets[(size_t)rtype]) * materialSize;
+		std::memcpy(&graphicsWriteInfo_.graphicsMaterialData.data()[offset], (char*)tmpMaterial->data, tmpMaterial->size);
 	}
+	++graphicsWriteInfo_.offsets[(size_t)rtype];
 }
 
 std::ostream& outputSceneRecursively(std::ostream& os, SceneHeirarchyNode* node, std::string depthIndicator) {

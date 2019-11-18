@@ -10,6 +10,7 @@ namespace QZL {
 			kAtmosphere,
 			kParticle,
 			kPostProcess,
+			kShadow,
 			kNone
 		};
 
@@ -21,7 +22,8 @@ namespace QZL {
 			DESCRIPTOR_MATERIAL = 16,
 			INSTANCED = 32,
 			NON_INDEXED = 64,
-			DYNAMIC = 128
+			DYNAMIC = 128,
+			CASTS_SHADOWS = 256
 		};
 		
 		inline constexpr RendererFlags operator|(RendererFlags a, RendererFlags b)
@@ -41,11 +43,12 @@ namespace QZL {
 		};
 
 		constexpr RendererFlags kRendererTypeFlags[(size_t)RendererTypes::kNone] = { 
-			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL,
-			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL,
+			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::CASTS_SHADOWS,
+			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::CASTS_SHADOWS,
 			RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::FULLSCREEN,
 			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::NON_INDEXED | RendererFlags::DYNAMIC,
-			RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::FULLSCREEN
+			RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::FULLSCREEN,
+			RendererFlags::FULLSCREEN
 		};
 	}
 }

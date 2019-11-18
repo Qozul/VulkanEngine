@@ -32,14 +32,14 @@ void Entity::setGameScript(Game::GameScript* script)
 }
 
 void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::ShaderParams* perMeshParams, Graphics::ShaderParams* perInstanceParams,
-	Graphics::Material* material, const std::string& meshName, Graphics::MeshLoadFunc loadFunc, bool overrideChecks)
+	Graphics::Material* material, const std::string& meshName, Graphics::MeshLoadFunc loadFunc)
 {
-	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, perMeshParams, perInstanceParams, meshName, loadFunc, material, overrideChecks);
+	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, perMeshParams, perInstanceParams, meshName, loadFunc, material);
 }
 
-void Entity::setGraphicsComponent(const Graphics::RendererTypes rtype, Graphics::RenderObject* robject, Graphics::ShaderParams* perInstanceParams)
+void Entity::setGraphicsComponent(Graphics::RendererTypes rtype, Graphics::ShaderParams* params, const std::string& meshName, Graphics::Material* material)
 {
-	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, robject, perInstanceParams);
+	graphicsComponent_ = new Graphics::GraphicsComponent(this, rtype, params, meshName, material);
 }
 
 bool Entity::isStatic() const

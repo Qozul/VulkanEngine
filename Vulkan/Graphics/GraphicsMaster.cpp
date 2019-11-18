@@ -15,16 +15,6 @@ using namespace QZL::Graphics;
 
 glm::mat4 GraphicsMaster::kProjectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, NEAR_PLANE_Z, FAR_PLANE_Z);
 
-void GraphicsMaster::registerComponent(GraphicsComponent* component, RenderObject* robject, RendererTypes rtypeOverride)
-{
-	if (rtypeOverride == RendererTypes::kNone) {
-		renderers_[component->getRendererType()]->registerComponent(component, robject);
-	}
-	else {
-		renderers_[rtypeOverride]->registerComponent(component, robject);
-	}
-}
-
 void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 {
 	renderers_[type] = renderer;

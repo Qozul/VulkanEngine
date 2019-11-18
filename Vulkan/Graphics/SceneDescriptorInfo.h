@@ -8,7 +8,9 @@
 namespace QZL {
 	namespace Graphics {
 		class DescriptorBuffer;
+		class ElementBufferObject;
 		struct SceneGraphicsInfo {
+			ElementBufferObject* shadowCastingEBOs[(size_t)RendererTypes::kNone];
 			VkDescriptorSet set;
 			VkDescriptorSetLayout layout;
 			DescriptorBuffer* paramsBuffer;

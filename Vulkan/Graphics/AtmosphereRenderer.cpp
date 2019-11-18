@@ -3,7 +3,6 @@
 
 #include "AtmosphereRenderer.h"
 #include "ElementBufferObject.h"
-#include "RenderStorage.h"
 #include "GlobalRenderData.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
@@ -18,8 +17,7 @@ using namespace QZL;
 using namespace Graphics;
 
 AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), 
-		sizeof(VertexOnlyPosition), sizeof(uint16_t))))
+	: RendererBase(createInfo, nullptr)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -44,22 +42,16 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = createInfo.extent;
-	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.subpassIndex = createInfo.subpassIndex;
 
-	createPipeline<VertexOnlyPosition>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
+	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 void AtmosphereRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
-	if (renderStorage_->meshCount() == 0)
-		return;
-
 	beginFrame(cmdBuffer);
-	bindEBO(cmdBuffer, idx);
-	for (auto& cmd : *commandList) {
-		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
-	}
+	vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 }

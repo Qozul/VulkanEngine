@@ -2,7 +2,6 @@
 // Date: 01/11/19
 #include "TerrainRenderer.h"
 #include "ElementBufferObject.h"
-#include "RenderStorage.h"
 #include "GlobalRenderData.h"
 #include "StorageBuffer.h"
 #include "LogicDevice.h"
@@ -19,8 +18,8 @@ using namespace QZL;
 using namespace Graphics;
 
 TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
-		sizeof(uint16_t))))
+	: RendererBase(createInfo, new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), 
+		sizeof(uint16_t)))
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -61,10 +60,10 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 
 void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
-	if (renderStorage_->meshCount() == 0)
+	if (commandList->size() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	renderStorage_->buffer()->bind(cmdBuffer, idx); 
+	ebo_->bind(cmdBuffer, idx);
 	for (auto& cmd : *commandList) {
 		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}

@@ -65,10 +65,11 @@
     <ClInclude Include="Graphics\RendererPipeline.h" />
     <ClInclude Include="Graphics\RenderObject.h" />
     <ClInclude Include="Graphics\RenderPass.h" />
-    <ClInclude Include="Graphics\RenderStorage.h" />
     <ClInclude Include="Graphics\SceneDescriptorInfo.h" />
     <ClInclude Include="Graphics\Shader.h" />
     <ClInclude Include="Graphics\ShaderParams.h" />
+    <ClInclude Include="Graphics\ShadowPass.h" />
+    <ClInclude Include="Graphics\ShadowRenderer.h" />
     <ClInclude Include="Graphics\StorageBuffer.h" />
     <ClInclude Include="Graphics\SwapChain.h" />
     <ClInclude Include="Graphics\SwapChainDetails.h" />
@@ -120,9 +121,10 @@
     <ClCompile Include="Graphics\RendererBase.cpp" />
     <ClCompile Include="Graphics\RendererPipeline.cpp" />
     <ClCompile Include="Graphics\RenderPass.cpp" />
-    <ClCompile Include="Graphics\RenderStorage.cpp" />
     <ClCompile Include="Graphics\Shader.cpp" />
     <ClCompile Include="Graphics\ShaderParams.cpp" />
+    <ClCompile Include="Graphics\ShadowPass.cpp" />
+    <ClCompile Include="Graphics\ShadowRenderer.cpp" />
     <ClCompile Include="Graphics\StorageBuffer.cpp" />
     <ClCompile Include="Graphics\SwapChain.cpp" />
     <ClCompile Include="Graphics\TerrainRenderer.cpp" />

@@ -74,5 +74,5 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 	dataPtr[1] = geometryDepthTexture_;
 	storageBuffers_[0]->unbindRange();
 
-	vkCmdDrawIndexed(cmdBuffer, 3, 1, 0, 0, 0);
+	vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 }

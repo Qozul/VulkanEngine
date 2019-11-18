@@ -24,7 +24,7 @@ void SwapChain::loop(LogicalCamera& camera)
 	const uint32_t imgIdx = aquireImage();
 
 	auto viewProj = master_->kProjectionMatrix * camera.viewMatrix;
-	auto commandLists = master_->getMasters().gameMaster->update(viewProj, System::deltaTimeSeconds, imgIdx);
+	auto commandLists = master_->getMasters().gameMaster->update(viewProj, System::deltaTimeSeconds, imgIdx, camera);
 
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
@@ -248,7 +248,6 @@ void SwapChain::present(const uint32_t imgIdx, VkSemaphore signalSemaphores[])
 
 	currentFrame_ = (currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
 }
-
 
 void SwapChain::createSyncObjects() {
 	imageAvailableSemaphores_.resize(MAX_FRAMES_IN_FLIGHT);

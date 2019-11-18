@@ -61,13 +61,13 @@ void ParticleSystem::update(float dt, const glm::mat4& viewProjection, const glm
 	}
 }
 
-Graphics::RenderObject* ParticleSystem::makeRenderObject(std::string name)
+Graphics::BasicMesh* ParticleSystem::makeMesh()
 {
 	Graphics::BasicMesh* mesh = new Graphics::BasicMesh();
 	mesh->count = static_cast<uint32_t>(subBufferRange_.count);
 	mesh->vertexOffset = static_cast<uint32_t>(subBufferRange_.first / sizeof(Graphics::ParticleVertex));
 	mesh->indexOffset = 0;
-	return new Graphics::RenderObject(name, mesh, makeShaderParams(), material_);
+	return mesh;
 }
 
 ParticleSystem::ParticleSystem(const SystemMasters& initialiser, glm::vec3* billboardPoint,

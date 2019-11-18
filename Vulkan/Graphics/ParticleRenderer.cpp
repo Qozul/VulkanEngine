@@ -4,7 +4,6 @@
 #include "ParticleRenderer.h"
 #include "DynamicElementBuffer.h"
 #include "StorageBuffer.h"
-#include "RenderStorage.h"
 #include "GlobalRenderData.h"
 #include "LogicDevice.h"
 #include "Descriptor.h"
@@ -18,7 +17,7 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo, new RenderStorage(new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex))))
+	: RendererBase(createInfo, new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)))
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -56,14 +55,12 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 
 void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
-	if (renderStorage_->meshCount() == 0)
+	if (commandList->size() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	renderStorage_->buffer()->updateBuffer(cmdBuffer, idx);
+	ebo_->updateBuffer(cmdBuffer, idx);
 	bindEBO(cmdBuffer, idx);
-	 // TODO use command list
-	for (int i = 0; i < renderStorage_->meshCount(); ++i) {
-		const DrawElementsCommand& drawElementCmd = renderStorage_->meshData()[i];
-		vkCmdDraw(cmdBuffer, drawElementCmd.count, drawElementCmd.instanceCount, drawElementCmd.baseVertex, i);
+	for (auto& cmd : *commandList) {
+		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}
 }
