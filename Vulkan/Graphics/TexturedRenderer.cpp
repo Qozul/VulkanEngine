@@ -22,10 +22,9 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
-	
-	VkPushConstantRange pushConstants[2] = { 
-		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT), 
-		setupPushConstantRange<TessellationPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT) 
+
+	VkPushConstantRange pushConstants[1] = {
+		setupPushConstantRange<VertexPushConstants>(VK_SHADER_STAGE_VERTEX_BIT)
 	};
 
 	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] };
@@ -50,7 +49,7 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
-		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci);
+		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci);
 }
 
 void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)

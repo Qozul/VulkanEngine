@@ -11,12 +11,15 @@ layout(location = 3) flat out int outInstanceIndex;
 layout(location = 4) flat out vec4 outCameraPos;
 
 layout(push_constant) uniform PushConstants {
-	vec4 cameraPos;
+	mat4 shadowMatrix;
+	vec4 cameraPosition;
+	vec3 mainLightPosition;
+	uint shadowTextureIdx;
 } PC;
 
 void main()
 {
-	outCameraPos = PC.cameraPos;
+	outCameraPos = PC.cameraPosition;
 	outPosition = inPosition;
 	outScale = inScale;
 	outTexOffset = inTexOffset;

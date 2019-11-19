@@ -38,14 +38,18 @@ void SwapChain::loop()
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-	LightingData lightingData = { glm::vec4(cameras_[0].position, 0.0f), glm::vec4(glm::vec3(0.2f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
+	LightingData lightingData = { glm::vec4(cameras_[0].position, 0.0f), glm::vec4(glm::vec3(0.1f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
 	globalRenderData_->updateData(0, lightingData);
+
+	static const glm::vec3 shadowCamoffset = glm::vec3(0.0f, 100.0f, 100.0f);
+	//cameras_[1].lookPoint = cameras_[0].position;
+	//cameras_[1].viewMatrix = glm::lookAt(cameras_[0].position + shadowCamoffset, cameras_[1].lookPoint, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
-	renderPasses_[2]->doFrame(cameras_[1], imgIdx, commandBuffers_[imgIdx], commandLists);
-	renderPasses_[0]->doFrame(cameras_[0], imgIdx, commandBuffers_[imgIdx], commandLists);
-	renderPasses_[1]->doFrame(cameras_[0], imgIdx, commandBuffers_[imgIdx], commandLists);
+	renderPasses_[2]->doFrame(cameras_, NUM_CAMERAS, imgIdx, commandBuffers_[imgIdx], commandLists);
+	renderPasses_[0]->doFrame(cameras_, NUM_CAMERAS, imgIdx, commandBuffers_[imgIdx], commandLists);
+	renderPasses_[1]->doFrame(cameras_, NUM_CAMERAS, imgIdx, commandBuffers_[imgIdx], commandLists);
 
 	CHECK_VKRESULT(vkEndCommandBuffer(commandBuffers_[imgIdx]));
 
@@ -73,13 +77,13 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	cameras_[0].viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 	cameras_[0].projectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 	cameras_[0].projectionMatrix[1][1] *= -1.0f;
-	cameras_[0].position = glm::vec3(0.0f, 10.0f, 0.0f);
+	cameras_[0].position = glm::vec3(200.0f, 100.0f, 200.0f);
 	cameras_[0].lookPoint = glm::vec3(0.0f, 0.0f, 10.0f);
 	cameras_[1] = {};
-	cameras_[1].position = glm::vec3(0.0f, 0.0f, 1000.0f);
-	cameras_[1].lookPoint = glm::vec3(0.0f);
+	cameras_[1].position = glm::vec3(100.0f, 100.0f, 200.0f);
+	cameras_[1].lookPoint = glm::vec3(100.0f, 10.0f, 300.0f);
 	cameras_[1].viewMatrix = glm::lookAt(cameras_[1].position, cameras_[1].lookPoint, glm::vec3(0.0f, 1.0f, 0.0f));
-	cameras_[1].projectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+	cameras_[1].projectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 	cameras_[1].projectionMatrix[1][1] *= -1.0f;
 }
 

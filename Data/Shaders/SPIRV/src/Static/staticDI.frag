@@ -22,6 +22,8 @@ layout (location = 0) in vec2 texUV;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec3 worldPos;
 layout (location = 3) flat in int instanceIndex;
+layout (location = 4) in vec4 shadowCoord;
+layout (location = 5) flat in uint shadowMapIdx;
 
 layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
 
@@ -42,6 +44,21 @@ layout(set = 0, binding = 2) readonly buffer DescriptorIndexBuffer
 	DescriptorIndexData diData[];
 };
 
+//See reference: https://github.com/SaschaWillems/Vulkan/blob/master/data/shaders/shadowmapping/scene.frag
+float textureProj(vec4 shadowCoord, vec2 off)
+{
+	float shadow = 1.0;
+	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
+	{
+		float dist = texture(texSamplers[nonuniformEXT(shadowMapIdx)], shadowCoord.st + off ).r;
+		if ( shadowCoord.w > 0.0 && dist < shadowCoord.z ) 
+		{
+			shadow = 0.1;
+		}
+	}
+	return shadow;
+}
+
 void main() {
 	Material mat = materials[SC_PARAMS_OFFSET + instanceIndex];
 	vec3 incident = normalize ( lightPositions[0].xyz - worldPos );
@@ -60,5 +77,8 @@ void main() {
 	vec3 ambient = texColour.rgb * ambientColour.xyz;
 	vec3 diffuse = texColour.rgb * mat.diffuseColour.xyz * lambert;
 	vec3 specular = mat.specularColour.xyz * sFactor * 0.05;
+
+	
+	float shadow = textureProj(shadowCoord / shadowCoord.w, vec2(0.0));
 	fragColor = vec4(ambient + diffuse + specular, min(texColour.a, mat.diffuseColour.w));
 }

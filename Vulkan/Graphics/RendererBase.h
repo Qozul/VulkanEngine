@@ -80,6 +80,7 @@ namespace QZL
 
 		struct VertexPushConstants {
 			glm::mat4 shadowMatrix;
+			glm::vec4 cameraPosition;
 			glm::vec3 mainLightPosition;
 			uint32_t shadowTextureIdx;
 		};

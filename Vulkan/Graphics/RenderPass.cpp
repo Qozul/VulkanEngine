@@ -21,7 +21,7 @@ RenderPass::~RenderPass()
 	vkDestroyRenderPass(*logicDevice_, renderPass_, nullptr);
 }
 
-void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage)
+void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage, VkExtent2D extent)
 {
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -33,10 +33,16 @@ void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageVie
 	renderPassInfo.pDependencies = createInfo.dependencies.data();
 
 	CHECK_VKRESULT(vkCreateRenderPass(*logicDevice_, &renderPassInfo, nullptr, &renderPass_));
-	createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, firstAttachmentIsSwapChainImage);
+	if (extent.width == 0) {
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, firstAttachmentIsSwapChainImage, swapChainDetails_.extent);
+	}
+	else {
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, firstAttachmentIsSwapChainImage, extent);
+	}
 }
 
-void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage)
+void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage,
+	VkExtent2D extent)
 {
 	framebuffers_.resize(swapChainDetails.imageViews.size());
 	for (size_t i = 0; i < swapChainDetails.imageViews.size(); i++) {
@@ -49,22 +55,22 @@ void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDet
 		framebufferInfo.renderPass = renderPass_;
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachmentImages.size());
 		framebufferInfo.pAttachments = attachmentImages.data();
-		framebufferInfo.width = swapChainDetails.extent.width;
-		framebufferInfo.height = swapChainDetails.extent.height;
+		framebufferInfo.width = extent.width;
+		framebufferInfo.height = extent.height;
 		framebufferInfo.layers = 1;
 
 		CHECK_VKRESULT(vkCreateFramebuffer(*logicDevice, &framebufferInfo, nullptr, &framebuffers_[i]));
 	}
 }
 
-VkRenderPassBeginInfo RenderPass::beginInfo(const uint32_t& idx)
+VkRenderPassBeginInfo RenderPass::beginInfo(const uint32_t& idx, VkExtent2D extent)
 {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = renderPass_;
 	renderPassInfo.framebuffer = framebuffers_[idx];
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = swapChainDetails_.extent;
+	renderPassInfo.renderArea.extent = extent.width == 0 ? swapChainDetails_.extent : extent;
 	return renderPassInfo;
 }
 

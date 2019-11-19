@@ -27,6 +27,15 @@ layout (location = 0) out vec2 texUV;
 layout (location = 1) out vec3 normal;
 layout (location = 2) out vec3 worldPos;
 layout (location = 3) flat out int instanceIndex;
+layout (location = 4) out vec4 shadowCoord;
+layout (location = 5) flat out uint shadowMapIdx;
+
+layout(push_constant) uniform PushConstants {
+	mat4 shadowMatrix;
+	vec4 cameraPosition;
+	vec3 mainLightPosition;
+	uint shadowTextureIdx;
+} PC;
 
 out gl_PerVertex {
 	vec4 gl_Position;
@@ -47,4 +56,7 @@ void main() {
 	texUV = iTextureCoord;
 	worldPos = (materials[SC_PARAMS_OFFSET + gl_InstanceIndex].model * vec4(iPosition, 1.0)).xyz;
 	normal = mat3(transpose(inverse(materials[SC_PARAMS_OFFSET + gl_InstanceIndex].model))) * iNormal;
+
+	shadowCoord = (biasMat * PC.shadowMatrix * materials[SC_PARAMS_OFFSET + gl_InstanceIndex].model) * vec4(iPosition, 1.0);
+	shadowMapIdx = PC.shadowTextureIdx;
 }

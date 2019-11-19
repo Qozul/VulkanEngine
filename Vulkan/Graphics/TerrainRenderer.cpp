@@ -24,9 +24,8 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
-	VkPushConstantRange pushConstants[2] = {
-		setupPushConstantRange<CameraPushConstants>(VK_SHADER_STAGE_VERTEX_BIT),
-		setupPushConstantRange<TessellationPushConstants>(VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
+	VkPushConstantRange pushConstants[1] = {
+		setupPushConstantRange<VertexPushConstants>(VK_SHADER_STAGE_VERTEX_BIT)
 	};
 
 	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] };
@@ -35,12 +34,13 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 		makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
 		makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
 	};
-	auto tescSpecConstant = setupSpecConstants(1, mapEntry.data(), sizeof(uint32_t), &offsets[2]);
+	auto vertSpecConstant = setupSpecConstants(1, mapEntry.data(), sizeof(uint32_t), &offsets[1]);
+	auto tescSpecConstant = setupSpecConstants(2, mapEntry.data(), sizeof(uint32_t) * 2, &offsets[1]);
 	auto teseSpecConstant = setupSpecConstants(3, mapEntry.data(), sizeof(uint32_t) * 3, offsets);
 	auto fragSpecConstant = setupSpecConstants(2, mapEntry.data(), sizeof(uint32_t) * 2, &offsets[1]);
 
 	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, &vertSpecConstant);
 	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &fragSpecConstant);
 	stageInfos.emplace_back(createInfo.tessControlShader, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &tescSpecConstant);
 	stageInfos.emplace_back(createInfo.tessEvalShader, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &teseSpecConstant);
@@ -55,7 +55,7 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	pci.subpassIndex = createInfo.subpassIndex;
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
-		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
+		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 void TerrainRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)

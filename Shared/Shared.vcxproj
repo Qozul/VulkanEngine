@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClInclude Include="nv_dds.h" />
     <ClInclude Include="PerfMeasurer.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="tiny_obj_loader.h" />
     <ClInclude Include="Utility.h" />
   </ItemGroup>

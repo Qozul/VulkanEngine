@@ -45,6 +45,9 @@ namespace QZL {
 			TextureSampler* getSampler(std::string name) {
 				return textureSamplersDI_[name].first;
 			}
+			uint32_t getSamplerIdx(std::string name) {
+				return textureSamplersDI_[name].second;
+			}
 			
 			Material* requestMaterial(const RendererTypes type, const std::string name);
 

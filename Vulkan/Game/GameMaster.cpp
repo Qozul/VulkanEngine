@@ -56,7 +56,7 @@ void GameMaster::loadGame()
 
 	Entity* teapot = new Entity("Teapot");
 	teapot->getTransform()->scale = glm::vec3(1.0f);
-	teapot->getTransform()->position = glm::vec3(100.0f, 50.0f, 100.0f);
+	teapot->getTransform()->position = glm::vec3(100.0f, 10.0f, 300.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 	
@@ -69,7 +69,7 @@ void GameMaster::loadGame()
 	sun->setGameScript(sunScript);
 	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunScript->makeShaderParams(), "sun", sunScript->getMaterial());
 
-	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
+	//Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
 	Entity* fire = new Entity("firetest");
 	scriptInit.owner = fire;
@@ -79,7 +79,7 @@ void GameMaster::loadGame()
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
-	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
+	//scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(fire);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
 	scenes_[activeSceneIdx_]->addEntity(teapot);

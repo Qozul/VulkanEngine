@@ -218,7 +218,7 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 
 	addDynamicDescriptor(graphicsInfo_.paramsBuffer, graphicsInfo_.paramsRange, graphicsInfo_.paramsOffsetSizes, { 
 			{ (size_t)RendererTypes::kStatic, sizeof(StaticShaderParams), instancesMap[RendererTypes::kStatic] },
-			{ (size_t)RendererTypes::kTerrain, sizeof(StaticShaderParams), instancesMap[RendererTypes::kTerrain] },
+			{ (size_t)RendererTypes::kTerrain, sizeof(TerrainShaderParams), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(ParticleShaderParams), instancesMap[RendererTypes::kParticle] },
 			{ (size_t)RendererTypes::kAtmosphere, sizeof(AtmosphereShaderParams), instancesMap[RendererTypes::kAtmosphere] }
 		}, numFrameImages, limits.minStorageBufferOffsetAlignment, 1, "ParamsBuffer",

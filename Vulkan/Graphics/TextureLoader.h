@@ -15,7 +15,8 @@ namespace QZL
 			TextureLoader(const LogicDevice* logicDevice);
 			~TextureLoader();
 			Image* loadTexture(const std::string& fileName, VkShaderStageFlags stages);
-
+			static unsigned char* getCPUImage(std::string name, int width, int height, int channels, int format);
+			static void freeCPUImage(unsigned char* image);
 		private:
 			VkFormat convertToVkFormat(unsigned int oldFormat);
 

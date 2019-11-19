@@ -2,6 +2,7 @@
 // Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
+#include "LogicalCamera.h"
 
 namespace QZL
 {
@@ -13,7 +14,6 @@ namespace QZL
 		class DescriptorBuffer;
 		class TextureSampler;
 		class Image;
-		struct LogicalCamera;
 		struct SwapChainDetails;
 		struct SceneGraphicsInfo;
 
@@ -26,16 +26,17 @@ namespace QZL
 				std::vector<VkSubpassDependency> dependencies;
 			};
 
-			virtual void doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) = 0;
+			virtual void doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) = 0;
 			virtual void createRenderers() = 0;
 			virtual void initRenderPassDependency(std::vector<Image*> dependencyAttachment) = 0;
 			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			virtual ~RenderPass();
 
-			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage);
+			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage, VkExtent2D extent = { 0, 0 });
 
-			void createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage);
-			VkRenderPassBeginInfo beginInfo(const uint32_t& idx);
+			void createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage,
+				VkExtent2D extent);
+			VkRenderPassBeginInfo beginInfo(const uint32_t& idx, VkExtent2D extent = { 0, 0 });
 
 			VkAttachmentDescription makeAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
 				VkAttachmentLoadOp stencilLoadOp, VkAttachmentStoreOp stencilStoreOp, VkImageLayout initialLayout, VkImageLayout finalLayout);

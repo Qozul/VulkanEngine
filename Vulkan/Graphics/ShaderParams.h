@@ -29,11 +29,11 @@ namespace QZL {
 			float alpha = 1.0f;
 			glm::vec3 specularCol;
 			float specularExponent = 1.0f;
-			/*float distanceFarMinusClose = 300.0f;
+			float distanceFarMinusClose = 300.0f;
 			float closeDistance = 50.0f;
 			float patchRadius = 40.0f;
 			float maxTessellationWeight = 4.0f;
-			std::array<glm::vec4, 6> frustumPlanes;*/
+			std::array<glm::vec4, 6> frustumPlanes;
 			//uint32_t materialIdx;
 			TerrainShaderParams(glm::vec3 albedo, glm::vec3 specular, float alpha, float specExponent)
 				: albedoCol(albedo), alpha(alpha), specularCol(specular), specularExponent(specExponent) { }

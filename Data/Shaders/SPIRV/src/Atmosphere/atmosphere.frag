@@ -18,14 +18,6 @@ layout(constant_id = 0) const uint SC_PARAMS_OFFSET = 0;
 layout (location = 0) out vec4 colour;
 layout (location = 0) in vec2 pos;
 layout (location = 1) flat in vec4 cameraPos;
-/*layout(push_constant) uniform Params {
-	mat4 inverseViewProj;
-	vec4 betaRay; // .w = float betaMie	
-	vec4 cameraPosition; // .w = float planetRadius
-	vec4 sunDirection; // .w = float Hatm
-	vec3 sunIntensity;
-	uint samplerIdx;
-} PC;*/
 
 layout(set = 0, binding = 1) readonly buffer ShaderParamsData
 {

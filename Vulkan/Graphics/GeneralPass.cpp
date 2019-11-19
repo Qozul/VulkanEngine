@@ -71,7 +71,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(atmosphereRenderer_);
 }
 
-void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
+void GeometryPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
 {
 	std::array<VkClearValue, 2> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -92,28 +92,19 @@ void GeometryPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommand
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
 	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, texturedRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
-	/*VertexPushConstants vpc;
-	vpc.mainLightPosition = ; // TODO get mainLight position
-	vpc.shadowMatrix = ; // TODO get cameras_[1].viewProjection
-	vpc.shadowTextureIdx = shadowDepthTexture_;*/
+	VertexPushConstants vpc;
+	vpc.cameraPosition = glm::vec4(cameras[0].position, 1.0f);
+	vpc.mainLightPosition = cameras[1].position;
+	vpc.shadowTextureIdx = shadowDepthTexture_;
+	vpc.shadowMatrix = cameras[1].viewProjection;
 
-	CameraPushConstants pc;
-	pc.cameraPosition = glm::vec4(camera.position, 1.0f);
-	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &pc);
+	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vpc), &vpc);
 
-	TessellationPushConstants pcs;
-	pcs.distanceFarMinusClose = 300.0f; // Implies far distance is 350.0f+
-	pcs.closeDistance = 50.0f;
-	pcs.patchRadius = 40.0f;
-	pcs.maxTessellationWeight = 4.0f;
-	camera.calculateFrustumPlanes(camera.viewProjection, pcs.frustumPlanes); // TODO calculate in terrain update and use as shader params
-
-	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, sizeof(glm::vec4), sizeof(TessellationPushConstants), &pcs);
-	atmosphereRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kAtmosphere]);
+	atmosphereRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kAtmosphere]);
 
 	vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
-	terrainRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
-	texturedRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
+	texturedRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
+	terrainRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -129,7 +120,7 @@ void GeometryPass::createRenderers()
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
 
-	createInfo.updateRendererSpecific(1, 1, "StaticVert", logicDevice_->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing) ? "StaticFrag_DI" : "StaticFrag");
+	createInfo.updateRendererSpecific(1, 1, "StaticVert", "StaticFrag_DI");
 	texturedRenderer_ = new TexturedRenderer(createInfo);
 
 	createInfo.updateRendererSpecific(1, 1, "TerrainVert", "TerrainFrag", "", "TerrainTESC", "TerrainTESE");
@@ -147,7 +138,8 @@ void GeometryPass::initRenderPassDependency(std::vector<Image*> dependencyAttach
 {
 	ASSERT(dependencyAttachment.size() == 1);
 	shadowDepthBuf_ = dependencyAttachment[0];
-	shadowDepthTexture_ = graphicsMaster_->getMasters().textureManager->allocateTexture("shadowDepth", shadowDepthBuf_);
+	shadowDepthTexture_ = graphicsMaster_->getMasters().textureManager->allocateTexture("shadowDepth", shadowDepthBuf_, 
+		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT });
 	createRenderers();
 }
 

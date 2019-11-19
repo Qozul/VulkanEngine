@@ -61,7 +61,7 @@ PostProcessPass::~PostProcessPass()
 	SAFE_DELETE(particleRenderer_);
 }
 
-void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
+void PostProcessPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
 {
 	VkOffset3D imageOffset = {};
 	imageOffset.x = 0;
@@ -110,9 +110,9 @@ void PostProcessPass::doFrame(LogicalCamera& camera, const uint32_t& idx, VkComm
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	postProcessRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kPostProcess]);
+	postProcessRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kPostProcess]);
 
-	particleRenderer_->recordFrame(camera, idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kParticle]);
+	particleRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kParticle]);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }

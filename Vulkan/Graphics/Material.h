@@ -27,6 +27,7 @@ namespace QZL {
 				uint32_t heightmapIdx;
 				uint32_t normalmapIdx;
 				uint32_t albedoIdx;
+				uint32_t detailNormalmapIdx;
 			};
 
 			struct Atmosphere {

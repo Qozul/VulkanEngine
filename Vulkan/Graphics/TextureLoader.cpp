@@ -5,6 +5,8 @@
 #include "LogicDevice.h"
 #include "DeviceMemory.h"
 #include "../../Shared/nv_dds.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "../../Shared/stb_image.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -19,6 +21,17 @@ TextureLoader::TextureLoader(const LogicDevice* logicDevice)
 
 TextureLoader::~TextureLoader()
 {
+}
+
+unsigned char* TextureLoader::getCPUImage(std::string name, int width, int height, int channels, int format) 
+{
+	unsigned char* image = stbi_load((kPath + name).c_str(), &width, &height, &channels, format);
+	return image;
+}
+
+void TextureLoader::freeCPUImage(unsigned char* image) 
+{
+	stbi_image_free(image);
 }
 
 // Adapted from https://vulkan-tutorial.com/Texture_mapping/Images
