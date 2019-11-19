@@ -8,6 +8,7 @@ namespace QZL
 	namespace Graphics {
 		class LogicDevice;
 		class PhysicalDevice;
+		class Image;
 		struct GraphicsSystemDetails;
 
 		// Interface for https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/index.html
@@ -24,7 +25,8 @@ namespace QZL
 			void* mapMemory(const AllocationID& id);
 			void unmapMemory(const AllocationID& id);
 			void transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
-			void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height);
+			void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height, 
+				VkShaderStageFlags stages = VK_SHADER_STAGE_FRAGMENT_BIT, Image* image = nullptr);
 			void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer);
 			void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage);
 

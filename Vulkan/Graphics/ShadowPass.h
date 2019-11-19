@@ -21,6 +21,7 @@ namespace QZL {
 			VkFormat createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 
 			RendererBase* shadowRenderer_;
+			RendererBase* shadowTerrainRenderer_;
 			Image* depthBuffer_;
 			Image* colourBuffer_;
 		};

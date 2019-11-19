@@ -18,23 +18,15 @@ ShadowPass::ShadowPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
 {
 	CreateInfo createInfo = {};
-	createColourBuffer(logicDevice, swapChainDetails);
 	auto depthFormat = createDepthBuffer(logicDevice, swapChainDetails);
-	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 	createInfo.attachments.push_back(makeAttachment(depthFormat, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL));
 
-	std::vector<VkAttachmentReference> colourAttachmentRefs;
-	VkAttachmentReference colourRef = {};
-	colourRef.attachment = 0;
-	colourRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	colourAttachmentRefs.push_back(colourRef);
 	VkAttachmentReference depthAttachmentRef = {};
-	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.attachment = 0;
 	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef));
+	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, &depthAttachmentRef));
 	
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
@@ -48,29 +40,44 @@ ShadowPass::ShadowPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 		VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT));
 
-	std::vector<VkImageView> attachmentImages = { colourBuffer_->getImageView(), depthBuffer_->getImageView() };
-	createRenderPass(createInfo, attachmentImages, false, { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS });
+	std::vector<VkImageView> attachmentImages = { depthBuffer_->getImageView() };
+	createRenderPass(createInfo, attachmentImages, { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS });
 	createRenderers();
 }
 
 ShadowPass::~ShadowPass()
 {
+	SAFE_DELETE(shadowTerrainRenderer_);
 	SAFE_DELETE(depthBuffer_);
-	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(shadowRenderer_);
 }
 
 void ShadowPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
 {
-	std::array<VkClearValue, 2> clearValues = {};
-	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
-	clearValues[1].depthStencil = { 1.0f, 0 };
+	std::array<VkClearValue, 1> clearValues = {};
+	clearValues[0].depthStencil = { 1.0f, 0 };
 
 	auto bi = beginInfo(idx, { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS });
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	bi.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport viewport;
+	viewport.height = SHADOW_DIMENSIONS;
+	viewport.width = SHADOW_DIMENSIONS;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	viewport.x = 0;
+	viewport.y = 0;
+	vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+
+	VkRect2D scissor;
+	scissor.extent.width = SHADOW_DIMENSIONS;
+	scissor.extent.height = SHADOW_DIMENSIONS;
+	scissor.offset.x = 0;
+	scissor.offset.y = 0;
+	vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
 		graphicsInfo_->mvpRange * (idx + graphicsInfo_->numFrameIndices),
@@ -83,14 +90,15 @@ void ShadowPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const
 
 	vkCmdSetDepthBias(cmdBuffer, 1.25f, 0.0f, 1.75f);
 
-	uint32_t mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic];
+	uint32_t mvpOffset[2] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic], 0 };
 	vkCmdPushConstants(cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
 	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kStatic]->bind(cmdBuffer, idx);
 	shadowRenderer_->recordFrame(cameras[1], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
-	mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
-	vkCmdPushConstants(cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
-	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(cmdBuffer, idx);
-	shadowRenderer_->recordFrame(cameras[1], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
+	mvpOffset[0] = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
+	mvpOffset[1] = graphicsMaster_->getMasters().textureManager->getSamplerIdx("Heightmaps/hmap2");
+	//vkCmdPushConstants(cmdBuffer, shadowTerrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
+	//graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(cmdBuffer, idx);
+	//shadowTerrainRenderer_->recordFrame(cameras[1], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
 
 	vkCmdEndRenderPass(cmdBuffer);
 }
@@ -105,8 +113,12 @@ void ShadowPass::createRenderers()
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
-	createInfo.updateRendererSpecific(0, 1, "ShadowVert",  "ShadowFrag");
+	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	createInfo.updateRendererSpecific(0, 1, "ShadowVert",  "");
 	shadowRenderer_ = new ShadowRenderer(createInfo);
+	createInfo.updateRendererSpecific(0, 1, "ShadowTerrainVert", "", "", "ShadowterrainTESC", "ShadowTerrainTESE");
+	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+	shadowTerrainRenderer_ = new ShadowRenderer(createInfo);
 
 	graphicsMaster_->setRenderer(RendererTypes::kShadow, shadowRenderer_);
 }
@@ -116,26 +128,14 @@ void ShadowPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDet
 	colourBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, SHADOW_DIMENSIONS, SHADOW_DIMENSIONS, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
-	colourBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 VkFormat ShadowPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
 {
-	VkFormat imageFormat = VkFormat::VK_FORMAT_UNDEFINED;
-	for (VkFormat format : { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM }) {
-		VkFormatProperties properties;
-		vkGetPhysicalDeviceFormatProperties(logicDevice->getPhysicalDevice(), format, &properties);
-		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT && properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) {
-			imageFormat = format;
-			break;
-		}
-	}
-	ASSERT(imageFormat != VkFormat::VK_FORMAT_UNDEFINED);
-
-	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, imageFormat, VK_IMAGE_TILING_OPTIMAL,
+	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VK_FORMAT_D32_SFLOAT, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, SHADOW_DIMENSIONS, SHADOW_DIMENSIONS, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
-	depthBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	return imageFormat;
+		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL }, "ShadowDepthBuffer");
+	depthBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	return VK_FORMAT_D32_SFLOAT;
 }
 

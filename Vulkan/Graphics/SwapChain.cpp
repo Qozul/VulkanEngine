@@ -38,7 +38,7 @@ void SwapChain::loop()
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-	LightingData lightingData = { glm::vec4(cameras_[0].position, 0.0f), glm::vec4(glm::vec3(0.1f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
+	LightingData lightingData = { glm::vec4(cameras_[0].position, 0.0f), glm::vec4(glm::vec3(0.05f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
 	globalRenderData_->updateData(0, lightingData);
 
 	static const glm::vec3 shadowCamoffset = glm::vec3(0.0f, 100.0f, 100.0f);
@@ -65,12 +65,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	initSwapChainImages(window, surface, surfaceCapabilities);
 	numSwapChainImages = details_.images.size();
 	initImageViews();
-	if (master->supportsOptionalExtension(OptionalExtensions::kDescriptorIndexing)) {
-		globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().textureManager->getSetlayoutBinding());
-	}
-	else {
-		globalRenderData_ = new GlobalRenderData(logicDevice);
-	}
+	globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().textureManager->getSetlayoutBinding());
 	createSyncObjects();
 
 	cameras_[0] = {};
@@ -83,7 +78,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	cameras_[1].position = glm::vec3(100.0f, 100.0f, 200.0f);
 	cameras_[1].lookPoint = glm::vec3(100.0f, 10.0f, 300.0f);
 	cameras_[1].viewMatrix = glm::lookAt(cameras_[1].position, cameras_[1].lookPoint, glm::vec3(0.0f, 1.0f, 0.0f));
-	cameras_[1].projectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+	cameras_[1].projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
 	cameras_[1].projectionMatrix[1][1] *= -1.0f;
 }
 
@@ -297,6 +292,6 @@ void SwapChain::initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsIn
 	renderPasses_.push_back(new GeometryPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_.push_back(new ShadowPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
-	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
+	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->msaaResolveBuffer_ });
 	renderPasses_[0]->initRenderPassDependency({ static_cast<ShadowPass*>(renderPasses_[2])->depthBuffer_ });
 }

@@ -29,6 +29,8 @@ namespace QZL
 			uint32_t subpassIndex;
 			uint32_t colourAttachmentCount = 1;
 			VkBool32 depthBiasEnable = VK_FALSE;
+			VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
+			std::vector<VkDynamicState> dynamicState;
 		};
 
 		class RendererPipeline {

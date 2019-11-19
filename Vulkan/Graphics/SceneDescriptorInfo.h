@@ -27,6 +27,8 @@ namespace QZL {
 			VkDeviceSize materialOffsetSizes[(size_t)RendererTypes::kNone];
 
 			ElementBufferObject* shadowCastingEBOs[(size_t)RendererTypes::kNone];
+
+			DescriptorBuffer* lightsBuffer;
 		};
 	}
 }

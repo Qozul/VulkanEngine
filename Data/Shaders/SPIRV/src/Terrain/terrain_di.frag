@@ -35,7 +35,7 @@ layout(set = 0, binding = 2) readonly buffer TexIndices
 };
 
 //See reference: https://github.com/SaschaWillems/Vulkan/blob/master/data/shaders/shadowmapping/scene.frag
-float textureProj(vec4 shadowCoord, vec2 off)
+float texturePrj(vec4 shadowCoord, vec2 off)
 {
 	float shadow = 1.0;
 	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
@@ -64,11 +64,11 @@ void main() {
 	vec4 texColour = texture(texSamplers[nonuniformEXT(texIndices.diffuseIdx)], texUV);
 	
 	vec3 ambient = texColour.rgb * ambientColour.xyz;
-	vec3 diffuse = texColour.rgb * param.diffuseColour.xyz * lambert;
+	vec3 diffuse = max(texColour.rgb * param.diffuseColour.xyz * lambert, ambient);
 	vec3 specular = param.specularColour.xyz * sFactor * 0.05;
-
-	float shadow = 1.0f;// textureProj(shadowCoord / shadowCoord.w, vec2(0.0));
-	fragColor = vec4((ambient + diffuse + specular) * shadow, min(texColour.a, param.diffuseColour.w));
+	
+	float shadow = texturePrj(shadowCoord / shadowCoord.w, vec2(0.0));
+	fragColor = vec4((diffuse + specular) * shadow, min(texColour.a, param.diffuseColour.w));
 	fragColor = fragColor / (fragColor + vec4(1.0, 1.0, 1.0, 0.0));
 	fragColor.rgb = pow(fragColor.rgb, vec3(1.0/2.2));
 }

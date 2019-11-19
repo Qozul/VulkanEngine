@@ -27,7 +27,7 @@ namespace QZL {
 				uint32_t heightmapIdx;
 				uint32_t normalmapIdx;
 				uint32_t albedoIdx;
-				uint32_t detailNormalmapIdx;
+				//uint32_t detailNormalmapIdx;
 			};
 
 			struct Atmosphere {
@@ -40,7 +40,12 @@ namespace QZL {
 
 			struct PostProcess {
 				uint32_t colourBufferIdx;
-				uint32_t depthBufferIdx;
+			};
+
+			struct Water {
+				uint32_t displacementMap;
+				uint32_t normalMap;
+				uint32_t specularMap;
 			};
 			static void loadMaterial(TextureManager* texManager, RendererTypes type, std::string fileName, void* data);
 			static RendererTypes stringToType(std::string typeName);
@@ -53,6 +58,7 @@ namespace QZL {
 			static void loadStaticMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
 			static void loadTerrainMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
 			static void loadParticleMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
+			static void loadWaterMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines);
 		};
 	}
 }

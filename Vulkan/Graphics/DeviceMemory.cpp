@@ -5,6 +5,7 @@
 #include "PhysicalDevice.h"
 #include "LogicDevice.h"
 #include "Validation.h"
+#include "Image.h"
 #include "vk_mem_alloc.h"
 
 using namespace QZL;
@@ -21,7 +22,7 @@ private:
 	void* mapMemory(const AllocationID& id);
 	void unmapMemory(const AllocationID& id);
 	void transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
-	void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height);
+	void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height, VkShaderStageFlags stages, Image* image);
 	void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer);
 	void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage);
 
@@ -155,7 +156,7 @@ void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkBuffe
 	vkQueueWaitIdle(queue_);
 }
 
-void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height)
+void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height, VkShaderStageFlags stages, Image* image)
 {
 	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -173,6 +174,8 @@ void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkImage
 	copyRegion.imageExtent = { width, height, 1 };
 
 	vkCmdCopyBufferToImage(transferCmdBuffer_, srcBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+	if (image != nullptr) image->generateMipmaps(transferCmdBuffer_, stages);
 
 	vkEndCommandBuffer(transferCmdBuffer_);
 	VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
@@ -382,9 +385,9 @@ void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dst
 {
 	pImpl_->transferMemory(srcBuffer, dstBuffer, srcOffset, dstOffset, size);
 }
-void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height)
+void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height, VkShaderStageFlags stages, Image* image)
 {
-	pImpl_->transferMemory(srcBuffer, dstImage, srcOffset, width, height);
+	pImpl_->transferMemory(srcBuffer, dstImage, srcOffset, width, height, stages, image);
 }
 void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer)
 {

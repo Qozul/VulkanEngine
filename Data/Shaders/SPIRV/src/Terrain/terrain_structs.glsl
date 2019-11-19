@@ -12,5 +12,4 @@ struct TextureIndices {
 	uint heightmapIdx;
 	uint normalmapIdx;
 	uint diffuseIdx;
-	uint detailNmIdx;
 };

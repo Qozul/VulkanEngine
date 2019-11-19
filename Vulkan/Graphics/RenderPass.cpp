@@ -21,7 +21,7 @@ RenderPass::~RenderPass()
 	vkDestroyRenderPass(*logicDevice_, renderPass_, nullptr);
 }
 
-void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage, VkExtent2D extent)
+void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent)
 {
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -34,19 +34,20 @@ void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageVie
 
 	CHECK_VKRESULT(vkCreateRenderPass(*logicDevice_, &renderPassInfo, nullptr, &renderPass_));
 	if (extent.width == 0) {
-		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, firstAttachmentIsSwapChainImage, swapChainDetails_.extent);
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, swapChainDetails_.extent);
 	}
 	else {
-		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, firstAttachmentIsSwapChainImage, extent);
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, extent);
 	}
 }
 
-void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, bool firstAttachmentIsSwapChainImage,
+void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages,
 	VkExtent2D extent)
 {
+	bool useSwapChainImageView = attachmentImages[0] == nullptr;
 	framebuffers_.resize(swapChainDetails.imageViews.size());
-	for (size_t i = 0; i < swapChainDetails.imageViews.size(); i++) {
-		if (firstAttachmentIsSwapChainImage) {
+	for (size_t i = 0; i < swapChainDetails.imageViews.size(); ++i) {
+		if (useSwapChainImageView) {
 			attachmentImages[0] = swapChainDetails.imageViews[i];
 		}
 
@@ -89,14 +90,15 @@ VkAttachmentDescription RenderPass::makeAttachment(VkFormat format, VkSampleCoun
 	return attachment;
 }
 
-VkSubpassDescription RenderPass::makeSubpass(VkPipelineBindPoint pipelineType, std::vector<VkAttachmentReference>& colourReferences, VkAttachmentReference* depthReference)
+VkSubpassDescription RenderPass::makeSubpass(VkPipelineBindPoint pipelineType, std::vector<VkAttachmentReference>& colourReferences, VkAttachmentReference* depthReference, VkAttachmentReference* resolve)
 {
-	VkSubpassDescription atmosphereSubpass = {};
-	atmosphereSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	atmosphereSubpass.colorAttachmentCount = static_cast<uint32_t>(colourReferences.size());
-	atmosphereSubpass.pColorAttachments = colourReferences.data();
-	atmosphereSubpass.pDepthStencilAttachment = depthReference;
-	return atmosphereSubpass;
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = static_cast<uint32_t>(colourReferences.size());
+	subpass.pColorAttachments = colourReferences.data();
+	subpass.pDepthStencilAttachment = depthReference;
+	subpass.pResolveAttachments = resolve;
+	return subpass;
 }
 VkSubpassDescription RenderPass::makeSubpass(VkPipelineBindPoint pipelineType, VkAttachmentReference* depthReference)
 {

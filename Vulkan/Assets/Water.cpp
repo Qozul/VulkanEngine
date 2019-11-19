@@ -1,4 +1,4 @@
-#include "Terrain.h"
+#include "Water.h"
 #include "../Graphics/ShaderParams.h"
 #include "../Graphics/Material.h"
 #include "../Graphics/TextureManager.h"
@@ -9,17 +9,17 @@
 using namespace QZL;
 using namespace Graphics;
 
-Terrain::Terrain(const std::string name, TextureManager* textureManager)
+Water::Water(const std::string name, TextureManager* textureManager)
 	: Entity(name)
 {
-	setGraphicsComponent(Graphics::RendererTypes::kTerrain, nullptr, new TerrainShaderParams(glm::vec3(1.5f), glm::vec3(0.8f), 1.0f, 10.0f),
-		textureManager->requestMaterial(Graphics::RendererTypes::kTerrain, "ExampleTerrain"), "terrain", loadFunction);
+	setGraphicsComponent(Graphics::RendererTypes::kWater, nullptr, new WaterShaderParams(glm::vec3(1.5f), glm::vec3(0.8f), 1.0f, 10.0f),
+		textureManager->requestMaterial(Graphics::RendererTypes::kWater, "Water"), "water", loadFunction);
 }
 
-void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vector<char>& vertices)
+void Water::loadFunction(uint32_t& count, std::vector<char>& indices, std::vector<char>& vertices)
 {
-	const int gridSize = 1024;
-	const int numSubGrids = 200;
+	const int gridSize = 256;
+	const int numSubGrids = 20;
 	const int subGridSize = gridSize / numSubGrids;
 	std::vector<uint16_t> inds;
 	std::vector<Graphics::Vertex> verts;
@@ -29,8 +29,7 @@ void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vec
 			float vz = static_cast<float>(z * subGridSize);
 			float u = vx;
 			float v = vz;
-			// Store normalized coordinates where the normals go, and the maximum height in the final normal
-			verts.emplace_back(vx, 0.0f, vz, u, v, vx / 1024.0f, vz / 1024.0f, 200.0f);
+			verts.emplace_back(vx, 0.0f, vz, u / gridSize, v / gridSize, 10.0f, 1.0f, 0.0f); // Pack in max wave height and speed
 		}
 	}
 	for (int x = 0; x < numSubGrids - 1; ++x) {

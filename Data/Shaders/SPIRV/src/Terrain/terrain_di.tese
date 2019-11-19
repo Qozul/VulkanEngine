@@ -13,7 +13,8 @@ layout (location = 0) in vec2 iTexUV[];
 layout (location = 1) flat in int instanceIndex[];
 layout (location = 2) in vec4 shadowCoord[];
 layout (location = 3) flat in uint shadowMapIdx[];
-layout (location = 4) in vec3 inNormal[];
+layout (location = 4) in vec2 inNormalizedUvs[];
+layout (location = 5) flat in float maxHeight[];
 
 layout (location = 0) out vec2 texUV;
 layout (location = 1) out vec3 worldPos;
@@ -45,8 +46,6 @@ layout(set = 0, binding = 2) readonly buffer TexIndices
 
 layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
 
-const float maxHeight = 100.0;
-
 void main(void)
 {
 	outInstanceIndex = instanceIndex[0];
@@ -61,18 +60,18 @@ void main(void)
 	vec4 shadowCoord2 = mix(shadowCoord[3], shadowCoord[2], gl_TessCoord.x);
 	outShadowCoord = mix(shadowCoord1, shadowCoord2, gl_TessCoord.y);
 	
+	vec2 normalUvs1 = mix(inNormalizedUvs[0], inNormalizedUvs[1], gl_TessCoord.x);
+	vec2 normalUvs2 = mix(inNormalizedUvs[3], inNormalizedUvs[2], gl_TessCoord.x);
+	vec2 normalizedUvs = mix(normalUvs1, normalUvs2, gl_TessCoord.y);
+	
 	vec4 pos1 = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
 	vec4 pos2 = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
 	vec4 position = mix(pos1, pos2, gl_TessCoord.y);
-	//position.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], texUV).r * maxHeight;
-
-	vec3 norm1 = mix(inNormal[0], inNormal[1], gl_TessCoord.x);
-	vec3 norm2 = mix(inNormal[3], inNormal[2], gl_TessCoord.x);
-	normal = mix(norm1, norm2, gl_TessCoord.y);
+	position.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], normalizedUvs).r * maxHeight[0];
 	
 	gl_Position = ubo.elementData[SC_MVP_OFFSET + instanceIndex[0]] * position;
 	worldPos = (material.model * position).xyz;
-	//normal = texture(texSamplers[nonuniformEXT(texIndices.normalmapIdx)], texUV).rgb;
+	normal = texture(texSamplers[nonuniformEXT(texIndices.normalmapIdx)], normalizedUvs).rgb;
 	float tmp = normal.r;
 	normal.r = normal.g;
 	normal.g = normal.b;

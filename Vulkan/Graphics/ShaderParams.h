@@ -48,6 +48,8 @@ namespace QZL {
 			float Hatm;
 			float g;
 			uint32_t scatteringIdx;
+			float padding0;
+			float padding1;
 		};
 		struct ParticleShaderParams : ShaderParams {
 			glm::mat4 modelMatrix;
@@ -55,6 +57,12 @@ namespace QZL {
 			//uint32_t materialIdx;
 			ParticleShaderParams(float texTileLength, glm::vec3 tint) : tint(tint, texTileLength) { }
 			ParticleShaderParams(glm::mat4 model, glm::vec4 tint) : modelMatrix(model), tint(tint) { }
+		};
+		struct WaterShaderParams : ShaderParams {
+			glm::mat4 modelMatrix;
+			glm::vec4 baseColour;
+			glm::vec4 tipColour;
+			WaterShaderParams(glm::vec4 base, glm::vec4 tip) : baseColour(base), tipColour(tip) { }
 		};
 	}
 }

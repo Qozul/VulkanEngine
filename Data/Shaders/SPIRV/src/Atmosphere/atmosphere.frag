@@ -11,11 +11,14 @@ struct Params {
 	vec4 sunIntensity;//  float Hatm;
 	float g;
 	uint scatteringIdx;
+	float padding0;
+	float padding1;
 };
 
 layout(constant_id = 0) const uint SC_PARAMS_OFFSET = 0;
 
 layout (location = 0) out vec4 colour;
+
 layout (location = 0) in vec2 pos;
 layout (location = 1) flat in vec4 cameraPos;
 
@@ -62,7 +65,6 @@ void main()
 {	
 	Params parameters = params[SC_PARAMS_OFFSET];
 	vec3 Z = vec3(0.0, 1.0, 0.0);
-	//vec3 Z = normalize(PC.cameraPosition.xyz);
 	vec3 L = normalize(parameters.sunDirection.xyz);
 	vec3 V = normalize((parameters.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0)).xyz);
 	vec3 rayleigh;

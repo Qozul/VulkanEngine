@@ -30,6 +30,7 @@ namespace QZL
 			VkExtent2D extent;
 			uint32_t maxDrawnEntities;
 			size_t swapChainImageCount;
+			VkPrimitiveTopology prims;
 			std::string vertexShader;
 			std::string fragmentShader;
 			std::string geometryShader;

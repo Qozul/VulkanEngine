@@ -48,6 +48,8 @@ RendererTypes Materials::stringToType(std::string typeName)
 		return RendererTypes::kAtmosphere;
 	else if (typeName == "POST_PROCESS")
 		return RendererTypes::kPostProcess;
+	else if (typeName == "WATER")
+		return RendererTypes::kWater;
 }
 
 Materials::MaterialLoadingFunction Materials::getLoadingFunction(RendererTypes type)
@@ -59,6 +61,8 @@ Materials::MaterialLoadingFunction Materials::getLoadingFunction(RendererTypes t
 		return Materials::loadTerrainMaterial;
 	case RendererTypes::kParticle:
 		return Materials::loadParticleMaterial;
+	case RendererTypes::kWater:
+		return Materials::loadWaterMaterial;
 	default:
 		ASSERT(false);
 	}
@@ -80,7 +84,7 @@ void Materials::loadTerrainMaterial(TextureManager* texManager, void* data, std:
 	material.heightmapIdx = texManager->requestTexture(lines[0]);
 	material.normalmapIdx = texManager->requestTexture(lines[2]);
 	material.albedoIdx = texManager->requestTexture(lines[1]);
-	material.detailNormalmapIdx = texManager->requestTexture(lines[3]);
+	//material.detailNormalmapIdx = texManager->requestTexture(lines[3]);
 	memcpy(data, &material, sizeof(Terrain));
 }
 
@@ -90,4 +94,14 @@ void Materials::loadParticleMaterial(TextureManager* texManager, void* data, std
 	Particle material = {};
 	material.albedoIdx = texManager->requestTexture(lines[0]);
 	memcpy(data, &material, sizeof(Particle));
+}
+
+void Materials::loadWaterMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines)
+{
+	ASSERT(lines.size() >= 3);
+	Water material = {};
+	material.displacementMap = texManager->requestTexture(lines[0]);
+	material.normalMap = texManager->requestTexture(lines[1]);
+	material.specularMap = texManager->requestTexture(lines[2]);
+	memcpy(data, &material, sizeof(Water));
 }

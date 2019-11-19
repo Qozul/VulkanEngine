@@ -16,8 +16,8 @@
 using namespace QZL;
 using namespace Graphics;
 
-PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture, uint32_t geometryDepthTexture)
-	: RendererBase(createInfo, nullptr), geometryColourTexture_(geometryColourTexture), geometryDepthTexture_(geometryDepthTexture)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture)
+	: RendererBase(createInfo, nullptr), geometryColourTexture_(geometryColourTexture)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -54,6 +54,8 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.subpassIndex = createInfo.subpassIndex;
+	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
 	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
@@ -70,7 +72,6 @@ void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx,
 	};
 	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[0]->bindRange() + sizeof(Materials::PostProcess) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess] + dynamicOffsets[2]);
 	dataPtr[0] = geometryColourTexture_;
-	dataPtr[1] = geometryDepthTexture_;
 	storageBuffers_[0]->unbindRange();
 
 	vkCmdDraw(cmdBuffer, 3, 1, 0, 0);

@@ -13,6 +13,13 @@ namespace QZL {
 			glm::vec4 ambientColour;
 			std::array<glm::vec4, kMaxLights> lightPositions;
 		};
+		struct Light {
+			glm::vec3 position;
+			float radius;
+			glm::vec3 colour;
+			float attenuationFactor;
+			glm::vec4 direction;
+		};
 		enum class GlobalRenderDataBindings : uint32_t {
 			kLighting = 0,
 			kTextureArray = 1

@@ -7,5 +7,7 @@ const size_t ShaderParams::shaderParamsLUT[] = {
 	sizeof(TerrainShaderParams), 
 	sizeof(AtmosphereShaderParams), 
 	sizeof(ParticleShaderParams), 
-	0 // Post process
+	0, // Post process
+	0, // Shadow
+	sizeof(WaterShaderParams)
 };

@@ -27,8 +27,10 @@ namespace QZL {
 			RendererBase* texturedRenderer_;
 			RendererBase* terrainRenderer_;
 			RendererBase* atmosphereRenderer_;
+			RendererBase* particleRenderer_;
 
 			Image* colourBuffer_;
+			Image* msaaResolveBuffer_;
 			Image* depthBuffer_;
 			Image* shadowDepthBuf_;
 			uint32_t shadowDepthTexture_;

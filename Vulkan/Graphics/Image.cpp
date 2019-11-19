@@ -1,5 +1,6 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
+// Mipmapping reference https://vulkan-tutorial.com/Generating_Mipmaps for calculating mipmap levels and generating them
 #include "Image.h"
 #include "DeviceMemory.h"
 #include "LogicDevice.h"
@@ -8,9 +9,15 @@
 using namespace QZL;
 using namespace Graphics;
 
-Image::Image(const LogicDevice* logicDevice, const VkImageCreateInfo createInfo, MemoryAllocationPattern pattern, ImageParameters imageParameters, std::string debugName)
-	: logicDevice_(logicDevice), format_(createInfo.format), mipLevels_(createInfo.mipLevels)
+Image::Image(const LogicDevice* logicDevice, VkImageCreateInfo createInfo, MemoryAllocationPattern pattern, ImageParameters imageParameters, std::string debugName)
+	: logicDevice_(logicDevice), format_(createInfo.format), width_(createInfo.extent.width), height_(createInfo.extent.height), mipLevels_(createInfo.mipLevels)
 {
+	if (createInfo.mipLevels > 1) {
+		mipLevels_ = calculateMipLevels(createInfo.extent.width, createInfo.extent.height);
+		createInfo.mipLevels = mipLevels_;
+		createInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	}
+
 	imageInfo_ = {};
 	imageDetails_ = logicDevice->getDeviceMemory()->createImage(pattern, createInfo, debugName);
 
@@ -58,6 +65,50 @@ void Image::changeLayout(VkCommandBuffer& cmdBuffer, VkImageLayout newLayout, Vk
 	imageInfo_.imageLayout = newLayout;
 }
 
+uint32_t Image::calculateMipLevels(uint32_t width, uint32_t height)
+{
+	return static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
+}
+
+void Image::generateMipmaps(VkCommandBuffer cmdBuffer, VkShaderStageFlags stages)
+{
+	if (mipLevels_ == 1) return;
+	VkImageMemoryBarrier barrier = makeImageMemoryBarrier(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+	int32_t mipWidth = width_;
+	int32_t mipHeight = height_;
+	for (uint32_t i = 1; i < mipLevels_; i++) {
+		VkImageBlit blit = {};
+		blit.srcOffsets[0] = { 0, 0, 0 };
+		blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
+		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.srcSubresource.mipLevel = i - 1;
+		blit.srcSubresource.baseArrayLayer = 0;
+		blit.srcSubresource.layerCount = 1;
+		blit.dstOffsets[0] = { 0, 0, 0 };
+		blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
+		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		blit.dstSubresource.mipLevel = i;
+		blit.dstSubresource.baseArrayLayer = 0;
+		blit.dstSubresource.layerCount = 1;
+
+		vkCmdBlitImage(cmdBuffer, imageDetails_.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDetails_.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
+
+		barrier.subresourceRange.baseMipLevel = i - 1;
+		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, stages, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+		if (mipWidth > 1) mipWidth /= 2;
+		if (mipHeight > 1) mipHeight /= 2;
+	}
+
+	barrier.subresourceRange.baseMipLevel = mipLevels_ - 1;
+	vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, stages, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+}
+
 const VkImageView& Image::getImageView()
 {
 	return imageView_;
@@ -102,7 +153,6 @@ VkAccessFlags Image::imageLayoutToAccessFlags(VkImageLayout layout)
 
 VkPipelineStageFlags Image::imageLayoutToStage(VkImageLayout layout)
 {
-	// Note the lack of shader read only optimal because it could come from any stage to any stage
 	switch (layout) {
 	case VK_IMAGE_LAYOUT_UNDEFINED:
 		return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -116,6 +166,8 @@ VkPipelineStageFlags Image::imageLayoutToStage(VkImageLayout layout)
 		return VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	case VK_IMAGE_LAYOUT_GENERAL:
 		return VK_SHADER_STAGE_COMPUTE_BIT;
+	case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+		return VK_SHADER_STAGE_FRAGMENT_BIT;
 	default:
 		ASSERT(false);
 	}

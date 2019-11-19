@@ -123,8 +123,9 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.sampleShadingEnable = pipelineCreateInfo.sampleCount != VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = pipelineCreateInfo.sampleCount;
+	multisampling.minSampleShading = 0.2f;
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -173,11 +174,10 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	pipelineInfo.subpass = pipelineCreateInfo.subpassIndex;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	VkDynamicState dynamicState;
 	VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo;
-	if (pipelineCreateInfo.depthBiasEnable) {
-		dynamicState = VK_DYNAMIC_STATE_DEPTH_BIAS;
-		dynamicStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, nullptr, 0, 1, &dynamicState };
+	if (pipelineCreateInfo.depthBiasEnable) pipelineCreateInfo.dynamicState.push_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
+	if (pipelineCreateInfo.dynamicState.size() > 0) {
+		dynamicStateCreateInfo = { VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, nullptr, 0, (uint32_t)pipelineCreateInfo.dynamicState.size(), pipelineCreateInfo.dynamicState.data() };
 		pipelineInfo.pDynamicState = &dynamicStateCreateInfo;
 	}
 
