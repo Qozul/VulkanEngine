@@ -45,7 +45,6 @@ namespace QZL {
 			struct Water {
 				uint32_t displacementMap;
 				uint32_t normalMap;
-				uint32_t specularMap;
 			};
 			static void loadMaterial(TextureManager* texManager, RendererTypes type, std::string fileName, void* data);
 			static RendererTypes stringToType(std::string typeName);

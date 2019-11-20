@@ -1,4 +1,6 @@
 Teapot object and textures (Royalty Free)
  - https://www.turbosquid.com/3d-models/teapot-model-1311532
 
+Water textures https://3dtextures.me/2018/11/29/water-002/
+
 Everything else is public domain from opengameart

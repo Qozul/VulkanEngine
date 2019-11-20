@@ -21,7 +21,6 @@ namespace QZL {
 			float specularY = 0.7f;
 			float specularZ = 0.7f;
 			float specularExponent = 41.0f;
-			//uint32_t materialIdx;
 		};
 		struct TerrainShaderParams : ShaderParams {
 			glm::mat4 model;
@@ -34,7 +33,6 @@ namespace QZL {
 			float patchRadius = 40.0f;
 			float maxTessellationWeight = 4.0f;
 			std::array<glm::vec4, 6> frustumPlanes;
-			//uint32_t materialIdx;
 			TerrainShaderParams(glm::vec3 albedo, glm::vec3 specular, float alpha, float specExponent)
 				: albedoCol(albedo), alpha(alpha), specularCol(specular), specularExponent(specExponent) { }
 		};
@@ -54,7 +52,6 @@ namespace QZL {
 		struct ParticleShaderParams : ShaderParams {
 			glm::mat4 modelMatrix;
 			glm::vec4 tint;
-			//uint32_t materialIdx;
 			ParticleShaderParams(float texTileLength, glm::vec3 tint) : tint(tint, texTileLength) { }
 			ParticleShaderParams(glm::mat4 model, glm::vec4 tint) : modelMatrix(model), tint(tint) { }
 		};

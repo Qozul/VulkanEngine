@@ -29,6 +29,7 @@
     <ClInclude Include="Assets\Skysphere.h" />
     <ClInclude Include="Assets\Terrain.h" />
     <ClInclude Include="Assets\Transform.h" />
+    <ClInclude Include="Assets\Water.h" />
     <ClInclude Include="Game\AtmosphereScript.h" />
     <ClInclude Include="Game\Camera.h" />
     <ClInclude Include="Game\FireSystem.h" />
@@ -83,6 +84,7 @@
     <ClInclude Include="Graphics\Vertex.h" />
     <ClInclude Include="Graphics\VkUtil.h" />
     <ClInclude Include="Graphics\vk_mem_alloc.h" />
+    <ClInclude Include="Graphics\WaterRenderer.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="Physics\CollisionVolume.h" />
     <ClInclude Include="Physics\RigidBody.h" />
@@ -93,6 +95,7 @@
     <ClCompile Include="Assets\Entity.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />
+    <ClCompile Include="Assets\Water.cpp" />
     <ClCompile Include="Game\AtmosphereScript.cpp" />
     <ClCompile Include="Game\Camera.cpp" />
     <ClCompile Include="Game\FireSystem.cpp" />
@@ -136,6 +139,7 @@
     <ClCompile Include="Graphics\TextureSampler.cpp" />
     <ClCompile Include="Graphics\Validation.cpp" />
     <ClCompile Include="Graphics\VkUtil.cpp" />
+    <ClCompile Include="Graphics\WaterRenderer.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="SystemMasters.cpp" />
   </ItemGroup>

@@ -14,7 +14,7 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 const size_t Materials::materialTextureCountLUT[(size_t)RendererTypes::kNone] = { 2, 3, 1, 1 };
-const size_t Materials::materialSizeLUT[(size_t)RendererTypes::kNone] = { sizeof(Static), sizeof(Terrain), sizeof(Atmosphere), sizeof(Particle), sizeof(PostProcess) };
+const size_t Materials::materialSizeLUT[(size_t)RendererTypes::kNone] = { sizeof(Static), sizeof(Terrain), sizeof(Atmosphere), sizeof(Particle), sizeof(PostProcess), 0, sizeof(Water) };
 
 void Materials::loadMaterial(TextureManager* texManager, RendererTypes type, std::string fileName, void* data)
 {
@@ -98,10 +98,9 @@ void Materials::loadParticleMaterial(TextureManager* texManager, void* data, std
 
 void Materials::loadWaterMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines)
 {
-	ASSERT(lines.size() >= 3);
+	ASSERT(lines.size() >= 2);
 	Water material = {};
 	material.displacementMap = texManager->requestTexture(lines[0]);
 	material.normalMap = texManager->requestTexture(lines[1]);
-	material.specularMap = texManager->requestTexture(lines[2]);
 	memcpy(data, &material, sizeof(Water));
 }

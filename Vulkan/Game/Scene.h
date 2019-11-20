@@ -69,6 +69,7 @@ namespace QZL {
 		void findDescriptorRequirementsRecursively(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount, SceneHeirarchyNode* node);
 		void addToCommandList(Graphics::GraphicsComponent* component, Graphics::LogicalCamera& mainCamera);
 		void writeGraphicsData(Graphics::GraphicsComponent* component, Graphics::LogicalCamera* cameras, size_t cameraCount, glm::mat4& ctm, const uint32_t& frameIdx);
+		void sort(Graphics::RendererTypes rtype);
 
 		SceneHeirarchyNode* rootNode_;
 		Graphics::SceneGraphicsInfo graphicsInfo_;

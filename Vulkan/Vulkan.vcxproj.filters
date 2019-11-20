@@ -180,9 +180,6 @@
     <ClInclude Include="Assets\Terrain.h">
       <Filter>Header Files\Assets\Specialised Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Assets\Skysphere.h">
-      <Filter>Header Files\Assets</Filter>
-    </ClInclude>
     <ClInclude Include="Game\ParticleSystem.h">
       <Filter>Header Files\Game</Filter>
     </ClInclude>
@@ -302,6 +299,15 @@
     </ClInclude>
     <ClInclude Include="Game\TerrainScript.h">
       <Filter>Header Files\Game\Scripts</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Skysphere.h">
+      <Filter>Header Files\Assets\Specialised Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Assets\Water.h">
+      <Filter>Header Files\Assets\Specialised Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\WaterRenderer.h">
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -448,6 +454,12 @@
     </ClCompile>
     <ClCompile Include="Game\TerrainScript.cpp">
       <Filter>Source Files\Game\Scripts</Filter>
+    </ClCompile>
+    <ClCompile Include="Assets\Water.cpp">
+      <Filter>Source Files\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\WaterRenderer.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

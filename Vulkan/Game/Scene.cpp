@@ -29,6 +29,35 @@ Scene::~Scene()
 	SAFE_DELETE(graphicsInfo_.materialBuffer);
 }
 
+struct SortKey {
+	float key;
+	VkDrawIndexedIndirectCommand cmd;
+};
+
+void Scene::sort(RendererTypes rtype)
+{
+	auto& distances = graphicsWriteInfo_.distances[(size_t)rtype];
+	auto& cmds = graphicsCommandLists_[(size_t)rtype];
+	SortKey key;
+	int64_t j;
+	for (int64_t i = 1; i < distances.size(); ++i)
+	{
+		key.key = distances[i];
+		key.cmd = cmds[i];
+		j = i - 1;
+
+		while (j >= 0 && distances[j] > key.key)
+		{
+			distances[j + 1] = distances[j];
+			cmds[j + 1] = cmds[j];
+			
+			j = j - 1;
+		}
+		distances[j + 1] = key.key;
+		cmds[j + 1] = key.cmd;
+	}
+}
+
 std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras, const size_t cameraCount, float dt, const uint32_t& frameIdx)
 {
 	for (auto& cmdList : graphicsCommandLists_) {
@@ -51,6 +80,9 @@ std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras,
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
 		updateRecursively(rootNode_->childNodes[i], cameras, cameraCount, glm::mat4(), dt, frameIdx);
 	}
+
+	sort(RendererTypes::kStatic);
+	sort(RendererTypes::kParticle);
 
 	// Write frame's data to the gpu buffers
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->bindRange();
@@ -212,7 +244,8 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 	addDynamicDescriptor(graphicsInfo_.mvpBuffer, graphicsInfo_.mvpRange, graphicsInfo_.mvpOffsetSizes, {
 			{ (size_t)RendererTypes::kStatic, sizeof(glm::mat4), instancesMap[RendererTypes::kStatic] }, 
 			{ (size_t)RendererTypes::kTerrain, sizeof(glm::mat4), instancesMap[RendererTypes::kTerrain] },
-			{ (size_t)RendererTypes::kParticle, sizeof(glm::mat4), instancesMap[RendererTypes::kParticle] } 
+			{ (size_t)RendererTypes::kParticle, sizeof(glm::mat4), instancesMap[RendererTypes::kParticle] },
+			{ (size_t)RendererTypes::kWater, sizeof(glm::mat4), instancesMap[RendererTypes::kWater] }
 		}, numFrameImages * NUM_CAMERAS, limits.minStorageBufferOffsetAlignment, 0, "MVPBuffer",
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, logicDevice);
 
@@ -220,7 +253,8 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 			{ (size_t)RendererTypes::kStatic, sizeof(StaticShaderParams), instancesMap[RendererTypes::kStatic] },
 			{ (size_t)RendererTypes::kTerrain, sizeof(TerrainShaderParams), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(ParticleShaderParams), instancesMap[RendererTypes::kParticle] },
-			{ (size_t)RendererTypes::kAtmosphere, sizeof(AtmosphereShaderParams), instancesMap[RendererTypes::kAtmosphere] }
+			{ (size_t)RendererTypes::kAtmosphere, sizeof(AtmosphereShaderParams), instancesMap[RendererTypes::kAtmosphere] },
+			{ (size_t)RendererTypes::kWater, sizeof(WaterShaderParams), instancesMap[RendererTypes::kWater] }
 		}, numFrameImages, limits.minStorageBufferOffsetAlignment, 1, "ParamsBuffer",
 		VK_SHADER_STAGE_ALL_GRAPHICS, logicDevice);
 
@@ -228,7 +262,8 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 			{ (size_t)RendererTypes::kStatic, sizeof(Materials::Static), instancesMap[RendererTypes::kStatic] },
 			{ (size_t)RendererTypes::kTerrain, sizeof(Materials::Terrain), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(Materials::Particle), instancesMap[RendererTypes::kParticle] },
-			{ (size_t)RendererTypes::kPostProcess, sizeof(Materials::PostProcess), 1 }
+			{ (size_t)RendererTypes::kPostProcess, sizeof(Materials::PostProcess), 1 },
+			{ (size_t)RendererTypes::kWater, sizeof(Materials::Water), instancesMap[RendererTypes::kWater] }
 		}, numFrameImages, limits.minStorageBufferOffsetAlignment, 2, "MaterialBuffer",
 		VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, logicDevice);
 

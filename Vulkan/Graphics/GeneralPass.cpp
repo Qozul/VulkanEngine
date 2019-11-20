@@ -5,6 +5,7 @@
 #include "SwapChainDetails.h"
 #include "TexturedRenderer.h"
 #include "TerrainRenderer.h"
+#include "WaterRenderer.h"
 #include "ParticleRenderer.h"
 #include "AtmosphereRenderer.h"
 #include "Image.h"
@@ -69,6 +70,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(texturedRenderer_);
 	SAFE_DELETE(atmosphereRenderer_);
 	SAFE_DELETE(particleRenderer_);
+	SAFE_DELETE(waterRenderer_);
 }
 
 void GeometryPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
@@ -120,7 +122,7 @@ void GeometryPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, con
 	texturedRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
 	terrainRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
 	particleRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kParticle]);
-
+	waterRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kWater]);
 	vkCmdEndRenderPass(cmdBuffer);
 }
 
@@ -147,10 +149,14 @@ void GeometryPass::createRenderers()
 	createInfo.updateRendererSpecific(0, 2, "ParticlesVert", "ParticlesFrag", "ParticlesGeom");
 	particleRenderer_ = new ParticleRenderer(createInfo);
 
+	createInfo.updateRendererSpecific(0, 1, "WaterVert", "WaterFrag", "", "WaterTESC", "WaterTESE");
+	waterRenderer_ = new WaterRenderer(createInfo);
+
 	graphicsMaster_->setRenderer(RendererTypes::kParticle, particleRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kStatic, texturedRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kTerrain, terrainRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kAtmosphere, atmosphereRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kWater, waterRenderer_);
 }
 
 void GeometryPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
