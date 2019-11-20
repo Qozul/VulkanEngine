@@ -1,6 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
-#extension GL_EXT_nonuniform_qualifier : require
+#extension GL_GOOGLE_include_directive : enable
+#include "../common.glsl"
 
 struct Params {
 	mat4 model;
@@ -41,21 +42,6 @@ layout(set = 0, binding = 1) readonly buffer ParamsData
 	Params params[];
 };
 
-//See reference: https://github.com/SaschaWillems/Vulkan/blob/master/data/shaders/shadowmapping/scene.frag
-float texturePrj(vec4 shadowCoord, vec2 off)
-{
-	float shadow = 1.0;
-	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 ) 
-	{
-		float dist = texture(texSamplers[nonuniformEXT(shadowMapIdx)], shadowCoord.st + off ).r;
-		if ( shadowCoord.w > 0.0 && dist < shadowCoord.z ) 
-		{
-			shadow = 0.1;
-		}
-	}
-	return shadow;
-}
-
 void main() {
 	Params param = params[SC_PARAMS_OFFSET + instanceIndex];
 	vec3 incident = normalize(lightPositions[0].xyz - worldPos);
@@ -74,8 +60,8 @@ void main() {
 	vec3 diffuse = max(param.baseColour.xyz * lambert, ambient);
 	vec3 specular = vec3(1.0) * sFactor * 0.05;
 	
-	float shadow = texturePrj(shadowCoord / shadowCoord.w, vec2(0.0));
-	fragColor = vec4((mix(environmentCol.rgb, diffuse, 0.5) + specular) * shadow, 1.0);
+	float shadow = projectShadow(shadowCoord / shadowCoord.w, vec2(0.0), shadowMapIdx);
+	fragColor = vec4((mix(environmentCol.rgb, diffuse, 0.5) * shadow + specular), 1.0);
 	fragColor = fragColor / (fragColor + vec4(1.0, 1.0, 1.0, 0.0));
 	fragColor.rgb = pow(fragColor.rgb, vec3(1.0/2.2));
 }

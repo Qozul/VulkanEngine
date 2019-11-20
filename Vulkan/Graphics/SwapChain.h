@@ -4,13 +4,14 @@
 #include "VkUtil.h"
 #include "GraphicsTypes.h"
 #include "SwapChainDetails.h"
-#include "LogicalCamera.h"
+#include "FrameInfo.h"
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
 namespace QZL
 {
 	class Scene;
+	struct InputProfile;
 	namespace Graphics {
 		class LogicDevice;
 		class RenderPass;
@@ -51,8 +52,9 @@ namespace QZL
 			void submitQueue(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void createSyncObjects();
-
 			void initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsInfo);
+
+			void toggleSplitscreen();
 
 			GlobalRenderData* globalRenderData_;
 
@@ -64,12 +66,14 @@ namespace QZL
 			LogicDevice* logicDevice_;
 			GraphicsMaster* master_;
 			Scene* activeScene_;
-			LogicalCamera cameras_[NUM_CAMERAS]; // Main, Shadow (Main light)
 
 			std::vector<VkSemaphore> imageAvailableSemaphores_;
 			std::vector<VkSemaphore> renderFinishedSemaphores_;
 			std::vector<VkFence> inFlightFences_;
 			size_t currentFrame_ = 0;
+			bool splitscreenEnabled_;
+			InputProfile* inputProfile_;
+			FrameInfo frameInfo_;
 		};
 	}
 }

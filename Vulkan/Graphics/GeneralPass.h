@@ -17,7 +17,7 @@ namespace QZL {
 		protected:
 			GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			~GeometryPass();
-			void doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) override;
+			void doFrame(FrameInfo& frameInfo) override;
 			void createRenderers() override;
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
 		private:

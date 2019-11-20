@@ -2,6 +2,7 @@
 #include "../Graphics/VkUtil.h"
 #include "../Graphics/GraphicsTypes.h"
 #include "../Graphics/SceneDescriptorInfo.h"
+#include "../Graphics/LogicalCamera.h"
 
 namespace QZL {
 	class Entity;

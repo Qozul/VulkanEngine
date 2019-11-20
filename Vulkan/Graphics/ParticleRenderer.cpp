@@ -54,13 +54,13 @@ ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci);
 }
 
-void ParticleRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void ParticleRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
 	if (commandList->size() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	ebo_->updateBuffer(cmdBuffer, idx);
-	bindEBO(cmdBuffer, idx);
+	ebo_->updateBuffer(cmdBuffer, frameIdx);
+	bindEBO(cmdBuffer, frameIdx);
 	for (auto& cmd : *commandList) {
 		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}

@@ -64,10 +64,8 @@ void GameMaster::loadGame()
 	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 	terrain->setGameScript(new TerrainScript(masters_));
 
-
-	//Entity* water = new Water("water", masters_.textureManager);
-	Entity* water2 = new Water("water", masters_.textureManager);
-	water2->getTransform()->position = glm::vec3(0.0f, -120.0f, 130.0f);
+	Entity* water = new Water("water", masters_.textureManager);
+	water->getTransform()->position = glm::vec3(0.0f, -120.0f, 130.0f);
 
 	Entity* sun = new Entity("sun");
 	scriptInit.owner = sun;
@@ -87,8 +85,7 @@ void GameMaster::loadGame()
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(fire);
-	//scenes_[activeSceneIdx_]->addEntity(water);
-	scenes_[activeSceneIdx_]->addEntity(water2);
+	scenes_[activeSceneIdx_]->addEntity(water);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
 	scenes_[activeSceneIdx_]->addEntity(teapot);
 

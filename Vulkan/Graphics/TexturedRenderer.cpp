@@ -54,12 +54,12 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci);
 }
 
-void TexturedRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void TexturedRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
 	if (commandList->size() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	ebo_->bind(cmdBuffer, idx);
+	ebo_->bind(cmdBuffer, frameIdx);
 
 	for (auto& cmd : *commandList) {
 		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);

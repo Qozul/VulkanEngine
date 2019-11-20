@@ -75,5 +75,4 @@ void main(void)
 	normal.r = normal.g;
 	normal.g = normal.b;
 	normal.b = tmp;
-	normal = normalize(mat3(transpose(inverse(material.model))) * normal);
 }

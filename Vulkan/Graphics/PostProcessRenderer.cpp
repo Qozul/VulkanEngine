@@ -61,14 +61,14 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void PostProcessRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void PostProcessRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
 	beginFrame(cmdBuffer);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * idx,
-		graphicsInfo_->paramsRange * idx,
-		graphicsInfo_->materialRange * idx
+		graphicsInfo_->mvpRange * frameIdx,
+		graphicsInfo_->paramsRange * frameIdx,
+		graphicsInfo_->materialRange * frameIdx
 	};
 	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[0]->bindRange() + sizeof(Materials::PostProcess) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess] + dynamicOffsets[2]);
 	dataPtr[0] = geometryColourTexture_;

@@ -2,7 +2,7 @@
 // Date: 01/11/19
 #pragma once
 #include "VkUtil.h"
-#include "LogicalCamera.h"
+#include "FrameInfo.h"
 
 namespace QZL
 {
@@ -26,7 +26,7 @@ namespace QZL
 				std::vector<VkSubpassDependency> dependencies;
 			};
 
-			virtual void doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists) = 0;
+			virtual void doFrame(FrameInfo& frameInfo) = 0;
 			virtual void createRenderers() = 0;
 			virtual void initRenderPassDependency(std::vector<Image*> dependencyAttachment) = 0;
 			RenderPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
@@ -35,7 +35,7 @@ namespace QZL
 			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent = { 0, 0 });
 
 			void createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, VkExtent2D extent);
-			VkRenderPassBeginInfo beginInfo(const uint32_t& idx, VkExtent2D extent = { 0, 0 });
+			VkRenderPassBeginInfo beginInfo(const uint32_t& idx, VkExtent2D extent = { 0, 0 }, int32_t offsetX = 0);
 
 			VkAttachmentDescription makeAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
 				VkAttachmentLoadOp stencilLoadOp, VkAttachmentStoreOp stencilStoreOp, VkImageLayout initialLayout, VkImageLayout finalLayout);

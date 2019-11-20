@@ -309,6 +309,9 @@
     <ClInclude Include="Graphics\WaterRenderer.h">
       <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\FrameInfo.h">
+      <Filter>Header Files\Graphics\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp">

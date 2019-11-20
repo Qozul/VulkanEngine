@@ -52,16 +52,16 @@ ShadowPass::~ShadowPass()
 	SAFE_DELETE(shadowRenderer_);
 }
 
-void ShadowPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
+void ShadowPass::doFrame(FrameInfo& frameInfo)
 {
 	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].depthStencil = { 1.0f, 0 };
 
-	auto bi = beginInfo(idx, { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS });
+	auto bi = beginInfo(frameInfo.frameIdx, { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS });
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	bi.pClearValues = clearValues.data();
 
-	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport;
 	viewport.height = SHADOW_DIMENSIONS;
@@ -70,37 +70,37 @@ void ShadowPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const
 	viewport.maxDepth = 1.0f;
 	viewport.x = 0;
 	viewport.y = 0;
-	vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
 
 	VkRect2D scissor;
 	scissor.extent.width = SHADOW_DIMENSIONS;
 	scissor.extent.height = SHADOW_DIMENSIONS;
 	scissor.offset.x = 0;
 	scissor.offset.y = 0;
-	vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (idx + graphicsInfo_->numFrameIndices),
-		graphicsInfo_->paramsRange * (idx),
-		graphicsInfo_->materialRange * (idx)
+		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		graphicsInfo_->paramsRange * frameInfo.frameIdx,
+		graphicsInfo_->materialRange * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shadowRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
+	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shadowRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
-	vkCmdSetDepthBias(cmdBuffer, 1.25f, 0.0f, 1.75f);
+	vkCmdSetDepthBias(frameInfo.cmdBuffer, 1.25f, 0.0f, 1.75f);
 
 	uint32_t mvpOffset[2] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic], 0 };
-	vkCmdPushConstants(cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
-	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kStatic]->bind(cmdBuffer, idx);
-	shadowRenderer_->recordFrame(cameras[1], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
+	vkCmdPushConstants(frameInfo.cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
+	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kStatic]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
+	shadowRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
 	mvpOffset[0] = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
 	mvpOffset[1] = graphicsMaster_->getMasters().textureManager->getSamplerIdx("Heightmaps/hmap2");
 	//vkCmdPushConstants(cmdBuffer, shadowTerrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
 	//graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(cmdBuffer, idx);
 	//shadowTerrainRenderer_->recordFrame(cameras[1], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
 
-	vkCmdEndRenderPass(cmdBuffer);
+	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
 void ShadowPass::createRenderers()

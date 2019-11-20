@@ -17,12 +17,13 @@ namespace QZL {
 			VkFilter magFilter = VK_FILTER_LINEAR;
 			VkFilter minFilter = VK_FILTER_LINEAR;
 			VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			VkBorderColor borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 			float anisotropy = 8;
 			VkShaderStageFlags stages = VK_SHADER_STAGE_FRAGMENT_BIT;
 			SamplerInfo() { }
 			SamplerInfo(VkShaderStageFlags stages) : stages(stages) { }
-			SamplerInfo(VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy, VkShaderStageFlags stages)
-				: magFilter(magFilter), minFilter(minFilter), addressMode(addressMode), anisotropy(anisotropy), stages(stages) { }
+			SamplerInfo(VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy, VkShaderStageFlags stages, VkBorderColor borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK)
+				: magFilter(magFilter), minFilter(minFilter), addressMode(addressMode), anisotropy(anisotropy), stages(stages), borderColor(borderColor) { }
 		};
 
 		class TextureManager {

@@ -74,58 +74,58 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(environmentRenderer_);
 }
 
-void GeometryPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
+void GeometryPass::doFrame(FrameInfo& frameInfo)
 {
 	std::array<VkClearValue, 3> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 	clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	auto bi = beginInfo(idx);
+	auto bi = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX);
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	bi.pClearValues = clearValues.data();
 
-	vkCmdBeginRenderPass(cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport;
 	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = swapChainDetails_.extent.width;
+	viewport.width = frameInfo.viewportWidth;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	viewport.x = 0;
+	viewport.x = frameInfo.viewportX;
 	viewport.y = 0;
-	vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
 
 	VkRect2D scissor;
-	scissor.extent.width = swapChainDetails_.extent.width;
+	scissor.extent.width = frameInfo.viewportWidth;
 	scissor.extent.height = swapChainDetails_.extent.height;
-	scissor.offset.x = 0;
+	scissor.offset.x = frameInfo.viewportX;
 	scissor.offset.y = 0;
-	vkCmdSetScissor(cmdBuffer, 0, 1, &scissor);
+	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * idx,
-		graphicsInfo_->paramsRange * idx,
-		graphicsInfo_->materialRange * idx
+		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		graphicsInfo_->paramsRange * frameInfo.frameIdx,
+		graphicsInfo_->materialRange * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
-	vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, texturedRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
+	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, texturedRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
 	VertexPushConstants vpc;
-	vpc.cameraPosition = glm::vec4(cameras[0].position, 1.0f);
-	vpc.mainLightPosition = cameras[1].position;
+	vpc.cameraPosition = glm::vec4(frameInfo.cameras[frameInfo.mainCameraIdx].position, 1.0f);
+	vpc.mainLightPosition = frameInfo.cameras[1].position;
 	vpc.shadowTextureIdx = shadowDepthTexture_;
-	vpc.shadowMatrix = cameras[1].viewProjection;
+	vpc.shadowMatrix = frameInfo.cameras[1].viewProjection;
 
-	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vpc), &vpc);
-	environmentRenderer_->recordFrame(cameras[0], idx, cmdBuffer, nullptr);
-	atmosphereRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kAtmosphere]);
-	texturedRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
-	terrainRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
-	particleRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kParticle]);
-	waterRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kWater]);
-	vkCmdEndRenderPass(cmdBuffer);
+	vkCmdPushConstants(frameInfo.cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vpc), &vpc);
+	environmentRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+	atmosphereRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kAtmosphere]);
+	texturedRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
+	terrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
+	particleRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kParticle]);
+	waterRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kWater]);
+	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
 void GeometryPass::createRenderers()
@@ -169,7 +169,7 @@ void GeometryPass::initRenderPassDependency(std::vector<Image*> dependencyAttach
 	ASSERT(dependencyAttachment.size() == 1);
 	shadowDepthBuf_ = dependencyAttachment[0];
 	shadowDepthTexture_ = graphicsMaster_->getMasters().textureManager->allocateTexture("shadowDepth", shadowDepthBuf_, 
-		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT });
+		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	createRenderers();
 }
 

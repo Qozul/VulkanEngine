@@ -55,7 +55,7 @@ ShadowRenderer::ShadowRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void ShadowRenderer::recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void ShadowRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
 	if (commandList->size() == 0)
 		return;

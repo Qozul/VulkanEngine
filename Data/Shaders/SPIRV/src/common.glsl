@@ -37,19 +37,13 @@ struct Light {
 };
 
 #ifndef OVERRIDE_TEX_SAMPLERS
-//See reference: https://github.com/SaschaWillems/Vulkan/blob/master/data/shaders/shadowmapping/scene.frag
 float projectShadow(in vec4 shadowCoord, in vec2 off, in uint mapIdx)
 {
-	float shadow = 1.0;
-	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
-	{
-		float dist = texture(texSamplers[nonuniformEXT(mapIdx)], shadowCoord.st + off).r;
-		if (shadowCoord.w > 0.0 && dist < shadowCoord.z)
-		{
-			shadow = 0.1;
-		}
+	if (shadowCoord.s >= 0.0 && shadowCoord.s <= 1.0 && shadowCoord.t >= 0.0 && shadowCoord.t <= 1.0) { 
+		return shadowCoord.z > -0.1 && shadowCoord.z < 1.0 && shadowCoord.w > 0.0 && 
+			texture(texSamplers[nonuniformEXT(mapIdx)], shadowCoord.st + off).r < shadowCoord.z ? 0.1 : 1.0;
 	}
-	return shadow;
+	return 1.0;
 }
 #endif
 

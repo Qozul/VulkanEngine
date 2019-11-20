@@ -64,13 +64,13 @@ void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDet
 	}
 }
 
-VkRenderPassBeginInfo RenderPass::beginInfo(const uint32_t& idx, VkExtent2D extent)
+VkRenderPassBeginInfo RenderPass::beginInfo(const uint32_t& idx, VkExtent2D extent, int32_t offsetX)
 {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = renderPass_;
 	renderPassInfo.framebuffer = framebuffers_[idx];
-	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.offset = { offsetX, 0 };
 	renderPassInfo.renderArea.extent = extent.width == 0 ? swapChainDetails_.extent : extent;
 	return renderPassInfo;
 }

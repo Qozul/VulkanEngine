@@ -8,6 +8,7 @@
 
 namespace QZL {
 	namespace Graphics {
+#define NUM_CAMERAS 2
 		struct LogicalCamera {
 			glm::mat4 viewMatrix;
 			glm::mat4 projectionMatrix;

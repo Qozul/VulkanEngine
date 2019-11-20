@@ -95,7 +95,7 @@ namespace QZL
 				  graphicsInfo_(createInfo.graphicsInfo) { }
 
 			virtual ~RendererBase();
-			virtual void recordFrame(LogicalCamera& camera, const uint32_t idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) = 0;
+			virtual void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) = 0;
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 
 			ElementBufferObject* getElementBuffer();

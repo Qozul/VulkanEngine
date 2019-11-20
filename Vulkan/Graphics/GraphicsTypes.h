@@ -2,8 +2,6 @@
 // Date: 01/11/19
 #pragma once
 
-#define NUM_CAMERAS 2
-
 namespace QZL {
 	namespace Graphics {
 		enum class RendererTypes : size_t {
