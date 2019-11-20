@@ -1,6 +1,7 @@
 #version 450
 #extension GL_EXT_nonuniform_qualifier : require
 #extension GL_GOOGLE_include_directive : enable
+#include "../common.glsl"
 #include "terrain_structs.glsl"
 
 layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
@@ -23,28 +24,26 @@ layout (location = 3) flat out int outInstanceIndex;
 layout (location = 4) out vec4 outShadowCoord;
 layout (location = 5) out flat uint outShadowMapIdx;
 
-layout(set = 0, binding = 0) readonly buffer UniformBufferObject {
+layout(set = COMMON_SET, binding = COMMON_MVP_BINDING) readonly buffer UniformBufferObject {
     mat4 elementData[];
 } ubo;
 
-layout(set = 1, binding = 0) uniform LightingData
+layout(set = GLOBAL_SET, binding = LIGHT_UBO_BINDING) uniform LightingData
 {
 	vec4 cameraPosition;
 	vec4 ambientColour;
 	vec4 lightPositions[1];
 };
 
-layout(set = 0, binding = 1) readonly buffer MaterialData
+layout(set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer MaterialData
 {
 	Params materials[];
 };
 
-layout(set = 0, binding = 2) readonly buffer TexIndices
+layout(set = COMMON_SET, binding = COMMON_MATERIALS_BINDING) readonly buffer TexIndices
 {
 	TextureIndices textureIndices[];
 };
-
-layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
 
 void main(void)
 {
@@ -76,4 +75,5 @@ void main(void)
 	normal.r = normal.g;
 	normal.g = normal.b;
 	normal.b = tmp;
+	normal = normalize(mat3(transpose(inverse(material.model))) * normal);
 }

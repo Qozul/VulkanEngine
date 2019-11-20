@@ -81,8 +81,8 @@ void ShadowPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const
 
 	const uint32_t dynamicOffsets[3] = {
 		graphicsInfo_->mvpRange * (idx + graphicsInfo_->numFrameIndices),
-		graphicsInfo_->paramsRange * (idx + graphicsInfo_->numFrameIndices),
-		graphicsInfo_->materialRange * (idx + graphicsInfo_->numFrameIndices)
+		graphicsInfo_->paramsRange * (idx),
+		graphicsInfo_->materialRange * (idx)
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };

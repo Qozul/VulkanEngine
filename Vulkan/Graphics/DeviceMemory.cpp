@@ -23,6 +23,7 @@ private:
 	void unmapMemory(const AllocationID& id);
 	void transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 	void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height, VkShaderStageFlags stages, Image* image);
+	void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkBufferImageCopy* copyRanges, uint32_t count);
 	void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer);
 	void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage);
 
@@ -176,6 +177,22 @@ void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkImage
 	vkCmdCopyBufferToImage(transferCmdBuffer_, srcBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 	if (image != nullptr) image->generateMipmaps(transferCmdBuffer_, stages);
+
+	vkEndCommandBuffer(transferCmdBuffer_);
+	VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &transferCmdBuffer_;
+
+	vkQueueSubmit(queue_, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(queue_);
+}
+void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkBufferImageCopy* copyRanges, uint32_t count)
+{
+	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	vkBeginCommandBuffer(transferCmdBuffer_, &beginInfo);
+
+	vkCmdCopyBufferToImage(transferCmdBuffer_, srcBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, count, copyRanges);
 
 	vkEndCommandBuffer(transferCmdBuffer_);
 	VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
@@ -388,6 +405,10 @@ void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dst
 void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height, VkShaderStageFlags stages, Image* image)
 {
 	pImpl_->transferMemory(srcBuffer, dstImage, srcOffset, width, height, stages, image);
+}
+void DeviceMemory::transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkBufferImageCopy* copyRanges, uint32_t count)
+{
+	pImpl_->transferMemory(srcBuffer, dstImage, copyRanges, count);
 }
 void DeviceMemory::changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer)
 {

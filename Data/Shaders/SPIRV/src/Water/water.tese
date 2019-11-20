@@ -52,7 +52,7 @@ layout(set = 0, binding = 2) readonly buffer TexIndices
 	Material textureIndices[];
 };
 
-layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
+layout(set = 1, binding = 2) uniform sampler2D texSamplers[];
 
 void main(void)
 {
@@ -81,4 +81,5 @@ void main(void)
 	normal.r = normal.g;
 	normal.g = normal.b;
 	normal.b = tmp;
+	normal = normalize(mat3(transpose(inverse(param.model))) * normal);
 }

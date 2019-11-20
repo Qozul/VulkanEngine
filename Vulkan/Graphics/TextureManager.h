@@ -37,6 +37,8 @@ namespace QZL {
 			// destructor being called.
 			TextureSampler* requestTextureSeparate(const std::string& name, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR,
 				VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT, float anisotropy = 8, VkShaderStageFlags stages = VK_SHADER_STAGE_FRAGMENT_BIT);
+			TextureSampler* requestTextureSeparate(const std::array<std::string, 6U> names, VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR,
+				VkSamplerAddressMode addressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT, float anisotropy = 8, VkShaderStageFlags stages = VK_SHADER_STAGE_FRAGMENT_BIT);
 
 			uint32_t allocateTexture(const std::string& name, Image*& imgPtr, VkImageCreateInfo createInfo,
 				MemoryAllocationPattern allocationPattern, ImageParameters parameters, SamplerInfo samplerInfo = {});

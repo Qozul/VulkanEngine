@@ -64,7 +64,7 @@ std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras,
 		cmdList.clear();
 	}
 	for (auto& distances : graphicsWriteInfo_.distances) {
-		distances.clear(); // TODO use these for sorting the commands and data
+		distances.clear();
 	}
 	std::memset(graphicsWriteInfo_.offsets, 0, (size_t)Graphics::RendererTypes::kNone * sizeof(VkDeviceSize));
 	for (size_t i = 0; i < NUM_CAMERAS; ++i) {

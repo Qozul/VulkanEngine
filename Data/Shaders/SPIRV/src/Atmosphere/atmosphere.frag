@@ -1,7 +1,9 @@
 #version 450
+#define OVERRIDE_TEX_SAMPLERS
 #extension GL_EXT_nonuniform_qualifier : require
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
+#include "../common.glsl"
 #include "./alt_functions.glsl"
 
 struct Params {
@@ -27,7 +29,7 @@ layout(set = 0, binding = 1) readonly buffer ShaderParamsData
 	Params params[];
 };
 
-layout(set = 1, binding = 1) uniform sampler3D texSamplers[];
+layout(set = GLOBAL_SET, binding = SAMPLER_ARRAY_BINDING) uniform sampler3D texSamplers[];
 
 // theta is the angle between the direction of the incident light and the direction of the scattered light
 float rayleighPhase(float ctheta)
@@ -74,4 +76,6 @@ void main()
 	colour = vec4(rayleigh + mie, 1.0) * vec4(parameters.sunIntensity.xyz, 1.0);
 	colour = colour / (colour + vec4(1.0, 1.0, 1.0, 0.0));
 	colour.rgb = pow(colour.rgb, vec3(1.0/2.2));
+	float Cs = dot(L, Z);
+	colour.a = Cs < 0 ? Cs + 0.8 : Cs + 0.9;
 }

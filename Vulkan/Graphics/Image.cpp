@@ -10,7 +10,8 @@ using namespace QZL;
 using namespace Graphics;
 
 Image::Image(const LogicDevice* logicDevice, VkImageCreateInfo createInfo, MemoryAllocationPattern pattern, ImageParameters imageParameters, std::string debugName)
-	: logicDevice_(logicDevice), format_(createInfo.format), width_(createInfo.extent.width), height_(createInfo.extent.height), mipLevels_(createInfo.mipLevels)
+	: logicDevice_(logicDevice), format_(createInfo.format), width_(createInfo.extent.width), height_(createInfo.extent.height), mipLevels_(createInfo.mipLevels),
+	arrayLayers_(createInfo.arrayLayers)
 {
 	if (createInfo.mipLevels > 1) {
 		mipLevels_ = calculateMipLevels(createInfo.extent.width, createInfo.extent.height);
@@ -35,6 +36,7 @@ Image::Image(const LogicDevice* logicDevice, VkImageCreateInfo createInfo, Memor
 	CHECK_VKRESULT(vkCreateImageView(*logicDevice, &viewInfo, nullptr, &imageView_));
 	imageInfo_.imageView = imageView_;
 
+	
 	changeLayout(imageParameters.newLayout, 0, 0, imageParameters.aspectBits);
 }
 
@@ -90,7 +92,7 @@ void Image::generateMipmaps(VkCommandBuffer cmdBuffer, VkShaderStageFlags stages
 		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.dstSubresource.mipLevel = i;
 		blit.dstSubresource.baseArrayLayer = 0;
-		blit.dstSubresource.layerCount = 1;
+		blit.dstSubresource.layerCount = arrayLayers_;
 
 		vkCmdBlitImage(cmdBuffer, imageDetails_.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, imageDetails_.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);
 
@@ -187,7 +189,8 @@ VkImageAspectFlags Image::imageLayoutToAspectMask(VkImageLayout layout, VkFormat
 	}
 }
 
-VkImageCreateInfo Image::makeCreateInfo(VkImageType type, uint32_t mipLevels, uint32_t arrayLayers, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkSampleCountFlagBits samples, uint32_t width, uint32_t height, uint32_t depth)
+VkImageCreateInfo Image::makeCreateInfo(VkImageType type, uint32_t mipLevels, uint32_t arrayLayers, VkFormat format, VkImageTiling tiling,
+	VkImageUsageFlags usage, VkSampleCountFlagBits samples, uint32_t width, uint32_t height, uint32_t depth, VkImageCreateFlags flags)
 {
 	VkImageCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -203,6 +206,7 @@ VkImageCreateInfo Image::makeCreateInfo(VkImageType type, uint32_t mipLevels, ui
 	createInfo.usage = usage;
 	createInfo.samples = samples;
 	createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	createInfo.flags = flags;
 	return createInfo;
 }
 
@@ -230,7 +234,7 @@ VkImageMemoryBarrier Image::makeImageMemoryBarrier(const VkImageLayout newLayout
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = mipLevels_;
 	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.layerCount = arrayLayers_;
 	barrier.subresourceRange.aspectMask = aspectMask;
 
 	barrier.srcAccessMask = imageLayoutToAccessFlags(imageInfo_.imageLayout);

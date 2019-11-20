@@ -1,4 +1,6 @@
 #version 450
+#extension GL_GOOGLE_include_directive : enable
+#include "../common.glsl"
 
 struct Params {
 	mat4 model;
@@ -22,11 +24,11 @@ layout(location = 1) flat out int outInstanceIndex;
 
 const vec3 UP = vec3(0.0, 1.0, 0.0);
 
-layout (set = 0, binding = 0) readonly buffer MVPs {
+layout (set = COMMON_SET, binding = COMMON_MVP_BINDING) readonly buffer MVPs {
 	mat4[] mvps;
 };
 
-layout (set = 0, binding = 1) readonly buffer ShaderParams {
+layout (set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer ShaderParams {
 	Params[] params;
 };
 

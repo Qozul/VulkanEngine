@@ -41,7 +41,7 @@ namespace QZL {
 			static VkPipelineStageFlags imageLayoutToStage(VkImageLayout layout);
 			static VkImageAspectFlags imageLayoutToAspectMask(VkImageLayout layout, VkFormat format);
 			static VkImageCreateInfo makeCreateInfo(VkImageType type, uint32_t mipLevels, uint32_t arrayLayers, VkFormat format,
-				VkImageTiling tiling, VkImageUsageFlags usage, VkSampleCountFlagBits samples, uint32_t width, uint32_t height, uint32_t depth = 1);
+				VkImageTiling tiling, VkImageUsageFlags usage, VkSampleCountFlagBits samples, uint32_t width, uint32_t height, uint32_t depth = 1, VkImageCreateFlags flags = 0);
 
 			static VkDescriptorSetLayoutBinding makeBinding(uint32_t b, VkShaderStageFlags flags, VkSampler* immutableSampler = nullptr);
 			VkImageMemoryBarrier makeImageMemoryBarrier(const VkImageLayout newLayout, VkImageAspectFlags aspectMask);
@@ -51,6 +51,7 @@ namespace QZL {
 			VkImageView imageView_;
 			VkFormat format_;
 			uint32_t mipLevels_;
+			uint32_t arrayLayers_;
 			uint32_t width_;
 			uint32_t height_;
 			VkDescriptorImageInfo imageInfo_;

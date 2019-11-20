@@ -74,7 +74,20 @@ TextureSampler* TextureManager::requestTextureSeparate(const std::string& name, 
 	else {
 		auto image = textureLoader_->loadTexture(name, stages);
 		textures_[name] = image;
-		return image->createTextureSampler(name, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 8);
+		return image->createTextureSampler(name, magFilter, minFilter, addressMode, anisotropy);
+	}
+}
+TextureSampler* TextureManager::requestTextureSeparate(const std::array<std::string, 6U> names, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode,
+	float anisotropy, VkShaderStageFlags stages)
+{
+	std::string keyName = names[0] + names[1] + names[2] + names[3] + names[4] + names[5];
+	if (textures_.count(keyName)) {
+		return textures_[keyName]->createTextureSampler(keyName, magFilter, minFilter, addressMode, anisotropy);
+	}
+	else {
+		auto image = textureLoader_->loadCubeTexture(names, stages);
+		textures_[keyName] = image;
+		return image->createTextureSampler(keyName, magFilter, minFilter, addressMode, anisotropy);
 	}
 }
 

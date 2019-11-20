@@ -17,7 +17,7 @@ layout(set = 0, binding = 2) readonly buffer DescriptorIndexBuffer
 	Material materialData[];
 };
 
-layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
+layout(set = 1, binding = 2) uniform sampler2D texSamplers[];
 
 float linearizeDepth(float depth)
 {

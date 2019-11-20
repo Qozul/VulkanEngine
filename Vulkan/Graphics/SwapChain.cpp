@@ -42,8 +42,6 @@ void SwapChain::loop()
 	globalRenderData_->updateData(0, lightingData);
 
 	static const glm::vec3 shadowCamoffset = glm::vec3(0.0f, 100.0f, 100.0f);
-	//cameras_[1].lookPoint = cameras_[0].position;
-	//cameras_[1].viewMatrix = glm::lookAt(cameras_[0].position + shadowCamoffset, cameras_[1].lookPoint, glm::vec3(0.0f, 1.0f, 0.0f));
 
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
@@ -65,7 +63,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	initSwapChainImages(window, surface, surfaceCapabilities);
 	numSwapChainImages = details_.images.size();
 	initImageViews();
-	globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().textureManager->getSetlayoutBinding());
+	globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().textureManager, master->getMasters().textureManager->getSetlayoutBinding());
 	createSyncObjects();
 
 	cameras_[0] = {};

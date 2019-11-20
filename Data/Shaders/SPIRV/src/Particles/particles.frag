@@ -1,5 +1,7 @@
 #version 450
 #extension GL_EXT_nonuniform_qualifier : require
+#extension GL_GOOGLE_include_directive : enable
+#include "../common.glsl"
 
 struct PerInstanceParams {
 	mat4 model;
@@ -14,14 +16,12 @@ layout(location = 1) flat in int inInstanceIndex;
 
 layout(location = 0) out vec4 colour;
 
-layout(set = 0, binding = 1) readonly buffer Params {
+layout(set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer Params {
 	PerInstanceParams[] params;
 };
-layout(set = 0, binding = 2) readonly buffer DIParams {
+layout(set = COMMON_SET, binding = COMMON_MATERIALS_BINDING) readonly buffer DIParams {
 	uint textureIndices[];
 };
-
-layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
 
 void main()
 {

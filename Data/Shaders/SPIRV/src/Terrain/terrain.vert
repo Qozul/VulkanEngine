@@ -1,6 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
+#include "../common.glsl"
 #include "terrain_structs.glsl"
 
 const mat4 biasMat = mat4( 
@@ -22,7 +23,7 @@ layout (location = 3) flat out uint shadowMapIdx;
 layout (location = 4) out vec2 outNormalizedUvs;
 layout (location = 5) flat out float maxHeight;
 
-layout(set = 0, binding = 1) readonly buffer MaterialData
+layout(set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer MaterialData
 {
 	Params materials[];
 };

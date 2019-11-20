@@ -29,6 +29,7 @@ namespace QZL {
 			RendererBase* atmosphereRenderer_;
 			RendererBase* particleRenderer_;
 			RendererBase* waterRenderer_;
+			RendererBase* environmentRenderer_;
 
 			Image* colourBuffer_;
 			Image* msaaResolveBuffer_;

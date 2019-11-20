@@ -1,5 +1,5 @@
-C:\VulkanSDK\1.1.126.0\Bin\glslangValidator.exe -V terrain.vert -o ../../TerrainVert.spv
-C:\VulkanSDK\1.1.126.0\Bin\glslangValidator.exe -V terrain_di.tesc -o ../../TerrainTESC.spv
-C:\VulkanSDK\1.1.126.0\Bin\glslangValidator.exe -V terrain_di.tese -o ../../TerrainTESE.spv
-C:\VulkanSDK\1.1.126.0\Bin\glslangValidator.exe -V terrain_di.frag -o ../../TerrainFrag.spv
+C:\VulkanSDK\1.1.126.0\Bin\glslc.exe terrain.frag -c -o ../../TerrainFrag.spv
+C:\VulkanSDK\1.1.126.0\Bin\glslc.exe terrain.vert -c -o ../../TerrainVert.spv
+C:\VulkanSDK\1.1.126.0\Bin\glslc.exe terrain.tese -c -o ../../TerrainTESE.spv
+C:\VulkanSDK\1.1.126.0\Bin\glslc.exe terrain.tesc -c -o ../../TerrainTESC.spv
 pause

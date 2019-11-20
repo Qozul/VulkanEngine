@@ -25,7 +25,7 @@ layout (location = 4) in vec4 shadowCoord;
 layout (location = 5) flat in uint shadowMapIdx;
 layout (location = 6) in float height;
 
-layout(set = 1, binding = 1) uniform sampler2D texSamplers[];
+layout(set = 1, binding = 2) uniform sampler2D texSamplers[];
 
 layout(set = 1, binding = 0) uniform LightingData
 {
@@ -33,6 +33,8 @@ layout(set = 1, binding = 0) uniform LightingData
 	vec4 ambientColour;
 	vec4 lightPositions[1];
 };
+
+layout(set = 1,  binding = 1) uniform samplerCube Cubemap;
 
 layout(set = 0, binding = 1) readonly buffer ParamsData
 {
@@ -60,6 +62,8 @@ void main() {
 	vec3 viewDir = normalize(cameraPosition.xyz - worldPos);
 	vec3 halfDir = normalize(incident + viewDir);
 	float dist = length(lightPositions[0].xyz - worldPos);
+
+	vec4 environmentCol = texture(Cubemap, reflect(viewDir, normal));
 	
 	float lambert = max(0.0, dot(incident, normal));
 	float rFactor = max(0.0, dot(halfDir, normal));
@@ -71,7 +75,7 @@ void main() {
 	vec3 specular = vec3(1.0) * sFactor * 0.05;
 	
 	float shadow = texturePrj(shadowCoord / shadowCoord.w, vec2(0.0));
-	fragColor = vec4((diffuse + specular) * shadow, 1.0);
+	fragColor = vec4((mix(environmentCol.rgb, diffuse, 0.5) + specular) * shadow, 1.0);
 	fragColor = fragColor / (fragColor + vec4(1.0, 1.0, 1.0, 0.0));
 	fragColor.rgb = pow(fragColor.rgb, vec3(1.0/2.2));
 }

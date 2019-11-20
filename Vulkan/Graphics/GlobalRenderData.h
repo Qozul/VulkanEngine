@@ -7,6 +7,7 @@
 
 namespace QZL {
 	namespace Graphics {
+		class TextureSampler;
 		static const size_t kMaxLights = 1;
 		struct LightingData {
 			glm::vec4 cameraPosition;
@@ -22,7 +23,8 @@ namespace QZL {
 		};
 		enum class GlobalRenderDataBindings : uint32_t {
 			kLighting = 0,
-			kTextureArray = 1
+			kEnvironmentMap = 1,
+			kTextureArray = 2
 		};
 		class LogicDevice;
 		class GlobalRenderData {
@@ -36,15 +38,14 @@ namespace QZL {
 			}
 			void updateData(uint32_t idx, LightingData& data);
 		private:
-			GlobalRenderData(LogicDevice* logicDevice);
-
-			GlobalRenderData(LogicDevice* logicDevice, VkDescriptorSetLayoutBinding descriptorIndexBinding);
+			GlobalRenderData(LogicDevice* logicDevice, TextureManager* textureManager, VkDescriptorSetLayoutBinding descriptorIndexBinding);
 			~GlobalRenderData();
 			void createDescriptorSet(LogicDevice* logicDevice, std::vector<VkDescriptorBindingFlagsEXT> bindingFlags, VkDescriptorSetLayoutBinding* descriptorIndexBinding = nullptr);
 
 			VkDescriptorSet set_;
 			VkDescriptorSetLayout layout_;
 			DescriptorBuffer* lightingUbo_;
+			TextureSampler* environmentTexture_;
 		};
 	}
 }

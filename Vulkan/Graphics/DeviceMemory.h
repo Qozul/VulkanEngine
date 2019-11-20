@@ -27,6 +27,7 @@ namespace QZL
 			void transferMemory(const VkBuffer& srcBuffer, const VkBuffer& dstBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 			void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkDeviceSize srcOffset, uint32_t width, uint32_t height, 
 				VkShaderStageFlags stages = VK_SHADER_STAGE_FRAGMENT_BIT, Image* image = nullptr);
+			void transferMemory(const VkBuffer& srcBuffer, const VkImage& dstImage, VkBufferImageCopy* copyRanges, uint32_t count);
 			void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage, VkCommandBuffer& cmdBuffer);
 			void changeImageLayout(VkImageMemoryBarrier barrier, VkPipelineStageFlags oldStage, VkPipelineStageFlags newStage);
 

@@ -71,6 +71,7 @@ GeometryPass::~GeometryPass()
 	SAFE_DELETE(atmosphereRenderer_);
 	SAFE_DELETE(particleRenderer_);
 	SAFE_DELETE(waterRenderer_);
+	SAFE_DELETE(environmentRenderer_);
 }
 
 void GeometryPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, const uint32_t& idx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandLists)
@@ -118,6 +119,7 @@ void GeometryPass::doFrame(LogicalCamera* cameras, const size_t cameraCount, con
 	vpc.shadowMatrix = cameras[1].viewProjection;
 
 	vkCmdPushConstants(cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vpc), &vpc);
+	environmentRenderer_->recordFrame(cameras[0], idx, cmdBuffer, nullptr);
 	atmosphereRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kAtmosphere]);
 	texturedRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kStatic]);
 	terrainRenderer_->recordFrame(cameras[0], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
@@ -137,7 +139,7 @@ void GeometryPass::createRenderers()
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
 
-	createInfo.updateRendererSpecific(0, 1, "StaticVert", "StaticFrag_DI");
+	createInfo.updateRendererSpecific(0, 1, "StaticVert", "StaticFrag");
 	texturedRenderer_ = new TexturedRenderer(createInfo);
 
 	createInfo.updateRendererSpecific(0, 1, "TerrainVert", "TerrainFrag", "", "TerrainTESC", "TerrainTESE");
@@ -151,6 +153,9 @@ void GeometryPass::createRenderers()
 
 	createInfo.updateRendererSpecific(0, 1, "WaterVert", "WaterFrag", "", "WaterTESC", "WaterTESE");
 	waterRenderer_ = new WaterRenderer(createInfo);
+
+	createInfo.updateRendererSpecific(0, 1, "AtmosphereVert", "EnvironmentFrag");
+	environmentRenderer_ = new AtmosphereRenderer(createInfo);
 
 	graphicsMaster_->setRenderer(RendererTypes::kParticle, particleRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kStatic, texturedRenderer_);
