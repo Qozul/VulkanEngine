@@ -33,6 +33,7 @@ namespace QZL {
 
 			Image* colourBuffer_;
 			Image* msaaResolveBuffer_;
+			Image* msaaDepthResolveBuffer_;
 			Image* depthBuffer_;
 			Image* shadowDepthBuf_;
 			uint32_t shadowDepthTexture_;

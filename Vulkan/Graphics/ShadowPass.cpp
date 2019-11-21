@@ -43,6 +43,7 @@ ShadowPass::ShadowPass(GraphicsMaster* master, LogicDevice* logicDevice, const S
 	std::vector<VkImageView> attachmentImages = { depthBuffer_->getImageView() };
 	createRenderPass(createInfo, attachmentImages, { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS });
 	createRenderers();
+	terrainHeightmapIdx_ = graphicsMaster_->getMasters().textureManager->requestTexture("Heightmaps/hmap2");
 }
 
 ShadowPass::~ShadowPass()
@@ -91,14 +92,14 @@ void ShadowPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetDepthBias(frameInfo.cmdBuffer, 1.25f, 0.0f, 1.75f);
 
 	uint32_t mvpOffset[2] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic], 0 };
-	vkCmdPushConstants(frameInfo.cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
+	vkCmdPushConstants(frameInfo.cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t) * 2, &mvpOffset);
 	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kStatic]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
 	shadowRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
 	mvpOffset[0] = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
-	mvpOffset[1] = graphicsMaster_->getMasters().textureManager->getSamplerIdx("Heightmaps/hmap2");
-	//vkCmdPushConstants(cmdBuffer, shadowTerrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
-	//graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(cmdBuffer, idx);
-	//shadowTerrainRenderer_->recordFrame(cameras[1], idx, cmdBuffer, &commandLists[(size_t)RendererTypes::kTerrain]);
+	mvpOffset[1] = terrainHeightmapIdx_;
+	vkCmdPushConstants(frameInfo.cmdBuffer, shadowTerrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t) * 2, &mvpOffset);
+	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
+	shadowTerrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
 
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
@@ -132,10 +133,10 @@ void ShadowPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDet
 
 VkFormat ShadowPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
 {
-	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VK_FORMAT_D32_SFLOAT, VK_IMAGE_TILING_OPTIMAL,
+	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.depthFormat, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, SHADOW_DIMENSIONS, SHADOW_DIMENSIONS, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL }, "ShadowDepthBuffer");
 	depthBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-	return VK_FORMAT_D32_SFLOAT;
+	return  swapChainDetails.depthFormat;
 }
 

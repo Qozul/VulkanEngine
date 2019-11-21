@@ -312,6 +312,9 @@
     <ClInclude Include="Graphics\FrameInfo.h">
       <Filter>Header Files\Graphics\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Game\RainSystem.h">
+      <Filter>Header Files\Game\Scripts\Particles</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp">
@@ -463,6 +466,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\WaterRenderer.cpp">
       <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\RainSystem.cpp">
+      <Filter>Source Files\Game\Scripts</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

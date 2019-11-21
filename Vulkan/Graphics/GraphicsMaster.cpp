@@ -52,7 +52,7 @@ GraphicsMaster::GraphicsMaster(SystemMasters& masters)
 	for (auto ext : extensions) {
 		ASSERT(std::find(std::begin(availableExtNames), std::end(availableExtNames), ext) == availableExtNames.end());
 	}
-
+	extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	initInstance(extensions, enabledLayerCount, enabledLayerNames);
 	CHECK_VKRESULT(glfwCreateWindowSurface(details_.instance, details_.window, nullptr, &details_.surface));
 

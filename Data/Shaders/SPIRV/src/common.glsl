@@ -64,3 +64,8 @@ void calculatePhongShading(in vec3 worldPos, in vec3 lightPos, in vec3 camPos, i
 	lambert = max(0.0, dot(incident, normal));
 	specularFactor = pow(rFactor, shininess);
 }
+
+float linearizeDepth(float depth, float near, float far)
+{
+  return (2.0 * near) / (far + near - depth * (far - near));
+}

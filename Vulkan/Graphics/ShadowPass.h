@@ -24,6 +24,8 @@ namespace QZL {
 			RendererBase* shadowTerrainRenderer_;
 			Image* depthBuffer_;
 			Image* colourBuffer_;
+
+			uint32_t terrainHeightmapIdx_;
 		};
 	}
 }

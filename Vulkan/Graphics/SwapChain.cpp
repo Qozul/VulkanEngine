@@ -47,7 +47,6 @@ void SwapChain::loop()
 	frameInfo_.commandLists = commandLists;
 	frameInfo_.mainCameraIdx = 1;
 	frameInfo_.viewportX = 0;
-	frameInfo_.viewportWidth = splitscreenEnabled_ ? details_.extent.width / 2 : details_.extent.width;
 
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
@@ -62,7 +61,6 @@ void SwapChain::loop()
 		frameInfo_.viewportX = details_.extent.width / 2;
 		frameInfo_.mainCameraIdx = 1;
 		renderPasses_[0]->doFrame(frameInfo_);
-		frameInfo_.viewportWidth = details_.extent.width;
 		frameInfo_.viewportX = 0;
 		frameInfo_.mainCameraIdx = 0;
 	}
@@ -77,14 +75,16 @@ void SwapChain::loop()
 }
 
 SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR surface, LogicDevice* logicDevice, DeviceSurfaceCapabilities& surfaceCapabilities)
-	: logicDevice_(logicDevice), master_(master), splitscreenEnabled_(false)
+	: logicDevice_(logicDevice), master_(master), splitscreenEnabled_(true)
 {
 	initSwapChain(window, surfaceCapabilities);
 	initSwapChainImages(window, surface, surfaceCapabilities);
 	numSwapChainImages = details_.images.size();
 	initImageViews();
+	initDepthFormat();
 	globalRenderData_ = new GlobalRenderData(logicDevice, master->getMasters().textureManager, master->getMasters().textureManager->getSetlayoutBinding());
 	createSyncObjects();
+	toggleSplitscreen();
 
 	frameInfo_.cameras[0] = {};
 	frameInfo_.cameras[0].viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
@@ -187,6 +187,21 @@ void SwapChain::initImageViews()
 		CHECK_VKRESULT(vkCreateImageView(*logicDevice_, &createInfo, nullptr, &details_.imageViews[i]));
 	}
 }
+
+void SwapChain::initDepthFormat()
+{
+	details_.depthFormat = VkFormat::VK_FORMAT_UNDEFINED;
+	for (VkFormat format : { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM }) {
+		VkFormatProperties properties;
+		vkGetPhysicalDeviceFormatProperties(logicDevice_->getPhysicalDevice(), format, &properties);
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT && properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) {
+			details_.depthFormat = format;
+			break;
+		}
+	}
+	ASSERT(details_.depthFormat != VkFormat::VK_FORMAT_UNDEFINED);
+}
+
 VkSurfaceFormatKHR SwapChain::chooseFormat(std::vector<VkSurfaceFormatKHR>& formats)
 {
 	if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED) {
@@ -316,11 +331,21 @@ void SwapChain::initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsIn
 	renderPasses_.push_back(new GeometryPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_.push_back(new ShadowPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
-	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->msaaResolveBuffer_ });
+	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->msaaResolveBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->msaaDepthResolveBuffer_ });
 	renderPasses_[0]->initRenderPassDependency({ static_cast<ShadowPass*>(renderPasses_[2])->depthBuffer_ });
+}
+
+void SwapChain::updateCameraAspectRatio()
+{
+	frameInfo_.cameras[0].projectionMatrix = !splitscreenEnabled_ ?
+		glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f) :
+		glm::perspective(glm::radians(45.0f), 2.0f / 3.0f, 0.1f, 1000.0f);
+	frameInfo_.cameras[0].projectionMatrix[1][1] *= -1.0f;
 }
 
 void SwapChain::toggleSplitscreen()
 {
 	splitscreenEnabled_ = !splitscreenEnabled_;
+	frameInfo_.viewportWidth = splitscreenEnabled_ ? details_.extent.width / 2 : details_.extent.width;
+	updateCameraAspectRatio();
 }

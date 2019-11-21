@@ -39,6 +39,7 @@ namespace QZL
 			void initSwapChain(GLFWwindow* window, DeviceSurfaceCapabilities& surfaceCapabilities);
 			void initSwapChainImages(GLFWwindow* window, VkSurfaceKHR surface, DeviceSurfaceCapabilities& surfaceCapabilities);
 			void initImageViews();
+			void initDepthFormat();
 
 			// These three functions are straight from the tutorial 
 			VkSurfaceFormatKHR chooseFormat(std::vector<VkSurfaceFormatKHR>& formats);
@@ -53,7 +54,7 @@ namespace QZL
 			void present(const uint32_t imgIdx, VkSemaphore signalSemaphores[]);
 			void createSyncObjects();
 			void initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsInfo);
-
+			void updateCameraAspectRatio();
 			void toggleSplitscreen();
 
 			GlobalRenderData* globalRenderData_;

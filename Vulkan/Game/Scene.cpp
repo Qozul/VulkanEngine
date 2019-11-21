@@ -242,7 +242,7 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 	graphicsInfo_.numFrameIndices = numFrameImages;
 
 	addDynamicDescriptor(graphicsInfo_.mvpBuffer, graphicsInfo_.mvpRange, graphicsInfo_.mvpOffsetSizes, {
-			{ (size_t)RendererTypes::kStatic, sizeof(glm::mat4), instancesMap[RendererTypes::kStatic] }, 
+			{ (size_t)RendererTypes::kStatic, sizeof(glm::mat4), instancesMap[RendererTypes::kStatic] },
 			{ (size_t)RendererTypes::kTerrain, sizeof(glm::mat4), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(glm::mat4), instancesMap[RendererTypes::kParticle] },
 			{ (size_t)RendererTypes::kWater, sizeof(glm::mat4), instancesMap[RendererTypes::kWater] }
@@ -262,7 +262,6 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 			{ (size_t)RendererTypes::kStatic, sizeof(Materials::Static), instancesMap[RendererTypes::kStatic] },
 			{ (size_t)RendererTypes::kTerrain, sizeof(Materials::Terrain), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(Materials::Particle), instancesMap[RendererTypes::kParticle] },
-			{ (size_t)RendererTypes::kPostProcess, sizeof(Materials::PostProcess), 1 },
 			{ (size_t)RendererTypes::kWater, sizeof(Materials::Water), instancesMap[RendererTypes::kWater] }
 		}, numFrameImages, limits.minStorageBufferOffsetAlignment, 2, "MaterialBuffer",
 		VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, logicDevice);

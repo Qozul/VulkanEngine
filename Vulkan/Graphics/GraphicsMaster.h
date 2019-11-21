@@ -55,6 +55,9 @@ namespace QZL
 			const SystemMasters& getMasters() {
 				return masters_;
 			}
+			VkInstance getInstance() {
+				return details_.instance;
+			}
 			const bool supportsOptionalExtension(OptionalExtensions ext);
 		private:
 			GraphicsMaster(SystemMasters& masters);

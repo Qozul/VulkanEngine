@@ -57,7 +57,7 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	auto bi = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX);
+	auto bi = beginInfo(frameInfo.frameIdx);
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	bi.pClearValues = clearValues.data();
 
@@ -65,22 +65,19 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 
 	VkViewport viewport;
 	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = frameInfo.viewportWidth;
+	viewport.width = swapChainDetails_.extent.width;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	viewport.x = frameInfo.viewportX;
+	viewport.x = 0;
 	viewport.y = 0;
 	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
 
 	VkRect2D scissor;
-	scissor.extent.width = frameInfo.viewportWidth;
+	scissor.extent.width = swapChainDetails_.extent.width;
 	scissor.extent.height = swapChainDetails_.extent.height;
-	scissor.offset.x = frameInfo.viewportX;
+	scissor.offset.x = 0;
 	scissor.offset.y = 0;
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
-
-
-	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
 	postProcessRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kPostProcess]);
 
@@ -89,9 +86,11 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 
 void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
 {
-	ASSERT(dependencyAttachment.size() == 1);
+	ASSERT(dependencyAttachment.size() == 2);
 	geometryColourBuf_ = dependencyAttachment[0];
+	geometryDepthBuf_ = dependencyAttachment[1];
 	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
+	gpDepthResolveBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_);
 	createRenderers();
 }
 
@@ -107,7 +106,7 @@ void PostProcessPass::createRenderers()
 	createInfo.graphicsInfo = graphicsInfo_;
 
 	createInfo.updateRendererSpecific(0, 1, "PPVert", "PPFrag");
-	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_);
+	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthResolveBuffer_);
 	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, postProcessRenderer_);
 }
 

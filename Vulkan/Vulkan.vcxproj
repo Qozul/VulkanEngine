@@ -36,6 +36,7 @@
     <ClInclude Include="Game\GameMaster.h" />
     <ClInclude Include="Game\GameScript.h" />
     <ClInclude Include="Game\ParticleSystem.h" />
+    <ClInclude Include="Game\RainSystem.h" />
     <ClInclude Include="Game\Scene.h" />
     <ClInclude Include="Game\SunScript.h" />
     <ClInclude Include="Game\TerrainScript.h" />
@@ -103,6 +104,7 @@
     <ClCompile Include="Game\GameMaster.cpp" />
     <ClCompile Include="Game\GameScript.cpp" />
     <ClCompile Include="Game\ParticleSystem.cpp" />
+    <ClCompile Include="Game\RainSystem.cpp" />
     <ClCompile Include="Game\Scene.cpp" />
     <ClCompile Include="Game\SunScript.cpp" />
     <ClCompile Include="Game\TerrainScript.cpp" />

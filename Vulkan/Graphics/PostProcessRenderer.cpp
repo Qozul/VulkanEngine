@@ -16,8 +16,8 @@
 using namespace QZL;
 using namespace Graphics;
 
-PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture)
-	: RendererBase(createInfo, nullptr), geometryColourTexture_(geometryColourTexture)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture, uint32_t gpDepthResolveBuffer)
+	: RendererBase(createInfo, nullptr), geometryColourTexture_(geometryColourTexture), gpDepthResolveBuffer_(gpDepthResolveBuffer)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -30,17 +30,20 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 	struct Vals {
 		float nearPlane;
 		float farPlane;
-		uint32_t offset;
+		uint32_t colourIdx;
+		uint32_t depthIdx;
 	} specConstantValues;
 	specConstantValues.nearPlane = GraphicsMaster::NEAR_PLANE_Z;
 	specConstantValues.farPlane = GraphicsMaster::FAR_PLANE_Z;
-	specConstantValues.offset = graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess];
+	specConstantValues.colourIdx = geometryColourTexture_;
+	specConstantValues.depthIdx = gpDepthResolveBuffer_;
 	std::vector<VkSpecializationMapEntry> specEntries = { 
 		makeSpecConstantEntry(0, 0, sizeof(float)),
 		makeSpecConstantEntry(1, sizeof(float), sizeof(float)), 
-		makeSpecConstantEntry(2, sizeof(uint32_t) + sizeof(float), sizeof(uint32_t)) 
+		makeSpecConstantEntry(2, sizeof(float) * 2, sizeof(uint32_t)),
+		makeSpecConstantEntry(3, sizeof(uint32_t) + sizeof(float) * 2, sizeof(uint32_t))
 	};
-	VkSpecializationInfo specializationInfo = setupSpecConstants(3, specEntries.data(), sizeof(Vals), &specConstantValues);
+	VkSpecializationInfo specializationInfo = setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
@@ -64,15 +67,5 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 void PostProcessRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
 {
 	beginFrame(cmdBuffer);
-
-	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * frameIdx,
-		graphicsInfo_->paramsRange * frameIdx,
-		graphicsInfo_->materialRange * frameIdx
-	};
-	uint32_t* dataPtr = (uint32_t*)((char*)storageBuffers_[0]->bindRange() + sizeof(Materials::PostProcess) * graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kPostProcess] + dynamicOffsets[2]);
-	dataPtr[0] = geometryColourTexture_;
-	storageBuffers_[0]->unbindRange();
-
 	vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
 }

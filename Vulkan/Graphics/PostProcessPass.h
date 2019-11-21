@@ -24,16 +24,17 @@ namespace QZL {
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
-			void createComputePipelines() {}
 
 			RendererBase* postProcessRenderer_;
 
 			Image* colourBuffer_;
 
 			Image* geometryColourBuf_;
+			Image* geometryDepthBuf_;
 
 			// Samplers for the images produced in the GeometryPass render pass.
 			uint32_t gpColourBuffer_;
+			uint32_t gpDepthResolveBuffer_;
 		};
 	}
 }

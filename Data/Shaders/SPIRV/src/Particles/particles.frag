@@ -25,5 +25,5 @@ layout(set = COMMON_SET, binding = COMMON_MATERIALS_BINDING) readonly buffer DIP
 
 void main()
 {
-	colour = texture(texSamplers[nonuniformEXT(textureIndices[SC_MATERIAL_OFFSET + inInstanceIndex])], inUvCoords) + vec4(params[SC_PARAMS_OFFSET + inInstanceIndex].tint.xyz, 0.0);
+	colour = texture(texSamplers[nonuniformEXT(textureIndices[SC_MATERIAL_OFFSET + inInstanceIndex])], inUvCoords);
 }

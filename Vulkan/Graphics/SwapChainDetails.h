@@ -7,6 +7,7 @@ namespace QZL {
 	namespace Graphics {
 		struct SwapChainDetails {
 			VkSwapchainKHR swapChain;
+			VkFormat depthFormat;
 			VkSurfaceFormatKHR surfaceFormat;
 			VkPresentModeKHR presentMode;
 			VkExtent2D extent;

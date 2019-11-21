@@ -37,7 +37,7 @@ void main() {
 	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex];	
 	float lambert;
 	float sFactor;
-	calculatePhongShading(worldPos, lightPositions[0].xyz, cameraPosition.xyz, normal, 1.0,  lambert, sFactor);
+	calculatePhongShading(worldPos, lightPositions[0].xyz, cameraPosition.xyz, normal, 49.0,  lambert, sFactor);
 	
 	vec4 texColour = texture(texSamplers[nonuniformEXT(texIndices.diffuseIdx)], texUV);
 	

@@ -45,7 +45,6 @@ TextureManager::~TextureManager()
 
 uint32_t TextureManager::requestTexture(const std::string& name, SamplerInfo samplerInfo)
 {
-	ASSERT(descriptorIndexingActive_);
 	// Reuse sampler if it already exists
 	if (textureSamplersDI_.count(name)) {
 		return textureSamplersDI_[name].second;

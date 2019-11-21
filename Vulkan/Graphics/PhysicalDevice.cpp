@@ -124,7 +124,9 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 {
 	auto availableExts = obtainVkData<VkExtensionProperties>(vkEnumerateDeviceExtensionProperties, device_, nullptr);
 	auto hasSwapchain = false;
+	bool resolveExts[4] = { false, false, false, false };
 	optionalExtensionsEnabled_[OptionalExtensions::kDescriptorIndexing] = false;
+	// Can definitely do this better, but oh well deadline is too close, refactor afterwards
 	for (auto& ext : availableExts) {
 		// Optional extensions
 		if (!strcmp(ext.extensionName, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) {
@@ -136,8 +138,24 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 		if (!strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) {
 			hasSwapchain = true;
 		}
+		if (!strcmp(ext.extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME)) {
+			resolveExts[0] = true;
+		}
+		if (!strcmp(ext.extensionName, VK_KHR_MAINTENANCE2_EXTENSION_NAME)) {
+			resolveExts[1] = true;
+		}
+		if (!strcmp(ext.extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME)) {
+			resolveExts[2] = true;
+		}
+		if (!strcmp(ext.extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME)) {
+			resolveExts[3] = true;
+		}
 	}
-	if (hasSwapchain) {
+	if (hasSwapchain && resolveExts[0] && resolveExts[1] && resolveExts[2] && resolveExts[3]) {
+		deviceExtensions_.push_back(VK_KHR_MULTIVIEW_EXTENSION_NAME);
+		deviceExtensions_.push_back(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
+		deviceExtensions_.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
+		deviceExtensions_.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_, surface, &surfaceCapabilities.capabilities);
 		surfaceCapabilities.formats = obtainVkData<VkSurfaceFormatKHR>(vkGetPhysicalDeviceSurfaceFormatsKHR, device_, surface);
 		surfaceCapabilities.presentModes = obtainVkData<VkPresentModeKHR>(vkGetPhysicalDeviceSurfacePresentModesKHR, device_, surface);

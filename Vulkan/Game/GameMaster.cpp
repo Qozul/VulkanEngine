@@ -14,6 +14,7 @@
 #include "AtmosphereScript.h"
 #include "Scene.h"
 #include "FireSystem.h"
+#include "RainSystem.h"
 #include "TerrainScript.h"
 #include "../Graphics/GraphicsTypes.h"
 #include "../Graphics/SceneDescriptorInfo.h"
@@ -75,16 +76,16 @@ void GameMaster::loadGame()
 
 	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
-	Entity* fire = new Entity("firetest");
-	scriptInit.owner = fire;
-	auto fireScript = new FireSystem(masters_);
-	fire->setGameScript(fireScript);
-	fire->setGraphicsComponent(Graphics::RendererTypes::kParticle, fireScript->makeShaderParams(), "fire", fireScript->getMaterial());
+	Entity* rain = new Entity("rain");
+	scriptInit.owner = rain;
+	auto rainScript = new RainSystem(masters_);
+	rain->setGameScript(rainScript);
+	rain->setGraphicsComponent(Graphics::RendererTypes::kParticle, rainScript->makeShaderParams(), "rain", rainScript->getMaterial());
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
-	scenes_[activeSceneIdx_]->addEntity(fire);
+	//scenes_[activeSceneIdx_]->addEntity(rain);
 	scenes_[activeSceneIdx_]->addEntity(water);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
 	scenes_[activeSceneIdx_]->addEntity(teapot);

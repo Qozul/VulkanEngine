@@ -21,50 +21,73 @@ using namespace QZL::Graphics;
 GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
 	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
 {
-	CreateInfo createInfo = {};
+	CreateInfo2 createInfo = {};
 	createColourBuffer(logicDevice, swapChainDetails);
 	auto depthFormat = createDepthBuffer(logicDevice, swapChainDetails);
-	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_8_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+	/*createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_8_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL));
 	createInfo.attachments.push_back(makeAttachment(depthFormat, VK_SAMPLE_COUNT_8_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL));
 	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));*/
+	createInfo.attachments.push_back(makeAttachment2(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_8_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL));
+	createInfo.attachments.push_back(makeAttachment2(depthFormat, VK_SAMPLE_COUNT_8_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL));
+	createInfo.attachments.push_back(makeAttachment2(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+	createInfo.attachments.push_back(makeAttachment2(depthFormat, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 
-	std::vector<VkAttachmentReference> colourAttachmentRefs;
-	VkAttachmentReference colourRef = {};
+	std::vector<VkAttachmentReference2KHR> colourAttachmentRefs;
+	VkAttachmentReference2KHR colourRef = {};
+	colourRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
 	colourRef.attachment = 0;
 	colourRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	colourAttachmentRefs.push_back(colourRef);
-	VkAttachmentReference depthAttachmentRef = {};
+	VkAttachmentReference2KHR depthAttachmentRef = {};
+	depthAttachmentRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
 	depthAttachmentRef.attachment = 1;
 	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	VkAttachmentReference resolveRef = {};
+	VkAttachmentReference2KHR resolveRef = {};
+	resolveRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
 	resolveRef.attachment = 2;
 	resolveRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference2KHR depthResolveRef = {};
+	depthResolveRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
+	depthResolveRef.attachment = 3;
+	depthResolveRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef, &resolveRef));
+	VkSubpassDescriptionDepthStencilResolveKHR subpassResolveExt = {};
+	subpassResolveExt.sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_DEPTH_STENCIL_RESOLVE_KHR;
+	subpassResolveExt.depthResolveMode = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT_KHR;
+	subpassResolveExt.stencilResolveMode = VK_RESOLVE_MODE_SAMPLE_ZERO_BIT_KHR;
+	subpassResolveExt.pDepthStencilResolveAttachment = &depthResolveRef;
+
+	createInfo.subpasses.push_back(makeSubpass2(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef, &resolveRef, &depthResolveRef, &subpassResolveExt));
 	
-	createInfo.dependencies.push_back(makeSubpassDependency(
+	createInfo.dependencies.push_back(makeSubpassDependency2(
 		VK_SUBPASS_EXTERNAL,
 		0,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	);
-	createInfo.dependencies.push_back(makeSubpassDependency(
+	createInfo.dependencies.push_back(makeSubpassDependency2(
 		0, 
 		VK_SUBPASS_EXTERNAL, 
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT));
 
-	std::vector<VkImageView> attachmentImages = { colourBuffer_->getImageView(), depthBuffer_->getImageView(), msaaResolveBuffer_->getImageView() };
-	createRenderPass(createInfo, attachmentImages);
+	std::vector<VkImageView> attachmentImages = { colourBuffer_->getImageView(), depthBuffer_->getImageView(), 
+		msaaResolveBuffer_->getImageView(), msaaDepthResolveBuffer_->getImageView() };
+	createRenderPass2(createInfo, attachmentImages);
 }
 
 GeometryPass::~GeometryPass()
 {
 	SAFE_DELETE(depthBuffer_);
 	SAFE_DELETE(colourBuffer_);
+	SAFE_DELETE(msaaDepthResolveBuffer_);
 	SAFE_DELETE(msaaResolveBuffer_);
 	SAFE_DELETE(terrainRenderer_);
 	SAFE_DELETE(texturedRenderer_);
@@ -76,10 +99,11 @@ GeometryPass::~GeometryPass()
 
 void GeometryPass::doFrame(FrameInfo& frameInfo)
 {
-	std::array<VkClearValue, 3> clearValues = {};
+	std::array<VkClearValue, 4> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 	clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clearValues[3].depthStencil = { 1.0f, 0 };
 
 	auto bi = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX);
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -187,20 +211,13 @@ void GeometryPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainD
 
 VkFormat GeometryPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
 {
-	VkFormat imageFormat = VkFormat::VK_FORMAT_UNDEFINED;
-	for (VkFormat format : { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM }) {
-		VkFormatProperties properties;
-		vkGetPhysicalDeviceFormatProperties(logicDevice->getPhysicalDevice(), format, &properties);
-		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT && properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) {
-			imageFormat = format;
-			break;
-		}
-	}
-	ASSERT(imageFormat != VkFormat::VK_FORMAT_UNDEFINED);
-
-	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, imageFormat, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_SAMPLE_COUNT_8_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
+	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.depthFormat, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SAMPLE_COUNT_8_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL }, "GeometryDepthBuffer");
 	depthBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-	return imageFormat;
+	msaaDepthResolveBuffer_  = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.depthFormat, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
+		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL }, "GeometryMSAAResolveDepthBuffer");
+	msaaDepthResolveBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	return swapChainDetails.depthFormat;
 }

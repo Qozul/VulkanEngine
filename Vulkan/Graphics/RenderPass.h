@@ -26,6 +26,12 @@ namespace QZL
 				std::vector<VkSubpassDependency> dependencies;
 			};
 
+			struct CreateInfo2 {
+				std::vector<VkAttachmentDescription2KHR> attachments;
+				std::vector<VkSubpassDescription2KHR> subpasses;
+				std::vector<VkSubpassDependency2KHR> dependencies;
+			};
+
 			virtual void doFrame(FrameInfo& frameInfo) = 0;
 			virtual void createRenderers() = 0;
 			virtual void initRenderPassDependency(std::vector<Image*> dependencyAttachment) = 0;
@@ -33,15 +39,22 @@ namespace QZL
 			virtual ~RenderPass();
 
 			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent = { 0, 0 });
+			void createRenderPass2(CreateInfo2& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent = { 0, 0 });
 
 			void createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, VkExtent2D extent);
 			VkRenderPassBeginInfo beginInfo(const uint32_t& idx, VkExtent2D extent = { 0, 0 }, int32_t offsetX = 0);
 
 			VkAttachmentDescription makeAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
 				VkAttachmentLoadOp stencilLoadOp, VkAttachmentStoreOp stencilStoreOp, VkImageLayout initialLayout, VkImageLayout finalLayout);
-			VkSubpassDescription makeSubpass(VkPipelineBindPoint pipelineType, std::vector<VkAttachmentReference>& colourReferences, VkAttachmentReference* depthReference, VkAttachmentReference* resolve = nullptr);
+			VkAttachmentDescription2KHR makeAttachment2(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
+				VkAttachmentLoadOp stencilLoadOp, VkAttachmentStoreOp stencilStoreOp, VkImageLayout initialLayout, VkImageLayout finalLayout);
+			VkSubpassDescription makeSubpass(VkPipelineBindPoint pipelineType, std::vector<VkAttachmentReference>& colourReferences, VkAttachmentReference* depthReference, VkAttachmentReference* resolve = nullptr);;
+			VkSubpassDescription2KHR makeSubpass2(VkPipelineBindPoint pipelineType, std::vector<VkAttachmentReference2KHR>& colourReferences, 
+				VkAttachmentReference2KHR* depthReference, VkAttachmentReference2KHR* resolve, VkAttachmentReference2KHR* depthStencilResolve, VkSubpassDescriptionDepthStencilResolveKHR* resolveDescription);
 			VkSubpassDescription makeSubpass(VkPipelineBindPoint pipelineType, VkAttachmentReference* depthReference);
 			VkSubpassDependency makeSubpassDependency(uint32_t srcIdx, uint32_t dstIdx, VkPipelineStageFlags srcStage,
+				VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
+			VkSubpassDependency2KHR makeSubpassDependency2(uint32_t srcIdx, uint32_t dstIdx, VkPipelineStageFlags srcStage,
 				VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
 
 			VkRenderPass renderPass_;
