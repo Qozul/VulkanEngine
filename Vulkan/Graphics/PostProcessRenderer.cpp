@@ -21,7 +21,6 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
-	storageBuffers_.push_back(createInfo.graphicsInfo->materialBuffer);
 
 	VkPushConstantRange pushConstants[1] = {
 		setupPushConstantRange<VertexPushConstants>(VK_SHADER_STAGE_VERTEX_BIT)

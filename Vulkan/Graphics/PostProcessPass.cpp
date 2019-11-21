@@ -5,6 +5,7 @@
 #include "SwapChainDetails.h"
 #include "TextureSampler.h"
 #include "PostProcessRenderer.h"
+#include "FullscreenRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
 #include "TextureManager.h"
@@ -50,6 +51,7 @@ PostProcessPass::~PostProcessPass()
 {
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(postProcessRenderer_);
+	SAFE_DELETE(fxaa_);
 }
 
 void PostProcessPass::doFrame(FrameInfo& frameInfo)
@@ -79,7 +81,7 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	scissor.offset.y = 0;
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
-	postProcessRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kPostProcess]);
+	fxaa_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kPostProcess]);
 
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
@@ -90,7 +92,8 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 	geometryColourBuf_ = dependencyAttachment[0];
 	geometryDepthBuf_ = dependencyAttachment[1];
 	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
-	gpDepthResolveBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_);
+	gpDepthBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_, 
+		SamplerInfo(VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
 	createRenderers();
 }
 
@@ -105,9 +108,52 @@ void PostProcessPass::createRenderers()
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
 
-	createInfo.updateRendererSpecific(0, 1, "PPVert", "PPFrag");
-	postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthResolveBuffer_);
-	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, postProcessRenderer_);
+	//createInfo.updateRendererSpecific(0, 1, "PPVert", "PPFrag");
+	//postProcessRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_, gpDepthBuffer_);
+	//graphicsMaster_->setRenderer(RendererTypes::kPostProcess, postProcessRenderer_);
+
+	VkPushConstantRange pushConstants[1] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
+	};
+
+	struct Vals {
+		float nearPlane;
+		float farPlane;
+		uint32_t colourIdx;
+		uint32_t depthIdx;
+	} specConstantValues;
+	specConstantValues.nearPlane = 1.0f / swapChainDetails_.extent.width;
+	specConstantValues.farPlane = 1.0f / swapChainDetails_.extent.height;
+	specConstantValues.colourIdx = gpColourBuffer_;
+	specConstantValues.depthIdx = gpDepthBuffer_;
+	std::vector<VkSpecializationMapEntry> specEntries = {
+		RendererBase::makeSpecConstantEntry(0, 0, sizeof(float)),
+		RendererBase::makeSpecConstantEntry(1, sizeof(float), sizeof(float)),
+		RendererBase::makeSpecConstantEntry(2, sizeof(float) * 2, sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) + sizeof(float) * 2, sizeof(uint32_t))
+	};
+	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("FXAA", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
+
+	PipelineCreateInfo pci = {};
+	pci.debugName = "FXAA";
+	pci.enableDepthTest = VK_FALSE;
+	pci.enableDepthWrite = VK_FALSE;
+	pci.extent = createInfo.extent;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	pci.subpassIndex = createInfo.subpassIndex;
+	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
+
+	RendererCreateInfo2 createInfo2;
+	createInfo2.shaderStages = stageInfos;
+	createInfo2.pipelineCreateInfo = pci;
+	createInfo2.pcRangesCount = 1;
+	createInfo2.pcRanges = pushConstants;
+	fxaa_ = new FullscreenRenderer(createInfo, createInfo2);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

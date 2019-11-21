@@ -48,12 +48,14 @@
     <ClInclude Include="Graphics\DynamicElementBuffer.h" />
     <ClInclude Include="Graphics\ElementBufferObject.h" />
     <ClInclude Include="Graphics\FrameInfo.h" />
+    <ClInclude Include="Graphics\FullscreenRenderer.h" />
     <ClInclude Include="Graphics\GeneralPass.h" />
     <ClInclude Include="Graphics\GlobalRenderData.h" />
     <ClInclude Include="Graphics\GraphicsComponent.h" />
     <ClInclude Include="Graphics\GraphicsMaster.h" />
     <ClInclude Include="Graphics\GraphicsTypes.h" />
     <ClInclude Include="Graphics\Image.h" />
+    <ClInclude Include="Graphics\Light.h" />
     <ClInclude Include="Graphics\LogicalCamera.h" />
     <ClInclude Include="Graphics\LogicDevice.h" />
     <ClInclude Include="Graphics\Material.h" />
@@ -114,6 +116,7 @@
     <ClCompile Include="Graphics\DeviceMemory.cpp" />
     <ClCompile Include="Graphics\DynamicElementBuffer.cpp" />
     <ClCompile Include="Graphics\ElementBufferObject.cpp" />
+    <ClCompile Include="Graphics\FullscreenRenderer.cpp" />
     <ClCompile Include="Graphics\GeneralPass.cpp" />
     <ClCompile Include="Graphics\GlobalRenderData.cpp" />
     <ClCompile Include="Graphics\GraphicsComponent.cpp" />

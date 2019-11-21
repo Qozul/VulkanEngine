@@ -54,6 +54,15 @@ VkSpecializationInfo RendererBase::setupSpecConstants(uint32_t entryCount, VkSpe
 	return { entryCount, entryPtr, dataSize, data };
 }
 
+const VkPushConstantRange RendererBase::setupPushConstantRange(VkShaderStageFlagBits stage, VkDeviceSize size, VkDeviceSize offset)
+{
+	VkPushConstantRange range = {};
+	range.size = size;
+	range.offset = offset;
+	range.stageFlags = stage;
+	return range;
+}
+
 void RendererBase::beginFrame(VkCommandBuffer& cmdBuffer)
 {
 	EXPECTS(pipeline_ != nullptr);

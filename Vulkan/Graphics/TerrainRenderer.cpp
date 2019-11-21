@@ -54,7 +54,7 @@ TerrainRenderer::TerrainRenderer(RendererCreateInfo& createInfo)
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 	pci.subpassIndex = createInfo.subpassIndex;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-	pci.sampleCount = VK_SAMPLE_COUNT_8_BIT;
+	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);

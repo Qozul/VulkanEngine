@@ -26,6 +26,7 @@ namespace QZL {
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 
 			RendererBase* postProcessRenderer_;
+			RendererBase* fxaa_;
 
 			Image* colourBuffer_;
 
@@ -34,7 +35,7 @@ namespace QZL {
 
 			// Samplers for the images produced in the GeometryPass render pass.
 			uint32_t gpColourBuffer_;
-			uint32_t gpDepthResolveBuffer_;
+			uint32_t gpDepthBuffer_;
 		};
 	}
 }
