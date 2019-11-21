@@ -24,17 +24,14 @@ namespace QZL {
 		};
 		struct TerrainShaderParams : ShaderParams {
 			glm::mat4 model;
-			glm::vec3 albedoCol;
-			float alpha = 1.0f;
-			glm::vec3 specularCol;
-			float specularExponent = 1.0f;
+			glm::vec4 heights;
 			float distanceFarMinusClose = 300.0f;
 			float closeDistance = 50.0f;
 			float patchRadius = 40.0f;
 			float maxTessellationWeight = 4.0f;
 			std::array<glm::vec4, 6> frustumPlanes;
-			TerrainShaderParams(glm::vec3 albedo, glm::vec3 specular, float alpha, float specExponent)
-				: albedoCol(albedo), alpha(alpha), specularCol(specular), specularExponent(specExponent) { }
+			TerrainShaderParams(float maxHeight, float sandHeight, float grassHeight, float snowHeight)
+				: heights(maxHeight, sandHeight, grassHeight, snowHeight) { }
 		};
 		struct AtmosphereShaderParams : ShaderParams {
 			glm::mat4 inverseViewProj;

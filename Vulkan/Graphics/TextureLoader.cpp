@@ -42,61 +42,61 @@ Image* TextureLoader::loadTexture(const std::string& fileName, VkShaderStageFlag
 	image.load(kPath + fileName + kExt, false);
 	ASSERT(image.is_valid());
 	Image* texture = nullptr;
-	if (!image.is_cubemap()) {
-		VkFormat format = convertToVkFormat(image.get_format());
-		MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer("", MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, image.get_size());
-		uint8_t* data = static_cast<uint8_t*>(deviceMemory_->mapMemory(stagingBuffer.id));
-		memcpy(data, image, image.get_size());
-		deviceMemory_->unmapMemory(stagingBuffer.id);
+	VkFormat format = convertToVkFormat(image.get_format());
 
-		texture = new Image(logicDevice_, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, format, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT, image.get_width(), image.get_height()),
-			MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL });
+	texture = new Image(logicDevice_, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, image.get_num_mipmaps() == 0 ? 1 : image.get_num_mipmaps(), 1, format, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT, image.get_width(), image.get_height()),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL });
 
-		deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), 0, image.get_width(), image.get_height(), stages, texture);
-
-		if (texture->getMipLevels() <= 1) {
-			texture->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, stages);
-		}
-
-		deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
-		image.clear();
-	}
-	else {
-		VkFormat format = VK_FORMAT_BC3_UNORM_BLOCK;
-		texture = new Image(logicDevice_, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 6, format, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT, image.get_width(), image.get_height(), 1, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT),
-			MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL });
-
-		MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer("", MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, image.get_size() * 6);
-		
-		std::vector<VkBufferImageCopy> bufferCopyRegions;
-		uint32_t offset = 0;
-		uint8_t* data = static_cast<uint8_t*>(deviceMemory_->mapMemory(stagingBuffer.id));
-		for (size_t face = 0; face < 6; ++face) {
-			memcpy(data + offset, image.get_cubemap_face(face), image.get_size());
-
-			VkBufferImageCopy bufferCopyRegion = {};
-			bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			bufferCopyRegion.imageSubresource.mipLevel = 0;
-			bufferCopyRegion.imageSubresource.baseArrayLayer = face;
-			bufferCopyRegion.imageSubresource.layerCount = 1;
-			bufferCopyRegion.imageExtent.width = image.get_width();
-			bufferCopyRegion.imageExtent.height = image.get_height();
-			bufferCopyRegion.imageExtent.depth = 1;
-			bufferCopyRegion.bufferOffset = offset;
-			bufferCopyRegions.push_back(bufferCopyRegion);
-			offset = image.get_size();
-		}
-		deviceMemory_->unmapMemory(stagingBuffer.id);
-
-		deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), bufferCopyRegions.data(), bufferCopyRegions.size());
-
-		texture->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, stages);
-		deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
-		image.clear();
+	VkDeviceSize totalSize = image.get_size();
+	for (unsigned int i = 0; i < image.get_num_mipmaps(); ++i) {
+		totalSize += image.get_mipmap(i).get_size();
 	}
 
+	MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer("", MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, totalSize);
+
+	std::vector<VkBufferImageCopy> bufferCopyRegions;
+	uint8_t* data = static_cast<uint8_t*>(deviceMemory_->mapMemory(stagingBuffer.id));
+	memcpy(data, image, image.get_size());
+
+	VkBufferImageCopy bufferCopyRegion = {};
+	bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	bufferCopyRegion.imageSubresource.mipLevel = 0;
+	bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+	bufferCopyRegion.imageSubresource.layerCount = 1;
+	bufferCopyRegion.imageExtent.width = image.get_width();
+	bufferCopyRegion.imageExtent.height = image.get_height();
+	bufferCopyRegion.imageExtent.depth = 1;
+	bufferCopyRegion.bufferOffset = 0;
+	bufferCopyRegions.push_back(bufferCopyRegion);
+
+	uint32_t offset = image.get_size();
+	for (unsigned int i = 0; i < image.get_num_mipmaps(); ++i) {
+		memcpy(data + offset, image.get_mipmap(i), image.get_mipmap(i).get_size());
+
+		VkBufferImageCopy bufferCopyRegion = {};
+		bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		bufferCopyRegion.imageSubresource.mipLevel = i + 1;
+		bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+		bufferCopyRegion.imageSubresource.layerCount = 1;
+		bufferCopyRegion.imageExtent.width = image.get_mipmap(i).get_width();
+		bufferCopyRegion.imageExtent.height = image.get_mipmap(i).get_height();
+		bufferCopyRegion.imageExtent.depth = 1;
+		bufferCopyRegion.bufferOffset = offset;
+		bufferCopyRegions.push_back(bufferCopyRegion);
+
+		offset += image.get_mipmap(i).get_size();
+	}
+	deviceMemory_->unmapMemory(stagingBuffer.id);
+
+	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), bufferCopyRegions.data(), bufferCopyRegions.size());
+
+
+
+	texture->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, stages);
+
+	deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
+	image.clear();
 	return texture;
 }
 
@@ -132,7 +132,7 @@ Image* Graphics::TextureLoader::loadCubeTexture(const std::array<std::string, 6U
 		bufferCopyRegion.imageExtent.depth = 1;
 		bufferCopyRegion.bufferOffset = offset;
 		bufferCopyRegions.push_back(bufferCopyRegion);
-		offset = image[0].get_size();
+		offset += image[0].get_size();
 	}
 	deviceMemory_->unmapMemory(stagingBuffer.id);
 

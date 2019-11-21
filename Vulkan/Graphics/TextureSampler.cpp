@@ -27,7 +27,7 @@ TextureSampler::TextureSampler(const LogicDevice* logicDevice, const std::string
 	createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	createInfo.mipLodBias = 0.0f;
 	createInfo.minLod = 0.0f;
-	createInfo.maxLod = 0.0f;
+	createInfo.maxLod = (float)texture->getMipLevels();
 	CHECK_VKRESULT(vkCreateSampler(*logicDevice, &createInfo, nullptr, &sampler_));
 
 	imageInfo_ = texture_->getImageInfo();

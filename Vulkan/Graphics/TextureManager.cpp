@@ -26,7 +26,7 @@ TextureManager::TextureManager(const LogicDevice* logicDevice, Descriptor* descr
 	}
 
 	materialCount_ = 0;
-	materialData_.resize(36);
+	materialData_.resize(1000);
 }
 
 TextureManager::~TextureManager()

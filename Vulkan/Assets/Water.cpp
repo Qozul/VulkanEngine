@@ -19,7 +19,7 @@ Water::Water(const std::string name, TextureManager* textureManager)
 void Water::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
 	auto params = static_cast<WaterShaderParams*>(graphicsComponent_->getShaderParams());
-	params->baseColour.w += dt * 0.05f;
+	params->baseColour.w += dt * 0.01f;
 	if (params->baseColour.w > 1.0f) {
 		params->baseColour.w = 0.0f;
 	}
@@ -27,8 +27,8 @@ void Water::update(float dt, const glm::mat4& viewProjection, const glm::mat4& p
 
 void Water::loadFunction(uint32_t& count, std::vector<char>& indices, std::vector<char>& vertices)
 {
-	const int gridSize = 800;
-	const int numSubGrids = 100;
+	const int gridSize = 1000;
+	const int numSubGrids = 50;
 	const int subGridSize = gridSize / numSubGrids;
 	std::vector<uint16_t> inds;
 	std::vector<Graphics::Vertex> verts;

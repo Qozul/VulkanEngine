@@ -24,10 +24,10 @@ namespace QZL {
 			};
 
 			struct Terrain {
-				uint32_t heightmapIdx;
 				uint32_t normalmapIdx;
-				uint32_t albedoIdx;
-				//uint32_t detailNormalmapIdx;
+				uint32_t albedoIdx0;
+				uint32_t albedoIdx1;
+				uint32_t albedoIdx2;
 			};
 
 			struct Atmosphere {
@@ -43,6 +43,7 @@ namespace QZL {
 			};
 
 			struct Water {
+				uint32_t dudv;
 				uint32_t displacementMap;
 				uint32_t normalMap;
 			};

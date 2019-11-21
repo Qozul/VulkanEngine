@@ -66,7 +66,7 @@ void GameMaster::loadGame()
 	terrain->setGameScript(new TerrainScript(masters_));
 
 	Entity* water = new Water("water", masters_.textureManager);
-	water->getTransform()->position = glm::vec3(0.0f, -120.0f, 130.0f);
+	water->getTransform()->position = glm::vec3(0.0f, 80.0f, 130.0f);
 
 	Entity* sun = new Entity("sun");
 	scriptInit.owner = sun;

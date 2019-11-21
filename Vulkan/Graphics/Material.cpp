@@ -81,10 +81,10 @@ void Materials::loadTerrainMaterial(TextureManager* texManager, void* data, std:
 {
 	ASSERT(lines.size() >= 3);
 	Terrain material = {};
-	material.heightmapIdx = texManager->requestTexture(lines[0]);
-	material.normalmapIdx = texManager->requestTexture(lines[2]);
-	material.albedoIdx = texManager->requestTexture(lines[1]);
-	//material.detailNormalmapIdx = texManager->requestTexture(lines[3]);
+	material.normalmapIdx = texManager->requestTexture(lines[0]);
+	material.albedoIdx0 = texManager->requestTexture(lines[1]);
+	material.albedoIdx1 = texManager->requestTexture(lines[2]);
+	material.albedoIdx2 = texManager->requestTexture(lines[3]);
 	memcpy(data, &material, sizeof(Terrain));
 }
 
@@ -98,9 +98,10 @@ void Materials::loadParticleMaterial(TextureManager* texManager, void* data, std
 
 void Materials::loadWaterMaterial(TextureManager* texManager, void* data, std::vector<std::string>& lines)
 {
-	ASSERT(lines.size() >= 2);
+	ASSERT(lines.size() >= 3);
 	Water material = {};
-	material.displacementMap = texManager->requestTexture(lines[0]);
-	material.normalMap = texManager->requestTexture(lines[1]);
+	material.dudv = texManager->requestTexture(lines[0]);
+	material.displacementMap = texManager->requestTexture(lines[1]);
+	material.normalMap = texManager->requestTexture(lines[2]);
 	memcpy(data, &material, sizeof(Water));
 }

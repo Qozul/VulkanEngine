@@ -8,6 +8,7 @@ struct Params {
 };
 
 struct Material {
+	uint dudvIdx;
 	uint displacementmapIdx;
 	uint normalmapIdx;
 };
@@ -30,6 +31,7 @@ layout (location = 3) flat out int outInstanceIndex;
 layout (location = 4) out vec4 outShadowCoord;
 layout (location = 5) flat out uint outShadowMapIdx;
 layout (location = 6) out float height;
+layout (location = 7) flat out uint disp;
 
 layout(set = 0, binding = 0) readonly buffer UniformBufferObject {
     mat4 elementData[];
@@ -82,4 +84,6 @@ void main(void)
 	normal.g = normal.b;
 	normal.b = tmp;
 	normal = normalize(mat3(transpose(inverse(param.model))) * normal);
+	
+	disp = texIndices.dudvIdx;
 }

@@ -14,7 +14,7 @@ layout(location = 0) out vec4 colour;
 void main()
 {
 	colour = texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv);
-	float depth = texture(texSamplers[nonuniformEXT(SC_GEOMETRY_DEPTH_IDX)], uv).r;
-	depth = clamp(linearizeDepth(depth, SC_NEAR_Z, SC_FAR_Z), 0.0, 1.0);
-	colour = vec4(depth, depth, depth, 1.0);
+	//float depth = texture(texSamplers[nonuniformEXT(SC_GEOMETRY_DEPTH_IDX)], uv).r;
+	//depth = clamp(linearizeDepth(depth, SC_NEAR_Z, SC_FAR_Z), 0.0, 1.0);
+	//colour = vec4(depth, depth, depth, 1.0);
 }

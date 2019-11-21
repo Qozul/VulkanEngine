@@ -20,8 +20,7 @@ layout (location = 0) out vec2 texUV;
 layout (location = 1) flat out int instanceIndex;
 layout (location = 2) out vec4 shadowCoord;
 layout (location = 3) flat out uint shadowMapIdx;
-layout (location = 4) out vec2 outNormalizedUvs;
-layout (location = 5) flat out float maxHeight;
+layout (location = 4) out vec3 normal;
 
 layout(set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer MaterialData
 {
@@ -39,8 +38,7 @@ void main() {
 	instanceIndex = gl_InstanceIndex;
 	gl_Position = vec4(iPosition, 1.0);
 	texUV = iTextureCoord;
-	outNormalizedUvs = iNormal.xy;
-	maxHeight = iNormal.z;
+	normal = iNormal;
 	shadowCoord = (biasMat * PC.shadowMatrix * materials[SC_PARAMS_OFFSET + instanceIndex].model) * vec4(iPosition, 1.0);
 	shadowMapIdx = PC.shadowTextureIdx;
 }

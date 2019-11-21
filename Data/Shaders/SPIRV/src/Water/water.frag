@@ -25,6 +25,7 @@ layout (location = 3) flat in int instanceIndex;
 layout (location = 4) in vec4 shadowCoord;
 layout (location = 5) flat in uint shadowMapIdx;
 layout (location = 6) in float height;
+layout (location = 7) flat in uint disp;
 
 layout(set = 1, binding = 2) uniform sampler2D texSamplers[];
 
@@ -49,7 +50,11 @@ void main() {
 	vec3 halfDir = normalize(incident + viewDir);
 	float dist = length(lightPositions[0].xyz - worldPos);
 
-	vec4 environmentCol = texture(Cubemap, reflect(viewDir, normal));
+	vec3 distortion = texture(texSamplers[nonuniformEXT(disp)], texUV).rgb * 0.15;
+	
+	vec3 R = reflect(viewDir, normal);
+	R += distortion;
+	vec4 environmentCol = texture(Cubemap, R);
 	
 	float lambert = max(0.0, dot(incident, normal));
 	float rFactor = max(0.0, dot(halfDir, normal));

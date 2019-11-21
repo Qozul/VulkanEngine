@@ -30,7 +30,7 @@ float calculateTessLevel(float d0, float d1)
 	float dist = min(d0, d1) - 50.0;
 	// Calculate a continuous value between 0 and 1
 	float proportion = clamp(dist/500.0, 0.0, 1.0);
-	return mix(8.0, 1.0, proportion);
+	return mix(1.0, 1.0, proportion);
 }
 
 void main()

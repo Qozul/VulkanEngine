@@ -176,7 +176,7 @@ void DeviceMemory::Impl::transferMemory(const VkBuffer& srcBuffer, const VkImage
 
 	vkCmdCopyBufferToImage(transferCmdBuffer_, srcBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
-	if (image != nullptr) image->generateMipmaps(transferCmdBuffer_, stages);
+	//if (image != nullptr) image->generateMipmaps(transferCmdBuffer_, stages);
 
 	vkEndCommandBuffer(transferCmdBuffer_);
 	VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };

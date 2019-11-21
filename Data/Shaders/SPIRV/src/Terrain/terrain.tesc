@@ -17,15 +17,13 @@ layout (location = 0) in vec2 iTexUV[];
 layout (location = 1) flat in int instanceIndex[];
 layout (location = 2) in vec4 shadowCoord[];
 layout (location = 3) flat in uint shadowMapIdx[];
-layout (location = 4) in vec2 inNormalizedUvs[];
-layout (location = 5) flat in float inMaxHeight[];
+layout (location = 4) in vec3 normal[];
 
 layout (location = 0) out vec2 outTexUV[NUM_VERTS];
 layout (location = 1) flat out int outInstanceIndex[NUM_VERTS];
 layout (location = 2) out vec4 outShadowCoord[NUM_VERTS];
 layout (location = 3) flat out uint outShadowMapIdx[NUM_VERTS];
-layout (location = 4) out vec2 outNormalizedUvs[NUM_VERTS];
-layout (location = 5) flat out float maxHeight[NUM_VERTS];
+layout (location = 4) out vec3 outNormal[NUM_VERTS];
 
 layout(set = GLOBAL_SET, binding = LIGHT_UBO_BINDING) uniform LightingData
 {
@@ -59,7 +57,7 @@ bool checkCulling(in Params parameters)
 {
 	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec4 pos = gl_in[gl_InvocationID].gl_Position;
-	pos.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], inNormalizedUvs[0]).r * inMaxHeight[0];
+	//pos.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], inNormalizedUvs[0]).r * inMaxHeight[0];
 	for (int i = 0; i < 6; ++i) {
 		if (dot(pos, parameters.frustumPlanes[i]) + parameters.patchRadius < 0.0) {
 			return false;
@@ -72,7 +70,7 @@ vec3 getVertexPosition(int i)
 {
 	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec3 pos = gl_in[i].gl_Position.xyz;
-	pos.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], inNormalizedUvs[i]).r * inMaxHeight[0];
+	//pos.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], inNormalizedUvs[i]).r * inMaxHeight[0];
 	return pos;
 }
 
@@ -81,7 +79,6 @@ void main()
 	Params parameters = params[SC_PARAMS_OFFSET + instanceIndex[0]];
 	outInstanceIndex[gl_InvocationID] = instanceIndex[0];
 	outShadowMapIdx[gl_InvocationID] = shadowMapIdx[0];
-	maxHeight[gl_InvocationID] = inMaxHeight[0];
 	// Only calculate per-patch stuff (tess levels) once per patch
 	if (gl_InvocationID == 0) {
 		if (!checkCulling(parameters)) {
@@ -111,6 +108,6 @@ void main()
 	}
 	outTexUV[gl_InvocationID] = iTexUV[gl_InvocationID];
 	outShadowCoord[gl_InvocationID] = shadowCoord[gl_InvocationID];
-	outNormalizedUvs[gl_InvocationID] = inNormalizedUvs[gl_InvocationID];
+	outNormal[gl_InvocationID] = normal[gl_InvocationID];
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }
