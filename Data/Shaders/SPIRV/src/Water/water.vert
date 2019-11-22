@@ -21,8 +21,8 @@ layout(location = 2) in vec3 iNormal;
 
 layout (location = 0) out vec2 texUV;
 layout (location = 1) flat out int instanceIndex;
-layout (location = 2) out vec4 shadowCoord;
-layout (location = 3) flat out uint shadowMapIdx;
+layout (location = 2) flat out uint shadowMapIdx;
+layout (location = 3) flat out mat4 shadowMat;
 
 layout(set = 0, binding = 1) readonly buffer MaterialData
 {
@@ -40,6 +40,6 @@ void main() {
 	instanceIndex = gl_InstanceIndex;
 	gl_Position = vec4(iPosition, 1.0);
 	texUV = iTextureCoord;
-	shadowCoord = (biasMat * PC.shadowMatrix * params[SC_PARAMS_OFFSET + instanceIndex].model) * vec4(iPosition, 1.0);
+	shadowMat = PC.shadowMatrix;
 	shadowMapIdx = PC.shadowTextureIdx;
 }

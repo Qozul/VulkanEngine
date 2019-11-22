@@ -66,7 +66,7 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	// Ping-pong
 	while (effects.size() > 0) {
 		// 1st pass
-		auto bi1 = beginInfo(frameInfo.frameIdx);
+		auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
 		bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		bi1.pClearValues = clearValues.data();
 
@@ -120,7 +120,7 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 	geometryDepthBuf_ = dependencyAttachment[1];
 	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
 	gpDepthBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_, 
-		SamplerInfo(VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_REPEAT, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
+		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
 	createPasses();
 	createRenderers();
 }
@@ -131,7 +131,7 @@ void PostProcessPass::createRenderers()
 	createInfo.logicDevice = logicDevice_;
 	createInfo.descriptor = descriptor_;
 	createInfo.extent = swapChainDetails_.extent;
-	createInfo.renderPass = renderPass_;
+	createInfo.renderPass = renderPassPresent_;
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
@@ -140,6 +140,8 @@ void PostProcessPass::createRenderers()
 	presentRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_);
 	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, presentRenderer_);
 	presentRenderer2_ = new PostProcessRenderer(createInfo, colourBufferIdx_);
+
+	createInfo.renderPass = renderPass_;
 
 	VkPushConstantRange pushConstants[1] = {
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
@@ -215,7 +217,7 @@ void PostProcessPass::createPasses()
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
 		0,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT));
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		0,
@@ -225,7 +227,7 @@ void PostProcessPass::createPasses()
 	);
 
 	std::vector<VkImageView> attachmentImages = { colourBuffer1_->getImageView() };
-	createRenderPass(createInfo, attachmentImages);
+	createRenderPass(createInfo, attachmentImages, { 0, 0 }, &renderPass_, framebuffers_);
 
 	std::vector<VkImageView> attachmentImages2 = { geometryColourBuf_->getImageView() };
 	createRenderPass(createInfo, attachmentImages2, { 0, 0 }, &renderPass2_, framebuffers2_);

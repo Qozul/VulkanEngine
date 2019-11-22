@@ -9,13 +9,13 @@ layout(vertices = NUM_VERTS) out;
 
 layout (location = 0) in vec2 iTexUV[];
 layout (location = 1) flat in int instanceIndex[];
-layout (location = 2) in vec4 shadowCoord[];
-layout (location = 3) flat in uint shadowMapIdx[];
+layout (location = 2) flat in uint shadowMapIdx[];
+layout (location = 3) flat in mat4 shadowMat[];
 
 layout (location = 0) out vec2 outTexUV[NUM_VERTS];
 layout (location = 1) flat out int outInstanceIndex[NUM_VERTS];
-layout (location = 2) out vec4 outShadowCoord[NUM_VERTS];
-layout (location = 3) flat out uint outShadowMapIdx[NUM_VERTS];
+layout (location = 2) flat out uint outShadowMapIdx[NUM_VERTS];
+layout (location = 3) flat out mat4 outShadowMat[NUM_VERTS];
 
 layout(set = 1, binding = 0) uniform LightingData
 {
@@ -52,6 +52,6 @@ void main()
 	gl_TessLevelInner[0] = mix(gl_TessLevelOuter[0], gl_TessLevelOuter[3], 0.5);
 	gl_TessLevelInner[1] = mix(gl_TessLevelOuter[2], gl_TessLevelOuter[1], 0.5);
 	outTexUV[gl_InvocationID] = iTexUV[gl_InvocationID];
-	outShadowCoord[gl_InvocationID] = shadowCoord[gl_InvocationID];
+	outShadowMat[gl_InvocationID] = shadowMat[0];
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }

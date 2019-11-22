@@ -13,9 +13,9 @@ layout (constant_id = 1) const float SC_INV_SCREEN_Y = 0.0;
 layout (constant_id = 2) const uint SC_GEOMETRY_COLOUR_IDX = 0;
 layout (constant_id = 3) const uint SC_GEOMETRY_DEPTH_IDX = 0;
 
-const float EDGE_THRESHOLD_MAX = 0.25;
-const float EDGE_THRESHOLD_MIN = 0.625;
-const float SUBPIX_QUALITY = 0.75;
+const float EDGE_THRESHOLD_MAX = 0.0625;
+const float EDGE_THRESHOLD_MIN = 0.03125;
+const float SUBPIX_QUALITY = 0.875;
 const float INV_TWELVE = 1.0 / 12.0;
 const int ITERATIONS = 12;
 const float QUALITY[12] = float[](1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 8.0);
@@ -24,7 +24,7 @@ layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 colour;
 
 float rgbToLuminance(vec3 rgb){
-    return sqrt(dot(rgb, vec3(0.299, 0.587, 0.114)));
+    return dot(rgb, vec3(0.299, 0.587, 0.114));
 }
 
 void main()
@@ -44,7 +44,6 @@ void main()
 	
 	if (range < max(EDGE_THRESHOLD_MIN, lumMax * EDGE_THRESHOLD_MAX)) {
 		colour = vec4(col, 1.0);
-		return;
 	}
 	else {
 		float lumDL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2(-1,-1)).rgb);
@@ -61,7 +60,7 @@ void main()
 		float lumUC = lumUR + lumUL;
 		
 		float edgeH = abs(-2.0 * lumL + lumLC) + abs(-2.0 * lum + lumDU) * 2.0 + abs(-2.0 * lumR + lumRC);
-		float edgeV = abs(-2.0 * lumU + lumUC) + abs(-2.0 * lum * lumLR) * 2.0 + abs(-2.0 * lumD + lumDC);
+		float edgeV = abs(-2.0 * lumU + lumUC) + abs(-2.0 * lum + lumLR) * 2.0 + abs(-2.0 * lumD + lumDC);
 		
 		bool horizontal = edgeH >= edgeV;
 		
@@ -73,17 +72,18 @@ void main()
 		
 		float grad = 0.25 * max(abs(grad1), abs(grad2));
 		float stepLength = horizontal ? SC_INV_SCREEN_Y : SC_INV_SCREEN_X;
-		stepLength *= -1.0 * step(grad2, grad1);
-		
-		float lumAvg = stepLength < 0.0 ? 0.5 * (lum1 + lum) : 0.5 * (lum2 + lum);
-		vec2 uvCurrent = vec2(uv.x + stepLength * 0.5, uv.y + stepLength * 0.5);
-		
+		stepLength *= abs(grad1) >= abs(grad2) ? -1.0 : 1.0;
+
+		float lumAvg = abs(grad1) >= abs(grad2) ? 0.5 * (lum1 + lum) : 0.5 * (lum2 + lum);
+
+		vec2 uvCurrent = horizontal ? vec2(uv.x, uv.y + stepLength * 0.5) : vec2(uv.x + stepLength * 0.5, uv.y);
+
 		vec2 uvOffset = horizontal ? vec2(SC_INV_SCREEN_X, 0.0) : vec2(0.0, SC_INV_SCREEN_Y);
 		vec2 uv1 = uvCurrent - uvOffset;
 		vec2 uv2 = uvCurrent + uvOffset;
 		
-		float lumEnd1 = (rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv1).rgb)) - lumAvg;
-		float lumEnd2 = rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv1).rgb) - lumAvg;
+		float lumEnd1 = rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv1).rgb) - lumAvg;
+		float lumEnd2 = rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv2).rgb) - lumAvg;
 		
 		bool reached1 = abs(lumEnd1) >= grad;
 		bool reached2 = abs(lumEnd2) >= grad;
@@ -116,7 +116,7 @@ void main()
 					uv1 -= uvOffset * QUALITY[i];
 				}
 				if (!reached2) {
-					uv2 -= uvOffset * QUALITY[i];
+					uv2 += uvOffset * QUALITY[i];
 				}
 			}
 		}
