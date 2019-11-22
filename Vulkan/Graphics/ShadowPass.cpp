@@ -117,7 +117,7 @@ void ShadowPass::createRenderers()
 	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	createInfo.updateRendererSpecific(0, 1, "ShadowVert",  "");
 	shadowRenderer_ = new ShadowRenderer(createInfo);
-	createInfo.updateRendererSpecific(0, 1, "ShadowTerrainVert", "", "", "ShadowterrainTESC", "ShadowTerrainTESE");
+	createInfo.updateRendererSpecific(0, 1, "ShadowTerrainVert", "", "", "ShadowTerrainTESC", "ShadowTerrainTESE");
 	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 	shadowTerrainRenderer_ = new ShadowRenderer(createInfo);
 
@@ -126,9 +126,6 @@ void ShadowPass::createRenderers()
 
 void ShadowPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
 {
-	colourBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, SHADOW_DIMENSIONS, SHADOW_DIMENSIONS, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
 }
 
 VkFormat ShadowPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

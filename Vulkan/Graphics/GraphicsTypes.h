@@ -12,6 +12,7 @@ namespace QZL {
 			kPostProcess,
 			kShadow,
 			kWater,
+			kStaticDeferred,
 			kNone
 		};
 

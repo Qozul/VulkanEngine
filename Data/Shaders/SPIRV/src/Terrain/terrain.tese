@@ -3,6 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "../common.glsl"
 #include "terrain_structs.glsl"
+const float PI = 3.14159265358979323846;
 
 layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
 layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
@@ -51,17 +52,17 @@ const vec3 betaRay = vec3(6.55e-6, 1.73e-5, 2.30e-5);
 const vec3 betaMie = vec3(2e-6);
 
 // theta is the angle between the direction of the incident light and the direction of the scattered light
-float rayleighPhase(float ctheta)
+vec3 rayleighPhase(float ctheta, vec3 betaRay)
 {
-	return 0.8 * (1.4 + 0.5 * ctheta);
+	return (3 / (16.0 * PI)) * betaRay * (1.0 + ctheta * ctheta);
 }
 
 // g is in range [-1, 1]
-float miePhase(float ctheta, float g)
+vec3 miePhase(float ctheta, float g, vec3 betaMie)
 {
 	float g2 = g * g;
 	float c2theta = ctheta * ctheta;
-	return ((3.0 * (1.0 - g2)) / (2.0 * (2.0 + g2))) * ((1.0 + c2theta) / pow(1.0 + g2 - 2.0 * g * c2theta, 1.5));
+	return (1.0 / (4.0 * PI)) * betaMie * (pow(1.0 + g, 2.0) / pow(1.0 + g2 - 2.0 * g * c2theta, 1.5));
 }
 
 void main(void)
@@ -92,5 +93,5 @@ void main(void)
 	
 	Fext = exp(-(betaRay + betaMie) * distance(worldPos, cameraPosition.xyz));
 	float ctheta = dot(normalize(worldPos - cameraPosition.xyz), normalize(lightPositions[0].xyz));
-	Lin = ((rayleighPhase(ctheta) + miePhase(ctheta, 0.9)) / (betaRay + betaMie)) * (1.0 - Fext);
+	Lin = ((rayleighPhase(ctheta, betaRay) + miePhase(ctheta, 0.9, betaMie)) / (betaRay + betaMie)) * (1.0 - Fext);
 }

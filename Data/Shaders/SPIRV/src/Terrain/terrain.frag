@@ -66,7 +66,7 @@ void main() {
 	
 	float shadow = projectShadow(shadowCoord / shadowCoord.w, vec2(0.0), shadowMapIdx);
 	fragColor = vec4((diffuse + specular) * shadow, 1.0);
-	vec4 tmpFragColor0 = mix(vec4(Lin * 0.001, 1.0), fragColor, heightFactor * heightFactor);
+	vec4 tmpFragColor0 = mix(vec4(Lin * vec3(6.5e-7, 5.1e-7, 4.75e-7) * vec3(1e9), 1.0), fragColor, heightFactor * heightFactor);
 	float distFactor = (distance(worldPos, cameraPosition.xyz) - 0.1) / 1000.0;
 	fragColor = mix(fragColor, tmpFragColor0, distFactor * distFactor);
 	reinhardTonemap(fragColor);

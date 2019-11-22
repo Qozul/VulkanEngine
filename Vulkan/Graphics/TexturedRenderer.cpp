@@ -49,6 +49,8 @@ TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
 	pci.subpassIndex = createInfo.subpassIndex;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
+	pci.colourAttachmentCount = createInfo.colourAttachmentCount;
+	pci.colourBlendEnables = createInfo.colourBlendEnables;
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci);

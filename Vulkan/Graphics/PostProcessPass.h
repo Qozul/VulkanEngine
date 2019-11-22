@@ -10,11 +10,10 @@ namespace QZL {
 	namespace Graphics {
 		class RendererBase;
 		class PostProcessPass : public RenderPass {
-			friend class SwapChain;
-			enum class SubPass : uint32_t {
-				kAerialPerspective,
-				kSubpassCount
+			enum class Effects {
+				kFXAA, kCount
 			};
+			friend class SwapChain;
 		protected:
 			PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			~PostProcessPass();
@@ -24,15 +23,25 @@ namespace QZL {
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
+			void createPasses();
 
-			RendererBase* postProcessRenderer_;
+			VkRenderPass renderPassPresent_;
+			VkRenderPass renderPass2_;
+			std::vector<VkFramebuffer> framebuffers2_;
+			std::vector<VkFramebuffer> framebuffersPresent_;
+
+			RendererBase* presentRenderer_;
+			RendererBase* presentRenderer2_;
 			RendererBase* fxaa_;
 
-			Image* colourBuffer_;
+			Image* colourBuffer1_;
+			Image* colourBuffer2_;
 
+			// Hold information from previous pass
 			Image* geometryColourBuf_;
 			Image* geometryDepthBuf_;
 
+			uint32_t colourBufferIdx_;;
 			// Samplers for the images produced in the GeometryPass render pass.
 			uint32_t gpColourBuffer_;
 			uint32_t gpDepthBuffer_;

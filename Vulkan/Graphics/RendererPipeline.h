@@ -31,6 +31,7 @@ namespace QZL
 			VkBool32 depthBiasEnable = VK_FALSE;
 			VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
 			std::vector<VkDynamicState> dynamicState;
+			std::vector<VkBool32> colourBlendEnables;
 		};
 
 		class RendererPipeline {

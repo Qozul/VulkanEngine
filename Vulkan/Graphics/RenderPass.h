@@ -40,9 +40,10 @@ namespace QZL
 
 			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent = { 0, 0 });
 			void createRenderPass2(CreateInfo2& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent = { 0, 0 });
+			void createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent, VkRenderPass* handle, std::vector<VkFramebuffer>& framebuffers);
 
-			void createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, VkExtent2D extent);
-			VkRenderPassBeginInfo beginInfo(const uint32_t& idx, VkExtent2D extent = { 0, 0 }, int32_t offsetX = 0);
+			void createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages, VkExtent2D extent, std::vector<VkFramebuffer>& framebuffers);
+			VkRenderPassBeginInfo beginInfo(const uint32_t& idx, VkExtent2D extent = { 0, 0 }, int32_t offsetX = 0, VkRenderPass renderPass = VK_NULL_HANDLE, VkFramebuffer framebuffer = VK_NULL_HANDLE);
 
 			VkAttachmentDescription makeAttachment(VkFormat format, VkSampleCountFlagBits samples, VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp,
 				VkAttachmentLoadOp stencilLoadOp, VkAttachmentStoreOp stencilStoreOp, VkImageLayout initialLayout, VkImageLayout finalLayout);

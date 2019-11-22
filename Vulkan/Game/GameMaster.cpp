@@ -57,10 +57,14 @@ void GameMaster::loadGame()
 	camera->setGameScript(new Camera(masters_));
 
 	Entity* teapot = new Entity("Teapot");
-	teapot->getTransform()->scale = glm::vec3(1.0f);
-	teapot->getTransform()->position = glm::vec3(100.0f, 10.0f, 300.0f);
+	teapot->getTransform()->position = glm::vec3(100.0f, 40.0f, 300.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
+
+	/*Entity* teapotDeferred = new Entity("TeapotDeferred");
+	teapotDeferred->getTransform()->position = glm::vec3(200.0f, 50.0f, 100.0f);
+	teapotDeferred->setGraphicsComponent(Graphics::RendererTypes::kStaticDeferred, nullptr, new Graphics::StaticShaderParams(),
+		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStaticDeferred, "ExampleStatic"), "Teapot");*/
 	
 	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 	terrain->setGameScript(new TerrainScript(masters_));

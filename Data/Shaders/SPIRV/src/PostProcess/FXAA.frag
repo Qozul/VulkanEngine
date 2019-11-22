@@ -1,3 +1,8 @@
+/*
+	Implemented using http://blog.simonrodriguez.fr/articles/30-07-2016_implementing_fxaa.html#ref4 as reference
+	for FXAA with a medium quality, with use of https://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf for
+	example value tuning.
+*/
 #version 450
 #extension GL_EXT_nonuniform_qualifier : require
 #extension GL_GOOGLE_include_directive : enable

@@ -331,7 +331,8 @@ void SwapChain::initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsIn
 	renderPasses_.push_back(new GeometryPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_.push_back(new ShadowPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
-	renderPasses_[1]->initRenderPassDependency({ static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ });
+	std::vector<Image*> geometryAttachments = { static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ };
+	renderPasses_[1]->initRenderPassDependency(geometryAttachments);
 	renderPasses_[0]->initRenderPassDependency({ static_cast<ShadowPass*>(renderPasses_[2])->depthBuffer_ });
 }
 

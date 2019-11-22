@@ -30,6 +30,8 @@ namespace QZL
 			VkExtent2D extent;
 			uint32_t maxDrawnEntities;
 			size_t swapChainImageCount;
+			uint32_t colourAttachmentCount;
+			std::vector<VkBool32> colourBlendEnables;
 			VkPrimitiveTopology prims;
 			std::string vertexShader;
 			std::string fragmentShader;

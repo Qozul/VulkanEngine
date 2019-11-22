@@ -35,10 +35,30 @@ void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageVie
 
 	CHECK_VKRESULT(vkCreateRenderPass(*logicDevice_, &renderPassInfo, nullptr, &renderPass_));
 	if (extent.width == 0) {
-		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, swapChainDetails_.extent);
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, swapChainDetails_.extent, framebuffers_);
 	}
 	else {
-		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, extent);
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, extent, framebuffers_);
+	}
+}
+
+void RenderPass::createRenderPass(CreateInfo& createInfo, std::vector<VkImageView>& attachmentImages, VkExtent2D extent, VkRenderPass* handle, std::vector<VkFramebuffer>& framebuffers)
+{
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = static_cast<uint32_t>(createInfo.attachments.size());
+	renderPassInfo.pAttachments = createInfo.attachments.data();
+	renderPassInfo.subpassCount = static_cast<uint32_t>(createInfo.subpasses.size());
+	renderPassInfo.pSubpasses = createInfo.subpasses.data();
+	renderPassInfo.dependencyCount = static_cast<uint32_t>(createInfo.dependencies.size());
+	renderPassInfo.pDependencies = createInfo.dependencies.data();
+
+	CHECK_VKRESULT(vkCreateRenderPass(*logicDevice_, &renderPassInfo, nullptr, handle));
+	if (extent.width == 0) {
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, swapChainDetails_.extent, framebuffers);
+	}
+	else {
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, extent, framebuffers);
 	}
 }
 
@@ -58,18 +78,18 @@ void RenderPass::createRenderPass2(CreateInfo2& createInfo, std::vector<VkImageV
 	ASSERT(createFunction != nullptr);
 	CHECK_VKRESULT(createFunction(*logicDevice_, &renderPassInfo2, nullptr, &renderPass_));
 	if (extent.width == 0) {
-		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, swapChainDetails_.extent);
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, swapChainDetails_.extent, framebuffers_);
 	}
 	else {
-		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, extent);
+		createFramebuffers(logicDevice_, swapChainDetails_, attachmentImages, extent, framebuffers_);
 	}
 }
 
 void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, std::vector<VkImageView>& attachmentImages,
-	VkExtent2D extent)
+	VkExtent2D extent, std::vector<VkFramebuffer>& framebuffers)
 {
 	bool useSwapChainImageView = attachmentImages[0] == nullptr;
-	framebuffers_.resize(swapChainDetails.imageViews.size());
+	framebuffers.resize(swapChainDetails.imageViews.size());
 	for (size_t i = 0; i < swapChainDetails.imageViews.size(); ++i) {
 		if (useSwapChainImageView) {
 			attachmentImages[0] = swapChainDetails.imageViews[i];
@@ -84,16 +104,16 @@ void RenderPass::createFramebuffers(LogicDevice* logicDevice, const SwapChainDet
 		framebufferInfo.height = extent.height;
 		framebufferInfo.layers = 1;
 
-		CHECK_VKRESULT(vkCreateFramebuffer(*logicDevice, &framebufferInfo, nullptr, &framebuffers_[i]));
+		CHECK_VKRESULT(vkCreateFramebuffer(*logicDevice, &framebufferInfo, nullptr, &framebuffers[i]));
 	}
 }
 
-VkRenderPassBeginInfo RenderPass::beginInfo(const uint32_t& idx, VkExtent2D extent, int32_t offsetX)
+VkRenderPassBeginInfo RenderPass::beginInfo(const uint32_t& idx, VkExtent2D extent, int32_t offsetX, VkRenderPass renderPass, VkFramebuffer framebuffer)
 {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = renderPass_;
-	renderPassInfo.framebuffer = framebuffers_[idx];
+	renderPassInfo.renderPass = renderPass == VK_NULL_HANDLE ? renderPass_ : renderPass;
+	renderPassInfo.framebuffer = framebuffer == VK_NULL_HANDLE ? framebuffers_[idx] : framebuffer;
 	renderPassInfo.renderArea.offset = { offsetX, 0 };
 	renderPassInfo.renderArea.extent = extent.width == 0 ? swapChainDetails_.extent : extent;
 	return renderPassInfo;

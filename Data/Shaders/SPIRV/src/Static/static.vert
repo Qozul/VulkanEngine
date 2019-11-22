@@ -19,9 +19,9 @@ const mat4 biasMat = mat4(
 layout(constant_id = 0) const uint SC_MVP_OFFSET = 0;
 layout(constant_id = 1) const uint SC_PARAMS_OFFSET = 0;
 
-layout(location = 0) in vec3 iPosition;
-layout(location = 1) in vec2 iTextureCoord;
-layout(location = 2) in vec3 iNormal;
+layout (location = 0) in vec3 iPosition;
+layout (location = 1) in vec2 iTextureCoord;
+layout (location = 2) in vec3 iNormal;
 
 layout (location = 0) out vec2 texUV;
 layout (location = 1) out vec3 normal;

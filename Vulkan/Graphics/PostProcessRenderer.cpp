@@ -16,8 +16,8 @@
 using namespace QZL;
 using namespace Graphics;
 
-PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture, uint32_t gpDepthResolveBuffer)
-	: RendererBase(createInfo, nullptr), geometryColourTexture_(geometryColourTexture), gpDepthResolveBuffer_(gpDepthResolveBuffer)
+PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t texture)
+	: RendererBase(createInfo, nullptr)
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
@@ -26,30 +26,18 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 		setupPushConstantRange<VertexPushConstants>(VK_SHADER_STAGE_VERTEX_BIT)
 	};
 
-	struct Vals {
-		float nearPlane;
-		float farPlane;
-		uint32_t colourIdx;
-		uint32_t depthIdx;
-	} specConstantValues;
-	specConstantValues.nearPlane = GraphicsMaster::NEAR_PLANE_Z;
-	specConstantValues.farPlane = GraphicsMaster::FAR_PLANE_Z;
-	specConstantValues.colourIdx = geometryColourTexture_;
-	specConstantValues.depthIdx = gpDepthResolveBuffer_;
+	uint32_t colourIdx = texture;
 	std::vector<VkSpecializationMapEntry> specEntries = { 
-		makeSpecConstantEntry(0, 0, sizeof(float)),
-		makeSpecConstantEntry(1, sizeof(float), sizeof(float)), 
-		makeSpecConstantEntry(2, sizeof(float) * 2, sizeof(uint32_t)),
-		makeSpecConstantEntry(3, sizeof(uint32_t) + sizeof(float) * 2, sizeof(uint32_t))
+		makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
 	};
-	VkSpecializationInfo specializationInfo = setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
+	VkSpecializationInfo specializationInfo = setupSpecConstants(1, specEntries.data(), sizeof(uint32_t), &colourIdx);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back(createInfo.vertexShader, VK_SHADER_STAGE_VERTEX_BIT, nullptr);
 	stageInfos.emplace_back(createInfo.fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
 
 	PipelineCreateInfo pci = {};
-	pci.debugName = "PostProcess";
+	pci.debugName = "PassThrough";
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = createInfo.extent;

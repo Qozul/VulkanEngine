@@ -14,12 +14,9 @@ namespace QZL
 
 		class PostProcessRenderer : public RendererBase {
 		public:
-			PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t geometryColourTexture, uint32_t gpDepthResolveBuffer);
+			PostProcessRenderer(RendererCreateInfo& createInfo, uint32_t texture);
 			~PostProcessRenderer() = default;
 			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) override;
-		private:
-			uint32_t geometryColourTexture_;
-			uint32_t gpDepthResolveBuffer_;
 		};
 	}
 }
