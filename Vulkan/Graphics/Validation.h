@@ -4,7 +4,9 @@
 #pragma once
 #include "VkUtil.h"
 
-#define ENABLE_VALIDATION _DEBUG
+#ifdef _DEBUG
+#define ENABLE_VALIDATION 
+#endif
 
 namespace QZL
 {

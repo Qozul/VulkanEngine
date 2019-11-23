@@ -3,7 +3,7 @@
 #pragma once
 #include "RenderPass.h"
 
-#define SHADOW_DIMENSIONS 2048
+#define SHADOW_DIMENSIONS 4096
 
 namespace QZL {
 	namespace Graphics {

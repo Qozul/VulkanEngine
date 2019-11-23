@@ -13,24 +13,19 @@ layout(constant_id = 1) const uint SC_MATERIAL_OFFSET = 0;
 
 layout(vertices = NUM_VERTS) out;
 
-layout (location = 0) in vec2 iTexUV[];
-layout (location = 1) flat in int instanceIndex[];
-layout (location = 2) in vec4 shadowCoord[];
-layout (location = 3) flat in uint shadowMapIdx[];
-layout (location = 4) in vec3 normal[];
+layout(location = 0) in vec2 iTexUV[];
+layout(location = 1) flat in int instanceIndex[];
+layout(location = 2) in vec4 shadowCoord[];
+layout(location = 3) flat in uint shadowMapIdx[];
+layout(location = 4) in vec3 normal[];
+layout(location = 5) flat in vec3 inCamPos[];
 
-layout (location = 0) out vec2 outTexUV[NUM_VERTS];
-layout (location = 1) flat out int outInstanceIndex[NUM_VERTS];
-layout (location = 2) out vec4 outShadowCoord[NUM_VERTS];
-layout (location = 3) flat out uint outShadowMapIdx[NUM_VERTS];
-layout (location = 4) out vec3 outNormal[NUM_VERTS];
-
-layout(set = GLOBAL_SET, binding = LIGHT_UBO_BINDING) uniform LightingData
-{
-	vec4 cameraPosition;
-	vec4 ambientColour;
-	vec4 lightPositions[1];
-};
+layout(location = 0) out vec2 outTexUV[NUM_VERTS];
+layout(location = 1) flat out int outInstanceIndex[NUM_VERTS];
+layout(location = 2) out vec4 outShadowCoord[NUM_VERTS];
+layout(location = 3) flat out uint outShadowMapIdx[NUM_VERTS];
+layout(location = 4) out vec3 outNormal[NUM_VERTS];
+layout(location = 5) flat out vec3 outCamPos[NUM_VERTS];
 
 layout(set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer ParamsData
 {
@@ -55,9 +50,7 @@ float calculateTessLevel(float d0, float d1, in Params parameters)
 
 bool checkCulling(in Params parameters)
 {
-	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec4 pos = gl_in[gl_InvocationID].gl_Position;
-	//pos.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], inNormalizedUvs[0]).r * inMaxHeight[0];
 	for (int i = 0; i < 6; ++i) {
 		if (dot(pos, parameters.frustumPlanes[i]) + parameters.patchRadius < 0.0) {
 			return false;
@@ -68,9 +61,7 @@ bool checkCulling(in Params parameters)
 
 vec3 getVertexPosition(int i)
 {
-	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec3 pos = gl_in[i].gl_Position.xyz;
-	//pos.y -= texture(texSamplers[nonuniformEXT(texIndices.heightmapIdx)], inNormalizedUvs[i]).r * inMaxHeight[0];
 	return pos;
 }
 
@@ -91,10 +82,10 @@ void main()
 		}
 		else {
 			float dists[NUM_VERTS] = float[](
-				distance(cameraPosition.xyz, getVertexPosition(0)),
-				distance(cameraPosition.xyz, getVertexPosition(1)),
-				distance(cameraPosition.xyz, getVertexPosition(2)),
-				distance(cameraPosition.xyz, getVertexPosition(3))
+				distance(inCamPos[0], getVertexPosition(0)),
+				distance(inCamPos[0], getVertexPosition(1)),
+				distance(inCamPos[0], getVertexPosition(2)),
+				distance(inCamPos[0], getVertexPosition(3))
 			);
 			
 			gl_TessLevelOuter[0] = calculateTessLevel(dists[0], dists[3], parameters);
@@ -109,5 +100,6 @@ void main()
 	outTexUV[gl_InvocationID] = iTexUV[gl_InvocationID];
 	outShadowCoord[gl_InvocationID] = shadowCoord[gl_InvocationID];
 	outNormal[gl_InvocationID] = normal[gl_InvocationID];
+	outCamPos[gl_InvocationID] = inCamPos[0];
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }

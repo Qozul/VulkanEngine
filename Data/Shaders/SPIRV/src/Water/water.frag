@@ -1,6 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
+#define USE_LIGHTS_UBO
 #include "../common.glsl"
 
 struct Params {
@@ -26,15 +27,7 @@ layout (location = 4) in vec4 shadowCoord;
 layout (location = 5) flat in uint shadowMapIdx;
 layout (location = 6) in float height;
 layout (location = 7) flat in uint disp;
-
-layout(set = 1, binding = 2) uniform sampler2D texSamplers[];
-
-layout(set = 1, binding = 0) uniform LightingData
-{
-	vec4 cameraPosition;
-	vec4 ambientColour;
-	vec4 lightPositions[1];
-};
+layout (location = 8) flat in vec3 outCamPos;
 
 layout(set = 1,  binding = 1) uniform samplerCube Cubemap;
 
@@ -45,10 +38,10 @@ layout(set = 0, binding = 1) readonly buffer ParamsData
 
 void main() {
 	Params param = params[SC_PARAMS_OFFSET + instanceIndex];
-	vec3 incident = normalize(lightPositions[0].xyz - worldPos);
-	vec3 viewDir = normalize(cameraPosition.xyz - worldPos);
+	vec3 incident = normalize(lights[0].position - worldPos);
+	vec3 viewDir = normalize(outCamPos - worldPos);
 	vec3 halfDir = normalize(incident + viewDir);
-	float dist = length(lightPositions[0].xyz - worldPos);
+	float dist = length(lights[0].position - worldPos);
 
 	vec3 distortion = texture(texSamplers[nonuniformEXT(disp)], texUV).rgb * 0.15;
 	
@@ -61,8 +54,8 @@ void main() {
 	float sFactor = pow(rFactor , 5.0);
 	
 	vec3 albedoColour = mix(param.baseColour.xyz, param.tipColour.xyz, pow(height, 2.0));
-	vec3 ambient = albedoColour.rgb * ambientColour.rgb;
-	vec3 diffuse = max(param.baseColour.xyz * lambert, ambient);
+	vec3 ambient = albedoColour.rgb * lights[0].padding;
+	vec3 diffuse = max(param.baseColour.xyz * lights[0].colour * lambert, ambient);
 	vec3 specular = vec3(1.0) * sFactor * 0.05;
 	
 	float shadow = projectShadow(shadowCoord / shadowCoord.w, vec2(0.0), shadowMapIdx);

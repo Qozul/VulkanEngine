@@ -24,7 +24,8 @@ layout(quads, equal_spacing, cw) in;
 layout (location = 0) in vec2 iTexUV[];
 layout (location = 1) flat in int instanceIndex[];
 layout (location = 2) flat in uint shadowMapIdx[];
-layout (location = 3) flat in mat4 shadowMat[];
+layout (location = 3) flat in vec3 inCamPos[];
+layout (location = 4) flat in mat4 shadowMat[];
 
 layout (location = 0) out vec2 texUV;
 layout (location = 1) out vec3 worldPos;
@@ -34,17 +35,11 @@ layout (location = 4) out vec4 outShadowCoord;
 layout (location = 5) flat out uint outShadowMapIdx;
 layout (location = 6) out float height;
 layout (location = 7) flat out uint disp;
+layout (location = 8) flat out vec3 outCamPos;
 
 layout(set = 0, binding = 0) readonly buffer UniformBufferObject {
     mat4 elementData[];
 } ubo;
-
-layout(set = 1, binding = 0) uniform LightingData
-{
-	vec4 cameraPosition;
-	vec4 ambientColour;
-	vec4 lightPositions[1];
-};
 
 layout(set = 0, binding = 1) readonly buffer MaterialData
 {
@@ -62,6 +57,7 @@ void main(void)
 {
 	outInstanceIndex = instanceIndex[0];
 	outShadowMapIdx = shadowMapIdx[0];
+	outCamPos = inCamPos[0];
 	Params param = params[SC_PARAMS_OFFSET + instanceIndex[0]];
 	Material texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec2 uv1 = mix(iTexUV[0], iTexUV[1], gl_TessCoord.x);

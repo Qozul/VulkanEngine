@@ -42,6 +42,7 @@
     <ClInclude Include="Game\TerrainScript.h" />
     <ClInclude Include="Graphics\AtmosphereRenderer.h" />
     <ClInclude Include="Graphics\ComputePipeline.h" />
+    <ClInclude Include="Graphics\DeferredPass.h" />
     <ClInclude Include="Graphics\Descriptor.h" />
     <ClInclude Include="Graphics\DeviceMemory.h" />
     <ClInclude Include="Graphics\DrawElementsCommand.h" />
@@ -55,7 +56,9 @@
     <ClInclude Include="Graphics\GraphicsMaster.h" />
     <ClInclude Include="Graphics\GraphicsTypes.h" />
     <ClInclude Include="Graphics\Image.h" />
+    <ClInclude Include="Graphics\IndexedRenderer.h" />
     <ClInclude Include="Graphics\Light.h" />
+    <ClInclude Include="Graphics\LightingPass.h" />
     <ClInclude Include="Graphics\LogicalCamera.h" />
     <ClInclude Include="Graphics\LogicDevice.h" />
     <ClInclude Include="Graphics\Material.h" />
@@ -112,6 +115,7 @@
     <ClCompile Include="Game\TerrainScript.cpp" />
     <ClCompile Include="Graphics\AtmosphereRenderer.cpp" />
     <ClCompile Include="Graphics\ComputePipeline.cpp" />
+    <ClCompile Include="Graphics\DeferredPass.cpp" />
     <ClCompile Include="Graphics\Descriptor.cpp" />
     <ClCompile Include="Graphics\DeviceMemory.cpp" />
     <ClCompile Include="Graphics\DynamicElementBuffer.cpp" />
@@ -122,6 +126,8 @@
     <ClCompile Include="Graphics\GraphicsComponent.cpp" />
     <ClCompile Include="Graphics\GraphicsMaster.cpp" />
     <ClCompile Include="Graphics\Image.cpp" />
+    <ClCompile Include="Graphics\IndexedRenderer.cpp" />
+    <ClCompile Include="Graphics\LightingPass.cpp" />
     <ClCompile Include="Graphics\LogicDevice.cpp" />
     <ClCompile Include="Graphics\Material.cpp" />
     <ClCompile Include="Graphics\MeshLoader.cpp" />

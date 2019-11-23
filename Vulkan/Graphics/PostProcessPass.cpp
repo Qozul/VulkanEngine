@@ -11,17 +11,21 @@
 #include "Image.h"
 #include "LogicDevice.h"
 #include "TextureManager.h"
+#include "../InputManager.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
 PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
-	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile())
 {
+	input_->profileBindings.push_back({ { GLFW_KEY_M }, [this]() {effectStates_[0].first = !effectStates_[0].first; }, 0.2f });
+	master->getMasters().inputManager->addProfile("Postprocessing effects", input_);
 }
 
 PostProcessPass::~PostProcessPass()
 {
+	SAFE_DELETE(input_);
 	SAFE_DELETE(colourBuffer1_);
 	SAFE_DELETE(colourBuffer2_);
 	SAFE_DELETE(presentRenderer_);
@@ -56,7 +60,11 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	std::queue<RendererBase*> effects;
-	effects.push(fxaa_);
+	for (auto it : effectStates_) {
+		if (it.first) {
+			effects.push(it.second);
+		}
+	}
 
 	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -120,9 +128,10 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 	geometryDepthBuf_ = dependencyAttachment[1];
 	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
 	gpDepthBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_, 
-		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
+		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
 	createPasses();
 	createRenderers();
+	effectStates_[0] = { true, fxaa_ };
 }
 
 void PostProcessPass::createRenderers()
@@ -191,11 +200,8 @@ void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapCha
 {
 	colourBuffer1_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, "PostProcessColourBuffer");
+		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }, "PostProcessColourBuffer");
 	colourBuffer1_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	/*colourBuffer2_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VkImageTiling::VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, "PostProcessColourBuffer");*/
 	colourBufferIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("pingPongTexture1", colourBuffer1_);
 }
 

@@ -20,7 +20,7 @@ void GraphicsMaster::setRenderer(RendererTypes type, RendererBase* renderer)
 
 ElementBufferObject* GraphicsMaster::getDynamicBuffer(RendererTypes type)
 {
-	return renderers_[type]->getElementBuffer();
+	return renderers_[type] == nullptr ? nullptr : renderers_[type]->getElementBuffer();
 }
 
 LogicalCamera* GraphicsMaster::getCamera(size_t idx)
@@ -156,9 +156,11 @@ void GraphicsMaster::preframeSetup()
 	// NOTE that since the are renderers are stored in no order then it may not be the same key each time
 	int i = 0;
 	for (auto renderer : renderers_) {
-		renderer.second->preframeSetup();
-		inputProfile_.profileBindings.push_back({ { GLFW_KEY_1 + i }, std::bind(&RendererBase::toggleWiremeshMode, renderer.second), 1.0f });
-		++i;
+		if (renderer.second != nullptr) {
+			renderer.second->preframeSetup();
+			inputProfile_.profileBindings.push_back({ { GLFW_KEY_1 + i }, std::bind(&RendererBase::toggleWiremeshMode, renderer.second), 1.0f });
+			++i;
+		}
 	}
 	masters_.inputManager->addProfile("graphicsdebug", &inputProfile_);
 }

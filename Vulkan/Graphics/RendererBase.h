@@ -20,6 +20,14 @@ namespace QZL
 		struct LogicalCamera;
 		struct SceneGraphicsInfo;
 
+		struct RendererCreateInfo2 {
+			ElementBufferObject* ebo;
+			PipelineCreateInfo pipelineCreateInfo;
+			std::vector<ShaderStageInfo> shaderStages;
+			VkPushConstantRange* pcRanges;
+			uint32_t pcRangesCount;
+		};
+
 		struct RendererCreateInfo {
 			LogicDevice* logicDevice;
 			Descriptor* descriptor;

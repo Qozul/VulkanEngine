@@ -18,7 +18,7 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 TexturedRenderer::TexturedRenderer(RendererCreateInfo& createInfo)
-	: RendererBase(createInfo,new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)))
+	: RendererBase(createInfo, new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t)))
 {
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());

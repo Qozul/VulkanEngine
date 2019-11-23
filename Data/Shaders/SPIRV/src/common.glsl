@@ -7,11 +7,9 @@
 #define COMMON_MATERIALS_BINDING 2
 #define COMMON_SET 0
 #define GLOBAL_SET 1
+#define MAX_LIGHTS 250
 
-#ifndef OVERRIDE_TEX_SAMPLERS
-layout(set = GLOBAL_SET, binding = SAMPLER_ARRAY_BINDING) uniform sampler2D texSamplers[];
-#endif
-
+// ------------------- CONSTANTS ------------------
 const mat4 BIAS_MATRIX = mat4(
 	0.5, 0.0, 0.0, 0.0,
 	0.0, 0.5, 0.0, 0.0,
@@ -21,20 +19,41 @@ const mat4 BIAS_MATRIX = mat4(
 const float MIN_TESSELLATION_WEIGHT = 1.0;
 const float MAX_TESSELLATION_WEIGHT = 64.0;
 
-struct CommonVertexPushConstants {
-	mat4 shadowMatrix;
-	vec4 cameraPosition;
-	vec3 mainLightPosition;
-	uint shadowTextureIdx;
-};
-
 struct Light {
 	vec3 position;
 	float radius;
 	vec3 colour;
-	float attenuationFactor;
-	vec4 direction;
+	float padding;
 };
+
+// ------------------- LAYOUTS ------------------
+
+#ifdef USE_VERTEX_PUSH_CONSTANTS
+layout(push_constant) uniform PushConstants {
+	mat4 shadowMatrix;
+	vec4 cameraPosition;
+	vec3 mainLightPosition;
+	uint shadowTextureIdx;
+} PC;
+#endif
+#ifdef USE_MVP_BUFFER
+layout(set = COMMON_SET, binding = COMMON_MVP_BINDING) readonly buffer ParameterData
+{
+	mat4[] mvps;
+};
+#endif
+
+#ifndef OVERRIDE_TEX_SAMPLERS
+layout(set = GLOBAL_SET, binding = SAMPLER_ARRAY_BINDING) uniform sampler2D texSamplers[];
+#endif
+#ifdef USE_LIGHTS_UBO
+layout(set = GLOBAL_SET, binding = LIGHT_UBO_BINDING) uniform LightsData
+{
+	Light lights[MAX_LIGHTS];
+};
+#endif
+
+// ----------------- FUNCTIONS ------------------
 
 #ifndef OVERRIDE_TEX_SAMPLERS
 float projectShadow(in vec4 shadowCoord, in vec2 off, in uint mapIdx)
@@ -53,12 +72,15 @@ void reinhardTonemap(inout vec4 colour)
 	colour.rgb = pow(colour.rgb, vec3(1.0 / 2.2));
 }
 
-void calculatePhongShading(in vec3 worldPos, in vec3 lightPos, in vec3 camPos, in vec3 normal, in float shininess, out float lambert, out float specularFactor)
+void calculatePhongShading(in vec3 worldPos, in vec3 lightPos, in vec3 camPos, in float radius, 
+	in vec3 normal, in float shininess, out float lambert, out float specularFactor)
 {
 	vec3 incident = normalize(lightPos - worldPos);
 	vec3 viewDir = normalize(camPos - worldPos);
 	vec3 halfDir = normalize(incident + viewDir);
+	
 	float dist = length(lightPos - worldPos);
+	float attenuation = 1.0 - clamp(dist / radius, 0.0, 1.0);
 	float rFactor = max(0.0, dot(halfDir, normal));
 
 	lambert = max(0.0, dot(incident, normal));

@@ -44,6 +44,7 @@ ShadowRenderer::ShadowRenderer(RendererCreateInfo& createInfo)
 	pci.enableDepthWrite = VK_TRUE;
 	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.cullFace = VK_CULL_MODE_FRONT_BIT;
 	pci.primitiveTopology = createInfo.prims;
 	pci.subpassIndex = createInfo.subpassIndex;
 	pci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;

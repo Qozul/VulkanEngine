@@ -33,7 +33,8 @@ layout(set = GLOBAL_SET, binding = ENVIORNMENT_SAMPLER_BINDING) uniform samplerC
 void main()
 {	
 	Params parameters = params[SC_PARAMS_OFFSET];
-	vec3 V = normalize((parameters.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0)).xyz);
+	vec4 Vclip = (parameters.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0));
+	vec3 V = normalize(Vclip.xyz / Vclip.w - cameraPos.xyz);
 		
 	colour = texture(environmentMap, V);
 }

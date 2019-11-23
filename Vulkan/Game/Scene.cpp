@@ -104,7 +104,9 @@ std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras,
 void Scene::start()
 {
 	for (size_t i = 0; i < (size_t)RendererTypes::kNone; ++i) {
-		graphicsInfo_.shadowCastingEBOs[i] = kRendererTypeFlags[i] & RendererFlags::CASTS_SHADOWS ? masters_->graphicsMaster->getDynamicBuffer((RendererTypes)i) : nullptr;
+		if (masters_->graphicsMaster->getDynamicBuffer((RendererTypes)i) != nullptr) {
+			graphicsInfo_.shadowCastingEBOs[i] = kRendererTypeFlags[i] & RendererFlags::CASTS_SHADOWS ? masters_->graphicsMaster->getDynamicBuffer((RendererTypes)i) : nullptr;
+		}
 	}
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
 		startRecursively(rootNode_->childNodes[i]);
@@ -245,7 +247,8 @@ Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, con
 			{ (size_t)RendererTypes::kStatic, sizeof(glm::mat4), instancesMap[RendererTypes::kStatic] },
 			{ (size_t)RendererTypes::kTerrain, sizeof(glm::mat4), instancesMap[RendererTypes::kTerrain] },
 			{ (size_t)RendererTypes::kParticle, sizeof(glm::mat4), instancesMap[RendererTypes::kParticle] },
-			{ (size_t)RendererTypes::kWater, sizeof(glm::mat4), instancesMap[RendererTypes::kWater] }
+			{ (size_t)RendererTypes::kWater, sizeof(glm::mat4), instancesMap[RendererTypes::kWater] },
+			{ (size_t)RendererTypes::kLight, sizeof(glm::mat4), instancesMap[RendererTypes::kLight] }
 		}, numFrameImages * NUM_CAMERAS, limits.minStorageBufferOffsetAlignment, 0, "MVPBuffer",
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, logicDevice);
 

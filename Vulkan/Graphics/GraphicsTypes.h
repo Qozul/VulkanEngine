@@ -12,7 +12,7 @@ namespace QZL {
 			kPostProcess,
 			kShadow,
 			kWater,
-			kStaticDeferred,
+			kLight,
 			kNone
 		};
 
@@ -51,7 +51,8 @@ namespace QZL {
 			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::NON_INDEXED | RendererFlags::DYNAMIC,
 			RendererFlags::DESCRIPTOR_MATERIAL | RendererFlags::FULLSCREEN,
 			RendererFlags::FULLSCREEN,
-			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL
+			RendererFlags::INCLUDE_MODEL | RendererFlags::DESCRIPTOR_MVP | RendererFlags::DESCRIPTOR_PARAMS | RendererFlags::DESCRIPTOR_MATERIAL,
+			RendererFlags::DESCRIPTOR_MVP
 		};
 	}
 }

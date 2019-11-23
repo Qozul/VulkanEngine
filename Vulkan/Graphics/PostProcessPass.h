@@ -4,6 +4,7 @@
 #include "RenderPass.h"
 
 namespace QZL {
+	struct InputProfile;
 	namespace Game {
 		class AtmosphereScript;
 	}
@@ -33,6 +34,9 @@ namespace QZL {
 			RendererBase* presentRenderer_;
 			RendererBase* presentRenderer2_;
 			RendererBase* fxaa_;
+
+			InputProfile* input_;
+			std::array<std::pair<bool, RendererBase*>, (size_t)Effects::kCount> effectStates_;
 
 			Image* colourBuffer1_;
 			Image* colourBuffer2_;

@@ -3,4 +3,6 @@ Teapot object and textures (Royalty Free)
 
 Water textures https://3dtextures.me/2018/11/29/water-002/
 
+Skybox textures from https://assetstore.unity.com/packages/templates/packs/earth-like-planets-32790
+
 Everything else is public domain from opengameart

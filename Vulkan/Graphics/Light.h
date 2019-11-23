@@ -3,28 +3,15 @@
 #pragma once
 #include "VkUtil.h"
 
+#define MAX_LIGHTS 250
+
 namespace QZL {
 	namespace Graphics {
-		struct DirectionalLight {
-			glm::vec4 direction; // ambient extracted from w components
-			glm::vec4 diffuse;
-			glm::vec4 specular;
-		};
-
-		struct PointLight {
+		struct Light {
 			glm::vec3 position;
-			float constant;
-			glm::vec3 diffuse;
-			float linear;
-			glm::vec3 specular;
-			float quadratic;
-		};
-
-		struct SpotLight {
-			glm::vec3 position;
+			float radius;
+			glm::vec3 colour;
 			float padding;
-			glm::vec3 direction;
-			float angle;
 		};
 	}
 }

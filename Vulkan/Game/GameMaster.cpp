@@ -56,43 +56,50 @@ void GameMaster::loadGame()
 	scriptInit.owner = camera;
 	camera->setGameScript(new Camera(masters_));
 
-	Entity* teapot = new Entity("Teapot");
+	/*Entity* teapot = new Entity("Teapot");
 	teapot->getTransform()->position = glm::vec3(100.0f, 40.0f, 300.0f);
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
-
-	/*Entity* teapotDeferred = new Entity("TeapotDeferred");
-	teapotDeferred->getTransform()->position = glm::vec3(200.0f, 50.0f, 100.0f);
-	teapotDeferred->setGraphicsComponent(Graphics::RendererTypes::kStaticDeferred, nullptr, new Graphics::StaticShaderParams(),
-		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStaticDeferred, "ExampleStatic"), "Teapot");*/
 	
 	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 	terrain->setGameScript(new TerrainScript(masters_));
 
 	Entity* water = new Water("water", masters_.textureManager);
-	water->getTransform()->position = glm::vec3(0.0f, 80.0f, 130.0f);
-
-	Entity* sun = new Entity("sun");
-	scriptInit.owner = sun;
-	auto sunScript = new SunScript(masters_);
-	sun->setGameScript(sunScript);
-	sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunScript->makeShaderParams(), "sun", sunScript->getMaterial());
-
-	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
+	water->getTransform()->position = glm::vec3(0.0f, 80.0f, 0.0f);
 
 	Entity* rain = new Entity("rain");
 	scriptInit.owner = rain;
 	auto rainScript = new RainSystem(masters_);
 	rain->setGameScript(rainScript);
-	rain->setGraphicsComponent(Graphics::RendererTypes::kParticle, rainScript->makeShaderParams(), "rain", rainScript->getMaterial());
+	rain->setGraphicsComponent(Graphics::RendererTypes::kParticle, rainScript->makeShaderParams(), "rain", rainScript->getMaterial());*/
+
+	Entity* sun = new Entity("sun");
+	scriptInit.owner = sun;
+	auto sunScript = new SunScript(masters_);
+	sun->setGameScript(sunScript);
+	//sun->setGraphicsComponent(Graphics::RendererTypes::kParticle, sunScript->makeShaderParams(), "sun", sunScript->getMaterial());
+
+	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
+
+	Entity* teapotDeferred = new Entity("TeapotDeferred");
+	teapotDeferred->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
+	teapotDeferred->getTransform()->setScale(2.0f);
+	teapotDeferred->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
+		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
+
+	Entity* light = new Entity("light");
+	light->setGraphicsComponent(Graphics::RendererTypes::kLight, nullptr, "ico", nullptr);
+	light->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
+	light->getTransform()->setScale(100.0f);
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
-	scenes_[activeSceneIdx_]->addEntity(sun, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
 	//scenes_[activeSceneIdx_]->addEntity(rain);
-	scenes_[activeSceneIdx_]->addEntity(water);
-	scenes_[activeSceneIdx_]->addEntity(terrain);
-	scenes_[activeSceneIdx_]->addEntity(teapot);
+	//scenes_[activeSceneIdx_]->addEntity(water);
+	//scenes_[activeSceneIdx_]->addEntity(terrain);
+	//scenes_[activeSceneIdx_]->addEntity(sun, terrain);
+	scenes_[activeSceneIdx_]->addEntity(teapotDeferred);
+	scenes_[activeSceneIdx_]->addEntity(light);
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
 }

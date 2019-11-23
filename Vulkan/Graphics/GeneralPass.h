@@ -6,39 +6,29 @@
 namespace QZL {
 	namespace Graphics {
 		class RendererBase;
-		class ElementBufferObject;
-		class GeometryPass : public RenderPass {
+		class CombinePass : public RenderPass {
 			friend class SwapChain;
-			enum class SubPass : uint32_t {
-				kAtmosphere,
-				kGeneral,
-				kSubpassCount
-			};
 		protected:
-			GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
-			~GeometryPass();
+			CombinePass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
+			~CombinePass();
 			void doFrame(FrameInfo& frameInfo) override;
 			void createRenderers() override;
 			void initRenderPassDependency(std::vector<Image*> dependencyAttachment) override;
 		private:
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
-			VkFormat createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 
-			RendererBase* staticDeferredRenderer_;
-			RendererBase* texturedRenderer_;
-			RendererBase* terrainRenderer_;
 			RendererBase* atmosphereRenderer_;
-			RendererBase* particleRenderer_;
-			RendererBase* waterRenderer_;
 			RendererBase* environmentRenderer_;
+			RendererBase* combineRenderer_;
 
 			Image* colourBuffer_;
-			Image* depthBuffer_;
-			Image* normalsBuffer_;
-			Image* albedoBuffer_;
-			Image* positionBuffer_;
-			Image* shadowDepthBuf_;
-			uint32_t shadowDepthTexture_;
+			uint32_t diffuseIdx_;
+			uint32_t specularIdx_;
+			uint32_t albedoIdx_;
+			//Image* depthBuffer_;
+			//Image* normalsBuffer_;
+			//Image* shadowDepthBuf_;
+			//uint32_t shadowDepthTexture_;
 		};
 	}
 }

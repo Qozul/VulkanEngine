@@ -6,13 +6,6 @@
 namespace QZL
 {
 	namespace Graphics {
-		struct RendererCreateInfo2 {
-			PipelineCreateInfo pipelineCreateInfo;
-			std::vector<ShaderStageInfo> shaderStages;
-			VkPushConstantRange* pcRanges;
-			uint32_t pcRangesCount;
-		};
-
 		class FullscreenRenderer : public RendererBase {
 		public:
 			FullscreenRenderer(RendererCreateInfo& createInfo, RendererCreateInfo2& createInfo2);

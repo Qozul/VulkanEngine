@@ -68,7 +68,8 @@ void main()
 	Params parameters = params[SC_PARAMS_OFFSET];
 	vec3 Z = vec3(0.0, 1.0, 0.0);
 	vec3 L = normalize(parameters.sunDirection.xyz);
-	vec3 V = normalize((parameters.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0)).xyz);
+	vec4 Vclip = (parameters.inverseViewProj * vec4(pos * 2.0 - 1.0, 1.0, 1.0));
+	vec3 V = normalize(Vclip.xyz / Vclip.w - cameraPos.xyz);
 	vec3 rayleigh;
 	vec3 mie;
 	calculateRayleighAndMie(V, L, Z, parameters, rayleigh, mie);

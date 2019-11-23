@@ -6,7 +6,7 @@
 #include "TexturedRenderer.h"
 #include "TerrainRenderer.h"
 #include "WaterRenderer.h"
-#include "ParticleRenderer.h"
+#include "FullscreenRenderer.h"
 #include "AtmosphereRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
@@ -18,103 +18,50 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-GeometryPass::GeometryPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
+CombinePass::CombinePass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
 	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
 {
-	CreateInfo2 createInfo = {};
+	CreateInfo createInfo = {};
 	createColourBuffer(logicDevice, swapChainDetails);
-	auto depthFormat = createDepthBuffer(logicDevice, swapChainDetails);
-	//createInfo.attachments.reserve(5);
 	// Forward rendering colour and depth
-	createInfo.attachments.push_back(makeAttachment2(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-	createInfo.attachments.push_back(makeAttachment2(depthFormat, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 
-	// G-buffer: Position, normals, and albedo information
-	/*createInfo.attachments.push_back(makeAttachment2(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-	createInfo.attachments.push_back(makeAttachment2(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-	createInfo.attachments.push_back(makeAttachment2(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));*/
-
-	std::vector<VkAttachmentReference2KHR> colourAttachmentRefs;
-	VkAttachmentReference2KHR colourRef = {};
-	colourRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
+	std::vector<VkAttachmentReference> colourAttachmentRefs;
+	VkAttachmentReference colourRef = {};
 	colourRef.attachment = 0;
 	colourRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	colourAttachmentRefs.push_back(colourRef);
-	VkAttachmentReference2KHR depthAttachmentRef = {};
-	depthAttachmentRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
-	depthAttachmentRef.attachment = 1;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	/*
-	std::vector<VkAttachmentReference2KHR> deferredColourAttachmentRefs;
-	VkAttachmentReference2KHR positionsRef = {};
-	positionsRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
-	positionsRef.attachment = 2;
-	positionsRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	deferredColourAttachmentRefs.push_back(positionsRef);
-	VkAttachmentReference2KHR normalsRef = {};
-	normalsRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
-	normalsRef.attachment = 3;
-	normalsRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	deferredColourAttachmentRefs.push_back(normalsRef);
-	VkAttachmentReference2KHR albedoRef = {};
-	albedoRef.sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2_KHR;
-	albedoRef.attachment = 4;
-	albedoRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	deferredColourAttachmentRefs.push_back(albedoRef);*/
 
-	//createInfo.subpasses.push_back(makeSubpass2(VK_PIPELINE_BIND_POINT_GRAPHICS, deferredColourAttachmentRefs, &depthAttachmentRef, nullptr, nullptr, nullptr));
-	createInfo.subpasses.push_back(makeSubpass2(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, &depthAttachmentRef, nullptr, nullptr, nullptr));
+	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, nullptr));
 	
-	createInfo.dependencies.push_back(makeSubpassDependency2(
+	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
 		0,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT) //VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
-	);
-	/*createInfo.dependencies.push_back(makeSubpassDependency2(
-		0,
-		1,
-		VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-	);*/
-	createInfo.dependencies.push_back(makeSubpassDependency2(
+	);
+	createInfo.dependencies.push_back(makeSubpassDependency(
 		0, 
 		VK_SUBPASS_EXTERNAL,
 		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT));
 
-	std::vector<VkImageView> attachmentImages = { colourBuffer_->getImageView(), depthBuffer_->getImageView() };//, positionBuffer_->getImageView(), normalsBuffer_->getImageView(), albedoBuffer_->getImageView()
-	createRenderPass2(createInfo, attachmentImages);
+	std::vector<VkImageView> attachmentImages = { colourBuffer_->getImageView() };
+	createRenderPass(createInfo, attachmentImages);
 }
 
-GeometryPass::~GeometryPass()
+CombinePass::~CombinePass()
 {
-	SAFE_DELETE(depthBuffer_);
 	SAFE_DELETE(colourBuffer_);
-	SAFE_DELETE(normalsBuffer_);
-	SAFE_DELETE(positionBuffer_);
-	SAFE_DELETE(albedoBuffer_);
-	SAFE_DELETE(terrainRenderer_);
-	SAFE_DELETE(texturedRenderer_);
 	SAFE_DELETE(atmosphereRenderer_);
-	SAFE_DELETE(particleRenderer_);
-	SAFE_DELETE(waterRenderer_);
 	SAFE_DELETE(environmentRenderer_);
-	SAFE_DELETE(staticDeferredRenderer_);
 }
 
-void GeometryPass::doFrame(FrameInfo& frameInfo)
+void CombinePass::doFrame(FrameInfo& frameInfo)
 {
-	std::array<VkClearValue, 4> clearValues = {};
+	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-	clearValues[1].depthStencil = { 1.0f, 0 };
-	clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-	clearValues[3].depthStencil = { 1.0f, 0 };
 
 	auto bi = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX);
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -122,53 +69,13 @@ void GeometryPass::doFrame(FrameInfo& frameInfo)
 
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
-	VkViewport viewport;
-	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = frameInfo.viewportWidth;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	viewport.x = frameInfo.viewportX;
-	viewport.y = 0;
-	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
-
-	VkRect2D scissor;
-	scissor.extent.width = frameInfo.viewportWidth;
-	scissor.extent.height = swapChainDetails_.extent.height;
-	scissor.offset.x = frameInfo.viewportX;
-	scissor.offset.y = 0;
-	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
-
-	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
-	};
-
-	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
-	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, texturedRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
-
-	VertexPushConstants vpc;
-	vpc.cameraPosition = glm::vec4(frameInfo.cameras[frameInfo.mainCameraIdx].position, 1.0f);
-	vpc.mainLightPosition = frameInfo.cameras[1].position;
-	vpc.shadowTextureIdx = shadowDepthTexture_;
-	vpc.shadowMatrix = frameInfo.cameras[1].viewProjection;
-
-	vkCmdPushConstants(frameInfo.cmdBuffer, texturedRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vpc), &vpc);
-
-	//staticDeferredRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStaticDeferred]);
-
-	//vkCmdNextSubpass(frameInfo.cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
-
 	environmentRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-	atmosphereRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kAtmosphere]);
-	texturedRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
-	terrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
-	particleRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kParticle]);
-	waterRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kWater]);
+	atmosphereRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+	combineRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
-void GeometryPass::createRenderers()
+void CombinePass::createRenderers()
 {
 	RendererCreateInfo createInfo = {};
 	createInfo.logicDevice = logicDevice_;
@@ -178,7 +85,7 @@ void GeometryPass::createRenderers()
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
-	createInfo.subpassIndex = 1;
+	createInfo.subpassIndex = 0;
 	createInfo.colourAttachmentCount = 1;
 	createInfo.colourBlendEnables = { VK_TRUE };
 
@@ -188,66 +95,69 @@ void GeometryPass::createRenderers()
 	createInfo.updateRendererSpecific(0, 1, "AtmosphereVert", "EnvironmentFrag");
 	environmentRenderer_ = new AtmosphereRenderer(createInfo);
 
-	createInfo.updateRendererSpecific(0, 1, "TerrainVert", "TerrainFrag", "", "TerrainTESC", "TerrainTESE");
-	terrainRenderer_ = new TerrainRenderer(createInfo);
+	VkPushConstantRange pushConstants[1] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
+	};
 
-	createInfo.updateRendererSpecific(0, 2, "ParticlesVert", "ParticlesFrag", "ParticlesGeom");
-	particleRenderer_ = new ParticleRenderer(createInfo);
+	struct Vals {
+		uint32_t diffuseIdx;
+		uint32_t specularIdx;
+		uint32_t albedoIdx;
+	} specConstantValues;
+	specConstantValues.diffuseIdx = diffuseIdx_;
+	specConstantValues.specularIdx = specularIdx_;
+	specConstantValues.albedoIdx = albedoIdx_;
 
-	createInfo.updateRendererSpecific(0, 1, "WaterVert", "WaterFrag", "", "WaterTESC", "WaterTESE");
-	waterRenderer_ = new WaterRenderer(createInfo);
+	std::vector<VkSpecializationMapEntry> specEntries = {
+		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
+	};
 
-	createInfo.updateRendererSpecific(0, 1, "StaticVert", "StaticFrag");
-	texturedRenderer_ = new TexturedRenderer(createInfo);
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(3, specEntries.data(), sizeof(Vals), &specConstantValues);
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("DeferredLightingCombineFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
 
-	createInfo.colourAttachmentCount = 3;
-	createInfo.colourBlendEnables = { VK_FALSE, VK_FALSE, VK_FALSE };
+	PipelineCreateInfo pci = {};
+	pci.debugName = "Combine";
+	pci.enableDepthTest = VK_FALSE;
+	pci.enableDepthWrite = VK_FALSE;
+	pci.extent = createInfo.extent;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	pci.subpassIndex = createInfo.subpassIndex;
+	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
-	//createInfo.updateRendererSpecific(0, 1, "StaticVert", "StaticDeferredFrag");
-	//staticDeferredRenderer_ = new TexturedRenderer(createInfo);
+	RendererCreateInfo2 createInfo2;
+	createInfo2.shaderStages = stageInfos;
+	createInfo2.pipelineCreateInfo = pci;
+	createInfo2.pcRangesCount = 1;
+	createInfo2.pcRanges = pushConstants;
 
-	graphicsMaster_->setRenderer(RendererTypes::kParticle, particleRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::kStatic, texturedRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::kTerrain, terrainRenderer_);
+	createInfo.updateRendererSpecific(0, 1, "FullscreenVert", "DeferredLightingCombineFrag");
+	combineRenderer_ = new FullscreenRenderer(createInfo, createInfo2);
+
 	graphicsMaster_->setRenderer(RendererTypes::kAtmosphere, atmosphereRenderer_);
-	graphicsMaster_->setRenderer(RendererTypes::kWater, waterRenderer_);
-	//graphicsMaster_->setRenderer(RendererTypes::kStaticDeferred, staticDeferredRenderer_);
 }
 
-void GeometryPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
+void CombinePass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
 {
-	ASSERT(dependencyAttachment.size() == 1);
-	shadowDepthBuf_ = dependencyAttachment[0];
-	shadowDepthTexture_ = graphicsMaster_->getMasters().textureManager->allocateTexture("shadowDepth", shadowDepthBuf_, 
+	ASSERT(dependencyAttachment.size() == 3);
+	diffuseIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("DiffuseSampler", dependencyAttachment[0],
+		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
+	specularIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("SpecularSampler", dependencyAttachment[1],
+		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
+	albedoIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("AlbedoSampler", dependencyAttachment[2],
 		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	createRenderers();
 }
 
-void GeometryPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
+void CombinePass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
 {
 	colourBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, "GeometryColourBuffer");
+		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }, "GeometryColourBuffer");
 	colourBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	/*normalsBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, "GeometryNormalsBuffer");
-	normalsBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	albedoBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, "GeometryAlbedoBuffer");
-	albedoBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	positionBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.surfaceFormat.format, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, "GeometryPositionBuffer");
-	positionBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;*/
-}
-
-VkFormat GeometryPass::createDepthBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
-{
-	depthBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails.depthFormat, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
-		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL }, "GeometryDepthBuffer");
-	depthBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	return swapChainDetails.depthFormat;
 }

@@ -117,7 +117,7 @@ void RendererPipeline::createPipeline(const LogicDevice* logicDevice, VkRenderPa
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizer.cullMode = pipelineCreateInfo.cullFace;
 	rasterizer.frontFace = pipelineCreateInfo.frontFace;
 	rasterizer.depthBiasEnable = pipelineCreateInfo.depthBiasEnable;
 

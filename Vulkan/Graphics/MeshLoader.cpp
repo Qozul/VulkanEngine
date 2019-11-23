@@ -63,11 +63,15 @@ void MeshLoader::loadMeshFromFile(const std::string& meshName, ElementBufferObje
 			vertex.x = attrib.vertices[3 * (size_t)index.vertex_index + 0];
 			vertex.y = attrib.vertices[3 * (size_t)index.vertex_index + 1];
 			vertex.z = attrib.vertices[3 * (size_t)index.vertex_index + 2];
-			vertex.u = attrib.texcoords[2 * (size_t)index.texcoord_index + 0];
-			vertex.v = 1.0f - attrib.texcoords[2 * (size_t)index.texcoord_index + 1];
-			vertex.nx = attrib.normals[3 * (size_t)index.normal_index + 0];
-			vertex.ny = attrib.normals[3 * (size_t)index.normal_index + 1];
-			vertex.nz = attrib.normals[3 * (size_t)index.normal_index + 2];
+			if (attrib.texcoords.size() > 0) {
+				vertex.u = attrib.texcoords[2 * (size_t)index.texcoord_index + 0];
+				vertex.v = 1.0f - attrib.texcoords[2 * (size_t)index.texcoord_index + 1];
+			}
+			if (attrib.normals.size() > 0) {
+				vertex.nx = attrib.normals[3 * (size_t)index.normal_index + 0];
+				vertex.ny = attrib.normals[3 * (size_t)index.normal_index + 1];
+				vertex.nz = attrib.normals[3 * (size_t)index.normal_index + 2];
+			}
 
 			verts.push_back(vertex);
 			indices.push_back(count++);

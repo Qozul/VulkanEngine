@@ -1,6 +1,6 @@
 #version 450
-#extension GL_EXT_nonuniform_qualifier : require
 #extension GL_GOOGLE_include_directive : enable
+#define USE_LIGHTS_UBO
 #include "../common.glsl"
 #include "terrain_structs.glsl"
 const float PI = 3.14159265358979323846;
@@ -16,6 +16,7 @@ layout (location = 1) flat in int instanceIndex[];
 layout (location = 2) in vec4 shadowCoord[];
 layout (location = 3) flat in uint shadowMapIdx[];
 layout (location = 4) in vec3 inNormal[];
+layout (location = 5) flat in vec3 inCamPos[];
 
 
 layout (location = 0) out vec2 texUV;
@@ -26,17 +27,11 @@ layout (location = 4) out vec4 outShadowCoord;
 layout (location = 5) out flat uint outShadowMapIdx;
 layout (location = 6) out vec3 Fext;
 layout (location = 7) out vec3 Lin;
+layout (location = 8) flat out vec3 outCamPos;
 
 layout(set = COMMON_SET, binding = COMMON_MVP_BINDING) readonly buffer UniformBufferObject {
     mat4 elementData[];
 } ubo;
-
-layout(set = GLOBAL_SET, binding = LIGHT_UBO_BINDING) uniform LightingData
-{
-	vec4 cameraPosition;
-	vec4 ambientColour;
-	vec4 lightPositions[1];
-};
 
 layout(set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer MaterialData
 {
@@ -49,7 +44,7 @@ layout(set = COMMON_SET, binding = COMMON_MATERIALS_BINDING) readonly buffer Tex
 };
 
 const vec3 betaRay = vec3(6.55e-6, 1.73e-5, 2.30e-5);
-const vec3 betaMie = vec3(2e-6);
+const vec3 betaMie = vec3(9e-4, 1e-3, 1.1e-3);
 
 // theta is the angle between the direction of the incident light and the direction of the scattered light
 vec3 rayleighPhase(float ctheta, vec3 betaRay)
@@ -69,6 +64,7 @@ void main(void)
 {
 	outInstanceIndex = instanceIndex[0];
 	outShadowMapIdx = shadowMapIdx[0];
+	outCamPos = inCamPos[0];
 	Params material = materials[SC_PARAMS_OFFSET + instanceIndex[0]];
 	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex[0]];
 	vec2 uv1 = mix(iTexUV[0], iTexUV[1], gl_TessCoord.x);
@@ -91,7 +87,7 @@ void main(void)
 	normal = mix(norm1, norm2, gl_TessCoord.y);
 	normal = normalize(mat3(transpose(inverse(material.model))) * normal);
 	
-	Fext = exp(-(betaRay + betaMie) * distance(worldPos, cameraPosition.xyz));
-	float ctheta = dot(normalize(worldPos - cameraPosition.xyz), normalize(lightPositions[0].xyz));
-	Lin = ((rayleighPhase(ctheta, betaRay) + miePhase(ctheta, 0.9, betaMie)) / (betaRay + betaMie)) * (1.0 - Fext);
+	Fext = exp(-(betaRay + betaMie) * distance(worldPos, inCamPos[0]));
+	float ctheta = dot(normalize(worldPos - inCamPos[0]), normalize(lights[0].position - inCamPos[0]));
+	Lin = ((rayleighPhase(ctheta, betaRay) + miePhase(ctheta, 0.1, betaMie)) / (betaRay + betaMie)) * (1.0 - Fext);
 }

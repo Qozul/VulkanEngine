@@ -7,22 +7,17 @@ layout(constant_id = 0) const uint SC_PARAMS_OFFSET = 0;
 
 layout(vertices = NUM_VERTS) out;
 
-layout (location = 0) in vec2 iTexUV[];
-layout (location = 1) flat in int instanceIndex[];
-layout (location = 2) flat in uint shadowMapIdx[];
-layout (location = 3) flat in mat4 shadowMat[];
+layout(location = 0) in vec2 iTexUV[];
+layout(location = 1) flat in int instanceIndex[];
+layout(location = 2) flat in uint shadowMapIdx[];
+layout(location = 3) flat in vec3 inCamPos[];
+layout(location = 4) flat in mat4 shadowMat[];
 
-layout (location = 0) out vec2 outTexUV[NUM_VERTS];
-layout (location = 1) flat out int outInstanceIndex[NUM_VERTS];
-layout (location = 2) flat out uint outShadowMapIdx[NUM_VERTS];
-layout (location = 3) flat out mat4 outShadowMat[NUM_VERTS];
-
-layout(set = 1, binding = 0) uniform LightingData
-{
-	vec4 cameraPosition;
-	vec4 ambientColour;
-	vec4 lightPositions[1];
-};
+layout(location = 0) out vec2 outTexUV[NUM_VERTS];
+layout(location = 1) flat out int outInstanceIndex[NUM_VERTS];
+layout(location = 2) flat out uint outShadowMapIdx[NUM_VERTS];
+layout(location = 3) flat out vec3 outCamPos[NUM_VERTS];
+layout(location = 4) flat out mat4 outShadowMat[NUM_VERTS];
 
 float calculateTessLevel(float d0, float d1)
 {
@@ -37,11 +32,12 @@ void main()
 {
 	outInstanceIndex[gl_InvocationID] = instanceIndex[0];
 	outShadowMapIdx[gl_InvocationID] = shadowMapIdx[0];
+	outCamPos[gl_InvocationID] = inCamPos[0];
 	float dists[NUM_VERTS] = float[](
-		distance(cameraPosition.xyz, gl_in[0].gl_Position.xyz),
-		distance(cameraPosition.xyz, gl_in[1].gl_Position.xyz),
-		distance(cameraPosition.xyz, gl_in[2].gl_Position.xyz),
-		distance(cameraPosition.xyz, gl_in[3].gl_Position.xyz)
+		distance(inCamPos[0], gl_in[0].gl_Position.xyz),
+		distance(inCamPos[0], gl_in[1].gl_Position.xyz),
+		distance(inCamPos[0], gl_in[2].gl_Position.xyz),
+		distance(inCamPos[0], gl_in[3].gl_Position.xyz)
 	);
 	
 	gl_TessLevelOuter[0] = calculateTessLevel(dists[0], dists[3]);

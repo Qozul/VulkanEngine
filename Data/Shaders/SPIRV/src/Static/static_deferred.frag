@@ -1,56 +1,49 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
-#extension GL_EXT_nonuniform_qualifier : require
+#extension GL_GOOGLE_include_directive : enable
+#include "../common.glsl"
 
-struct Material {
+struct Params {
     mat4 model;
 	vec4 diffuseColour;
 	vec4 specularColour;
 };
 
-struct DescriptorIndexData {
+struct TextureIndices {
 	uint diffuseIdx;
-	uint normalMapIdx;
+	uint inNormalMapIdx;
 };
 
 layout(constant_id = 0) const uint SC_PARAMS_OFFSET = 0;
 layout(constant_id = 1) const uint SC_MATERIAL_OFFSET = 0;
 
-layout (location = 0) out vec4 position;
-layout (location = 1) out vec4 outNormal;
-layout (location = 2) out vec4 albedo;
+layout(location = 0) in vec2 inUV;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec3 inWorldPos;
+layout(location = 3) flat in int inInstanceIndex;
+layout(location = 4) in vec4 inShadowCoord;
+layout(location = 5) flat in uint inShadowMapIdx;
+layout(location = 6) flat in vec3 inCamPos;
 
-layout (location = 0) in vec2 texUV;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec3 worldPos;
-layout (location = 3) flat in int instanceIndex;
-layout (location = 4) in vec4 shadowCoord;
-layout (location = 5) flat in uint shadowMapIdx;
+layout(location = 0) out vec4 outPosition;
+layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outAlbedo;
 
-layout(set = 1, binding = 2) uniform sampler2D texSamplers[];
-
-layout(set = 1, binding = 0) uniform LightingData
+layout(set = COMMON_SET, binding = COMMON_PARAMS_BINDING) readonly buffer MaterialData
 {
-	vec4 cameraPosition;
-	vec4 ambientColour;
-	vec4 lightPositions[1];
+	Params params[];
 };
 
-layout(set = 0, binding = 1) readonly buffer MaterialData
+layout(set = COMMON_SET, binding = COMMON_MATERIALS_BINDING) readonly buffer TextureIndexBuffer
 {
-	Material materials[];
-};
-
-layout(set = 0, binding = 2) readonly buffer DescriptorIndexBuffer
-{
-	DescriptorIndexData diData[];
+	TextureIndices texIndices[];
 };
 
 void main() 
 {
-	Material mat = materials[SC_PARAMS_OFFSET + instanceIndex];
-	position = vec4(worldPos, 1.0);
-	outNormal = vec4(normal, mat.specularColour.w);
-	DescriptorIndexData descriptorIndices = diData[SC_MATERIAL_OFFSET + instanceIndex];
-	albedo = texture(texSamplers[nonuniformEXT(descriptorIndices.diffuseIdx)], texUV);
+	Params parameters = params[SC_PARAMS_OFFSET + inInstanceIndex];
+	outPosition = vec4(inWorldPos, 1.0);
+	outNormal = vec4(inNormal * 0.5 + 0.5, parameters.specularColour.w);
+	TextureIndices texIdxs = texIndices[SC_MATERIAL_OFFSET + inInstanceIndex];
+	outAlbedo = texture(texSamplers[nonuniformEXT(texIdxs.diffuseIdx)], inUV);
 }

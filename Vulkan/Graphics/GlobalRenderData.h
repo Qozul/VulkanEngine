@@ -4,16 +4,12 @@
 #include "VkUtil.h"
 #include "StorageBuffer.h"
 #include "Descriptor.h"
+#include "Light.h"
 
 namespace QZL {
 	namespace Graphics {
 		class TextureSampler;
 		static const size_t kMaxLights = 1;
-		struct LightingData {
-			glm::vec4 cameraPosition;
-			glm::vec4 ambientColour;
-			std::array<glm::vec4, kMaxLights> lightPositions;
-		};
 		enum class GlobalRenderDataBindings : uint32_t {
 			kLighting = 0,
 			kEnvironmentMap = 1,
@@ -29,7 +25,7 @@ namespace QZL {
 			VkDescriptorSetLayout getLayout() const {
 				return layout_;
 			}
-			void updateData(uint32_t idx, LightingData& data);
+			void updateData(uint32_t idx, Light& data);
 		private:
 			GlobalRenderData(LogicDevice* logicDevice, TextureManager* textureManager, VkDescriptorSetLayoutBinding descriptorIndexBinding);
 			~GlobalRenderData();

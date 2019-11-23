@@ -55,6 +55,7 @@ ShadowPass::~ShadowPass()
 
 void ShadowPass::doFrame(FrameInfo& frameInfo)
 {
+
 	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].depthStencil = { 1.0f, 0 };
 
@@ -63,7 +64,6 @@ void ShadowPass::doFrame(FrameInfo& frameInfo)
 	bi.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
-
 	VkViewport viewport;
 	viewport.height = SHADOW_DIMENSIONS;
 	viewport.width = SHADOW_DIMENSIONS;
@@ -95,12 +95,11 @@ void ShadowPass::doFrame(FrameInfo& frameInfo)
 	vkCmdPushConstants(frameInfo.cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t) * 2, &mvpOffset);
 	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kStatic]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
 	shadowRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
-	mvpOffset[0] = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
-	mvpOffset[1] = terrainHeightmapIdx_;
-	vkCmdPushConstants(frameInfo.cmdBuffer, shadowTerrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t) * 2, &mvpOffset);
-	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
-	shadowTerrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
-
+	//mvpOffset[0] = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
+	//mvpOffset[1] = terrainHeightmapIdx_;
+	//vkCmdPushConstants(frameInfo.cmdBuffer, shadowTerrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t) * 2, &mvpOffset);
+	//graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
+	//shadowTerrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 

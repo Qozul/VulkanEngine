@@ -3,8 +3,10 @@
 #include "SwapChain.h"
 #include "LogicDevice.h"
 #include "GeneralPass.h"
+#include "DeferredPass.h"
 #include "PostProcessPass.h"
 #include "ShadowPass.h"
+#include "LightingPass.h"
 #include "RendererBase.h"
 #include "GlobalRenderData.h"
 #include "GraphicsMaster.h"
@@ -30,6 +32,12 @@ void SwapChain::loop()
 {
 	const uint32_t imgIdx = aquireImage();
 
+	// Main scene light
+	frameInfo_.sunHeight = glm::dot(glm::normalize(getCamera(1)->position), glm::vec3(0.0f, 1.0f, 0.0f));
+	auto mainIntensity = glm::vec3(0.8f) * frameInfo_.sunHeight;
+	Light lightingData = { frameInfo_.cameras[1].position, 2000.0f, glm::vec3(1.0), 0.01f };
+	globalRenderData_->updateData(0, lightingData);
+
 	auto commandLists = activeScene_->update(frameInfo_.cameras, NUM_CAMERAS, System::deltaTimeSeconds, imgIdx);
 
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
@@ -38,9 +46,6 @@ void SwapChain::loop()
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-	LightingData lightingData = { glm::vec4(frameInfo_.cameras[0].position, 0.0f), glm::vec4(glm::vec3(0.01f), 0.0f), glm::vec4(1000.0f, 500.0f, -1000.0f, 0.0f) };
-	globalRenderData_->updateData(0, lightingData);
 
 	frameInfo_.cmdBuffer = commandBuffers_[imgIdx];
 	frameInfo_.frameIdx = imgIdx;
@@ -51,21 +56,27 @@ void SwapChain::loop()
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
 	// Shadow pass
-	renderPasses_[2]->doFrame(frameInfo_);
-
-	//Geometry pass
-	frameInfo_.mainCameraIdx = 0;
 	renderPasses_[0]->doFrame(frameInfo_);
+
+	// Deferred geometry pass
+	frameInfo_.mainCameraIdx = 0;
+	renderPasses_[1]->doFrame(frameInfo_);
+	// Lighting pass
+	renderPasses_[2]->doFrame(frameInfo_);
+	// Combine pass
+	renderPasses_[3]->doFrame(frameInfo_);
+
 	if (splitscreenEnabled_) {
 		// Split screen geometry
-		frameInfo_.viewportX = details_.extent.width / 2;
+		/*frameInfo_.viewportX = details_.extent.width / 2;
 		frameInfo_.mainCameraIdx = 1;
 		renderPasses_[0]->doFrame(frameInfo_);
 		frameInfo_.viewportX = 0;
-		frameInfo_.mainCameraIdx = 0;
+		frameInfo_.mainCameraIdx = 0;*/
 	}
-	// Post process pass
-	renderPasses_[1]->doFrame(frameInfo_);
+
+	// Post process ping ponging passes
+	renderPasses_[4]->doFrame(frameInfo_);
 
 	CHECK_VKRESULT(vkEndCommandBuffer(commandBuffers_[imgIdx]));
 
@@ -93,10 +104,10 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	frameInfo_.cameras[0].position = glm::vec3(200.0f, 100.0f, 200.0f);
 	frameInfo_.cameras[0].lookPoint = glm::vec3(0.0f, 0.0f, 10.0f);
 	frameInfo_.cameras[1] = {};
-	frameInfo_.cameras[1].position = glm::vec3(100.0f, 100.0f, 200.0f);
+	frameInfo_.cameras[1].position = glm::vec3(100.0f, 300.0f, 200.0f);
 	frameInfo_.cameras[1].lookPoint = glm::vec3(100.0f, 10.0f, 300.0f);
 	frameInfo_.cameras[1].viewMatrix = glm::lookAt(frameInfo_.cameras[1].position, frameInfo_.cameras[1].lookPoint, glm::vec3(0.0f, 1.0f, 0.0f));
-	frameInfo_.cameras[1].projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
+	frameInfo_.cameras[1].projectionMatrix = glm::ortho(-400.0f, 400.0f, -400.0f, 400.0f, 200.0f, 1500.0f);
 	frameInfo_.cameras[1].projectionMatrix[1][1] *= -1.0f;
 }
 
@@ -328,12 +339,25 @@ void SwapChain::initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsIn
 	master_->getMasters().inputManager->addProfile("SplitScreen", inputProfile_);
 
 	activeScene_ = scene;
-	renderPasses_.push_back(new GeometryPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
-	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
 	renderPasses_.push_back(new ShadowPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
-	std::vector<Image*> geometryAttachments = { static_cast<GeometryPass*>(renderPasses_[0])->colourBuffer_, static_cast<GeometryPass*>(renderPasses_[0])->depthBuffer_ };
-	renderPasses_[1]->initRenderPassDependency(geometryAttachments);
-	renderPasses_[0]->initRenderPassDependency({ static_cast<ShadowPass*>(renderPasses_[2])->depthBuffer_ });
+	renderPasses_.push_back(new DeferredPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
+	renderPasses_.push_back(new LightingPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
+	renderPasses_.push_back(new CombinePass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
+	renderPasses_.push_back(new PostProcessPass(master_, logicDevice_, details_, globalRenderData_, graphicsInfo));
+
+	renderPasses_[0]->initRenderPassDependency({});
+	renderPasses_[1]->initRenderPassDependency({});
+	renderPasses_[2]->initRenderPassDependency({
+		static_cast<DeferredPass*>(renderPasses_[1])->positionBuffer_, static_cast<DeferredPass*>(renderPasses_[1])->normalsBuffer_,
+		static_cast<DeferredPass*>(renderPasses_[1])->depthBuffer_, static_cast<ShadowPass*>(renderPasses_[0])->depthBuffer_
+	});
+	renderPasses_[3]->initRenderPassDependency({
+		static_cast<LightingPass*>(renderPasses_[2])->diffuseBuffer_, static_cast<LightingPass*>(renderPasses_[2])->specularBuffer_, 
+		static_cast<DeferredPass*>(renderPasses_[1])->albedoBuffer_
+	});
+	renderPasses_[4]->initRenderPassDependency({ 
+		static_cast<CombinePass*>(renderPasses_[3])->colourBuffer_, static_cast<DeferredPass*>(renderPasses_[1])->depthBuffer_
+	});
 }
 
 void SwapChain::updateCameraAspectRatio()

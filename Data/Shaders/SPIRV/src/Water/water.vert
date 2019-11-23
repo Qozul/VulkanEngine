@@ -7,24 +7,19 @@ struct Params {
 	vec4 tipColour; // .w = maxHeight
 };
 
-const mat4 biasMat = mat4( 
-	0.5, 0.0, 0.0, 0.0,
-	0.0, 0.5, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.5, 0.5, 0.0, 1.0 );
-
 layout(constant_id = 0) const uint SC_PARAMS_OFFSET = 0;
 
 layout(location = 0) in vec3 iPosition;
 layout(location = 1) in vec2 iTextureCoord;
 layout(location = 2) in vec3 iNormal;
 
-layout (location = 0) out vec2 texUV;
-layout (location = 1) flat out int instanceIndex;
-layout (location = 2) flat out uint shadowMapIdx;
-layout (location = 3) flat out mat4 shadowMat;
+layout(location = 0) out vec2 texUV;
+layout(location = 1) flat out int instanceIndex;
+layout(location = 2) flat out uint shadowMapIdx;
+layout(location = 3) flat out vec3 outCamPos;
+layout(location = 4) flat out mat4 shadowMat;
 
-layout(set = 0, binding = 1) readonly buffer MaterialData
+layout(set = 0, binding = 1) readonly buffer ParamsData
 {
 	Params params[];
 };
@@ -42,4 +37,5 @@ void main() {
 	texUV = iTextureCoord;
 	shadowMat = PC.shadowMatrix;
 	shadowMapIdx = PC.shadowTextureIdx;
+	outCamPos = PC.cameraPosition.xyz;
 }

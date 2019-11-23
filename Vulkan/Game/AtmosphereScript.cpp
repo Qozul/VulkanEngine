@@ -161,12 +161,10 @@ void AtmosphereScript::start()
 
 void AtmosphereScript::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
-	auto cam = sysMasters_->graphicsMaster->getCamera(0);
-	auto vm = glm::lookAt({ 0.0f, cam->position.y, 0.0f }, cam->lookPoint + glm::vec3(0.0f, cam->position.y, 0.0f), { 0.0f, 1.0f, 0.0f });
 	AtmosphereShaderParams* params = static_cast<AtmosphereShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams());
 	params->sunDirection = *sun_->getSunDirection();
 	params->sunIntensity = *sun_->getSunIntensity();
-	params->inverseViewProj = glm::inverse(cam->projectionMatrix * vm);
+	params->inverseViewProj = glm::inverse(viewProjection);
 	params->scatteringIdx = scatteringSumIdx_;
 }
 

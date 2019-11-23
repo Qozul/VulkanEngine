@@ -321,6 +321,15 @@
     <ClInclude Include="Graphics\FullscreenRenderer.h">
       <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\DeferredPass.h">
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\LightingPass.h">
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\IndexedRenderer.h">
+      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp">
@@ -476,8 +485,17 @@
     <ClCompile Include="Game\RainSystem.cpp">
       <Filter>Source Files\Game\Scripts</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\DeferredPass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClCompile>
     <ClCompile Include="Graphics\FullscreenRenderer.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\LightingPass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\IndexedRenderer.cpp">
+      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

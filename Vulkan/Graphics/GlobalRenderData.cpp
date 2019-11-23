@@ -7,18 +7,18 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-void GlobalRenderData::updateData(uint32_t idx, LightingData& data)
+void GlobalRenderData::updateData(uint32_t idx, Light& data)
 {
-	LightingData* lightingPtr = static_cast<LightingData*>(lightingUbo_->bindRange());
-	*lightingPtr = data;
+	Light* lightingPtr = static_cast<Light*>(lightingUbo_->bindRange());
+	lightingPtr[idx] = data;
 	lightingUbo_->unbindRange();
 }
 
 GlobalRenderData::GlobalRenderData(LogicDevice* logicDevice, TextureManager* textureManager, VkDescriptorSetLayoutBinding descriptorIndexBinding)
 {
 	environmentTexture_ = textureManager->requestTextureSeparate({ 
-		"Environments/bkg1_right1", "Environments/bkg1_left2", "Environments/bkg1_top3", 
-		"Environments/bkg1_bottom4", "Environments/bkg1_back6", "Environments/bkg1_front5"
+		"Environments/rightImage", "Environments/leftImage", "Environments/upImage", 
+		"Environments/downImage", "Environments/frontImage", "Environments/backImage"
 		});
 	createDescriptorSet(logicDevice, { 0, 0, VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT }, &descriptorIndexBinding);
 }
@@ -36,8 +36,9 @@ void GlobalRenderData::createDescriptorSet(LogicDevice* logicDevice, std::vector
 	setLayoutBindingFlags.bindingCount = static_cast<uint32_t>(bindingFlags.size());
 	setLayoutBindingFlags.pBindingFlags = bindingFlags.data();
 
-	lightingUbo_ = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, (uint32_t)GlobalRenderDataBindings::kLighting, 0,
-		sizeof(LightingData), VK_SHADER_STAGE_ALL_GRAPHICS, "GlobalLightingBuffer");
+	lightingUbo_ = DescriptorBuffer::makeBuffer<UniformBuffer>(logicDevice, MemoryAllocationPattern::kDynamicResource, 0, 0,
+		sizeof(Light) * MAX_LIGHTS, VK_SHADER_STAGE_ALL_GRAPHICS, "GlobalLightingBuffer");
+
 	VkDescriptorSetLayoutBinding environmentBinding = TextureSampler::makeBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	auto descriptor = logicDevice->getPrimaryDescriptor();

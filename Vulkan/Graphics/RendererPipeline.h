@@ -28,6 +28,7 @@ namespace QZL
 			VkCompareOp depthCompareOp = VK_COMPARE_OP_LESS;
 			uint32_t subpassIndex;
 			uint32_t colourAttachmentCount = 1;
+			VkCullModeFlagBits cullFace = VK_CULL_MODE_BACK_BIT;
 			VkBool32 depthBiasEnable = VK_FALSE;
 			VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
 			std::vector<VkDynamicState> dynamicState;
