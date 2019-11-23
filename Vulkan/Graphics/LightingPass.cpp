@@ -107,8 +107,8 @@ void LightingPass::createRenderers()
 		uint32_t normalsIdx;
 		float invScreenX;
 		float invScreenY; // TODO need to be adjustable for splitscreen
-		uint32_t depthIdx;
 		uint32_t shadowIdx;
+		uint32_t depthIdx;
 	} specConstantValues;
 	specConstantValues.positionsIdx = positionIdx_;
 	specConstantValues.normalsIdx = normalsIdx_;
@@ -146,7 +146,7 @@ void LightingPass::createRenderers()
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 	pci.colourAttachmentCount = 2;
 	pci.colourBlendEnables = { VK_TRUE, VK_TRUE };
-	pci.cullFace = VK_CULL_MODE_NONE;
+	pci.cullFace = VK_CULL_MODE_FRONT_BIT;
 
 	RendererCreateInfo2 createInfo2;
 	createInfo2.shaderStages = stageInfos;
@@ -168,7 +168,7 @@ void LightingPass::initRenderPassDependency(std::vector<Image*> dependencyAttach
 		{ VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	depthIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("DepthSampler", dependencyAttachment[2],
 		{ VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
-	shadowDepthIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("ShadowSampler", dependencyAttachment[2],
+	shadowDepthIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("ShadowSampler", dependencyAttachment[3],
 		{ VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	createRenderers();
 }

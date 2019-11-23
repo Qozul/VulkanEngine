@@ -11,6 +11,7 @@
 #include "../Assets/AltAtmosphere.h"
 #include "Camera.h"
 #include "SunScript.h"
+#include "../Assets/LightSource.h"
 #include "AtmosphereScript.h"
 #include "Scene.h"
 #include "FireSystem.h"
@@ -61,17 +62,16 @@ void GameMaster::loadGame()
 	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 	
-	Entity* terrain = new Terrain("terrain", masters_.textureManager);
-	terrain->setGameScript(new TerrainScript(masters_));
-
-	Entity* water = new Water("water", masters_.textureManager);
-	water->getTransform()->position = glm::vec3(0.0f, 80.0f, 0.0f);
+	
 
 	Entity* rain = new Entity("rain");
 	scriptInit.owner = rain;
 	auto rainScript = new RainSystem(masters_);
 	rain->setGameScript(rainScript);
 	rain->setGraphicsComponent(Graphics::RendererTypes::kParticle, rainScript->makeShaderParams(), "rain", rainScript->getMaterial());*/
+
+	Entity* terrain = new Terrain("terrain", masters_.textureManager);
+	terrain->setGameScript(new TerrainScript(masters_));
 
 	Entity* sun = new Entity("sun");
 	scriptInit.owner = sun;
@@ -81,25 +81,29 @@ void GameMaster::loadGame()
 
 	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
+	Entity* water = new Water("water", masters_.textureManager);
+	water->getTransform()->position = glm::vec3(0.0f, 80.0f, 0.0f);
+
 	Entity* teapotDeferred = new Entity("TeapotDeferred");
 	teapotDeferred->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
 	teapotDeferred->getTransform()->setScale(2.0f);
 	teapotDeferred->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 
-	Entity* light = new Entity("light");
-	light->setGraphicsComponent(Graphics::RendererTypes::kLight, nullptr, "ico", nullptr);
-	light->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
-	light->getTransform()->setScale(100.0f);
+	//Entity* light = new Entity("light");
+	//light->setGraphicsComponent(Graphics::RendererTypes::kLight, nullptr, "ico", nullptr);
+	Entity* light = new LightSource("light", glm::vec3(0.8), 2000.0f, 1.0f);
+	//light->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
+	light->getTransform()->setScale(1500.0f);
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
 	//scenes_[activeSceneIdx_]->addEntity(rain);
-	//scenes_[activeSceneIdx_]->addEntity(water);
-	//scenes_[activeSceneIdx_]->addEntity(terrain);
-	//scenes_[activeSceneIdx_]->addEntity(sun, terrain);
+	scenes_[activeSceneIdx_]->addEntity(water);
+	scenes_[activeSceneIdx_]->addEntity(terrain);
+	scenes_[activeSceneIdx_]->addEntity(sun, terrain);
 	scenes_[activeSceneIdx_]->addEntity(teapotDeferred);
-	scenes_[activeSceneIdx_]->addEntity(light);
+	scenes_[activeSceneIdx_]->addEntity(light, sun);
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
 }

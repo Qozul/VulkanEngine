@@ -45,5 +45,5 @@ void main()
 	outPosition = vec4(inWorldPos, 1.0);
 	outNormal = vec4(inNormal * 0.5 + 0.5, parameters.specularColour.w);
 	TextureIndices texIdxs = texIndices[SC_MATERIAL_OFFSET + inInstanceIndex];
-	outAlbedo = texture(texSamplers[nonuniformEXT(texIdxs.diffuseIdx)], inUV);
+	outAlbedo = vec4(texture(texSamplers[nonuniformEXT(texIdxs.diffuseIdx)], inUV).rgb, 1.0);
 }

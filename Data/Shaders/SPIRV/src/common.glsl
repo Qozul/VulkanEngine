@@ -23,7 +23,7 @@ struct Light {
 	vec3 position;
 	float radius;
 	vec3 colour;
-	float padding;
+	float attenuationFactor;
 };
 
 // ------------------- LAYOUTS ------------------

@@ -330,6 +330,9 @@
     <ClInclude Include="Graphics\IndexedRenderer.h">
       <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
+    <ClInclude Include="Assets\LightSource.h">
+      <Filter>Header Files\Assets\Specialised Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp">
@@ -496,6 +499,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\IndexedRenderer.cpp">
       <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="Assets\LightSource.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

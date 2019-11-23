@@ -27,7 +27,7 @@ DeferredPass::DeferredPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 	// G-buffer: Position, normals, and albedo information
 	createInfo.attachments.push_back(makeAttachment(VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-	createInfo.attachments.push_back(makeAttachment(VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+	createInfo.attachments.push_back(makeAttachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
 	createInfo.attachments.push_back(makeAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
@@ -123,6 +123,8 @@ void DeferredPass::doFrame(FrameInfo& frameInfo)
 	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, staticRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
 	staticRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
+	waterRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kWater]);
+	terrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
@@ -188,13 +190,65 @@ void DeferredPass::createRenderers()
 
 	staticRenderer_ = new IndexedRenderer(createInfo, createInfo2);
 
+
+
+	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] };
+	std::vector<VkSpecializationMapEntry> mapEntryTerrain = {
+		RendererBase::makeSpecConstantEntry(0, 0,	sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
+	};
+	auto vertSpecConstant = RendererBase::setupSpecConstants(1, mapEntryTerrain.data(), sizeof(uint32_t), &offsets[1]);
+	auto tescSpecConstant = RendererBase::setupSpecConstants(2, mapEntryTerrain.data(), sizeof(uint32_t) * 2, &offsets[1]);
+	auto teseSpecConstant = RendererBase::setupSpecConstants(3, mapEntryTerrain.data(), sizeof(uint32_t) * 3, offsets);
+	auto fragSpecConstant = RendererBase::setupSpecConstants(2, mapEntryTerrain.data(), sizeof(uint32_t) * 2, &offsets[1]);
+
+	std::vector<ShaderStageInfo> stageInfosTerrain;
+	stageInfosTerrain.emplace_back("TerrainVert", VK_SHADER_STAGE_VERTEX_BIT, &vertSpecConstant);
+	stageInfosTerrain.emplace_back("TerrainFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &fragSpecConstant);
+	stageInfosTerrain.emplace_back("TerrainTESC", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &tescSpecConstant);
+	stageInfosTerrain.emplace_back("TerrainTESE", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &teseSpecConstant);
+
+	pci.debugName = "Terrain";
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+	createInfo2.pipelineCreateInfo = pci;
+	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.shaderStages = stageInfosTerrain;
+	terrainRenderer_ = new IndexedRenderer(createInfo, createInfo2);
+
+
+
+	uint32_t offsetsWater[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kWater], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kWater], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kWater] };
+	std::vector<VkSpecializationMapEntry> mapEntryWater = {
+		RendererBase::makeSpecConstantEntry(0, 0,	sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
+	};
+	auto vertSpecConstantWater = RendererBase::setupSpecConstants(1, mapEntryWater.data(), sizeof(uint32_t), &offsetsWater[1]);
+	auto tescSpecConstantWater = RendererBase::setupSpecConstants(1, mapEntryWater.data(), sizeof(uint32_t), &offsetsWater[1]);
+	auto teseSpecConstantWater = RendererBase::setupSpecConstants(3, mapEntryWater.data(), sizeof(uint32_t) * 3, offsetsWater);
+	auto fragSpecConstantWater = RendererBase::setupSpecConstants(1, mapEntryWater.data(), sizeof(uint32_t), &offsetsWater[1]);
+
+	std::vector<ShaderStageInfo> stageInfosWater;
+	stageInfosWater.emplace_back("WaterVert", VK_SHADER_STAGE_VERTEX_BIT, &vertSpecConstantWater);
+	stageInfosWater.emplace_back("WaterFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &fragSpecConstantWater);
+	stageInfosWater.emplace_back("WaterTESC", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &tescSpecConstantWater);
+	stageInfosWater.emplace_back("WaterTESE", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &teseSpecConstantWater);
+
+	pci.debugName = "Water";
+	createInfo2.pipelineCreateInfo = pci;
+	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.shaderStages = stageInfosWater;
+	waterRenderer_ = new IndexedRenderer(createInfo, createInfo2);
+
 	graphicsMaster_->setRenderer(RendererTypes::kStatic, staticRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kParticle, nullptr);
+	graphicsMaster_->setRenderer(RendererTypes::kTerrain, terrainRenderer_);
+	graphicsMaster_->setRenderer(RendererTypes::kWater, waterRenderer_);
 	
-	/*texturedRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
-	terrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
+	/*	
 	particleRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kParticle]);
-	waterRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kWater]);*/
+	*/
 }
 
 void DeferredPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
@@ -207,7 +261,7 @@ void DeferredPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainD
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }, "DeferredPositionsBuffer");
 	positionBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	normalsBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TILING_OPTIMAL,
+	normalsBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }, "DeferredNormalsBuffer");
 	normalsBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

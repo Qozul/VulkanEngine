@@ -56,6 +56,7 @@ CombinePass::~CombinePass()
 	SAFE_DELETE(colourBuffer_);
 	SAFE_DELETE(atmosphereRenderer_);
 	SAFE_DELETE(environmentRenderer_);
+	SAFE_DELETE(combineRenderer_);
 }
 
 void CombinePass::doFrame(FrameInfo& frameInfo)

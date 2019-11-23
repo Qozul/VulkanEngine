@@ -35,7 +35,7 @@ void SwapChain::loop()
 	// Main scene light
 	frameInfo_.sunHeight = glm::dot(glm::normalize(getCamera(1)->position), glm::vec3(0.0f, 1.0f, 0.0f));
 	auto mainIntensity = glm::vec3(0.8f) * frameInfo_.sunHeight;
-	Light lightingData = { frameInfo_.cameras[1].position, 2000.0f, glm::vec3(1.0), 0.01f };
+	Light lightingData = { frameInfo_.cameras[1].position, 2000.0f, glm::vec3(0.5), 0.0f };
 	globalRenderData_->updateData(0, lightingData);
 
 	auto commandLists = activeScene_->update(frameInfo_.cameras, NUM_CAMERAS, System::deltaTimeSeconds, imgIdx);
@@ -99,7 +99,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 
 	frameInfo_.cameras[0] = {};
 	frameInfo_.cameras[0].viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	frameInfo_.cameras[0].projectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+	frameInfo_.cameras[0].projectionMatrix = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 2500.0f);
 	frameInfo_.cameras[0].projectionMatrix[1][1] *= -1.0f;
 	frameInfo_.cameras[0].position = glm::vec3(200.0f, 100.0f, 200.0f);
 	frameInfo_.cameras[0].lookPoint = glm::vec3(0.0f, 0.0f, 10.0f);
@@ -363,8 +363,8 @@ void SwapChain::initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsIn
 void SwapChain::updateCameraAspectRatio()
 {
 	frameInfo_.cameras[0].projectionMatrix = !splitscreenEnabled_ ?
-		glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f) :
-		glm::perspective(glm::radians(45.0f), 2.0f / 3.0f, 0.1f, 1000.0f);
+		glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 2500.0f) :
+		glm::perspective(glm::radians(45.0f), 2.0f / 3.0f, 0.1f, 2500.0f);
 	frameInfo_.cameras[0].projectionMatrix[1][1] *= -1.0f;
 }
 

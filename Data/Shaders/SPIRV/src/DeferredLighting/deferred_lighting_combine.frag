@@ -10,13 +10,18 @@ layout(location = 0) in vec2 inUV;
 
 layout(location = 0) out vec4 outColour;
 
+const float AMBIENT = 0.1;
+
 void main()
 {
 	vec4 diffuse = texture(texSamplers[nonuniformEXT(SC_DIFFUSE_IDX)], inUV);
 	vec3 specular = texture(texSamplers[nonuniformEXT(SC_SPECULAR_IDX)], inUV).rgb;
-	vec3 light = texture(texSamplers[nonuniformEXT(SC_G_BUFFER_ALBEDO)], inUV).rgb;
+	vec4 fullAlbedo = texture(texSamplers[nonuniformEXT(SC_G_BUFFER_ALBEDO)], inUV);
+	vec3 albedo = fullAlbedo.rgb;
+	float includeSpecular = fullAlbedo.a;
 	
-	outColour.rgb = max(diffuse.rgb * light, diffuse.rgb * 0.1);
-	outColour.rgb += specular;
+	outColour.rgb = max(diffuse.rgb * albedo, diffuse.rgb * AMBIENT);
+	outColour.rgb += (specular * includeSpecular);
 	outColour.a = diffuse.a;
+	reinhardTonemap(outColour);
 }

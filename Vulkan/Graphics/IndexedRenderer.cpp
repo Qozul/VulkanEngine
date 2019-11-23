@@ -13,7 +13,7 @@ IndexedRenderer::IndexedRenderer(RendererCreateInfo& createInfo, RendererCreateI
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
 	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
-		pipelineLayouts_.data(), createInfo2.pcRangesCount, createInfo2.pcRanges), createInfo2.shaderStages, createInfo2.pipelineCreateInfo);
+		pipelineLayouts_.data(), createInfo2.pcRangesCount, createInfo2.pcRanges), createInfo2.shaderStages, createInfo2.pipelineCreateInfo, RendererPipeline::PrimitiveType::kQuads);
 }
 
 void IndexedRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)

@@ -7,11 +7,14 @@
 
 namespace QZL {
 	namespace Graphics {
+		enum class LightType {
+			kDirectional, kPoint, kSpot
+		};
 		struct Light {
 			glm::vec3 position;
 			float radius;
 			glm::vec3 colour;
-			float padding;
+			float attentuationFactor;
 		};
 	}
 }

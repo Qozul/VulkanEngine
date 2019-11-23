@@ -26,6 +26,7 @@
   <ItemGroup>
     <ClInclude Include="Assets\AtmosphereParameters.h" />
     <ClInclude Include="Assets\Entity.h" />
+    <ClInclude Include="Assets\LightSource.h" />
     <ClInclude Include="Assets\Skysphere.h" />
     <ClInclude Include="Assets\Terrain.h" />
     <ClInclude Include="Assets\Transform.h" />
@@ -100,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Assets\Entity.cpp" />
+    <ClCompile Include="Assets\LightSource.cpp" />
     <ClCompile Include="Assets\Skysphere.cpp" />
     <ClCompile Include="Assets\Terrain.cpp" />
     <ClCompile Include="Assets\Water.cpp" />

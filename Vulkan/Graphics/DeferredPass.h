@@ -27,6 +27,8 @@ namespace QZL {
 			Image* normalsBuffer_;
 			Image* albedoBuffer_;
 			Image* positionBuffer_;
+
+			uint32_t shadowDepthIdx_;
 		};
 	}
 }
