@@ -25,10 +25,7 @@ namespace QZL {
 			uint32_t diffuseIdx_;
 			uint32_t specularIdx_;
 			uint32_t albedoIdx_;
-			//Image* depthBuffer_;
-			//Image* normalsBuffer_;
-			//Image* shadowDepthBuf_;
-			//uint32_t shadowDepthTexture_;
+			uint32_t ambientIdx_;
 		};
 	}
 }

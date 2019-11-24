@@ -1,7 +1,9 @@
 #extension GL_EXT_nonuniform_qualifier : require
 #define LIGHT_UBO_BINDING 0
 #define ENVIORNMENT_SAMPLER_BINDING 1
-#define SAMPLER_ARRAY_BINDING 2
+#define CAMERA_INFO_BINDING 2
+#define POST_PROCESS_BINDING 3
+#define SAMPLER_ARRAY_BINDING 4
 #define COMMON_MVP_BINDING 0
 #define COMMON_PARAMS_BINDING 1
 #define COMMON_MATERIALS_BINDING 2
@@ -90,4 +92,9 @@ void calculatePhongShading(in vec3 worldPos, in vec3 lightPos, in vec3 camPos, i
 float linearizeDepth(float depth, float near, float far)
 {
   return (2.0 * near) / (far + near - depth * (far - near));
+}
+
+mat3 calculateTBN(in vec3 normal, in vec3 tangent)
+{
+	return mat3(tangent, cross(normal, tangent), normal);
 }

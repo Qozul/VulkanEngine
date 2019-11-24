@@ -15,7 +15,7 @@ TextureManager::TextureManager(const LogicDevice* logicDevice, Descriptor* descr
 	descriptorSetIdx_(0), descriptor_(descriptor)
 {
 	setLayoutBinding_ = {};
-	setLayoutBinding_.binding = (uint32_t)GlobalRenderDataBindings::kTextureArray;
+	setLayoutBinding_.binding = 4;
 	setLayoutBinding_.descriptorCount = maxTextures;
 	setLayoutBinding_.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	setLayoutBinding_.pImmutableSamplers = nullptr;
@@ -41,6 +41,22 @@ TextureManager::~TextureManager()
 	for (auto it : textureSamplersDI_) {
 		SAFE_DELETE(it.second.first);
 	}
+}
+
+uint32_t TextureManager::allocateGeneratedTexture(std::string name, void* data, uint32_t width, uint32_t height, VkFormat format, MemoryAllocationPattern allocationPattern, ImageParameters parameters, SamplerInfo samplerInfo)
+{
+	auto image = textureLoader_->loadTextureGenerated(name, samplerInfo.stages, data, width, height, format);
+	textures_[name] = image;
+	auto sampler = image->createTextureSampler(name, samplerInfo.magFilter, samplerInfo.minFilter, samplerInfo.addressMode, samplerInfo.anisotropy);
+	textureSamplersDI_[name].first = sampler;
+
+	uint32_t arrayIdx = freeDescriptors_.front();
+	freeDescriptors_.pop();
+
+	descriptor_->updateDescriptorSets({ makeDescriptorWrite(sampler->getImageInfo(), arrayIdx, 1) });
+
+	textureSamplersDI_[name].second = arrayIdx;
+	return arrayIdx;
 }
 
 uint32_t TextureManager::requestTexture(const std::string& name, SamplerInfo samplerInfo)
@@ -125,7 +141,7 @@ VkWriteDescriptorSet TextureManager::makeDescriptorWrite(VkDescriptorImageInfo i
 {
 	VkWriteDescriptorSet write = {};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	write.dstBinding = (uint32_t)GlobalRenderDataBindings::kTextureArray;
+	write.dstBinding = 4;
 	write.dstArrayElement = idx;
 	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	write.descriptorCount = count;

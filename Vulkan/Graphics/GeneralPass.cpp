@@ -104,18 +104,21 @@ void CombinePass::createRenderers()
 		uint32_t diffuseIdx;
 		uint32_t specularIdx;
 		uint32_t albedoIdx;
+		uint32_t ambientIdx;
 	} specConstantValues;
 	specConstantValues.diffuseIdx = diffuseIdx_;
 	specConstantValues.specularIdx = specularIdx_;
 	specConstantValues.albedoIdx = albedoIdx_;
+	specConstantValues.ambientIdx = ambientIdx_;
 
 	std::vector<VkSpecializationMapEntry> specEntries = {
 		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
 		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
+		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t))
 	};
 
-	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(3, specEntries.data(), sizeof(Vals), &specConstantValues);
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
 	stageInfos.emplace_back("DeferredLightingCombineFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
@@ -145,12 +148,14 @@ void CombinePass::createRenderers()
 
 void CombinePass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
 {
-	ASSERT(dependencyAttachment.size() == 3);
+	ASSERT(dependencyAttachment.size() == 4);
 	diffuseIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("DiffuseSampler", dependencyAttachment[0],
 		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	specularIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("SpecularSampler", dependencyAttachment[1],
 		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	albedoIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("AlbedoSampler", dependencyAttachment[2],
+		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
+	ambientIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("AmbientSampler", dependencyAttachment[3],
 		{ VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	createRenderers();
 }

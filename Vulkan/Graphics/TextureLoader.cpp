@@ -100,6 +100,23 @@ Image* TextureLoader::loadTexture(const std::string& fileName, VkShaderStageFlag
 	return texture;
 }
 
+Image* TextureLoader::loadTextureGenerated(const std::string& fileName, VkShaderStageFlags stages, void* data, uint32_t width, uint32_t height, VkFormat format)
+{
+	Image* texture = nullptr;
+
+	texture = new Image(logicDevice_, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, format, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_SAMPLE_COUNT_1_BIT, width, height),
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL });
+	MemoryAllocationDetails stagingBuffer = deviceMemory_->createBuffer("", MemoryAllocationPattern::kStaging, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, (VkDeviceSize)width * height * formatToSize(format));
+	void* stagingData = deviceMemory_->mapMemory(stagingBuffer.id);
+	memcpy(stagingData, data, (size_t)width * height * formatToSize(format));
+	deviceMemory_->unmapMemory(stagingBuffer.id);
+	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), 0, width, height, stages);
+	deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);
+	texture->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, stages);
+	return texture;
+}
+
 Image* Graphics::TextureLoader::loadCubeTexture(const std::array<std::string, 6U> fileName, VkShaderStageFlags stages)
 {
 	nv_dds::CDDSImage image[6];
@@ -156,6 +173,16 @@ VkFormat TextureLoader::convertToVkFormat(unsigned int oldFormat)
 		return VK_FORMAT_BC2_UNORM_BLOCK;
 	case 33779:
 		return VK_FORMAT_BC3_UNORM_BLOCK;
+	default:
+		ASSERT(false);
+	}
+}
+
+VkDeviceSize TextureLoader::formatToSize(VkFormat format)
+{
+	switch (format) {
+	case VK_FORMAT_R16G16B16A16_SFLOAT:
+		return sizeof(uint16_t) * 4;
 	default:
 		ASSERT(false);
 	}

@@ -11,10 +11,16 @@ layout (constant_id = 3) const uint SC_GEOMETRY_DEPTH_IDX = 0;
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 colour;
 
+const float aperture = 0;
+const float focalLength = 0;
+const float planeInFocus = 0;
+
+float objectDistance(float z)
+{
+	return -SC_FAR_Z * SC_NEAR_Z / (z * SC_FAR_Z - SC_NEAR_Z) - SC_FAR_Z);
+}
+
 void main()
 {
-	colour = texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv);
-	//float depth = texture(texSamplers[nonuniformEXT(SC_GEOMETRY_DEPTH_IDX)], uv).r;
-	//depth = clamp(linearizeDepth(depth, SC_NEAR_Z, SC_FAR_Z), 0.0, 1.0);
-	//colour = vec4(depth, depth, depth, 1.0);
+	
 }

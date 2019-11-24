@@ -10,12 +10,30 @@ layout(constant_id = 3) const float SC_INV_SCREEN_Y = 0;
 layout(constant_id = 4) const uint SC_SHADOW_DEPTH_IDX = 0;
 layout(constant_id = 5) const uint SC_G_BUFFER_DEPTH_IDX = 0;
 
+const int PCF_COUNT = 2;
+const int TOTAL_PCF_COUNT = (PCF_COUNT + PCF_COUNT + 1) * (PCF_COUNT + PCF_COUNT + 1);
+
 layout(location = 0) flat in uint inInstanceIndex;
 layout(location = 1) flat in vec4 inCameraPos;
 layout(location = 2) flat in mat4 inShadowMatrix;
 
 layout(location = 0) out vec4 outDiffuse;
 layout(location = 1) out vec4 outSpecular;
+layout(location = 2) out vec4 outAmbient;
+
+float pcfShadow(vec4 shadowCoord)
+{
+	ivec2 texSize = textureSize(texSamplers[nonuniformEXT(SC_SHADOW_DEPTH_IDX)], 0);
+	float dx = 1.0 / texSize.x;
+	float dy = 1.0 / texSize.y;
+	float shadow = 0;
+	for (int x = -PCF_COUNT; x <= PCF_COUNT; ++x) {
+		for (int y = -PCF_COUNT; y <= PCF_COUNT; ++y) {
+			shadow += projectShadow(shadowCoord, vec2(dx*x,dy*y), SC_SHADOW_DEPTH_IDX);
+		}
+	}
+	return shadow / TOTAL_PCF_COUNT;
+}
 
 void main()
 {
@@ -42,7 +60,7 @@ void main()
 	float sf = pow(rf, specExponent);
 	
 	vec4 shadowCoord = BIAS_MATRIX * inShadowMatrix * worldPos;
-	float shadow = projectShadow(shadowCoord / shadowCoord.w, vec2(0.0), SC_SHADOW_DEPTH_IDX);
+	float shadow = pcfShadow(shadowCoord / shadowCoord.w);
 	outDiffuse = vec4(light.colour * lambert * attenuation * shadow, worldPos.w);
 	outSpecular = vec4(light.colour * sf * attenuation * 0.33, 1.0);
 }

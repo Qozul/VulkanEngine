@@ -40,6 +40,8 @@ void SwapChain::loop()
 
 	auto commandLists = activeScene_->update(frameInfo_.cameras, NUM_CAMERAS, System::deltaTimeSeconds, imgIdx);
 
+	globalRenderData_->updateCameraData(frameInfo_.cameras[0], 800, 600);
+
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
 	vkResetCommandBuffer(commandBuffers_[imgIdx], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
@@ -109,6 +111,8 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	frameInfo_.cameras[1].viewMatrix = glm::lookAt(frameInfo_.cameras[1].position, frameInfo_.cameras[1].lookPoint, glm::vec3(0.0f, 1.0f, 0.0f));
 	frameInfo_.cameras[1].projectionMatrix = glm::ortho(-400.0f, 400.0f, -400.0f, 400.0f, 200.0f, 1500.0f);
 	frameInfo_.cameras[1].projectionMatrix[1][1] *= -1.0f;
+
+	globalRenderData_->updatePostData(800, 600);
 }
 
 SwapChain::~SwapChain()
@@ -353,7 +357,7 @@ void SwapChain::initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsIn
 	});
 	renderPasses_[3]->initRenderPassDependency({
 		static_cast<LightingPass*>(renderPasses_[2])->diffuseBuffer_, static_cast<LightingPass*>(renderPasses_[2])->specularBuffer_, 
-		static_cast<DeferredPass*>(renderPasses_[1])->albedoBuffer_
+		static_cast<DeferredPass*>(renderPasses_[1])->albedoBuffer_, static_cast<LightingPass*>(renderPasses_[2])->ambientBuffer_
 	});
 	renderPasses_[4]->initRenderPassDependency({ 
 		static_cast<CombinePass*>(renderPasses_[3])->colourBuffer_, static_cast<DeferredPass*>(renderPasses_[1])->depthBuffer_

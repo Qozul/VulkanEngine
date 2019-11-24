@@ -2,7 +2,7 @@
 #include "GraphicsMaster.h"
 #include "SwapChainDetails.h"
 #include "IndexedRenderer.h"
-#include "TerrainRenderer.h"
+#include "FullscreenRenderer.h"
 #include "WaterRenderer.h"
 #include "ParticleRenderer.h"
 #include "AtmosphereRenderer.h"
@@ -22,9 +22,11 @@ LightingPass::LightingPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 	CreateInfo createInfo = {};
 	createColourBuffer(logicDevice, swapChainDetails);
 	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)); // Diffuse
 	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)); // Specular
+	createInfo.attachments.push_back(makeAttachment(VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)); // Ambient
 	
 	std::vector<VkAttachmentReference> colourAttachmentRefs;
 	VkAttachmentReference diffuseRef = {};
@@ -35,6 +37,10 @@ LightingPass::LightingPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 	specularRef.attachment = 1;
 	specularRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	colourAttachmentRefs.push_back(specularRef);
+	VkAttachmentReference ambientRef = {};
+	ambientRef.attachment = 2;
+	ambientRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colourAttachmentRefs.push_back(ambientRef);
 
 	createInfo.dependencies.push_back(makeSubpassDependency(
 		VK_SUBPASS_EXTERNAL,
@@ -50,7 +56,7 @@ LightingPass::LightingPass(GraphicsMaster* master, LogicDevice* logicDevice, con
 
 	createInfo.subpasses.push_back(makeSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, colourAttachmentRefs, nullptr));
 
-	std::vector<VkImageView> attachmentImages = { diffuseBuffer_->getImageView(), specularBuffer_->getImageView() };
+	std::vector<VkImageView> attachmentImages = { diffuseBuffer_->getImageView(), specularBuffer_->getImageView(), ambientBuffer_->getImageView() };
 	createRenderPass(createInfo, attachmentImages);
 }
 
@@ -58,14 +64,17 @@ LightingPass::~LightingPass()
 {
 	SAFE_DELETE(diffuseBuffer_);
 	SAFE_DELETE(specularBuffer_);
+	SAFE_DELETE(ambientBuffer_);
 	SAFE_DELETE(lightingRenderer_);
+	SAFE_DELETE(ssaoRenderer_);
 }
 
 void LightingPass::doFrame(FrameInfo& frameInfo)
 {
-	std::array<VkClearValue, 2> clearValues = {};
+	std::array<VkClearValue, 3> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	clearValues[1].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	clearValues[2].color = { 1.0f, 0.0f, 0.0f, 0.0f };
 
 	auto bi = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX);
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -81,6 +90,7 @@ void LightingPass::doFrame(FrameInfo& frameInfo)
 
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 	lightingRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kLight]);
+	ssaoRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
@@ -95,8 +105,8 @@ void LightingPass::createRenderers()
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
 	createInfo.subpassIndex = 0;
-	createInfo.colourAttachmentCount = 2;
-	createInfo.colourBlendEnables = { VK_TRUE, VK_TRUE };
+	createInfo.colourAttachmentCount = 3;
+	createInfo.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_TRUE };
 
 	VkPushConstantRange pushConstants[1] = {
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
@@ -106,7 +116,7 @@ void LightingPass::createRenderers()
 		uint32_t positionsIdx;
 		uint32_t normalsIdx;
 		float invScreenX;
-		float invScreenY; // TODO need to be adjustable for splitscreen
+		float invScreenY;
 		uint32_t shadowIdx;
 		uint32_t depthIdx;
 	} specConstantValues;
@@ -141,11 +151,11 @@ void LightingPass::createRenderers()
 	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	pci.subpassIndex = createInfo.subpassIndex;
+	pci.subpassIndex = 0;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
-	pci.colourAttachmentCount = 2;
-	pci.colourBlendEnables = { VK_TRUE, VK_TRUE };
+	pci.colourAttachmentCount = 3;
+	pci.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_TRUE };
 	pci.cullFace = VK_CULL_MODE_FRONT_BIT;
 
 	RendererCreateInfo2 createInfo2;
@@ -157,6 +167,46 @@ void LightingPass::createRenderers()
 
 	lightingRenderer_ = new IndexedRenderer(createInfo, createInfo2);
 	graphicsMaster_->setRenderer(RendererTypes::kLight, lightingRenderer_);
+
+
+	std::uniform_real_distribution<float> rand(0.0f, 1.0f);
+	std::default_random_engine rng;
+	std::array<glm::vec4, 16U> generatedData;
+
+	for (size_t i = 0; i < 16; ++i) {
+		generatedData[i] = glm::vec4(rand(rng) * 2.0 - 1.0, rand(rng) * 2.0 - 1.0, 0.0f, 0.0f);
+	}
+
+	struct SSAOVals {
+		uint32_t depthIdx;
+		uint32_t normalsIdx;
+		uint32_t noiseIdx;
+	} ssaoVals; 
+	ssaoVals.depthIdx = depthIdx_;
+	ssaoVals.normalsIdx = normalsIdx_;
+	ssaoVals.noiseIdx = graphicsMaster_->getMasters().textureManager->allocateGeneratedTexture("SSAONoise", generatedData.data(), 4, 4, VK_FORMAT_R16G16B16A16_SFLOAT,
+		MemoryAllocationPattern::kStaticResource, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+
+	std::vector<VkSpecializationMapEntry> specEntriesSSAO = {
+		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
+	};
+
+	VkSpecializationInfo specInfoSSAO = RendererBase::setupSpecConstants(3, specEntriesSSAO.data(), sizeof(SSAOVals), &ssaoVals.depthIdx);
+
+	pci.subpassIndex = 0;
+	pci.debugName = "SSAO";
+	pci.cullFace = VK_CULL_MODE_BACK_BIT;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	std::vector<ShaderStageInfo> stageInfosSSAO;
+	stageInfosSSAO.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfosSSAO.emplace_back("SSAO", VK_SHADER_STAGE_FRAGMENT_BIT, &specInfoSSAO);
+	createInfo2.shaderStages = stageInfosSSAO;
+	createInfo2.pipelineCreateInfo = pci;
+	createInfo2.ebo = nullptr;
+	ssaoRenderer_ = new FullscreenRenderer(createInfo, createInfo2);
 }
 
 void LightingPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
@@ -182,5 +232,9 @@ void LightingPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainD
 	specularBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, swapChainDetails_.surfaceFormat.format, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
 		MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }, "DeferredSpecularBuffer");
-	specularBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	specularBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; 
+	ambientBuffer_ = new Image(logicDevice, Image::makeCreateInfo(VK_IMAGE_TYPE_2D, 1, 1, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_SAMPLE_COUNT_1_BIT, swapChainDetails.extent.width, swapChainDetails.extent.height, 1),
+			MemoryAllocationPattern::kRenderTarget, { VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }, "DeferredAmbientBuffer");
+	ambientBuffer_->getImageInfo().imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }

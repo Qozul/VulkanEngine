@@ -245,10 +245,6 @@ void DeferredPass::createRenderers()
 	graphicsMaster_->setRenderer(RendererTypes::kParticle, nullptr);
 	graphicsMaster_->setRenderer(RendererTypes::kTerrain, terrainRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kWater, waterRenderer_);
-	
-	/*	
-	particleRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kParticle]);
-	*/
 }
 
 void DeferredPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)

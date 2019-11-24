@@ -30,6 +30,8 @@ namespace QZL {
 		public:
 			TextureManager(const LogicDevice* logicDevice, Descriptor* descriptor, uint32_t maxTextures, bool descriptorIndexing = false);
 			~TextureManager();
+
+			uint32_t allocateGeneratedTexture(std::string name, void* data, uint32_t width, uint32_t height, VkFormat format, MemoryAllocationPattern allocationPattern, ImageParameters parameters, SamplerInfo samplerInfo = {});
 			
 			// Returns the index of the texture sampler in the texture aray descriptor
 			uint32_t requestTexture(const std::string& name, SamplerInfo samplerInfo = {});
