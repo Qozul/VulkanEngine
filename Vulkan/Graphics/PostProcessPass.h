@@ -10,6 +10,15 @@ namespace QZL {
 	}
 	namespace Graphics {
 		class RendererBase;
+
+		struct PostPushConstants {
+			uint32_t colourIdx;
+			uint32_t depthIdx;
+			float farZ;
+			float nearZ;
+			float screenX;
+			float screenY;
+		};
 		class PostProcessPass : public RenderPass {
 			enum class Effects {
 				kFXAA, kDOFVertical, kDOFHorizontal, kCount
@@ -32,7 +41,6 @@ namespace QZL {
 			std::vector<VkFramebuffer> framebuffersPresent_;
 
 			RendererBase* presentRenderer_;
-			RendererBase* presentRenderer2_;
 			RendererBase* fxaa_;
 			RendererBase* depthOfFieldH_;
 			RendererBase* depthOfFieldV_;

@@ -54,6 +54,7 @@ void SwapChain::loop()
 	frameInfo_.commandLists = commandLists;
 	frameInfo_.mainCameraIdx = 1;
 	frameInfo_.viewportX = 0;
+	frameInfo_.splitscreenEnabled = splitscreenEnabled_;
 
 	CHECK_VKRESULT(vkBeginCommandBuffer(commandBuffers_[imgIdx], &beginInfo));
 
@@ -62,21 +63,30 @@ void SwapChain::loop()
 
 	// Deferred geometry pass
 	frameInfo_.mainCameraIdx = 0;
+	frameInfo_.viewportWidth = splitscreenEnabled_ ? details_.extent.width / 2 : details_.extent.width;
 	renderPasses_[1]->doFrame(frameInfo_);
-	// Lighting pass
-	renderPasses_[2]->doFrame(frameInfo_);
-	// Combine pass
-	renderPasses_[3]->doFrame(frameInfo_);
 
+	// Lighting pass
 	if (splitscreenEnabled_) {
-		// Split screen geometry
-		/*frameInfo_.viewportX = details_.extent.width / 2;
+		frameInfo_.viewportX = details_.extent.width / 2;
 		frameInfo_.mainCameraIdx = 1;
-		renderPasses_[0]->doFrame(frameInfo_);
+		// Redo geometry, and lighting passes for other camera
+		renderPasses_[1]->doFrame(frameInfo_);
 		frameInfo_.viewportX = 0;
-		frameInfo_.mainCameraIdx = 0;*/
+		frameInfo_.mainCameraIdx = 0;
+	}
+	renderPasses_[2]->doFrame(frameInfo_);
+	if (splitscreenEnabled_) {
+		frameInfo_.viewportX = details_.extent.width / 2;
+		frameInfo_.mainCameraIdx = 1;
+		renderPasses_[2]->doFrame(frameInfo_);
+		frameInfo_.viewportWidth = details_.extent.width;
+		frameInfo_.viewportX = 0;
+		frameInfo_.mainCameraIdx = 0;
 	}
 
+	// Combine pass
+	renderPasses_[3]->doFrame(frameInfo_);
 	// Post process ping ponging passes
 	renderPasses_[4]->doFrame(frameInfo_);
 
@@ -367,8 +377,8 @@ void SwapChain::initialiseRenderPath(Scene* scene, SceneGraphicsInfo* graphicsIn
 void SwapChain::updateCameraAspectRatio()
 {
 	frameInfo_.cameras[0].projectionMatrix = !splitscreenEnabled_ ?
-		glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 2500.0f) :
-		glm::perspective(glm::radians(45.0f), 2.0f / 3.0f, 0.1f, 2500.0f);
+		glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 2500.0f) :
+		glm::perspective(glm::radians(45.0f), 400.0f / 600.0f, 0.1f, 2500.0f);
 	frameInfo_.cameras[0].projectionMatrix[1][1] *= -1.0f;
 }
 

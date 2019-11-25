@@ -90,10 +90,7 @@ void GameMaster::loadGame()
 	teapotDeferred->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 
-	//Entity* light = new Entity("light");
-	//light->setGraphicsComponent(Graphics::RendererTypes::kLight, nullptr, "ico", nullptr);
 	Entity* light = new LightSource("light", glm::vec3(0.8), 2000.0f, 1.0f);
-	//light->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
 	light->getTransform()->setScale(1500.0f);
 
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);

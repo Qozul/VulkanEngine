@@ -96,6 +96,13 @@ namespace QZL
 			uint32_t shadowTextureIdx;
 		};
 
+		struct FragmentPushConstants {
+			float screenWidth;
+			float screenHeight;
+			float screenX;
+			float screenY;
+		};
+
 		constexpr uint32_t kMaxPushConstantSize = 128;
 
 		class RendererBase {

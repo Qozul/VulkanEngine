@@ -72,7 +72,7 @@ LightingPass::~LightingPass()
 void LightingPass::doFrame(FrameInfo& frameInfo)
 {
 	std::array<VkClearValue, 3> clearValues = {};
-	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	clearValues[0].color = { 0.5f, 0.5f, 0.5f, 1.0f };
 	clearValues[1].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	clearValues[2].color = { 1.0f, 0.0f, 0.0f, 0.0f };
 
@@ -86,11 +86,45 @@ void LightingPass::doFrame(FrameInfo& frameInfo)
 	vpc.shadowTextureIdx = shadowDepthIdx_;
 	vpc.shadowMatrix = frameInfo.cameras[1].viewProjection;
 
+	FragmentPushConstants fpc;
+	fpc.screenWidth = swapChainDetails_.extent.width;
+	fpc.screenHeight = swapChainDetails_.extent.height;
+	fpc.screenX = frameInfo.viewportX / (float)swapChainDetails_.extent.width;
+	fpc.screenY = 0;
+
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		graphicsInfo_->paramsRange * frameInfo.frameIdx,
+		graphicsInfo_->materialRange * frameInfo.frameIdx
+	};
+
+	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
+	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightingRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 	vkCmdPushConstants(frameInfo.cmdBuffer, lightingRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vpc), &vpc);
+	vkCmdPushConstants(frameInfo.cmdBuffer, lightingRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(vpc), sizeof(fpc), &fpc);
 
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport viewport;
+	viewport.height = swapChainDetails_.extent.height;
+	viewport.width = frameInfo.viewportWidth;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	viewport.x = frameInfo.viewportX;
+	viewport.y = 0;
+	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
+
+	VkRect2D scissor;
+	scissor.extent.width = frameInfo.viewportWidth;
+	scissor.extent.height = swapChainDetails_.extent.height;
+	scissor.offset.x = frameInfo.viewportX;
+	scissor.offset.y = 0;
+	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
+
 	lightingRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kLight]);
-	ssaoRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+	if (!frameInfo.splitscreenEnabled) {
+		ssaoRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+	}
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
@@ -108,15 +142,14 @@ void LightingPass::createRenderers()
 	createInfo.colourAttachmentCount = 3;
 	createInfo.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_TRUE };
 
-	VkPushConstantRange pushConstants[1] = {
-		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
+	VkPushConstantRange pushConstants[2] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
 	};
 
 	struct Vals {
 		uint32_t positionsIdx;
 		uint32_t normalsIdx;
-		float invScreenX;
-		float invScreenY;
 		uint32_t shadowIdx;
 		uint32_t depthIdx;
 	} specConstantValues;
@@ -124,8 +157,6 @@ void LightingPass::createRenderers()
 	specConstantValues.normalsIdx = normalsIdx_;
 	specConstantValues.depthIdx = depthIdx_;
 	specConstantValues.shadowIdx = shadowDepthIdx_;
-	specConstantValues.invScreenX = 1.0f / (float)swapChainDetails_.extent.width;
-	specConstantValues.invScreenY = 1.0f / (float)swapChainDetails_.extent.height;
 
 	uint32_t mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kLight];
 
@@ -133,13 +164,11 @@ void LightingPass::createRenderers()
 		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
 		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
 		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(4, sizeof(uint32_t) * 4, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(5, sizeof(uint32_t) * 5, sizeof(uint32_t))
+		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t))
 	};
 
 	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(1, specEntries.data(), sizeof(uint32_t), &mvpOffset);
-	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(6, specEntries.data(), sizeof(Vals), &specConstantValues);
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back("DeferredLightingVert", VK_SHADER_STAGE_VERTEX_BIT, &specializationInfo);
 	stageInfos.emplace_back("DeferredLightingFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
@@ -161,7 +190,7 @@ void LightingPass::createRenderers()
 	RendererCreateInfo2 createInfo2;
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
-	createInfo2.pcRangesCount = 1;
+	createInfo2.pcRangesCount = 2;
 	createInfo2.pcRanges = pushConstants;
 	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
 

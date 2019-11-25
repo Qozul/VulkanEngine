@@ -10,6 +10,7 @@ namespace QZL {
 			uint32_t frameIdx;
 			int32_t viewportX;
 			uint32_t viewportWidth;
+			bool splitscreenEnabled;
 			VkCommandBuffer cmdBuffer;
 			std::vector<VkDrawIndexedIndirectCommand>* commandLists;
 		};

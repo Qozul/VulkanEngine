@@ -22,8 +22,10 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
 	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
 
-	VkPushConstantRange pushConstants[1] = {
-		setupPushConstantRange<VertexPushConstants>(VK_SHADER_STAGE_VERTEX_BIT)
+
+	VkPushConstantRange pushConstants[2] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
 	};
 
 	uint32_t offsets[1] = { graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kAtmosphere] };
@@ -48,7 +50,7 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
 	createPipeline(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()), 
-		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
+		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
 void AtmosphereRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)

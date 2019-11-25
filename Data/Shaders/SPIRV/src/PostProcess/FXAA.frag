@@ -10,8 +10,6 @@
 
 layout (constant_id = 0) const float SC_INV_SCREEN_X = 0.0;
 layout (constant_id = 1) const float SC_INV_SCREEN_Y = 0.0;
-layout (constant_id = 2) const uint SC_GEOMETRY_COLOUR_IDX = 0;
-layout (constant_id = 3) const uint SC_GEOMETRY_DEPTH_IDX = 0;
 
 const float EDGE_THRESHOLD_MAX = 0.0625;
 const float EDGE_THRESHOLD_MIN = 0.03125;
@@ -23,19 +21,28 @@ const float QUALITY[12] = float[](1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 2.0, 2.0, 2.0, 2
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 colour;
 
+layout(push_constant) uniform PushConstants {
+	uint colourIdx;
+	uint depthIdx;
+	float farZ;
+	float nearZ;
+	float screenX;
+	float screenY;
+} PC;
+
 float rgbToLuminance(vec3 rgb){
     return dot(rgb, vec3(0.299, 0.587, 0.114));
 }
 
 void main()
 {
-	vec3 col = texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv).rgb;
+	vec3 col = texture(texSamplers[nonuniformEXT(PC.colourIdx)], uv).rgb;
 	
 	float lum = rgbToLuminance(col);
-	float lumD = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2( 0, -1)).rgb);
-	float lumU = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2( 0,  1)).rgb);
-	float lumL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2(-1,  0)).rgb);
-	float lumR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2( 1,  0)).rgb);
+	float lumD = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 0, -1)).rgb);
+	float lumU = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 0,  1)).rgb);
+	float lumL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2(-1,  0)).rgb);
+	float lumR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 1,  0)).rgb);
 	
 	float lumMin = min(lum, min(min(lumD, lumU), min(lumL, lumR)));
 	float lumMax = max(lum, max(max(lumD, lumU), max(lumL, lumR)));
@@ -46,10 +53,10 @@ void main()
 		colour = vec4(col, 1.0);
 	}
 	else {
-		float lumDL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2(-1,-1)).rgb);
-		float lumUR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2( 1, 1)).rgb);
-		float lumUL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2(-1, 1)).rgb);
-		float lumDR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv, ivec2( 1,-1)).rgb);
+		float lumDL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2(-1,-1)).rgb);
+		float lumUR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 1, 1)).rgb);
+		float lumUL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2(-1, 1)).rgb);
+		float lumDR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 1,-1)).rgb);
 		
 		float lumDU = lumD + lumU;
 		float lumLR = lumL + lumR;
@@ -82,8 +89,8 @@ void main()
 		vec2 uv1 = uvCurrent - uvOffset;
 		vec2 uv2 = uvCurrent + uvOffset;
 		
-		float lumEnd1 = rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv1).rgb) - lumAvg;
-		float lumEnd2 = rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv2).rgb) - lumAvg;
+		float lumEnd1 = rgbToLuminance(texture(texSamplers[nonuniformEXT(PC.colourIdx)], uv1).rgb) - lumAvg;
+		float lumEnd2 = rgbToLuminance(texture(texSamplers[nonuniformEXT(PC.colourIdx)], uv2).rgb) - lumAvg;
 		
 		bool reached1 = abs(lumEnd1) >= grad;
 		bool reached2 = abs(lumEnd2) >= grad;
@@ -99,10 +106,10 @@ void main()
 		if (!reachedBoth) {
 			for (int i = 2; i < ITERATIONS; ++i) {
 				if (!reached1) {
-					lumEnd1 = rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv1).rgb) - lumAvg;
+					lumEnd1 = rgbToLuminance(texture(texSamplers[nonuniformEXT(PC.colourIdx)], uv1).rgb) - lumAvg;
 				}
 				if (!reached2) {
-					lumEnd2 = rgbToLuminance(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uv2).rgb) - lumAvg;
+					lumEnd2 = rgbToLuminance(texture(texSamplers[nonuniformEXT(PC.colourIdx)], uv2).rgb) - lumAvg;
 				}
 				reached1 = abs(lumEnd1) >= grad;
 				reached2 = abs(lumEnd2) >= grad;
@@ -138,6 +145,6 @@ void main()
 		float subpixOffset = subpixOffset2 * subpixOffset2 * SUBPIX_QUALITY;
 		finalOffset = max(finalOffset, subpixOffset);
 		vec2 uvFinal = horizontal ? vec2(uv.x, uv.y + finalOffset * stepLength) : vec2(uv.x + finalOffset * stepLength, uv.y);
-		colour = vec4(texture(texSamplers[nonuniformEXT(SC_GEOMETRY_COLOUR_IDX)], uvFinal).rgb, 1.0);
+		colour = vec4(texture(texSamplers[nonuniformEXT(PC.colourIdx)], uvFinal).rgb, 1.0);
 	}
 }

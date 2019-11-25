@@ -12,6 +12,8 @@
 #include "LogicDevice.h"
 #include "TextureManager.h"
 #include "../InputManager.h"
+#include "SceneDescriptorInfo.h"
+#include "GlobalRenderData.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -28,7 +30,6 @@ PostProcessPass::~PostProcessPass()
 	SAFE_DELETE(input_);
 	SAFE_DELETE(colourBuffer1_);
 	SAFE_DELETE(presentRenderer_);
-	SAFE_DELETE(presentRenderer2_);
 	SAFE_DELETE(fxaa_);
 	SAFE_DELETE(depthOfFieldH_);
 	SAFE_DELETE(depthOfFieldV_);
@@ -44,7 +45,7 @@ PostProcessPass::~PostProcessPass()
 
 void PostProcessPass::doFrame(FrameInfo& frameInfo)
 {
-	VkViewport viewport;
+	VkViewport viewport; 
 	viewport.height = swapChainDetails_.extent.height;
 	viewport.width = swapChainDetails_.extent.width;
 	viewport.minDepth = 0.0f;
@@ -60,17 +61,82 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	scissor.offset.y = 0;
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
-	std::queue<RendererBase*> effects;
-	for (auto it : effectStates_) {
-		if (it.first) {
-			effects.push(it.second);
-		}
-	}
+	PostPushConstants vpc;
+	vpc.colourIdx = gpColourBuffer_;
+	vpc.depthIdx = gpDepthBuffer_;
+	vpc.farZ = 2500.0f;
+	vpc.nearZ = 0.1f;
+	vpc.screenX = swapChainDetails_.extent.width;
+	vpc.screenY = swapChainDetails_.extent.height;
+	vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
+
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpRange * (frameInfo.frameIdx),
+		graphicsInfo_->paramsRange * frameInfo.frameIdx,
+		graphicsInfo_->materialRange * frameInfo.frameIdx
+	};
+
+	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
+	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, presentRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
 	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	uint32_t lastDrawnBuffer = gpColourBuffer_;
+	// ------ DoF Horiztonal
+	{
+		auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
+		bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		bi1.pClearValues = clearValues.data();
+		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
+		depthOfFieldH_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+		vkCmdEndRenderPass(frameInfo.cmdBuffer);
+	}
+
+	// ------- DoF Vertical
+	{
+		vpc.colourIdx = colourBufferIdx_;
+		vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
+		auto bi2 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass2_, framebuffers2_[frameInfo.frameIdx]);
+		bi2.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		bi2.pClearValues = clearValues.data();
+		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi2, VK_SUBPASS_CONTENTS_INLINE);
+		depthOfFieldV_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+		vkCmdEndRenderPass(frameInfo.cmdBuffer);
+	}
+
+	// ------- Second pass DoF for splitscreen
+	/*if (frameInfo.splitscreenEnabled) {
+		{
+			vpc.colourIdx = gpColourBuffer_;
+			auto bi1 = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX, renderPass_, framebuffers_[frameInfo.frameIdx]);
+			bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			bi1.pClearValues = clearValues.data();
+			vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
+			depthOfFieldH_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+			vkCmdEndRenderPass(frameInfo.cmdBuffer);
+		}
+		{
+			vpc.colourIdx = colourBufferIdx_;
+			auto bi1 = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX, renderPass2_, framebuffers_[frameInfo.frameIdx]);
+			bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			bi1.pClearValues = clearValues.data();
+			vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
+			depthOfFieldV_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+			vkCmdEndRenderPass(frameInfo.cmdBuffer);
+		}
+	}*/
+
+	// ------- FXAA
+	{
+		vpc.colourIdx = gpColourBuffer_;
+		vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
+		auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
+		bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		bi1.pClearValues = clearValues.data();
+		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
+		fxaa_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+		vkCmdEndRenderPass(frameInfo.cmdBuffer);
+	}
 
 	/*VkImageBlit blit = {};
 	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -87,53 +153,16 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	blit.dstOffsets[1] = { colourBuffer1_->getWidth() / 2, colourBuffer1_->getHeight() / 2, 1 };
 
 	vkCmdBlitImage(frameInfo.cmdBuffer, geometryColourBuf_->getImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, colourBuffer1_->getImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);*/
-	// Ping-pong
-	while (effects.size() > 0) {
-		// 1st pass
-		auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
-		bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		bi1.pClearValues = clearValues.data();
 
-		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
-
-		effects.front()->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-		effects.pop();
-
-		vkCmdEndRenderPass(frameInfo.cmdBuffer);
-
-		lastDrawnBuffer = colourBufferIdx_;
-
-		if (effects.size() <= 0) break;
-
-		// 2nd pass
-		auto bi2 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass2_, framebuffers2_[frameInfo.frameIdx]);
-		bi2.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		bi2.pClearValues = clearValues.data();
-
-		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi2, VK_SUBPASS_CONTENTS_INLINE);
-
-		effects.front()->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-		effects.pop();
-
-		vkCmdEndRenderPass(frameInfo.cmdBuffer);
-
-		lastDrawnBuffer = gpColourBuffer_;
-	}
-
-	// Present
+	// -------- Present
 	auto bi2 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPassPresent_, framebuffersPresent_[frameInfo.frameIdx]);
 	bi2.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	bi2.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi2, VK_SUBPASS_CONTENTS_INLINE);
-
-	if (lastDrawnBuffer == gpColourBuffer_) {
-		presentRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-	}
-	else {
-		presentRenderer2_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-	}
-
+	vpc.colourIdx = vpc.colourIdx == gpColourBuffer_ ? colourBufferIdx_ : gpColourBuffer_;
+	vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
+	presentRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
@@ -147,13 +176,14 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
 	createPasses();
 	createRenderers();
-	effectStates_[2] = { true, fxaa_ };
-	effectStates_[0] = { true, depthOfFieldV_ };
-	effectStates_[1] = { true, depthOfFieldH_ };
 }
 
 void PostProcessPass::createRenderers()
 {
+	VkPushConstantRange pushConstants[1] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PostPushConstants), 0)
+	};
+
 	RendererCreateInfo createInfo = {};
 	createInfo.logicDevice = logicDevice_;
 	createInfo.descriptor = descriptor_;
@@ -162,101 +192,67 @@ void PostProcessPass::createRenderers()
 	createInfo.globalRenderData = globalRenderData_;
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
-
 	createInfo.updateRendererSpecific(0, 1, "FullscreenVert", "PassThroughFrag");
-	presentRenderer_ = new PostProcessRenderer(createInfo, gpColourBuffer_);
-	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, presentRenderer_);
-	presentRenderer2_ = new PostProcessRenderer(createInfo, colourBufferIdx_);
-
-	createInfo.renderPass = renderPass_;
-
-	VkPushConstantRange pushConstants[1] = {
-		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
-	};
-
-	struct Vals {
-		float nearPlane;
-		float farPlane;
-		uint32_t colourIdx;
-		uint32_t depthIdx;
-	} specConstantValues;
-	specConstantValues.nearPlane = 1.0f / swapChainDetails_.extent.width;
-	specConstantValues.farPlane = 1.0f / swapChainDetails_.extent.height;
-	specConstantValues.colourIdx = gpColourBuffer_;
-	specConstantValues.depthIdx = gpDepthBuffer_;
-	std::vector<VkSpecializationMapEntry> specEntries = {
-		RendererBase::makeSpecConstantEntry(0, 0, sizeof(float)),
-		RendererBase::makeSpecConstantEntry(1, sizeof(float), sizeof(float)),
-		RendererBase::makeSpecConstantEntry(2, sizeof(float) * 2, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) + sizeof(float) * 2, sizeof(uint32_t))
-	};
-	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
-	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back("FXAA", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
 
 	PipelineCreateInfo pci = {};
-	pci.debugName = "FXAA";
+	pci.cullFace = VK_CULL_MODE_BACK_BIT;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
 	pci.extent = createInfo.extent;
-	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	pci.subpassIndex = createInfo.subpassIndex;
+	pci.subpassIndex = 0;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("PassThroughFrag", VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 	RendererCreateInfo2 createInfo2;
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
 	createInfo2.pcRangesCount = 1;
 	createInfo2.pcRanges = pushConstants;
+	createInfo2.ebo = nullptr;
+	presentRenderer_ = new FullscreenRenderer(createInfo, createInfo2);
+	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, presentRenderer_);
+
+	createInfo.renderPass = renderPass_;
+
+	struct Vals {
+		float invScreenX;
+		float invScreenY;
+	} specConstantValues;
+	specConstantValues.invScreenX = 1.0f / swapChainDetails_.extent.width;
+	specConstantValues.invScreenY = 1.0f / swapChainDetails_.extent.height;
+	std::vector<VkSpecializationMapEntry> specEntries = {
+		RendererBase::makeSpecConstantEntry(0, 0, sizeof(float)),
+		RendererBase::makeSpecConstantEntry(1, sizeof(float), sizeof(float))
+	};
+	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(Vals), &specConstantValues);
+	stageInfos.clear();
+	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("FXAA", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
+
+	pci.debugName = "FXAA";
+	createInfo2.shaderStages = stageInfos;
+	createInfo2.pipelineCreateInfo = pci;
 	fxaa_ = new FullscreenRenderer(createInfo, createInfo2);
 
-	struct DoFVals {
-		uint32_t colourIdx;
-		float nearPlaneZ;
-		float farPlaneZ;
-		uint32_t depthIdx;
-	} dofVals;
-	dofVals.colourIdx = gpColourBuffer_;
-	dofVals.nearPlaneZ = 0.1;
-	dofVals.farPlaneZ = 300.0f;
-	dofVals.depthIdx = gpDepthBuffer_;
-
-	std::vector<VkSpecializationMapEntry> specEntriesDoF = {
-		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t))
-	};
-
-	VkSpecializationInfo specInfoDoF = RendererBase::setupSpecConstants(4, specEntriesDoF.data(), sizeof(DoFVals), &dofVals.colourIdx);
-
-	pci.subpassIndex = 0;
-	pci.debugName = "DoF";
-	pci.cullFace = VK_CULL_MODE_BACK_BIT;
-	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	std::vector<ShaderStageInfo> stageInfosDoF;
-	stageInfosDoF.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfosDoF.emplace_back("DoFHorizontal", VK_SHADER_STAGE_FRAGMENT_BIT, &specInfoDoF);
-	createInfo2.shaderStages = stageInfosDoF;
+	pci.debugName = "DoFV";
+	stageInfos.clear();
+	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("DoFHorizontal", VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
-	createInfo2.ebo = nullptr;
 	depthOfFieldV_ = new FullscreenRenderer(createInfo, createInfo2);
 
-	dofVals.colourIdx = colourBufferIdx_;
-	dofVals.nearPlaneZ = 0.1;
-	dofVals.farPlaneZ = 300.0f;
-	dofVals.depthIdx = gpDepthBuffer_;
-
-	VkSpecializationInfo specInfoDoFH = RendererBase::setupSpecConstants(4, specEntriesDoF.data(), sizeof(DoFVals), &dofVals.colourIdx);
-
-	std::vector<ShaderStageInfo> stageInfosDoFH;
-	stageInfosDoFH.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfosDoFH.emplace_back("DoFVertical", VK_SHADER_STAGE_FRAGMENT_BIT, &specInfoDoFH);
-	createInfo2.shaderStages = stageInfosDoFH;
+	pci.debugName = "DoFH";
+	stageInfos.clear();
+	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("DoFVertical", VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
+	createInfo2.shaderStages = stageInfos;
+	createInfo2.pipelineCreateInfo = pci;
 	depthOfFieldH_ = new FullscreenRenderer(createInfo, createInfo2);
 }
 

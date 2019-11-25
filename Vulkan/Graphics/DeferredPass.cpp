@@ -122,6 +122,13 @@ void DeferredPass::doFrame(FrameInfo& frameInfo)
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
 	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, staticRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
+	VertexPushConstants vpc;
+	vpc.cameraPosition = glm::vec4(frameInfo.cameras[frameInfo.mainCameraIdx].position, 1.0f);
+	vpc.mainLightPosition = frameInfo.cameras[1].position;
+	vpc.shadowTextureIdx = shadowDepthIdx_;
+	vpc.shadowMatrix = frameInfo.cameras[1].viewProjection;
+	vkCmdPushConstants(frameInfo.cmdBuffer, terrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(vpc), &vpc);
+
 	staticRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
 	waterRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kWater]);
 	terrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
@@ -143,8 +150,9 @@ void DeferredPass::createRenderers()
 	createInfo.colourBlendEnables = { VK_FALSE, VK_FALSE, VK_FALSE };
 	createInfo.updateRendererSpecific(0, 1, "StaticVert", "StaticDeferredFrag");
 
-	VkPushConstantRange pushConstants[1] = {
-		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
+	VkPushConstantRange pushConstants[2] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
 	};
 
 	struct Vals {
@@ -184,7 +192,7 @@ void DeferredPass::createRenderers()
 	RendererCreateInfo2 createInfo2;
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
-	createInfo2.pcRangesCount = 1;
+	createInfo2.pcRangesCount = 2;
 	createInfo2.pcRanges = pushConstants;
 	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
 

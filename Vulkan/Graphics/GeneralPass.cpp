@@ -64,11 +64,36 @@ void CombinePass::doFrame(FrameInfo& frameInfo)
 	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	auto bi = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX);
+	auto bi = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0);
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	bi.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport viewport;
+	viewport.height = swapChainDetails_.extent.height;
+	viewport.width = swapChainDetails_.extent.width;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	viewport.x = 0;
+	viewport.y = 0;
+	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
+
+	VkRect2D scissor;
+	scissor.extent.width = swapChainDetails_.extent.width;
+	scissor.extent.height = swapChainDetails_.extent.height;
+	scissor.offset.x = 0;
+	scissor.offset.y = 0;
+	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
+
+	const uint32_t dynamicOffsets[3] = {
+		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		graphicsInfo_->paramsRange * frameInfo.frameIdx,
+		graphicsInfo_->materialRange * frameInfo.frameIdx
+	};
+
+	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
+	vkCmdBindDescriptorSets(frameInfo.cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, atmosphereRenderer_->getPipelineLayout(), 0, 2, sets, 3, dynamicOffsets);
 
 	environmentRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
 	atmosphereRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
@@ -96,8 +121,9 @@ void CombinePass::createRenderers()
 	createInfo.updateRendererSpecific(0, 1, "AtmosphereVert", "EnvironmentFrag");
 	environmentRenderer_ = new AtmosphereRenderer(createInfo);
 
-	VkPushConstantRange pushConstants[1] = {
-		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0)
+	VkPushConstantRange pushConstants[2] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
 	};
 
 	struct Vals {
@@ -137,7 +163,7 @@ void CombinePass::createRenderers()
 	RendererCreateInfo2 createInfo2;
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
-	createInfo2.pcRangesCount = 1;
+	createInfo2.pcRangesCount = 2;
 	createInfo2.pcRanges = pushConstants;
 
 	createInfo.updateRendererSpecific(0, 1, "FullscreenVert", "DeferredLightingCombineFrag");

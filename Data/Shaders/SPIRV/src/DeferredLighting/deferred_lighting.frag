@@ -5,10 +5,8 @@
 
 layout(constant_id = 0) const uint SC_G_BUFFER_POSITIONS_IDX = 0;
 layout(constant_id = 1) const uint SC_G_BUFFER_NORMALS_IDX = 0;
-layout(constant_id = 2) const float SC_INV_SCREEN_X = 0;
-layout(constant_id = 3) const float SC_INV_SCREEN_Y = 0;
-layout(constant_id = 4) const uint SC_SHADOW_DEPTH_IDX = 0;
-layout(constant_id = 5) const uint SC_G_BUFFER_DEPTH_IDX = 0;
+layout(constant_id = 2) const uint SC_SHADOW_DEPTH_IDX = 0;
+layout(constant_id = 3) const uint SC_G_BUFFER_DEPTH_IDX = 0;
 
 const int PCF_COUNT = 2;
 const int TOTAL_PCF_COUNT = (PCF_COUNT + PCF_COUNT + 1) * (PCF_COUNT + PCF_COUNT + 1);
@@ -20,6 +18,13 @@ layout(location = 2) flat in mat4 inShadowMatrix;
 layout(location = 0) out vec4 outDiffuse;
 layout(location = 1) out vec4 outSpecular;
 layout(location = 2) out vec4 outAmbient;
+
+layout(push_constant) uniform PushConstants {
+	layout(offset = 96) float screenWidth;
+	layout(offset = 100) float screenHeight;
+	layout(offset = 104) float screenX;
+	layout(offset = 108) float screenY;
+} PC;
 
 float pcfShadow(vec4 shadowCoord)
 {
@@ -40,7 +45,7 @@ void main()
 	Light light = lights[inInstanceIndex];
 	vec3 lightPos = light.position;
 	
-	vec2 uv = vec2(gl_FragCoord.x * SC_INV_SCREEN_X, gl_FragCoord.y * SC_INV_SCREEN_Y);
+	vec2 uv = vec2(gl_FragCoord.x * (1.0 / PC.screenWidth) + PC.screenX, (gl_FragCoord.y) * (1.0 / PC.screenHeight));
 	vec4 worldPos = texture(texSamplers[nonuniformEXT(SC_G_BUFFER_POSITIONS_IDX)], uv);
 	vec4 rawNormal = texture(texSamplers[nonuniformEXT(SC_G_BUFFER_NORMALS_IDX)], uv);
 	float specExponent = rawNormal.w;

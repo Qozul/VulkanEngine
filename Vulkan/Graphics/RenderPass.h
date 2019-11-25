@@ -58,6 +58,8 @@ namespace QZL
 			VkSubpassDependency2KHR makeSubpassDependency2(uint32_t srcIdx, uint32_t dstIdx, VkPipelineStageFlags srcStage,
 				VkAccessFlags srcAccess, VkPipelineStageFlags dstStage, VkAccessFlags dstAccess);
 
+			void updateViewportAndScissor(VkCommandBuffer cmdBuffer, VkExtent2D extent, int32_t offsetX, int32_t offsetY);
+
 			VkRenderPass renderPass_;
 			std::vector<VkFramebuffer> framebuffers_;
 			const SwapChainDetails& swapChainDetails_;
