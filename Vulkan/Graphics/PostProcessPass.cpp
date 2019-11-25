@@ -27,10 +27,10 @@ PostProcessPass::~PostProcessPass()
 {
 	SAFE_DELETE(input_);
 	SAFE_DELETE(colourBuffer1_);
-	SAFE_DELETE(colourBuffer2_);
 	SAFE_DELETE(presentRenderer_);
 	SAFE_DELETE(presentRenderer2_);
 	SAFE_DELETE(fxaa_);
+	SAFE_DELETE(depthOfField_);
 	for (auto framebuffer : framebuffers2_) {
 		vkDestroyFramebuffer(*logicDevice_, framebuffer, nullptr);
 	}
@@ -131,7 +131,8 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
 	createPasses();
 	createRenderers();
-	effectStates_[0] = { true, fxaa_ };
+	effectStates_[1] = { true, fxaa_ };
+	effectStates_[0] = { true, depthOfField_ };
 }
 
 void PostProcessPass::createRenderers()
@@ -164,7 +165,7 @@ void PostProcessPass::createRenderers()
 	} specConstantValues;
 	specConstantValues.nearPlane = 1.0f / swapChainDetails_.extent.width;
 	specConstantValues.farPlane = 1.0f / swapChainDetails_.extent.height;
-	specConstantValues.colourIdx = gpColourBuffer_;
+	specConstantValues.colourIdx = colourBufferIdx_;
 	specConstantValues.depthIdx = gpDepthBuffer_;
 	std::vector<VkSpecializationMapEntry> specEntries = {
 		RendererBase::makeSpecConstantEntry(0, 0, sizeof(float)),
@@ -194,6 +195,39 @@ void PostProcessPass::createRenderers()
 	createInfo2.pcRangesCount = 1;
 	createInfo2.pcRanges = pushConstants;
 	fxaa_ = new FullscreenRenderer(createInfo, createInfo2);
+
+	struct DoFVals {
+		uint32_t colourIdx;
+		float nearPlaneZ;
+		float farPlaneZ;
+		uint32_t depthIdx;
+	} dofVals;
+	dofVals.colourIdx = gpColourBuffer_;
+	dofVals.nearPlaneZ = 0.1;
+	dofVals.farPlaneZ = 300.0f;
+	dofVals.depthIdx = gpDepthBuffer_;
+
+	std::vector<VkSpecializationMapEntry> specEntriesDoF = {
+		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)),
+		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t))
+	};
+
+	VkSpecializationInfo specInfoDoF = RendererBase::setupSpecConstants(4, specEntriesDoF.data(), sizeof(DoFVals), &dofVals.colourIdx);
+
+	pci.subpassIndex = 0;
+	pci.debugName = "DoF";
+	pci.cullFace = VK_CULL_MODE_BACK_BIT;
+	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	std::vector<ShaderStageInfo> stageInfosDoF;
+	stageInfosDoF.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfosDoF.emplace_back("DoF", VK_SHADER_STAGE_FRAGMENT_BIT, &specInfoDoF);
+	createInfo2.shaderStages = stageInfosDoF;
+	createInfo2.pipelineCreateInfo = pci;
+	createInfo2.ebo = nullptr;
+	depthOfField_ = new FullscreenRenderer(createInfo, createInfo2);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
