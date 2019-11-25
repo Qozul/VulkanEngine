@@ -35,6 +35,12 @@ namespace QZL {
 			VkDescriptorImageInfo& getImageInfo() {
 				return imageInfo_;
 			}
+			uint32_t getWidth() {
+				return width_;
+			}
+			uint32_t getHeight() {
+				return height_;
+			}
 			TextureSampler* createTextureSampler(const std::string& name, VkFilter magFilter, VkFilter minFilter, VkSamplerAddressMode addressMode, float anisotropy);
 
 			static VkAccessFlags imageLayoutToAccessFlags(VkImageLayout layout);

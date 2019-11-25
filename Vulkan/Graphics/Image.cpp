@@ -36,12 +36,7 @@ Image::Image(const LogicDevice* logicDevice, VkImageCreateInfo createInfo, Memor
 	CHECK_VKRESULT(vkCreateImageView(*logicDevice, &viewInfo, nullptr, &imageView_));
 	imageInfo_.imageView = imageView_;
 
-	//if (mipLevels_ > 1) {
-	//	changeLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 0, 0, imageParameters.aspectBits);
-	//}
-	//else {
-		changeLayout(imageParameters.newLayout, 0, 0, imageParameters.aspectBits);
-	//}
+	changeLayout(imageParameters.newLayout, 0, 0, imageParameters.aspectBits);
 }
 
 Image::~Image()

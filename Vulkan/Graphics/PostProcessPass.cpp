@@ -30,7 +30,8 @@ PostProcessPass::~PostProcessPass()
 	SAFE_DELETE(presentRenderer_);
 	SAFE_DELETE(presentRenderer2_);
 	SAFE_DELETE(fxaa_);
-	SAFE_DELETE(depthOfField_);
+	SAFE_DELETE(depthOfFieldH_);
+	SAFE_DELETE(depthOfFieldV_);
 	for (auto framebuffer : framebuffers2_) {
 		vkDestroyFramebuffer(*logicDevice_, framebuffer, nullptr);
 	}
@@ -71,6 +72,21 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 
 	uint32_t lastDrawnBuffer = gpColourBuffer_;
 
+	/*VkImageBlit blit = {};
+	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blit.srcSubresource.baseArrayLayer = 0;
+	blit.srcSubresource.layerCount = 1;
+	blit.srcSubresource.mipLevel = 0;
+	blit.srcOffsets[0] = { 0, 0, 0 };
+	blit.srcOffsets[1] = { geometryColourBuf_->getWidth(), geometryColourBuf_->getHeight(), 1 };
+	blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	blit.dstSubresource.baseArrayLayer = 0;
+	blit.dstSubresource.layerCount = 1;
+	blit.dstSubresource.mipLevel = 0;
+	blit.dstOffsets[0] = { 0, 0, 0 };
+	blit.dstOffsets[1] = { colourBuffer1_->getWidth() / 2, colourBuffer1_->getHeight() / 2, 1 };
+
+	vkCmdBlitImage(frameInfo.cmdBuffer, geometryColourBuf_->getImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, colourBuffer1_->getImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);*/
 	// Ping-pong
 	while (effects.size() > 0) {
 		// 1st pass
@@ -131,8 +147,9 @@ void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAtt
 		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
 	createPasses();
 	createRenderers();
-	effectStates_[1] = { true, fxaa_ };
-	effectStates_[0] = { true, depthOfField_ };
+	effectStates_[2] = { true, fxaa_ };
+	effectStates_[0] = { true, depthOfFieldV_ };
+	effectStates_[1] = { true, depthOfFieldH_ };
 }
 
 void PostProcessPass::createRenderers()
@@ -165,7 +182,7 @@ void PostProcessPass::createRenderers()
 	} specConstantValues;
 	specConstantValues.nearPlane = 1.0f / swapChainDetails_.extent.width;
 	specConstantValues.farPlane = 1.0f / swapChainDetails_.extent.height;
-	specConstantValues.colourIdx = colourBufferIdx_;
+	specConstantValues.colourIdx = gpColourBuffer_;
 	specConstantValues.depthIdx = gpDepthBuffer_;
 	std::vector<VkSpecializationMapEntry> specEntries = {
 		RendererBase::makeSpecConstantEntry(0, 0, sizeof(float)),
@@ -223,11 +240,24 @@ void PostProcessPass::createRenderers()
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	std::vector<ShaderStageInfo> stageInfosDoF;
 	stageInfosDoF.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfosDoF.emplace_back("DoF", VK_SHADER_STAGE_FRAGMENT_BIT, &specInfoDoF);
+	stageInfosDoF.emplace_back("DoFHorizontal", VK_SHADER_STAGE_FRAGMENT_BIT, &specInfoDoF);
 	createInfo2.shaderStages = stageInfosDoF;
 	createInfo2.pipelineCreateInfo = pci;
 	createInfo2.ebo = nullptr;
-	depthOfField_ = new FullscreenRenderer(createInfo, createInfo2);
+	depthOfFieldV_ = new FullscreenRenderer(createInfo, createInfo2);
+
+	dofVals.colourIdx = colourBufferIdx_;
+	dofVals.nearPlaneZ = 0.1;
+	dofVals.farPlaneZ = 300.0f;
+	dofVals.depthIdx = gpDepthBuffer_;
+
+	VkSpecializationInfo specInfoDoFH = RendererBase::setupSpecConstants(4, specEntriesDoF.data(), sizeof(DoFVals), &dofVals.colourIdx);
+
+	std::vector<ShaderStageInfo> stageInfosDoFH;
+	stageInfosDoFH.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfosDoFH.emplace_back("DoFVertical", VK_SHADER_STAGE_FRAGMENT_BIT, &specInfoDoFH);
+	createInfo2.shaderStages = stageInfosDoFH;
+	depthOfFieldH_ = new FullscreenRenderer(createInfo, createInfo2);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)

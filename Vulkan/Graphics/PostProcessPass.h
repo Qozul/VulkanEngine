@@ -12,7 +12,7 @@ namespace QZL {
 		class RendererBase;
 		class PostProcessPass : public RenderPass {
 			enum class Effects {
-				kFXAA, kDOF, kCount
+				kFXAA, kDOFVertical, kDOFHorizontal, kCount
 			};
 			friend class SwapChain;
 		protected:
@@ -34,7 +34,8 @@ namespace QZL {
 			RendererBase* presentRenderer_;
 			RendererBase* presentRenderer2_;
 			RendererBase* fxaa_;
-			RendererBase* depthOfField_;
+			RendererBase* depthOfFieldH_;
+			RendererBase* depthOfFieldV_;
 
 			InputProfile* input_;
 			std::array<std::pair<bool, RendererBase*>, (size_t)Effects::kCount> effectStates_;
