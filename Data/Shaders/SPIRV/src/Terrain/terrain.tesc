@@ -45,12 +45,13 @@ float calculateTessLevel(float d0, float d1, in Params parameters)
 	float dist = min(d0, d1) - parameters.closeDistance;
 	// Calculate a continuous value between 0 and 1
 	float proportion = clamp(dist/parameters.distanceFarMinusClose, 0.0, 1.0);
-	return mix(parameters.maxTessellationWeight, minWeight, proportion);
+	return mix(12.0, minWeight, proportion);
 }
 
 bool checkCulling(in Params parameters)
 {
 	vec4 pos = gl_in[gl_InvocationID].gl_Position;
+	if ((parameters.model * pos).y < 17.0) return false; // Small cheat to cull the stuff below water
 	for (int i = 0; i < 6; ++i) {
 		if (dot(pos, parameters.frustumPlanes[i]) + parameters.patchRadius < 0.0) {
 			return false;

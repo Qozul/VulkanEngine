@@ -47,6 +47,23 @@ Graphics::SceneGraphicsInfo* GameMaster::loadDescriptors()
 	return scenes_[activeSceneIdx_]->createDescriptors(3, masters_.graphicsMaster->details_.physicalDevice->getDeviceLimits());
 }
 
+void GameMaster::loadStatics(Scene* scene)
+{
+	const std::vector<glm::vec3> positions = {
+		{180, 169, 72}, {153, 186, 96}, { 132, 170, 39 }, {126, 164, 15},
+		{84, 159, 6}, {65,137,14},{27, 120, 3}, {6, 119, 37}, {38, 121, 37}, {50,122,92},
+		{30, 121, 116}, {13,115,62},{330,93,505}
+	};
+	for (auto pos : positions) {
+		Entity* tree = new Entity("lowpoly_tree");
+		tree->getTransform()->setScale(3.0f);
+		tree->getTransform()->position = pos;
+		tree->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
+			masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "tree");
+		scene->addEntity(tree);
+	}
+}
+
 void GameMaster::loadGame()
 {
 	GameScriptInitialiser scriptInit;
@@ -56,19 +73,6 @@ void GameMaster::loadGame()
 	Entity* camera = new Entity("mainCamera");
 	scriptInit.owner = camera;
 	camera->setGameScript(new Camera(masters_));
-
-	/*Entity* teapot = new Entity("Teapot");
-	teapot->getTransform()->position = glm::vec3(100.0f, 40.0f, 300.0f);
-	teapot->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
-		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
-	
-	
-
-	Entity* rain = new Entity("rain");
-	scriptInit.owner = rain;
-	auto rainScript = new RainSystem(masters_);
-	rain->setGameScript(rainScript);
-	rain->setGraphicsComponent(Graphics::RendererTypes::kParticle, rainScript->makeShaderParams(), "rain", rainScript->getMaterial());*/
 
 	Entity* terrain = new Terrain("terrain", masters_.textureManager);
 	terrain->setGameScript(new TerrainScript(masters_));
@@ -82,7 +86,7 @@ void GameMaster::loadGame()
 	Skysphere* skysphere = new Skysphere("sky", masters_.getLogicDevice(), sunScript, scriptInit);
 
 	Entity* water = new Water("water", masters_.textureManager);
-	water->getTransform()->position = glm::vec3(0.0f, 80.0f, 0.0f);
+	water->getTransform()->position = glm::vec3(0.0f, 98.0f, 0.0f);
 
 	Entity* teapotDeferred = new Entity("TeapotDeferred");
 	teapotDeferred->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
@@ -90,16 +94,24 @@ void GameMaster::loadGame()
 	teapotDeferred->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
 
+	Entity* teapotDeferred2 = new Entity("TeapotDeferred");
+	teapotDeferred2->getTransform()->position = glm::vec3(500.0f, 0.0f, 200.0f);
+	teapotDeferred2->getTransform()->setScale(2.0f);
+	teapotDeferred2->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
+		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
+
 	Entity* light = new LightSource("light", glm::vec3(0.8), 2000.0f, 1.0f);
 	light->getTransform()->setScale(1500.0f);
 
+	loadStatics(scenes_[activeSceneIdx_]);
+
 	auto cameraNode = scenes_[activeSceneIdx_]->addEntity(camera);
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
-	//scenes_[activeSceneIdx_]->addEntity(rain);
 	scenes_[activeSceneIdx_]->addEntity(water);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
 	scenes_[activeSceneIdx_]->addEntity(sun, terrain);
 	scenes_[activeSceneIdx_]->addEntity(teapotDeferred);
+	scenes_[activeSceneIdx_]->addEntity(teapotDeferred2);
 	scenes_[activeSceneIdx_]->addEntity(light, sun);
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);

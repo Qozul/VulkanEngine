@@ -85,6 +85,7 @@ void Materials::loadTerrainMaterial(TextureManager* texManager, void* data, std:
 	material.albedoIdx0 = texManager->requestTexture(lines[1]);
 	material.albedoIdx1 = texManager->requestTexture(lines[2]);
 	material.albedoIdx2 = texManager->requestTexture(lines[3]);
+	material.grassIdx = texManager->requestTexture(lines[4]);
 	memcpy(data, &material, sizeof(Terrain));
 }
 

@@ -31,9 +31,9 @@ namespace QZL {
 			Graphics::LogicalCamera* sunCamera_;
 
 			static constexpr float TWO_PI = static_cast<float>(std::_Pi) * 2.0f;
-			static constexpr float SPEED = 0.025f;
+			static constexpr float SPEED = 0.005f;
 			static constexpr float DISTANCE_PER_SECOND = SPEED * TWO_PI;
-			static constexpr float RADIUS = 970.0f;
+			static constexpr float RADIUS = 700.0f;
 			static constexpr float PI_BY_TWO = 1.57079632679f;
 		};
 	}

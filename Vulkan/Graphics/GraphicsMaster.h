@@ -80,9 +80,8 @@ namespace QZL
 			InputProfile inputProfile_;
 			const SystemMasters& masters_;
 
-			static const int kDefaultWidth = 800;
-			static const int kDefaultHeight = 600;
-			static const int MAX_DESCRIPTOR_INDEXED_TEXTURES = 2;
+			static const int kDefaultWidth = 1920;
+			static const int kDefaultHeight = 1200;
 		};
 	}
 }

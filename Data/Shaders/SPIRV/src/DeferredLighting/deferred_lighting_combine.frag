@@ -31,12 +31,10 @@ void main()
 	vec4 diffuse = texture(texSamplers[nonuniformEXT(SC_DIFFUSE_IDX)], inUV);
 	vec3 specular = texture(texSamplers[nonuniformEXT(SC_SPECULAR_IDX)], inUV).rgb;
 	vec4 fullAlbedo = texture(texSamplers[nonuniformEXT(SC_G_BUFFER_ALBEDO)], inUV);
-	vec3 albedo = fullAlbedo.rgb;
-	float includeSpecular = fullAlbedo.a;
 	
 	outColour.rgb = max(diffuse.rgb, AMBIENT * blurSSAO());
-	outColour.rgb *= albedo;
-	outColour.rgb += (specular * includeSpecular);
-	outColour.a = diffuse.a;
+	outColour.rgb *= fullAlbedo.rgb;
+	outColour.rgb += (specular);
+	outColour.a = fullAlbedo.a;
 	reinhardTonemap(outColour);
 }

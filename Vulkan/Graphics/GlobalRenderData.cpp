@@ -44,9 +44,10 @@ void sampleKernelGeneration(glm::vec4* data) {
 	memcpy(data, generatedData.data(), sizeof(glm::vec4) * SSAO_KERNEL_SIZE);
 }
 
-void GlobalRenderData::updatePostData(float screenX, float screenY)
+void GlobalRenderData::updatePostData(float screenX, float screenY, glm::mat4& shadowMatrix)
 {
 	PostProcessInfo* postInfo = (PostProcessInfo*)postProcessInfoUbo_->bindRange();
+	postInfo->shadowMatrix = shadowMatrix;
 	postInfo->ssaoBias = 0.015f;
 	postInfo->ssaoKernelSize = SSAO_KERNEL_SIZE;
 	postInfo->ssaoNoiseScale = glm::vec2(screenX / 4.0f, screenY / 4.0f);

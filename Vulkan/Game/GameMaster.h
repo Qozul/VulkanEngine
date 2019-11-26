@@ -22,7 +22,7 @@ namespace QZL {
 			~GameMaster();
 			void loadGame();
 			Graphics::SceneGraphicsInfo* loadDescriptors();
-
+			void loadStatics(Scene* scene);
 			const SystemMasters& masters_;
 
 			std::vector<Scene*> scenes_;

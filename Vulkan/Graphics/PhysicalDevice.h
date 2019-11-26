@@ -17,7 +17,7 @@ namespace QZL
 		public:
 			bool isValid(DeviceSurfaceCapabilities& swapChainDetails, VkSurfaceKHR& surface);
 			LogicDevice* createLogicDevice(const GraphicsSystemDetails& sysDetails, DeviceSurfaceCapabilities& surfaceCapabilities,
-				uint32_t& enabledLayerCount, const char* const*& ppEnabledLayerNames);
+				uint32_t enabledLayerCount, const char* const* ppEnabledLayerNames);
 			VkPhysicalDevice getPhysicalDevice() const;
 			const VkPhysicalDeviceLimits& getDeviceLimits() const;
 

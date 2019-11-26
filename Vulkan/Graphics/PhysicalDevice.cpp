@@ -30,7 +30,7 @@ bool PhysicalDevice::isValid(DeviceSurfaceCapabilities& surfaceCapabilities, VkS
 }
 
 LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysDetails, DeviceSurfaceCapabilities& surfaceCapabilities,
-	uint32_t& enabledLayerCount, const char* const*& ppEnabledLayerNames)
+	uint32_t enabledLayerCount, const char* const* ppEnabledLayerNames)
 {
 	const float queuePriority = 1.0f;
 	auto createInfos = getCreateQueueInfos(&queuePriority);
@@ -40,17 +40,20 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 	deviceFeatures.tessellationShader = VK_TRUE;
 	deviceFeatures.fillModeNonSolid = VK_TRUE;
 	deviceFeatures.geometryShader = VK_TRUE;
-	deviceFeatures.sampleRateShading = VK_TRUE;
+	deviceFeatures.textureCompressionBC = VK_TRUE;
+	deviceFeatures.independentBlend = VK_TRUE;
 
 	VkDeviceCreateInfo deviceCreateInfo = {};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	deviceCreateInfo.pQueueCreateInfos = createInfos.data();
-	deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(createInfos.size());
+	deviceCreateInfo.queueCreateInfoCount = 1;
 	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 	deviceCreateInfo.enabledLayerCount = enabledLayerCount;
-	deviceCreateInfo.ppEnabledLayerNames = ppEnabledLayerNames;
+	deviceCreateInfo.ppEnabledLayerNames = enabledLayerCount ==  0 ? nullptr : ppEnabledLayerNames;
 	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions_.size());
 	deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions_.data();
+	deviceCreateInfo.pNext = nullptr;
+	deviceCreateInfo.flags = 0;
 
 	if (optionalExtensionsEnabled_[OptionalExtensions::kDescriptorIndexing]) {
 		VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures = {};
@@ -124,7 +127,6 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 {
 	auto availableExts = obtainVkData<VkExtensionProperties>(vkEnumerateDeviceExtensionProperties, device_, nullptr);
 	auto hasSwapchain = false;
-	bool resolveExts[4] = { false, false, false, false };
 	optionalExtensionsEnabled_[OptionalExtensions::kDescriptorIndexing] = false;
 	// Can definitely do this better, but oh well deadline is too close, refactor afterwards
 	for (auto& ext : availableExts) {
@@ -138,24 +140,8 @@ bool PhysicalDevice::hasRequiredExtensions(DeviceSurfaceCapabilities& surfaceCap
 		if (!strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) {
 			hasSwapchain = true;
 		}
-		if (!strcmp(ext.extensionName, VK_KHR_MULTIVIEW_EXTENSION_NAME)) {
-			resolveExts[0] = true;
-		}
-		if (!strcmp(ext.extensionName, VK_KHR_MAINTENANCE2_EXTENSION_NAME)) {
-			resolveExts[1] = true;
-		}
-		if (!strcmp(ext.extensionName, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME)) {
-			resolveExts[2] = true;
-		}
-		if (!strcmp(ext.extensionName, VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME)) {
-			resolveExts[3] = true;
-		}
 	}
-	if (hasSwapchain && resolveExts[0] && resolveExts[1] && resolveExts[2] && resolveExts[3]) {
-		deviceExtensions_.push_back(VK_KHR_MULTIVIEW_EXTENSION_NAME);
-		deviceExtensions_.push_back(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
-		deviceExtensions_.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
-		deviceExtensions_.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
+	if (hasSwapchain) {
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_, surface, &surfaceCapabilities.capabilities);
 		surfaceCapabilities.formats = obtainVkData<VkSurfaceFormatKHR>(vkGetPhysicalDeviceSurfaceFormatsKHR, device_, surface);
 		surfaceCapabilities.presentModes = obtainVkData<VkPresentModeKHR>(vkGetPhysicalDeviceSurfacePresentModesKHR, device_, surface);
@@ -179,6 +165,8 @@ std::vector<VkDeviceQueueCreateInfo> PhysicalDevice::getCreateQueueInfos(const f
 		createInfo.queueFamilyIndex = index;
 		createInfo.queueCount = 1;
 		createInfo.pQueuePriorities = queuePriority;
+		createInfo.pNext = nullptr;
+		createInfo.flags = 0;
 		createInfos.push_back(createInfo);
 	}
 	return createInfos;

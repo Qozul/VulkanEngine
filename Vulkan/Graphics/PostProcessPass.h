@@ -14,6 +14,7 @@ namespace QZL {
 		struct PostPushConstants {
 			uint32_t colourIdx;
 			uint32_t depthIdx;
+			uint32_t shadowDepthIdx;
 			float farZ;
 			float nearZ;
 			float screenX;
@@ -58,6 +59,7 @@ namespace QZL {
 			// Samplers for the images produced in the GeometryPass render pass.
 			uint32_t gpColourBuffer_;
 			uint32_t gpDepthBuffer_;
+			uint32_t shadowDepthIdx_;
 		};
 	}
 }

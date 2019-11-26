@@ -15,9 +15,11 @@ TerrainScript::TerrainScript(const SystemMasters& initialiser)
 
 void TerrainScript::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
-	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->distanceFarMinusClose = 300.0f;
-	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->closeDistance = 50.0f;
+	const float kSnowAccumulationRate = 0.00001;
+	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->heights.w -= kSnowAccumulationRate;
+	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->distanceFarMinusClose = 200.0f;
+	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->closeDistance = 60.0f;
 	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->patchRadius = 40.0f;
-	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->maxTessellationWeight = 4.0f;
+	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->maxTessellationWeight += dt;
 	mainCamera_->calculateFrustumPlanes(viewProjection, static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->frustumPlanes);
 }

@@ -9,6 +9,7 @@
 #include "RendererBase.h"
 #include "TextureManager.h"
 #include "../SystemMasters.h"
+#include <GLFW/glfw3.h>
 
 using namespace QZL;
 using namespace QZL::Graphics;
@@ -90,7 +91,13 @@ void GraphicsMaster::initGlfw(std::vector<const char*>& extensions)
 	glfwInit();
 	// Ensure glfw knows to ignore the openGL api and to not create a context for it
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+ 
+#ifndef _DEBUG
+	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	details_.window = glfwCreateWindow(mode->width, mode->height, "Vulkan Engine", glfwGetPrimaryMonitor(), nullptr);
+#else
 	details_.window = glfwCreateWindow(kDefaultWidth, kDefaultHeight, "Vulkan Engine", nullptr, nullptr);
+#endif
 	
 	ASSERT(details_.window != nullptr);
 	

@@ -11,6 +11,7 @@ layout(location = 0) in vec2 inUV;
 layout(push_constant) uniform PushConstants {
 	uint colourIdx;
 	uint depthIdx;
+	uint shadowDepthIdx;
 	float farZ;
 	float nearZ;
 	float screenX;

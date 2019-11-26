@@ -99,7 +99,7 @@ size_t ElementBufferObject::addVertices(void* data, const size_t size)
 	}
 	vertexCount_ += static_cast<uint32_t>(size / sizeOfVertices_);
 	ASSERT(vertexCount_ == (vertexData_.size() / sizeOfVertices_));
-	return prevSize;
+	return prevSize / sizeOfVertices_;
 }
 
 size_t ElementBufferObject::addIndices(void* data, const size_t size)
@@ -112,7 +112,7 @@ size_t ElementBufferObject::addIndices(void* data, const size_t size)
 	}
 	indexCount_ += static_cast<uint32_t>(size / sizeOfIndices_);
 	ASSERT(indexCount_ == (indexData_.size() / sizeOfIndices_));
-	return prevSize;
+	return prevSize / sizeOfIndices_;
 }
 
 void ElementBufferObject::emplaceMesh(const std::string name, uint32_t count, uint32_t vertexOffset, uint32_t indexOffset)

@@ -4,7 +4,7 @@
 #pragma once
 #include "VkUtil.h"
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(OVERRIDE_DEBUG)
 #define ENABLE_VALIDATION 
 #endif
 

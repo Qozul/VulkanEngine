@@ -47,9 +47,18 @@ void System::loop()
 	masters_.graphicsMaster->preframeSetup();
 	Shared::PerfMeasurer perfMeasurer;
 	Clock::time_point lastTime = Clock::now();
+	double fpsTimePrev = glfwGetTime();
+	uint32_t numFrames = 0;
 	while (!glfwWindowShouldClose(masters_.graphicsMaster->details_.window) 
 		&& !glfwGetKey(masters_.graphicsMaster->details_.window, GLFW_KEY_ESCAPE)) {
 		auto measuredTime = Clock::now();
+		double fpsTimeCurrent = glfwGetTime();
+		++numFrames;
+		if (fpsTimeCurrent - fpsTimePrev >= 1.0) {
+			glfwSetWindowTitle(masters_.graphicsMaster->details_.window, std::to_string(numFrames).c_str());
+			numFrames = 0;
+			fpsTimePrev += 1.0;
+		}
 		std::chrono::duration<float, std::milli> diff = (measuredTime - lastTime);
 		deltaTime = diff.count();
 		deltaTimeSeconds = deltaTime / 1000.0f;
@@ -57,10 +66,7 @@ void System::loop()
 
 		glfwPollEvents();
 		inputManager_->checkInput(deltaTimeSeconds);
-		perfMeasurer.startTime();
 		masters_.graphicsMaster->loop();
-		perfMeasurer.endTime();
 	}
-	std::cout << "Vulkan perf: " << perfMeasurer.getAverageTime().count() << std::endl;
 	vkDeviceWaitIdle(*masters_.graphicsMaster->details_.logicDevice);
 }

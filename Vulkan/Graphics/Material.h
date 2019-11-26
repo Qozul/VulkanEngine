@@ -28,6 +28,7 @@ namespace QZL {
 				uint32_t albedoIdx0;
 				uint32_t albedoIdx1;
 				uint32_t albedoIdx2;
+				uint32_t grassIdx;
 			};
 
 			struct Atmosphere {

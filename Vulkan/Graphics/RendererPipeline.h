@@ -31,6 +31,14 @@ namespace QZL
 			VkCullModeFlagBits cullFace = VK_CULL_MODE_BACK_BIT;
 			VkBool32 depthBiasEnable = VK_FALSE;
 			VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
+			struct BlendOps {
+				VkBlendFactor srcColourFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+				VkBlendFactor dstColourFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+				VkBlendOp colourOp = VK_BLEND_OP_ADD;
+				VkBlendFactor srcAlphaFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+				VkBlendFactor dstAlphaFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+				VkBlendOp alphaOp = VK_BLEND_OP_ADD;
+			} blendOps;
 			std::vector<VkDynamicState> dynamicState;
 			std::vector<VkBool32> colourBlendEnables;
 		};

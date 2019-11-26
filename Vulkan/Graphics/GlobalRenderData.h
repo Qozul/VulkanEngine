@@ -15,6 +15,7 @@ namespace QZL {
 		class LogicDevice;
 
 		struct PostProcessInfo {
+			glm::mat4 shadowMatrix;
 			glm::vec2 ssaoNoiseScale;
 			int ssaoKernelSize;
 			float ssaoRadius;
@@ -43,7 +44,7 @@ namespace QZL {
 			}
 			void updateData(uint32_t idx, Light& data);
 			void updateCameraData(LogicalCamera& mainCamera, float screenX, float screenY);
-			void updatePostData(float screenX, float screenY);
+			void updatePostData(float screenX, float screenY, glm::mat4& shadowMatrix);
 		private:
 			GlobalRenderData(LogicDevice* logicDevice, TextureManager* textureManager, VkDescriptorSetLayoutBinding descriptorIndexBinding);
 			~GlobalRenderData();

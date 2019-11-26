@@ -64,6 +64,7 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	PostPushConstants vpc;
 	vpc.colourIdx = gpColourBuffer_;
 	vpc.depthIdx = gpDepthBuffer_;
+	vpc.shadowDepthIdx = shadowDepthIdx_;
 	vpc.farZ = 2500.0f;
 	vpc.nearZ = 0.1f;
 	vpc.screenX = swapChainDetails_.extent.width;
@@ -168,12 +169,14 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 
 void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
 {
-	ASSERT(dependencyAttachment.size() == 2);
+	ASSERT(dependencyAttachment.size() == 3);
 	geometryColourBuf_ = dependencyAttachment[0];
 	geometryDepthBuf_ = dependencyAttachment[1];
 	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
 	gpDepthBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_, 
 		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
+	shadowDepthIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("ShadowSampler", dependencyAttachment[2],
+		{ VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	createPasses();
 	createRenderers();
 }
@@ -204,6 +207,8 @@ void PostProcessPass::createRenderers()
 	pci.subpassIndex = 0;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
+	pci.colourAttachmentCount = 1;
+	pci.colourBlendEnables = { VK_TRUE };
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);

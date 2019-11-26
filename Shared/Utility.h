@@ -33,6 +33,7 @@
 
 #include "PerfMeasurer.h"
 #pragma warning (disable : 4244)
+//#define OVERRIDE_DEBUG
 
 using uint = uint64_t;
 
@@ -43,7 +44,7 @@ using uint = uint64_t;
 #define ASSERT(post) if (!(post)) throw std::runtime_error("Assertion failed.")
 
 // Debug/Release related code
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(OVERRIDE_DEBUG)
 #define DEBUG_LOG(m) std::cout << m << std::endl
 #define DEBUG_ERR(m) std::cout << "Error in " << __FILE__ << " at line " << __LINE__ << " " << m << std::endl
 #define EXPECTS(pre) if (!(pre)) throw std::runtime_error("Precondition failed.")

@@ -186,7 +186,7 @@ void DeferredPass::createRenderers()
 	pci.subpassIndex = createInfo.subpassIndex;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
-	pci.colourBlendEnables = { VK_FALSE, VK_FALSE, VK_FALSE };
+	pci.colourBlendEnables = { VK_FALSE, VK_FALSE, VK_TRUE };
 	pci.colourAttachmentCount = 3;
 
 	RendererCreateInfo2 createInfo2;
@@ -210,12 +210,14 @@ void DeferredPass::createRenderers()
 	auto tescSpecConstant = RendererBase::setupSpecConstants(2, mapEntryTerrain.data(), sizeof(uint32_t) * 2, &offsets[1]);
 	auto teseSpecConstant = RendererBase::setupSpecConstants(3, mapEntryTerrain.data(), sizeof(uint32_t) * 3, offsets);
 	auto fragSpecConstant = RendererBase::setupSpecConstants(2, mapEntryTerrain.data(), sizeof(uint32_t) * 2, &offsets[1]);
+	auto geomSpecConstant = RendererBase::setupSpecConstants(2, mapEntryTerrain.data(), sizeof(uint32_t) * 2, &offsets);
 
 	std::vector<ShaderStageInfo> stageInfosTerrain;
 	stageInfosTerrain.emplace_back("TerrainVert", VK_SHADER_STAGE_VERTEX_BIT, &vertSpecConstant);
 	stageInfosTerrain.emplace_back("TerrainFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &fragSpecConstant);
 	stageInfosTerrain.emplace_back("TerrainTESC", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, &tescSpecConstant);
 	stageInfosTerrain.emplace_back("TerrainTESE", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, &teseSpecConstant);
+	stageInfosTerrain.emplace_back("TerrainGeom", VK_SHADER_STAGE_GEOMETRY_BIT, &geomSpecConstant);
 
 	pci.debugName = "Terrain";
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
