@@ -67,5 +67,5 @@ void main()
 	vec4 shadowCoord = BIAS_MATRIX * inShadowMatrix * worldPos;
 	float shadow = pcfShadow(shadowCoord / shadowCoord.w);
 	outDiffuse = vec4(light.colour * lambert * attenuation * shadow, worldPos.w);
-	outSpecular = vec4(light.colour * sf * attenuation * 0.33, 1.0);
+	outSpecular = specExponent < 1.0 ? vec4(0.0) : vec4(light.colour * sf * attenuation * 0.33, 1.0);
 }

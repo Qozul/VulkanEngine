@@ -19,9 +19,10 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
-	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile())
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile()), doFXAA_(true), doDoF_(true)
 {
-	input_->profileBindings.push_back({ { GLFW_KEY_M }, [this]() {effectStates_[0].first = !effectStates_[0].first; }, 0.2f });
+	input_->profileBindings.push_back({ { GLFW_KEY_M }, [this]() {doFXAA_ = !doFXAA_; }, 0.2f });
+	input_->profileBindings.push_back({ { GLFW_KEY_N }, [this]() {doDoF_ = !doDoF_; }, 0.2f });
 	master->getMasters().inputManager->addProfile("Postprocessing effects", input_);
 }
 
@@ -62,9 +63,9 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	PostPushConstants vpc;
-	vpc.colourIdx = gpColourBuffer_;
+	vpc.colourIdx = colourBufferIdx_;
 	vpc.depthIdx = gpDepthBuffer_;
-	vpc.shadowDepthIdx = shadowDepthIdx_;
+	vpc.shadowDepthIdx = 0;
 	vpc.farZ = 2500.0f;
 	vpc.nearZ = 0.1f;
 	vpc.screenX = swapChainDetails_.extent.width;
@@ -83,77 +84,46 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	std::array<VkClearValue, 1> clearValues = {};
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	// ------ DoF Horiztonal
-	{
-		auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
-		bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		bi1.pClearValues = clearValues.data();
-		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
-		depthOfFieldH_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-		vkCmdEndRenderPass(frameInfo.cmdBuffer);
-	}
+	if (!frameInfo.splitscreenEnabled) {
+		if (doDoF_) {
+			// ------ DoF Horiztonal
+			{
+				vpc.colourIdx = gpColourBuffer_;
+				vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
+				auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
+				bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
+				bi1.pClearValues = clearValues.data();
+				vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
+				depthOfFieldH_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+				vkCmdEndRenderPass(frameInfo.cmdBuffer);
+			}
 
-	// ------- DoF Vertical
-	{
-		vpc.colourIdx = colourBufferIdx_;
-		vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
-		auto bi2 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass2_, framebuffers2_[frameInfo.frameIdx]);
-		bi2.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		bi2.pClearValues = clearValues.data();
-		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi2, VK_SUBPASS_CONTENTS_INLINE);
-		depthOfFieldV_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-		vkCmdEndRenderPass(frameInfo.cmdBuffer);
+			// ------- DoF Vertical
+			{
+				vpc.colourIdx = colourBufferIdx_;
+				vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
+				auto bi2 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass2_, framebuffers2_[frameInfo.frameIdx]);
+				bi2.clearValueCount = static_cast<uint32_t>(clearValues.size());
+				bi2.pClearValues = clearValues.data();
+				vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi2, VK_SUBPASS_CONTENTS_INLINE);
+				depthOfFieldV_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+				vkCmdEndRenderPass(frameInfo.cmdBuffer);
+			}
+		}
 	}
-
-	// ------- Second pass DoF for splitscreen
-	/*if (frameInfo.splitscreenEnabled) {
+	if (doFXAA_) {
+		// ------- FXAA
 		{
 			vpc.colourIdx = gpColourBuffer_;
-			auto bi1 = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX, renderPass_, framebuffers_[frameInfo.frameIdx]);
+			vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
+			auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
 			bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
 			bi1.pClearValues = clearValues.data();
 			vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
-			depthOfFieldH_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
+			fxaa_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
 			vkCmdEndRenderPass(frameInfo.cmdBuffer);
 		}
-		{
-			vpc.colourIdx = colourBufferIdx_;
-			auto bi1 = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX, renderPass2_, framebuffers_[frameInfo.frameIdx]);
-			bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			bi1.pClearValues = clearValues.data();
-			vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
-			depthOfFieldV_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-			vkCmdEndRenderPass(frameInfo.cmdBuffer);
-		}
-	}*/
-
-	// ------- FXAA
-	{
-		vpc.colourIdx = gpColourBuffer_;
-		vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
-		auto bi1 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPass_, framebuffers_[frameInfo.frameIdx]);
-		bi1.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		bi1.pClearValues = clearValues.data();
-		vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi1, VK_SUBPASS_CONTENTS_INLINE);
-		fxaa_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
-		vkCmdEndRenderPass(frameInfo.cmdBuffer);
 	}
-
-	/*VkImageBlit blit = {};
-	blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	blit.srcSubresource.baseArrayLayer = 0;
-	blit.srcSubresource.layerCount = 1;
-	blit.srcSubresource.mipLevel = 0;
-	blit.srcOffsets[0] = { 0, 0, 0 };
-	blit.srcOffsets[1] = { geometryColourBuf_->getWidth(), geometryColourBuf_->getHeight(), 1 };
-	blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	blit.dstSubresource.baseArrayLayer = 0;
-	blit.dstSubresource.layerCount = 1;
-	blit.dstSubresource.mipLevel = 0;
-	blit.dstOffsets[0] = { 0, 0, 0 };
-	blit.dstOffsets[1] = { colourBuffer1_->getWidth() / 2, colourBuffer1_->getHeight() / 2, 1 };
-
-	vkCmdBlitImage(frameInfo.cmdBuffer, geometryColourBuf_->getImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, colourBuffer1_->getImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &blit, VK_FILTER_LINEAR);*/
 
 	// -------- Present
 	auto bi2 = beginInfo(frameInfo.frameIdx, { 0, 0 }, 0, renderPassPresent_, framebuffersPresent_[frameInfo.frameIdx]);
@@ -169,14 +139,12 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 
 void PostProcessPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)
 {
-	ASSERT(dependencyAttachment.size() == 3);
+	ASSERT(dependencyAttachment.size() == 2);
 	geometryColourBuf_ = dependencyAttachment[0];
 	geometryDepthBuf_ = dependencyAttachment[1];
 	gpColourBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpColourBuffer", geometryColourBuf_);
 	gpDepthBuffer_ = graphicsMaster_->getMasters().textureManager->allocateTexture("gpDepthBuffer", geometryDepthBuf_, 
 		SamplerInfo(VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 2, VK_SHADER_STAGE_FRAGMENT_BIT));
-	shadowDepthIdx_ = graphicsMaster_->getMasters().textureManager->allocateTexture("ShadowSampler", dependencyAttachment[2],
-		{ VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, 1.0f, VK_SHADER_STAGE_FRAGMENT_BIT, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE });
 	createPasses();
 	createRenderers();
 }

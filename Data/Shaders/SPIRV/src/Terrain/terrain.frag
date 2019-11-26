@@ -39,7 +39,7 @@ void main() {
 	TextureIndices texIndices = textureIndices[SC_MATERIAL_OFFSET + instanceIndex];
 	
 	outPosition = vec4(inWorldPos, 1.0);
-	outNormal = vec4(inNormal * 0.5 + 0.5, 90.0);
+	outNormal = vec4(inNormal * 0.5 + 0.5, 0.0);
 	
 	// Grass
 	if (inGrass > -1) {

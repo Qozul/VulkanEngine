@@ -24,6 +24,7 @@ layout(set = GLOBAL_SET, binding = CAMERA_INFO_BINDING) uniform CameraInfo {
 } Camera;
 
 layout(set = GLOBAL_SET, binding = POST_PROCESS_BINDING) uniform PostProcessInfo {
+	mat4 shadowMatrix;
 	vec2 ssaoNoiseScale;
 	int ssaoKernelSize;
 	float ssaoRadius;

@@ -59,7 +59,9 @@ namespace QZL {
 			// Samplers for the images produced in the GeometryPass render pass.
 			uint32_t gpColourBuffer_;
 			uint32_t gpDepthBuffer_;
-			uint32_t shadowDepthIdx_;
+
+			bool doFXAA_;
+			bool doDoF_;
 		};
 	}
 }

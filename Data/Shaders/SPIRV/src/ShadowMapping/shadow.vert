@@ -13,5 +13,5 @@ layout(set = 0, binding = 0) readonly buffer StorageBuffer {
 } mvps;
 
 void main() {
-	gl_Position = mvps.data[mvpOffset] * vec4(iPosition, 1.0);
+	gl_Position = mvps.data[mvpOffset + gl_InstanceIndex] * vec4(iPosition, 1.0);
 }

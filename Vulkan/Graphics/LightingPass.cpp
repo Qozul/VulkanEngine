@@ -12,13 +12,17 @@
 #include "GlobalRenderData.h"
 #include "TextureManager.h"
 #include "ElementBufferObject.h"
+#include "../InputManager.h"
 
 using namespace QZL;
 using namespace QZL::Graphics;
 
 LightingPass::LightingPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
-	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo)
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile()), doSSAO_(true)
 {
+	input_->profileBindings.push_back({ { GLFW_KEY_B }, [this]() {doSSAO_ = !doSSAO_; }, 0.2f });
+	master->getMasters().inputManager->addProfile("SSAO", input_);
+
 	CreateInfo createInfo = {};
 	createColourBuffer(logicDevice, swapChainDetails);
 	createInfo.attachments.push_back(makeAttachment(swapChainDetails.surfaceFormat.format, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,
@@ -67,6 +71,7 @@ LightingPass::~LightingPass()
 	SAFE_DELETE(ambientBuffer_);
 	SAFE_DELETE(lightingRenderer_);
 	SAFE_DELETE(ssaoRenderer_);
+	SAFE_DELETE(input_);
 }
 
 void LightingPass::doFrame(FrameInfo& frameInfo)
@@ -122,7 +127,7 @@ void LightingPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	lightingRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kLight]);
-	if (!frameInfo.splitscreenEnabled) {
+	if (!frameInfo.splitscreenEnabled && doSSAO_) {
 		ssaoRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
 	}
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);

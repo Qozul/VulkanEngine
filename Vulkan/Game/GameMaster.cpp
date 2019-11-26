@@ -88,17 +88,17 @@ void GameMaster::loadGame()
 	Entity* water = new Water("water", masters_.textureManager);
 	water->getTransform()->position = glm::vec3(0.0f, 98.0f, 0.0f);
 
-	Entity* teapotDeferred = new Entity("TeapotDeferred");
-	teapotDeferred->getTransform()->position = glm::vec3(200.0f, 0.0f, 200.0f);
+	/*Entity* teapotDeferred = new Entity("TeapotDeferred");
+	teapotDeferred->getTransform()->position = glm::vec3(200.0f, 50.0f, 200.0f);
 	teapotDeferred->getTransform()->setScale(2.0f);
 	teapotDeferred->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
-		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
+		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");*/
 
-	Entity* teapotDeferred2 = new Entity("TeapotDeferred");
-	teapotDeferred2->getTransform()->position = glm::vec3(500.0f, 0.0f, 200.0f);
+	/*Entity* teapotDeferred2 = new Entity("TeapotDeferred2");
+	teapotDeferred2->getTransform()->position = glm::vec3(400.0f, 50.0f, 300.0f);
 	teapotDeferred2->getTransform()->setScale(2.0f);
 	teapotDeferred2->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
-		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");
+		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");*/
 
 	Entity* light = new LightSource("light", glm::vec3(0.8), 2000.0f, 1.0f);
 	light->getTransform()->setScale(1500.0f);
@@ -109,9 +109,9 @@ void GameMaster::loadGame()
 	scenes_[activeSceneIdx_]->addEntity(skysphere, camera, cameraNode);
 	scenes_[activeSceneIdx_]->addEntity(water);
 	scenes_[activeSceneIdx_]->addEntity(terrain);
-	scenes_[activeSceneIdx_]->addEntity(sun, terrain);
-	scenes_[activeSceneIdx_]->addEntity(teapotDeferred);
-	scenes_[activeSceneIdx_]->addEntity(teapotDeferred2);
+	scenes_[activeSceneIdx_]->addEntity(sun);
+	//scenes_[activeSceneIdx_]->addEntity(teapotDeferred);
+	//scenes_[activeSceneIdx_]->addEntity(teapotDeferred2);
 	scenes_[activeSceneIdx_]->addEntity(light, sun);
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);

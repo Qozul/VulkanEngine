@@ -4,6 +4,7 @@
 #include "RenderPass.h"
 
 namespace QZL {
+	struct InputProfile;
 	namespace Graphics {
 		class RendererBase;
 		class LightingPass : public RenderPass {
@@ -27,6 +28,9 @@ namespace QZL {
 			uint32_t positionIdx_;
 			uint32_t depthIdx_;
 			uint32_t shadowDepthIdx_;
+
+			bool doSSAO_;
+			InputProfile* input_;
 		};
 	}
 }

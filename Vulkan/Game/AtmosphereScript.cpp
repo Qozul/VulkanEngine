@@ -163,6 +163,9 @@ void AtmosphereScript::update(float dt, const glm::mat4& viewProjection, const g
 {
 	AtmosphereShaderParams* params = static_cast<AtmosphereShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams());
 	params->sunDirection = *sun_->getSunDirection();
+	float tmp = params->sunDirection.z;
+	params->sunDirection.z = -params->sunDirection.x;
+	params->sunDirection.x = tmp;
 	params->sunIntensity = *sun_->getSunIntensity();
 	params->inverseViewProj = glm::inverse(viewProjection);
 	params->scatteringIdx = scatteringSumIdx_;
