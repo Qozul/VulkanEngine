@@ -11,7 +11,7 @@ namespace QZL
 		public:
 			AtmosphereRenderer(RendererCreateInfo& createInfo);
 			~AtmosphereRenderer() = default;
-			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) override;
+			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind = false) override;
 		};
 	}
 }

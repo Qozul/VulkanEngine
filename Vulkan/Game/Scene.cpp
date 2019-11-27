@@ -9,6 +9,8 @@
 #include "../Graphics/Mesh.h"
 #include "../Graphics/LogicalCamera.h"
 #include "../Graphics/MeshLoader.h"
+#include "../Assets/LightSource.h"
+#include "../Graphics/GlobalRenderData.h"
 
 using namespace QZL;
 using namespace Graphics;
@@ -58,7 +60,7 @@ void Scene::sort(RendererTypes rtype)
 	}
 }
 
-std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras, const size_t cameraCount, float dt, const uint32_t& frameIdx)
+std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras, const size_t cameraCount, float dt, const uint32_t& frameIdx, GlobalRenderData* grd)
 {
 	for (auto& cmdList : graphicsCommandLists_) {
 		cmdList.clear();
@@ -76,6 +78,8 @@ std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras,
 	for (size_t i = 0; i < cameraCount; ++i) {
 		cameras[i].viewProjection = cameras[i].projectionMatrix * cameras[i].viewMatrix;
 	}
+
+	graphicsWriteInfo_.lightData.clear();
 
 	for (size_t i = 0; i < rootNode_->childNodes.size(); ++i) {
 		updateRecursively(rootNode_->childNodes[i], cameras, cameraCount, glm::mat4(), dt, frameIdx);
@@ -97,6 +101,8 @@ std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras,
 	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->bindRange();
 	std::memcpy(graphicsWriteInfo_.materialPtr + frameIdx * graphicsInfo_.materialRange, graphicsWriteInfo_.graphicsMaterialData.data(), graphicsInfo_.materialRange);
 	graphicsWriteInfo_.materialPtr = (char*)graphicsInfo_.materialBuffer->unbindRange();
+
+	grd->updateLightData(graphicsWriteInfo_.lightData);
 
 	return graphicsCommandLists_;
 }
@@ -373,7 +379,19 @@ void Scene::addToCommandList(Graphics::GraphicsComponent* component, LogicalCame
 			graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, 0, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
 		}
 		else {
-			graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
+			if (rtype == RendererTypes::kLight) {
+				auto light = static_cast<LightSource*>(component->getEntity())->getLight();
+				if (glm::length(mainCamera.position - light.position) > light.volumeScale) {
+					graphicsCommandLists_[(size_t)RendererTypes::kLight].push_back({ mesh->count, 1, 0, mesh->vertexOffset,  (uint32_t)graphicsWriteInfo_.lightData.size() });
+				}
+				else {
+					graphicsCommandLists_[(size_t)RendererTypes::kLightInside].push_back({ mesh->count, 1, 0, mesh->vertexOffset,  (uint32_t)graphicsWriteInfo_.lightData.size() });
+				}
+				graphicsWriteInfo_.lightData.push_back(light);
+			}
+			else {
+				graphicsCommandLists_[(size_t)rtype].push_back({ mesh->count, 1, mesh->indexOffset, mesh->vertexOffset, (uint32_t)graphicsCommandLists_[(size_t)rtype].size() });
+			}
 		}
 
 		graphicsWriteInfo_.distances[(size_t)rtype].push_back(glm::distance(component->getEntity()->getTransform()->position, mainCamera.position));

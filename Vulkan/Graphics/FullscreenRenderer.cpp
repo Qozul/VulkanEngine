@@ -17,7 +17,7 @@ FullscreenRenderer::FullscreenRenderer(RendererCreateInfo& createInfo, RendererC
 		pipelineLayouts_.data(), createInfo2.pcRangesCount, createInfo2.pcRanges), createInfo2.shaderStages, createInfo2.pipelineCreateInfo);
 }
 
-void FullscreenRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void FullscreenRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind)
 {
 	beginFrame(cmdBuffer);
 	vkCmdDraw(cmdBuffer, 3, 1, 0, 0);

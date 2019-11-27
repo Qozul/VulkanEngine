@@ -39,6 +39,7 @@ namespace QZL
 			uint32_t maxDrawnEntities;
 			size_t swapChainImageCount;
 			uint32_t colourAttachmentCount;
+			VkCullModeFlagBits cullMode = VK_CULL_MODE_BACK_BIT;
 			std::vector<VkBool32> colourBlendEnables;
 			VkPrimitiveTopology prims;
 			std::string vertexShader;
@@ -112,7 +113,7 @@ namespace QZL
 				  graphicsInfo_(createInfo.graphicsInfo) { }
 
 			virtual ~RendererBase();
-			virtual void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) = 0;
+			virtual void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind = false) = 0;
 			std::vector<VkWriteDescriptorSet> getDescriptorWrites(uint32_t frameIdx);
 
 			ElementBufferObject* getElementBuffer();

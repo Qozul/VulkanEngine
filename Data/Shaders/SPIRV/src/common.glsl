@@ -89,6 +89,15 @@ void calculatePhongShading(in vec3 worldPos, in vec3 lightPos, in vec3 camPos, i
 	specularFactor = pow(rFactor, shininess);
 }
 
+#ifndef OVERRIDE_TEX_SAMPLERS
+vec3 getWorldPosition(uint depthIdx, vec2 uv, mat4 inverseViewProj)
+{
+	vec3 coords = vec3(uv * 2.0 - 1.0, texture(texSamplers[nonuniformEXT(depthIdx)], uv).r * 2.0 - 1.0);
+	vec4 clip = inverseViewProj * vec4(coords, 1.0);
+	return clip.xyz / clip.w;
+}
+#endif
+
 float linearizeDepth(float depth, float near, float far)
 {
   return (2.0 * near) / (far + near - depth * (far - near));

@@ -53,7 +53,7 @@ AtmosphereRenderer::AtmosphereRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 2, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void AtmosphereRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void AtmosphereRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind)
 {
 	beginFrame(cmdBuffer);
 	vkCmdDraw(cmdBuffer, 3, 1, 0, 0);

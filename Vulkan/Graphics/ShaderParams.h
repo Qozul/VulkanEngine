@@ -21,6 +21,8 @@ namespace QZL {
 			float specularY = 0.7f;
 			float specularZ = 0.7f;
 			float specularExponent = 41.0f;
+			StaticShaderParams() {}
+			StaticShaderParams(float exp) : specularExponent(exp) {}
 		};
 		struct TerrainShaderParams : ShaderParams {
 			glm::mat4 model;

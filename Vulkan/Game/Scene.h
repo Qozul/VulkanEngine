@@ -3,11 +3,13 @@
 #include "../Graphics/GraphicsTypes.h"
 #include "../Graphics/SceneDescriptorInfo.h"
 #include "../Graphics/LogicalCamera.h"
+#include "../Graphics/Light.h"
 
 namespace QZL {
 	class Entity;
 	namespace Graphics {
 		class GraphicsComponent;
+		class GlobalRenderData;
 		struct LogicalCamera;
 	}
 	struct SceneHeirarchyNode {
@@ -24,6 +26,7 @@ namespace QZL {
 		std::vector<char> graphicsParamsData;
 		std::vector<char> graphicsMaterialData;
 		std::vector<float> distances[(size_t)Graphics::RendererTypes::kNone];
+		std::vector<Graphics::Light> lightData;
 	};
 	// Encompasses a game scene, defining entities in a tree heirarchy with pointers to both parent and children.
 	class Scene {
@@ -33,7 +36,7 @@ namespace QZL {
 		~Scene();
 		// Calls update on every entity in the scene hierarchy, giving a combined model matrix such that
 		// parents are the spatial root of their children.
-		std::vector<VkDrawIndexedIndirectCommand>* update(Graphics::LogicalCamera* cameras, const size_t cameraCount, float dt, const uint32_t& frameIdx);
+		std::vector<VkDrawIndexedIndirectCommand>* update(Graphics::LogicalCamera* cameras, const size_t cameraCount, float dt, const uint32_t& frameIdx, Graphics::GlobalRenderData* grd);
 
 		void start();
 		/*  

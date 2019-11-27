@@ -10,9 +10,13 @@ namespace QZL {
 	}
 	class LightSource : public Entity {
 	public:
-		LightSource(const std::string name, glm::vec3 colour, float radius, float attenFactor);
+		LightSource(const std::string name, glm::vec3 colour, float radius, float attenFactor, glm::vec3* masterPos = nullptr);
 		void update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix) override;
+		Graphics::Light& getLight() {
+			return light_;
+		}
 	private:
 		Graphics::Light light_;
+		glm::vec3* masterPos_;
 	};
 }

@@ -44,7 +44,7 @@ ShadowRenderer::ShadowRenderer(RendererCreateInfo& createInfo)
 	pci.enableDepthWrite = VK_TRUE;
 	pci.extent = createInfo.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	pci.cullFace = VK_CULL_MODE_NONE;
+	pci.cullFace = createInfo.cullMode;
 	pci.primitiveTopology = createInfo.prims;
 	pci.subpassIndex = createInfo.subpassIndex;
 	pci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
@@ -56,11 +56,11 @@ ShadowRenderer::ShadowRenderer(RendererCreateInfo& createInfo)
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void ShadowRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void ShadowRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind)
 {
 	if (commandList->size() == 0)
 		return;
-	beginFrame(cmdBuffer);
+	if (!ignoreEboBind) beginFrame(cmdBuffer);
 	for (auto& cmd : *commandList) {
 		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}

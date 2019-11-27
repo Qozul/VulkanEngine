@@ -19,6 +19,7 @@ namespace QZL {
 			void createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails);
 
 			RendererBase* lightingRenderer_;
+			RendererBase* lightingInsideRenderer_;
 			RendererBase* ssaoRenderer_;
 
 			Image* diffuseBuffer_;

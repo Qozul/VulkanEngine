@@ -2,8 +2,6 @@
 #include "GraphicsMaster.h"
 #include "SwapChainDetails.h"
 #include "IndexedRenderer.h"
-#include "TerrainRenderer.h"
-#include "WaterRenderer.h"
 #include "ParticleRenderer.h"
 #include "AtmosphereRenderer.h"
 #include "Image.h"

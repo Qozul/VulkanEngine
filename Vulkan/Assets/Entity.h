@@ -14,6 +14,7 @@ components.
 namespace QZL {
 	class Transform;
 	struct SceneHeirarchyNode;
+	using SimpleUpdateFunction = std::function<void(float)>;
 	namespace Physics {
 		class RigidBody;
 		class CollisionVolume;
@@ -28,6 +29,9 @@ namespace QZL {
 		virtual void update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix);
 		void start();
 
+		void setSimpleUpdateFunction(SimpleUpdateFunction updateFunc) {
+			updateFunc_ = updateFunc;
+		}
 		void setGraphicsComponent(Graphics::GraphicsComponent* component);
 		void setGameScript(Game::GameScript* script);
 
@@ -71,7 +75,7 @@ namespace QZL {
 		Entity(const std::string name);
 		virtual ~Entity();
 	protected:
-
+		SimpleUpdateFunction updateFunc_;
 		Physics::CollisionVolume* collisionVolume_;
 		Physics::RigidBody* rigidBody_;
 		Game::GameScript* gameScript_;

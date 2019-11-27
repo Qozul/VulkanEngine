@@ -3,7 +3,6 @@
 #include "SwapChainDetails.h"
 #include "IndexedRenderer.h"
 #include "FullscreenRenderer.h"
-#include "WaterRenderer.h"
 #include "ParticleRenderer.h"
 #include "AtmosphereRenderer.h"
 #include "Image.h"
@@ -70,6 +69,7 @@ LightingPass::~LightingPass()
 	SAFE_DELETE(specularBuffer_);
 	SAFE_DELETE(ambientBuffer_);
 	SAFE_DELETE(lightingRenderer_);
+	SAFE_DELETE(lightingInsideRenderer_);
 	SAFE_DELETE(ssaoRenderer_);
 	SAFE_DELETE(input_);
 }
@@ -77,9 +77,9 @@ LightingPass::~LightingPass()
 void LightingPass::doFrame(FrameInfo& frameInfo)
 {
 	std::array<VkClearValue, 3> clearValues = {};
-	clearValues[0].color = { 0.5f, 0.5f, 0.5f, 1.0f };
+	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 	clearValues[1].color = { 0.0f, 0.0f, 0.0f, 0.0f };
-	clearValues[2].color = { 1.0f, 0.0f, 0.0f, 0.0f };
+	clearValues[2].color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	auto bi = beginInfo(frameInfo.frameIdx, { frameInfo.viewportWidth, swapChainDetails_.extent.height }, frameInfo.viewportX);
 	bi.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -126,7 +126,9 @@ void LightingPass::doFrame(FrameInfo& frameInfo)
 	scissor.offset.y = 0;
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
-	lightingRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kLight]);
+	lightingRenderer_->getElementBuffer()->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
+	lightingRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kLight], true);
+	lightingInsideRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kLightInside], true);
 	if (!frameInfo.splitscreenEnabled && doSSAO_) {
 		ssaoRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, nullptr);
 	}
@@ -145,7 +147,7 @@ void LightingPass::createRenderers()
 	createInfo.graphicsInfo = graphicsInfo_;
 	createInfo.subpassIndex = 0;
 	createInfo.colourAttachmentCount = 3;
-	createInfo.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_TRUE };
+	createInfo.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_FALSE };
 
 	VkPushConstantRange pushConstants[2] = {
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
@@ -189,8 +191,10 @@ void LightingPass::createRenderers()
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 	pci.colourAttachmentCount = 3;
-	pci.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_TRUE };
+	pci.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_FALSE };
 	pci.cullFace = VK_CULL_MODE_FRONT_BIT;
+	pci.blendOps.srcColourFactor = VK_BLEND_FACTOR_ONE;
+	pci.blendOps.dstColourFactor = VK_BLEND_FACTOR_ONE;
 
 	RendererCreateInfo2 createInfo2;
 	createInfo2.shaderStages = stageInfos;
@@ -202,6 +206,10 @@ void LightingPass::createRenderers()
 	lightingRenderer_ = new IndexedRenderer(createInfo, createInfo2);
 	graphicsMaster_->setRenderer(RendererTypes::kLight, lightingRenderer_);
 
+	pci.cullFace = VK_CULL_MODE_FRONT_BIT;
+	createInfo2.ebo = nullptr;
+	createInfo2.pipelineCreateInfo = pci;
+	lightingInsideRenderer_ = new IndexedRenderer(createInfo, createInfo2);
 
 	std::uniform_real_distribution<float> rand(0.0f, 1.0f);
 	std::default_random_engine rng;

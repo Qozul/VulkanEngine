@@ -34,7 +34,7 @@ float pcfShadow(vec4 shadowCoord)
 	float shadow = 0;
 	for (int x = -PCF_COUNT; x <= PCF_COUNT; ++x) {
 		for (int y = -PCF_COUNT; y <= PCF_COUNT; ++y) {
-			shadow += projectShadow(shadowCoord, vec2(dx*x,dy*y), SC_SHADOW_DEPTH_IDX);
+			shadow += projectShadow(shadowCoord, vec2(dx*x, dy*y), SC_SHADOW_DEPTH_IDX);
 		}
 	}
 	return shadow / TOTAL_PCF_COUNT;
@@ -52,7 +52,7 @@ void main()
 	vec3 N = normalize(rawNormal.xyz * 2.0 - 1.0);
 	
 	float dist = length(lightPos - worldPos.xyz);
-	float attenuation = (1.0 - clamp(dist / light.radius, 0.0, 1.0) * light.attenuationFactor);
+	float attenuation = (1.0 - clamp(dist / light.radius, 0.0, 1.0));
 	
 	if (attenuation == 0.0) discard;
 	

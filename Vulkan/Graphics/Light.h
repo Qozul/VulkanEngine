@@ -14,7 +14,7 @@ namespace QZL {
 			glm::vec3 position;
 			float radius;
 			glm::vec3 colour;
-			float attentuationFactor;
+			float volumeScale;
 		};
 	}
 }

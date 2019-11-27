@@ -10,7 +10,7 @@ const float Camera::MOUSE_SENSITIVITY = 1000.0f;
 const float Camera::MAX_ROTATION_DT = 5e-4f;
 
 QZL::Game::Camera::Camera(const SystemMasters& initialiser)
-	: GameScript(initialiser), mainCamera_(sysMasters_->graphicsMaster->getCamera(0)), pitch_(0.0f), yaw_(0.0f), speed_(SPEED)
+	: GameScript(initialiser), mainCamera_(sysMasters_->graphicsMaster->getCamera(0)), pitch_(0.0f), yaw_(0.0f), speed_(SPEED), isOnTrack_(true), currentNode_(0), trackAmount_(0.0f)
 {
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_W }, std::bind(&Camera::moveForwards, this), 0.0f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_A }, std::bind(&Camera::moveLeft, this), 0.0f });
@@ -21,8 +21,18 @@ QZL::Game::Camera::Camera(const SystemMasters& initialiser)
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_X }, std::bind(&Camera::increaseSpeed, this), 0.2f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_Z }, std::bind(&Camera::decreaseSpeed, this), 0.2f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_L }, std::bind(&Camera::logPosition, this), 0.2f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_T }, [this]() { isOnTrack_ = false; }, 0.2f });
 	inputManager_->addProfile("camera", &inputProfile_);
 	mainCamera_->lookPoint = { 0.0f, 0.0f, 0.0f };
+
+	trackNodes_ = std::vector<TrackNode>({ 
+		{{97, 167, 9}, 232.5f, -20}, {{97, 167, 9}, 294, 88.5f}, {{138, 174, 22}, 263.5f, 243}, {{261.8f, 174.5f, 79.7f}, 216, 295},
+		{{375, 124, 103}, 271.5f, -141} , { {441, 112, 91}, 257.5f, -143.5f},
+		{{618, 101, 229}, 264.0f, -142.0f}, {{708, 109, 346}, 291.0f, -126.5f}, {{796, 114, 403}, 256.5f, -258.5},
+		{{751, 118, 419}, 256, -79.5f}, {{751, 118, 419}, 256, -79.5f}, {{809, 110, 383}, 264.5f, -333.0f}, 
+		{{809, 110, 383}, 264.5f, -333.0f}
+	});
+	maxNode_ = trackNodes_.size() - 1;
 }
 
 Camera::~Camera()
@@ -36,17 +46,36 @@ void Camera::start()
 
 void Camera::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
-	dt = glm::min(dt, MAX_ROTATION_DT);
-	yaw_ += static_cast<float>(inputManager_->getRelativeMousePos().x) * MOUSE_SENSITIVITY * dt; // movement around y axis
-	pitch_ += static_cast<float>(inputManager_->getRelativeMousePos().y) * MOUSE_SENSITIVITY * dt * -1.0f; // movement around x axis
-	// clamp pitch to avoid inversion
-	pitch_ = glm::clamp(pitch_, 181.0f, 359.0f);
-	// Calc point on sphere with these (i.e. the two circle's intersection)
-	float phi = glm::radians(yaw_);
-	float theta = glm::radians(pitch_);
-	float stheta = sin(theta);
-	mainCamera_->lookPoint = glm::vec3(cos(phi) * stheta, cos(theta), sin(phi) * stheta);
-
+	if (isOnTrack_) {
+		trackAmount_ += dt * 0.2f;
+		mainCamera_->position = glm::mix(trackNodes_[currentNode_].position, trackNodes_[currentNode_ + 1].position, glm::clamp(trackAmount_, 0.0f, 1.0f));
+		float phi = glm::radians(glm::mix(trackNodes_[currentNode_].yaw, trackNodes_[currentNode_ + 1].yaw, glm::clamp(trackAmount_, 0.0f, 1.0f)));
+		float theta = glm::radians(glm::mix(trackNodes_[currentNode_].pitch, trackNodes_[currentNode_ + 1].pitch, glm::clamp(trackAmount_, 0.0f, 1.0f)));
+		float stheta = sin(theta);
+		mainCamera_->lookPoint = glm::vec3(cos(phi) * stheta, cos(theta), sin(phi) * stheta);
+		if (trackAmount_ >= 1.2f) {
+			++currentNode_;
+			trackAmount_ = 0.0f;
+		}
+		if (currentNode_ == maxNode_) {
+			isOnTrack_ = false;
+			currentNode_ = 0;
+			pitch_ = trackNodes_[currentNode_].pitch;
+			yaw_ = trackNodes_[currentNode_].yaw;
+		}
+	}
+	else {
+		dt = glm::min(dt, MAX_ROTATION_DT);
+		yaw_ += static_cast<float>(inputManager_->getRelativeMousePos().x) * MOUSE_SENSITIVITY * dt; // movement around y axis
+		pitch_ += static_cast<float>(inputManager_->getRelativeMousePos().y) * MOUSE_SENSITIVITY * dt * -1.0f; // movement around x axis
+		// clamp pitch to avoid inversion
+		pitch_ = glm::clamp(pitch_, 181.0f, 359.0f);
+		// Calc point on sphere with these (i.e. the two circle's intersection)
+		float phi = glm::radians(yaw_);
+		float theta = glm::radians(pitch_);
+		float stheta = sin(theta);
+		mainCamera_->lookPoint = glm::vec3(cos(phi) * stheta, cos(theta), sin(phi) * stheta);
+	}
 	updatePosition();
 }
 
@@ -101,5 +130,5 @@ void Camera::updatePosition()
 
 void Camera::logPosition()
 {
-	DEBUG_LOG(vecToString(mainCamera_->position));
+	DEBUG_LOG(vecToString(mainCamera_->position) << " Pitch: " << pitch_ << " Yaw: " << yaw_);
 }

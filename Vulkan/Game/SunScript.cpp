@@ -7,7 +7,7 @@ using namespace QZL;
 using namespace QZL::Game;
 
 SunScript::SunScript(const SystemMasters& initialiser)
-	: ParticleSystem(initialiser, &initialiser.graphicsMaster->getCamera(0)->position, 2, 0.0f, 0.5f, "SunMoon"), angle_(glm::radians(-10.0f)), 
+	: ParticleSystem(initialiser, &initialiser.graphicsMaster->getCamera(0)->position, 2, 0.0f, 0.5f, "SunMoon"), angle_(glm::radians(45.0f)), 
 	sunCamera_(initialiser.graphicsMaster->getCamera(1))
 {
 }
@@ -51,7 +51,7 @@ void SunScript::update(float dt, const glm::mat4& viewProjection, const glm::mat
 	transform()->rotationAngle = angle_;
 
 	// The direction from the sun particle to the centre point in world space, which in model space is +x
-	direction_ = glm::normalize(glm::vec3(1.0, 1.0, 0.0));// glm::normalize(glm::vec3((transform()->toModelMatrix() * glm::vec4(vertices_[0].position, 1.0))));
+	direction_ = glm::vec3(1.0, 1.0, 0.0);
 
 	sunCamera_->position = (direction_ * RADIUS);
 	auto localUp = direction_;
@@ -60,6 +60,4 @@ void SunScript::update(float dt, const glm::mat4& viewProjection, const glm::mat
 	localUp.x = x * glm::cos(PI_BY_TWO) - y * glm::sin(PI_BY_TWO);
 	localUp.y = x * glm::sin(PI_BY_TWO) + y * glm::cos(PI_BY_TWO);
 	sunCamera_->viewMatrix = glm::lookAt(sunCamera_->position, glm::vec3(512.0f, 0.0f, 512.0f), glm::vec3(0.0, 1.0, 0.0));
-
-	//static_cast<Graphics::ParticleShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->tint = glm::abs(glm::cos(angle_)) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 }

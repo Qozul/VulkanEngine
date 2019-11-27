@@ -10,7 +10,7 @@ namespace QZL
 		public:
 			IndexedRenderer(RendererCreateInfo& createInfo, RendererCreateInfo2& createInfo2);
 			~IndexedRenderer() = default;
-			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) override;
+			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind = false) override;
 		};
 	}
 }

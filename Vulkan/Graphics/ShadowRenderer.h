@@ -11,7 +11,7 @@ namespace QZL
 		public:
 			ShadowRenderer(RendererCreateInfo& createInfo);
 			~ShadowRenderer() = default;
-			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList) override;
+			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind = false) override;
 		};
 	}
 }

@@ -22,15 +22,8 @@ void main()
 	
 	vec2 v = getRay(Cv);
 	
-	if (!isinf(distanceToCircle(Pa, v, atmosphere.planetRadius, true))) {
-        imageStore(transmittanceTexture, ivec2(gl_GlobalInvocationID.xy), vec4(0.0, 0.0, 0.0, 1.0));
-        return;
-    }
     float t = distanceToCircle(Pa, v, atmosphere.planetRadius + atmosphere.Hatm, false);
-    if (isinf(t)) {
-        imageStore(transmittanceTexture, ivec2(gl_GlobalInvocationID.xy), vec4(1.0, 1.0, 1.0, 1.0));
-        return;
-    }
+	int numSteps = isinf(t) ? 0 : INTEGRATION_STEPS_TRANSMITTANCE;
 	
     vec2 Pb = Pa + t * v;
 	
@@ -43,7 +36,7 @@ void main()
 	// Integrate along viewing ray from corresponding height
 	float stepSize = distance(Pa, Pb) / float(INTEGRATION_STEPS_TRANSMITTANCE);
 	// For each integration step, calculate the particle density of Mie and Rayleigh
-	for (int s = 0; s < INTEGRATION_STEPS_TRANSMITTANCE; ++s) {
+	for (int s = 0; s < numSteps; ++s) {
 		vec2 P = Pa + stepSize * s * v; // Integration point
 		float h = getHeight(P, atmosphere.planetRadius);
 		float mieDensity = getDensity(h, atmosphere.mieScaleHeight);
@@ -56,7 +49,7 @@ void main()
 		previousRayleighDensity = rayleighDensity;
 		previousOzoneDensity = ozoneDensity;
 	}
-	vec3 result = exp(-(atmosphere.betaRay * rayleighDensitySum + 
+	vec3 result = isinf(t) ?  vec3(1.0) :  exp(-(atmosphere.betaRay * rayleighDensitySum + 
 		atmosphere.betaMieExt * mieDensitySum + atmosphere.betaOzoneExt * ozoneDensitySum ));
 	
 	imageStore(transmittanceTexture, ivec2(gl_GlobalInvocationID.xy), vec4(result, 1.0));

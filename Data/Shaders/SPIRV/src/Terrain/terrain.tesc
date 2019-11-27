@@ -11,6 +11,8 @@
 layout(constant_id = 0) const uint SC_PARAMS_OFFSET = 0;
 layout(constant_id = 1) const uint SC_MATERIAL_OFFSET = 0;
 
+const float TESSELLATION_WEIGHT_CLOSE = 16.0;
+
 layout(vertices = NUM_VERTS) out;
 
 layout(location = 0) in vec2 iTexUV[];
@@ -37,15 +39,13 @@ layout(set = COMMON_SET, binding = COMMON_MATERIALS_BINDING) readonly buffer Tex
 	TextureIndices textureIndices[];
 };
 
-const float minWeight = 1.0;
-
 float calculateTessLevel(float d0, float d1, in Params parameters)
 {
 	// Get closest vertex on the side to the camera
 	float dist = min(d0, d1) - parameters.closeDistance;
 	// Calculate a continuous value between 0 and 1
 	float proportion = clamp(dist/parameters.distanceFarMinusClose, 0.0, 1.0);
-	return mix(12.0, minWeight, proportion);
+	return mix(TESSELLATION_WEIGHT_CLOSE, MIN_TESSELLATION_WEIGHT, proportion);
 }
 
 bool checkCulling(in Params parameters)

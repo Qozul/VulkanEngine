@@ -2,4 +2,5 @@ Fullscreen quad without vertex buffers: https://www.saschawillems.de/blog/2016/0
 
 .obj loading: https://github.com/syoyo/tinyobjloader
 
-Atmospheric Scattering: http://publications.lib.chalmers.se/records/fulltext/203057/203057.pdf and https://github.com/Ralith/fuzzyblue
+Atmospheric Scattering: http://publications.lib.chalmers.se/records/fulltext/203057/203057.pdf and https://github.com/Ralith/fuzzyblue for some
+implementation stuff

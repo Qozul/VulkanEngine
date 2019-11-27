@@ -55,7 +55,7 @@ void System::loop()
 		double fpsTimeCurrent = glfwGetTime();
 		++numFrames;
 		if (fpsTimeCurrent - fpsTimePrev >= 1.0) {
-			glfwSetWindowTitle(masters_.graphicsMaster->details_.window, std::to_string(numFrames).c_str());
+			glfwSetWindowTitle(masters_.graphicsMaster->details_.window, ("Num keys for wiremesh modes. B, N, M for SSAO, DoF, and FXAA toggles. T to release camera from track. P for split screen. FPS: " + std::to_string(numFrames)).c_str());
 			numFrames = 0;
 			fpsTimePrev += 1.0;
 		}

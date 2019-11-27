@@ -14,13 +14,21 @@ void GlobalRenderData::updateData(uint32_t idx, Light& data)
 	lightingUbo_->unbindRange();
 }
 
+void GlobalRenderData::updateLightData(std::vector<Light>& lights)
+{
+	ASSERT(lights.size() < MAX_LIGHTS);
+	Light* lightingPtr = static_cast<Light*>(lightingUbo_->bindRange());
+	memcpy(lightingPtr, lights.data(), lights.size() * sizeof(Light));
+	lightingUbo_->unbindRange();
+}
+
 void GlobalRenderData::updateCameraData(LogicalCamera& mainCamera, float screenX, float screenY)
 {
 	CameraInfo* camInfo = (CameraInfo*)cameraInfoUbo_->bindRange();
 	camInfo->projMatrix = mainCamera.projectionMatrix;
 	camInfo->inverseViewProj = glm::inverse(mainCamera.viewProjection);
 	camInfo->nearPlaneZ = 0.1;
-	camInfo->farPlaneZ = 2500.0;
+	camInfo->farPlaneZ = 25000.0;
 	camInfo->position = mainCamera.position;
 	camInfo->viewMatrix = mainCamera.viewMatrix;
 	camInfo->screenX = screenX;

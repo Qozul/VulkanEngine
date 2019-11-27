@@ -10,6 +10,9 @@ void Entity::update(float dt, const glm::mat4& viewProjection, const glm::mat4& 
 	if (gameScript_ != nullptr) {
 		gameScript_->update(dt, viewProjection, parentMatrix);
 	}
+	if (updateFunc_ != nullptr) {
+		updateFunc_(dt);
+	}
 }
 
 void Entity::start()
@@ -47,9 +50,9 @@ bool Entity::isStatic() const
 	return rigidBody_ == nullptr && gameScript_ == nullptr;
 }
 
-Entity::Entity(const std::string name) 
+Entity::Entity(const std::string name)
 	: graphicsComponent_(nullptr), rigidBody_(nullptr), gameScript_(nullptr), transform_(new Transform()), 
-	  collisionVolume_(nullptr), sceneNode_(nullptr), preserveChildrenOnDelete_(true), name_(name)
+	  collisionVolume_(nullptr), sceneNode_(nullptr), preserveChildrenOnDelete_(true), name_(name), updateFunc_(nullptr)
 {
 }
 

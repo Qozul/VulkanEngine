@@ -50,7 +50,7 @@ PostProcessRenderer::PostProcessRenderer(RendererCreateInfo& createInfo, uint32_
 		pipelineLayouts_.data(), 1, pushConstants), stageInfos, pci, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void PostProcessRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void PostProcessRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind)
 {
 	beginFrame(cmdBuffer);
 	vkCmdDraw(cmdBuffer, 3, 1, 0, 0);

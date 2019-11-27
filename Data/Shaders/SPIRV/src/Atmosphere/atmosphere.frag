@@ -1,3 +1,7 @@
+// Reference: https://github.com/Ralith/fuzzyblue for distanceToCircle, intersection,
+// and adjustments to the parametrization values.
+// Additionally, this scattering is based on the paper http://publications.lib.chalmers.se/records/fulltext/203057/203057.pdf by
+// Gustav Boadre and Edvard Sandberg.
 #version 450
 #define OVERRIDE_TEX_SAMPLERS
 #extension GL_EXT_nonuniform_qualifier : require

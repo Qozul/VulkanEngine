@@ -114,8 +114,11 @@ void ShadowPass::createRenderers()
 	createInfo.swapChainImageCount = swapChainDetails_.images.size();
 	createInfo.graphicsInfo = graphicsInfo_;
 	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	createInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 	createInfo.updateRendererSpecific(0, 1, "ShadowVert",  "");
 	shadowRenderer_ = new ShadowRenderer(createInfo);
+
+	createInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
 	createInfo.updateRendererSpecific(0, 1, "ShadowTerrainVert", "", "", "ShadowTerrainTESC", "ShadowTerrainTESE");
 	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 	shadowTerrainRenderer_ = new ShadowRenderer(createInfo);

@@ -9,6 +9,11 @@ namespace QZL {
 	}
 	namespace Game {
 		class Camera : public GameScript {
+			struct TrackNode {
+				glm::vec3 position;
+				float pitch;
+				float yaw;
+			};
 		public:
 			Camera(const SystemMasters& initialiser);
 			~Camera();
@@ -34,7 +39,13 @@ namespace QZL {
 			InputProfile inputProfile_;
 			float speed_;
 
-			static const int MAX_SPEED = 100;
+			bool isOnTrack_;
+			std::vector<TrackNode> trackNodes_;
+			int currentNode_;
+			int maxNode_;
+			float trackAmount_;
+
+			static const int MAX_SPEED = 200;
 			static const int MIN_SPEED = 1;
 
 			static const float SPEED;

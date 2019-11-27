@@ -43,6 +43,7 @@ namespace QZL {
 				return layout_;
 			}
 			void updateData(uint32_t idx, Light& data);
+			void updateLightData(std::vector<Light>& lights);
 			void updateCameraData(LogicalCamera& mainCamera, float screenX, float screenY);
 			void updatePostData(float screenX, float screenY, glm::mat4& shadowMatrix);
 		private:

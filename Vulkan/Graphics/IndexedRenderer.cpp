@@ -16,12 +16,12 @@ IndexedRenderer::IndexedRenderer(RendererCreateInfo& createInfo, RendererCreateI
 		pipelineLayouts_.data(), createInfo2.pcRangesCount, createInfo2.pcRanges), createInfo2.shaderStages, createInfo2.pipelineCreateInfo, RendererPipeline::PrimitiveType::kQuads);
 }
 
-void IndexedRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList)
+void IndexedRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind)
 {
 	if (commandList->size() == 0)
 		return;
 	beginFrame(cmdBuffer);
-	ebo_->bind(cmdBuffer, frameIdx);
+	if (!ignoreEboBind) ebo_->bind(cmdBuffer, frameIdx);
 
 	for (auto& cmd : *commandList) {
 		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);

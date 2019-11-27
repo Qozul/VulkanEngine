@@ -70,7 +70,7 @@ void main() {
 	passThrough(parameters.model);
 	
 	// Generate new quad for grass if appropriate
-	int idx = int(clamp(fract(sin(inNormal[0].x) * sin(inPos[2].y)) * 3.99, 0.1, 3.99));
+	int idx = int(clamp(fract(sin(inNormal[0].x) * sin(inPos[2].y)) * 2.99, 0.1, 2.99));
 	mat4 mvp = mvps[SC_MVP_OFFSET + inInstanceIndex[0]];
 	float height = clamp((parameters.model * vec4(inPos[idx], 1.0)).y / parameters.heights.x, 0.0, 1.0);
 	bool slope = inNormal[idx].y > inNormal[idx].x + 0.1 && inNormal[idx].y > inNormal[idx].z + 0.1;

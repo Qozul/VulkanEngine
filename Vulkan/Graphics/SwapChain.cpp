@@ -32,15 +32,9 @@ void SwapChain::loop()
 {
 	const uint32_t imgIdx = aquireImage();
 
-	// Main scene light
-	frameInfo_.sunHeight = glm::dot(glm::normalize(getCamera(1)->position), glm::vec3(0.0f, 1.0f, 0.0f));
-	auto mainIntensity = glm::vec3(0.8f) * frameInfo_.sunHeight;
-	Light lightingData = { frameInfo_.cameras[1].position, 2000.0f, glm::vec3(0.5), 0.0f };
-	globalRenderData_->updateData(0, lightingData);
+	auto commandLists = activeScene_->update(frameInfo_.cameras, NUM_CAMERAS, System::deltaTimeSeconds, imgIdx, globalRenderData_);
 
-	auto commandLists = activeScene_->update(frameInfo_.cameras, NUM_CAMERAS, System::deltaTimeSeconds, imgIdx);
-
-	globalRenderData_->updateCameraData(frameInfo_.cameras[0], 800, 600);
+	globalRenderData_->updateCameraData(frameInfo_.cameras[0], details_.extent.width, details_.extent.height);
 
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
@@ -119,7 +113,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	frameInfo_.cameras[1].position = glm::vec3(100.0f, 300.0f, 200.0f);
 	frameInfo_.cameras[1].lookPoint = glm::vec3(100.0f, 10.0f, 300.0f);
 	frameInfo_.cameras[1].viewMatrix = glm::lookAt(frameInfo_.cameras[1].position, frameInfo_.cameras[1].lookPoint, glm::vec3(0.0f, 1.0f, 0.0f));
-	frameInfo_.cameras[1].projectionMatrix = glm::ortho(-500.0f, 500.0f, -500.0f, 500.0f, 200.0f, 1500.0f);
+	frameInfo_.cameras[1].projectionMatrix = glm::ortho(-700.0f, 700.0f, -700.0f, 700.0f, 500.0f, 1500.0f);
 	frameInfo_.cameras[1].projectionMatrix[1][1] *= -1.0f;
 
 	globalRenderData_->updatePostData(details_.extent.width, details_.extent.height, frameInfo_.cameras[1].viewProjection);

@@ -53,10 +53,10 @@ void main()
 		colour = vec4(col, 1.0);
 	}
 	else {
-		float lumDL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2(-1,-1)).rgb);
-		float lumUR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 1, 1)).rgb);
-		float lumUL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2(-1, 1)).rgb);
-		float lumDR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 1,-1)).rgb);
+		float lumDL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2(-1, -1)).rgb);
+		float lumUR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 1,  1)).rgb);
+		float lumUL = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2(-1,  1)).rgb);
+		float lumDR = rgbToLuminance(textureOffset(texSamplers[nonuniformEXT(PC.colourIdx)], uv, ivec2( 1, -1)).rgb);
 		
 		float lumDU = lumD + lumU;
 		float lumLR = lumL + lumR;
@@ -94,16 +94,11 @@ void main()
 		
 		bool reached1 = abs(lumEnd1) >= grad;
 		bool reached2 = abs(lumEnd2) >= grad;
-		bool reachedBoth = reached1 && reached2;
 		
-		if (!reached1) {
-			uv1 -= uvOffset;
-		}
-		if(!reached2){
-			uv2 += uvOffset;
-		}
+		if(!reached1) uv1 -= uvOffset;
+		if(!reached2) uv2 += uvOffset;
 		
-		if (!reachedBoth) {
+		if (!reached1 && reached2) {
 			for (int i = 2; i < ITERATIONS; ++i) {
 				if (!reached1) {
 					lumEnd1 = rgbToLuminance(texture(texSamplers[nonuniformEXT(PC.colourIdx)], uv1).rgb) - lumAvg;
@@ -113,18 +108,10 @@ void main()
 				}
 				reached1 = abs(lumEnd1) >= grad;
 				reached2 = abs(lumEnd2) >= grad;
-				reachedBoth = reached1 && reached2;
 				
-				if (reachedBoth) {
-					break;
-				}
-				
-				if (!reached1) {
-					uv1 -= uvOffset * QUALITY[i];
-				}
-				if (!reached2) {
-					uv2 += uvOffset * QUALITY[i];
-				}
+				if (reached1 && reached2) break;
+				if (!reached1) uv1 -= uvOffset * QUALITY[i];
+				if (!reached2) uv2 += uvOffset * QUALITY[i];
 			}
 		}
 		

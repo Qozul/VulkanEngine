@@ -49,10 +49,15 @@ Graphics::SceneGraphicsInfo* GameMaster::loadDescriptors()
 
 void GameMaster::loadStatics(Scene* scene)
 {
+	// Trees
 	const std::vector<glm::vec3> positions = {
-		{180, 169, 72}, {153, 186, 96}, { 132, 170, 39 }, {126, 164, 15},
-		{84, 159, 6}, {65,137,14},{27, 120, 3}, {6, 119, 37}, {38, 121, 37}, {50,122,92},
-		{30, 121, 116}, {13,115,62},{330,93,505}
+		{180, 165, 72}, {153, 184, 96}, { 132, 168, 39 }, {126, 161, 15},
+		{84, 157, 6}, {65,135,14},{27, 117, 3}, {6, 116, 37}, {38, 118, 37}, {50,120,92},
+		{30, 118, 116}, {13,113,62},{330,90,505}, {192, 135, 15}, {245, 147, 67}, {271,114,27},
+		{402, 90, 57}, {425,95,107}, {426,86,73}, {458,77,64},{426, 63, 3}, { 447, 92, 122 },
+		{ 504, 66, 85 }, {481, 87, 123},{ 467, 96, 166 }, { 489,90,159 }, { 505,87,153 }, { 552,79,165 },
+		{ 520,93,212 }, { 482,98,202 }, { 490,98,224 }, { 498,99,266 }, {446, 84, 86},{458,82,106},
+		{441,89,108}, {420, 95, 99}, {478, 84, 140}
 	};
 	for (auto pos : positions) {
 		Entity* tree = new Entity("lowpoly_tree");
@@ -61,6 +66,53 @@ void GameMaster::loadStatics(Scene* scene)
 		tree->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 			masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "tree");
 		scene->addEntity(tree);
+	}
+
+	// Windmill
+	const std::vector<glm::vec3> millPositions = {
+		{759, 96, 413}
+	};
+	for (auto pos : millPositions) {
+		Entity* turbineBase = new Entity("turbine_base");
+		turbineBase->getTransform()->setScale(20.0f);
+		turbineBase->getTransform()->rotationAxis = glm::vec3(0.0, 1.0, 0.0);
+		turbineBase->getTransform()->rotationAngle = glm::radians(180.0f);
+		turbineBase->getTransform()->position = pos;
+		turbineBase->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(20.0f),
+			masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "turbine"), "TurbineBase");
+		auto baseNode = scene->addEntity(turbineBase);
+		Entity* turbineBlade = new Entity("turbine_blade");
+		turbineBlade->getTransform()->position.y = 3.43f;
+		turbineBlade->getTransform()->rotationAxis = glm::vec3(1.0, 0.0, 0.0);
+		turbineBlade->setSimpleUpdateFunction([turbineBlade](float dt) { 
+			turbineBlade->getTransform()->rotationAngle += dt; 
+			if (turbineBlade->getTransform()->rotationAngle > glm::two_pi<float>()) {
+				turbineBlade->getTransform()->rotationAngle = 0.0f;
+			}
+		});
+		turbineBlade->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(10.0f),
+			masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "turbine_blade"), "TurbineBladesAdjusted");
+		scene->addEntity(turbineBlade, turbineBase, baseNode);
+	}
+
+	// Lamps
+	const std::vector<glm::vec3> lampPositions = {
+		{802, 102, 399}, {810,102,378},{823,97,365}, {811, 90, 346}, {833, 90, 337},
+		{755,101,365}, {745,87,318}, {698, 98, 340}, {717, 89, 317}, {708, 87, 303}
+	};
+	for (auto pos : lampPositions) {
+		Entity* lampPost = new Entity("lamp_post");
+		lampPost->getTransform()->setScale(0.05f);
+		lampPost->getTransform()->position = pos;
+		lampPost->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
+			masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "posts"), "poste_obj");
+		auto baseNode = scene->addEntity(lampPost);
+		auto radius = rand() % 200 + 20;
+		Entity* light = new LightSource("lampLight", glm::normalize(pos * glm::vec3((float)(rand() % 100), (float)(rand() % 100), (float)(rand() % 100))), 
+			radius, 1500.0f, &lampPost->getTransform()->position);
+		light->getTransform()->position = pos;
+		light->getTransform()->setScale(1500.0f);
+		scene->addEntity(light);
 	}
 }
 
@@ -100,7 +152,7 @@ void GameMaster::loadGame()
 	teapotDeferred2->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(),
 		masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "ExampleStatic"), "Teapot");*/
 
-	Entity* light = new LightSource("light", glm::vec3(0.8), 2000.0f, 1.0f);
+	Entity* light = new LightSource("light", glm::vec3(0.5), 2000.0f, 1500.0f, &masters_.graphicsMaster->getCamera(1)->position);
 	light->getTransform()->setScale(1500.0f);
 
 	loadStatics(scenes_[activeSceneIdx_]);
@@ -112,7 +164,7 @@ void GameMaster::loadGame()
 	scenes_[activeSceneIdx_]->addEntity(sun);
 	//scenes_[activeSceneIdx_]->addEntity(teapotDeferred);
 	//scenes_[activeSceneIdx_]->addEntity(teapotDeferred2);
-	scenes_[activeSceneIdx_]->addEntity(light, sun);
+	scenes_[activeSceneIdx_]->addEntity(light);
 
 	DEBUG_LOG(scenes_[activeSceneIdx_]);
 }

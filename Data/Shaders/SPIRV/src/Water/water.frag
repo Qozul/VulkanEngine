@@ -50,7 +50,7 @@ void main() {
 	vec3 albedoColour = mix(param.baseColour.xyz, param.tipColour.xyz, pow(height, 2.0));
 	
 	outPosition = vec4(inWorldPos, 1.0);
-	outNormal = vec4(inNormal * 0.5 + 0.5, 4.0);
+	outNormal = vec4(inNormal * 0.5 + 0.5, 24.0);
 	
-	outAlbedo = vec4(mix(albedoColour, environmentCol.rgb, 0.75), 1.0);
+	outAlbedo = vec4(mix(albedoColour, environmentCol.rgb, 0.85), 1.0);
 }

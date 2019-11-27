@@ -1,3 +1,4 @@
+// Based on SSAO tutorial https://learnopengl.com/Advanced-Lighting/SSAO
 #version 450
 #extension GL_EXT_nonuniform_qualifier : require
 #extension GL_GOOGLE_include_directive : enable
@@ -34,8 +35,7 @@ layout(set = GLOBAL_SET, binding = POST_PROCESS_BINDING) uniform PostProcessInfo
 
 vec3 sampleDepth(vec2 coords) {
 	vec4 clip = inverse(Camera.projMatrix) * vec4(vec3(coords * 2.0 - 1.0, texture(texSamplers[nonuniformEXT(SC_GEOMETRY_DEPTH_IDX)], coords).r * 2.0 - 1.0), 0.0);
-	vec3 position = clip.xyz / clip.w;
-	return position;
+	return clip.xyz / clip.w;
 }
 
 void main()

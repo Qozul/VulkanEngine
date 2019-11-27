@@ -1,3 +1,8 @@
+// Reference: https://github.com/Ralith/fuzzyblue for distanceToCircle, intersection,
+// and adjustments to the parametrization values.
+// Additionally, this scattering is based on the paper http://publications.lib.chalmers.se/records/fulltext/203057/203057.pdf by
+// Gustav Boadre and Edvard Sandberg.
+
 #define INTEGRATION_STEPS 30
 #define INVOCATION_SIZE 8
 
@@ -63,34 +68,24 @@ float getDensity(in float height, in float scaleHeight)
 	return exp(-height/scaleHeight);
 }
 
-// Reference: https://github.com/Ralith/fuzzyblue
-const float infinity = 1. / 0.;
+const float inf = 1. / 0.;
 float distanceToCircle(vec2 start, vec2 dir, float radius, bool nearest) {
     float c = dot(start, start) - (radius*radius);
     float b = dot(dir, start);
     float d = b*b - c;
-    if (d < 0.0) {
-		return infinity;
-	}
+    if (d < 0.0) return inf;
+	
     float t0 = -b - sqrt(d);
     float t1 = -b + sqrt(d);
     float ta = min(t0, t1);
     float tb = max(t0, t1);
-    if (tb < 0.0) { 
-		return infinity;
-	}
-    else if (nearest) { 
-		return ta > 0.0 ? ta : tb;
-	}
-    else { 
-		return tb;
-	}
+	return tb < 0.0 ? inf : nearest && ta > 0.0 ? ta : tb;
 }
 
 vec2 intersection(vec2 start, vec2 dir, float planetRadius, float Hatm) {
     float t = distanceToCircle(start, dir, planetRadius, true);
-    if (isinf(t)) { t = distanceToCircle(start, dir, planetRadius + Hatm, false); }
-    if (isinf(t)) { t = 0; }
+    t = isinf(t) ? distanceToCircle(start, dir, planetRadius + Hatm, false) : t;
+    t = isinf(t) ? 0 : t;
     return start + t * dir;
 }
 
@@ -103,15 +98,4 @@ float getHeight(in vec2 P, float planetRadius)
 vec3 extractMieFromScattering(in vec4 scattering, in float betaMie, in vec3 betaRay)
 {
 	return scattering.rgb * (scattering.a / scattering.r) * (betaRay.r / betaMie) * (betaMie / betaRay);
-}
-
-vec3 getNearPlaneWorldPosition(in vec2 uv, in mat4 invViewProj)
-{
-	// Clip space is in range -1 to 1. z = -1.0 puts it on the near plane.
-	vec4 clipCoords = vec4(uv * 2.0 - 1.0, -1.0, 1.0);
-	// Use inverseViewProj to go from clip to world position
-	vec4 pos = (invViewProj * clipCoords);
-	// Perspective division
-	pos /= pos.w;
-	return pos.xyz;
 }

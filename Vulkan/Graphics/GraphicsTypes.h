@@ -13,6 +13,7 @@ namespace QZL {
 			kShadow,
 			kWater,
 			kLight,
+			kLightInside,
 			kNone
 		};
 
