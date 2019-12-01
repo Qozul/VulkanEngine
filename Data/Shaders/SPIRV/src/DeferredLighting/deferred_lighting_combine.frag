@@ -32,7 +32,7 @@ void main()
 	vec3 specular = texture(texSamplers[nonuniformEXT(SC_SPECULAR_IDX)], inUV).rgb;
 	vec4 fullAlbedo = texture(texSamplers[nonuniformEXT(SC_G_BUFFER_ALBEDO)], inUV);
 	
-	outColour.rgb = max(diffuse.rgb, AMBIENT * blurSSAO());
+	outColour.rgb = max(diffuse.rgb * blurSSAO(), AMBIENT * blurSSAO());
 	outColour.rgb *= fullAlbedo.rgb;
 	outColour.rgb += (specular);
 	outColour.a = fullAlbedo.a;

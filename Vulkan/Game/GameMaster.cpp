@@ -76,7 +76,7 @@ void GameMaster::loadStatics(Scene* scene)
 		Entity* turbineBase = new Entity("turbine_base");
 		turbineBase->getTransform()->setScale(20.0f);
 		turbineBase->getTransform()->rotationAxis = glm::vec3(0.0, 1.0, 0.0);
-		turbineBase->getTransform()->rotationAngle = glm::radians(180.0f);
+		turbineBase->getTransform()->rotationAngle = glm::radians(90.0f);
 		turbineBase->getTransform()->position = pos;
 		turbineBase->setGraphicsComponent(Graphics::RendererTypes::kStatic, nullptr, new Graphics::StaticShaderParams(20.0f),
 			masters_.textureManager->requestMaterial(Graphics::RendererTypes::kStatic, "turbine"), "TurbineBase");

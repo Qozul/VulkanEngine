@@ -57,14 +57,14 @@ void createVertex(vec3 right, vec2 uv, float r, float u, mat4 mvp, mat4 model, i
 	outCamPos = inCamPos[0];
 	outTexUV = uv;
 	outWorldPos = (model * pos).xyz;
-	outNormal = normalize(inCamPos[0] - outWorldPos);
+	outNormal = inNormal[idx];
 	outGrass = idx;
 	gl_Position = mvp * pos;
 	EmitVertex();
 }
 
-void main() {
-	
+void main() 
+{
 	Params parameters = params[SC_PARAMS_OFFSET + inInstanceIndex[0]];
 	// Pass through terrain tri
 	passThrough(parameters.model);
