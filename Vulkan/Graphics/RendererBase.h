@@ -26,9 +26,11 @@ namespace QZL
 			std::vector<ShaderStageInfo> shaderStages;
 			VkPushConstantRange* pcRanges;
 			uint32_t pcRangesCount;
+			VertexTypes vertexTypes;
+			RendererPipeline::PrimitiveType tessellationPrims = RendererPipeline::PrimitiveType::kQuads;
 		};
 
-		struct RendererCreateInfo {
+		/*struct RendererCreateInfo {
 			LogicDevice* logicDevice;
 			Descriptor* descriptor;
 			GlobalRenderData* globalRenderData;
@@ -58,7 +60,7 @@ namespace QZL
 				tessControlShader = tesc;
 				tessEvalShader = tese;
 			}
-		};
+		};*/
 
 		struct DescriptorOffsets {
 			uint32_t mvp;
@@ -108,9 +110,7 @@ namespace QZL
 
 		class RendererBase {
 		public:
-			RendererBase(RendererCreateInfo& createInfo, ElementBufferObject* ebo)
-				: pipeline_(nullptr), ebo_(ebo), logicDevice_(createInfo.logicDevice), descriptor_(createInfo.descriptor), pushConstantOffset_(0),
-				  graphicsInfo_(createInfo.graphicsInfo) { }
+			RendererBase(LogicDevice* logicDevice, ElementBufferObject* ebo, SceneGraphicsInfo* graphicsInfo);
 
 			virtual ~RendererBase();
 			virtual void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind = false) = 0;
@@ -134,11 +134,10 @@ namespace QZL
 			static const std::pair<VkPushConstantRange, PushConstantInfo> createPushConstantRange(VkShaderStageFlagBits stages, uint32_t offset);
 		protected:
 			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages,
-				PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount = RendererPipeline::PrimitiveType::kNone);
+				PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount);
 
-			template<typename V>
-			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
-				PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount = RendererPipeline::PrimitiveType::kNone);
+			void createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages,
+				PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount, VertexTypes vertexType);
 
 			void beginFrame(VkCommandBuffer& cmdBuffer);
 			void bindEBO(VkCommandBuffer& cmdBuffer, uint32_t idx);
@@ -183,16 +182,6 @@ namespace QZL
 			pinfo.offset = offset;
 
 			return { pushConstantRange, pinfo };
-		}
-
-		template<typename V>
-		inline void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages, 
-			PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount)
-		{
-			auto bindingDesc = makeVertexBindingDescription(0, sizeof(V), VK_VERTEX_INPUT_RATE_VERTEX);
-			auto attribDesc = makeVertexAttribDescriptions(0, V::makeAttribInfo());
-			pipelineCreateInfo.vertexInputInfo = RendererPipeline::makeVertexInputInfo(bindingDesc, attribDesc);
-			pipeline_ = new RendererPipeline(logicDevice, renderPass, layoutInfo, stages, pipelineCreateInfo, patchVertexCount);
 		}
 	}
 }

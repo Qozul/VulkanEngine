@@ -168,14 +168,8 @@
     <ClInclude Include="Graphics\RenderPass.h">
       <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\GeneralPass.h">
-      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\PostProcessPass.h">
       <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\PostProcessRenderer.h">
-      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
     <ClInclude Include="Assets\Terrain.h">
       <Filter>Header Files\Assets\Specialised Entities</Filter>
@@ -185,9 +179,6 @@
     </ClInclude>
     <ClInclude Include="Game\FireSystem.h">
       <Filter>Header Files\Game\Scripts\Particles</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\AtmosphereRenderer.h">
-      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\ParticleRenderer.h">
       <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
@@ -288,9 +279,6 @@
     <ClInclude Include="Graphics\ShadowPass.h">
       <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\ShadowRenderer.h">
-      <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
-    </ClInclude>
     <ClInclude Include="Game\TerrainScript.h">
       <Filter>Header Files\Game\Scripts</Filter>
     </ClInclude>
@@ -312,9 +300,6 @@
     <ClInclude Include="Graphics\FullscreenRenderer.h">
       <Filter>Header Files\Graphics\Rendering\Renderers</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\DeferredPass.h">
-      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\LightingPass.h">
       <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
     </ClInclude>
@@ -323,6 +308,12 @@
     </ClInclude>
     <ClInclude Include="Assets\LightSource.h">
       <Filter>Header Files\Assets\Specialised Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\CombinePass.h">
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\GeometryPass.h">
+      <Filter>Header Files\Graphics\Rendering\RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -365,12 +356,6 @@
     <ClCompile Include="Game\FireSystem.cpp">
       <Filter>Source Files\Game\Scripts</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\AtmosphereRenderer.cpp">
-      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\PostProcessRenderer.cpp">
-      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\ParticleRenderer.cpp">
       <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
     </ClCompile>
@@ -405,9 +390,6 @@
       <Filter>Source Files\Graphics\Core</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\PostProcessPass.cpp">
-      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\GeneralPass.cpp">
       <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\RendererPipeline.cpp">
@@ -455,9 +437,6 @@
     <ClCompile Include="Graphics\ShaderParams.cpp">
       <Filter>Source Files\Graphics\Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\ShadowRenderer.cpp">
-      <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\ShadowPass.cpp">
       <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
     </ClCompile>
@@ -470,9 +449,6 @@
     <ClCompile Include="Game\RainSystem.cpp">
       <Filter>Source Files\Game\Scripts</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\DeferredPass.cpp">
-      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\FullscreenRenderer.cpp">
       <Filter>Source Files\Graphics\Rendering\Renderers</Filter>
     </ClCompile>
@@ -484,6 +460,12 @@
     </ClCompile>
     <ClCompile Include="Assets\LightSource.cpp">
       <Filter>Source Files\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\CombinePass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\GeometryPass.cpp">
+      <Filter>Source Files\Graphics\Rendering\RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

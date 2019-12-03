@@ -2,8 +2,8 @@
 // Date: 04/11/19
 #include "SwapChain.h"
 #include "LogicDevice.h"
-#include "GeneralPass.h"
-#include "DeferredPass.h"
+#include "CombinePass.h"
+#include "GeometryPass.h"
 #include "PostProcessPass.h"
 #include "ShadowPass.h"
 #include "LightingPass.h"

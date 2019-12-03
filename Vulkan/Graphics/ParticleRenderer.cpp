@@ -15,7 +15,7 @@
 
 using namespace QZL;
 using namespace QZL::Graphics;
-
+/*
 ParticleRenderer::ParticleRenderer(RendererCreateInfo& createInfo)
 	: RendererBase(createInfo, new DynamicElementBuffer(createInfo.logicDevice->getDeviceMemory(), createInfo.swapChainImageCount, sizeof(ParticleVertex)))
 {
@@ -68,4 +68,4 @@ void ParticleRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdB
 	for (auto& cmd : *commandList) {
 		vkCmdDrawIndexed(cmdBuffer, cmd.indexCount, cmd.instanceCount, cmd.firstIndex, cmd.vertexOffset, cmd.firstInstance);
 	}
-}
+}*/

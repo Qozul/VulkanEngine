@@ -27,7 +27,7 @@ namespace QZL
 			friend class PhysicalDevice;
 			friend class GraphicsMaster;
 
-			static constexpr char const* kDescriptorRequirementsName = "../descriptor-requirements.txt";
+			static constexpr char const* kDescriptorRequirementsName = "../Data/descriptor-requirements.txt";
 		public:
 			VkDevice getLogicDevice() const;
 			VkPhysicalDevice getPhysicalDevice() const;

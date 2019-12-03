@@ -6,14 +6,14 @@
 using namespace QZL;
 using namespace QZL::Graphics;
 
-IndexedRenderer::IndexedRenderer(RendererCreateInfo& createInfo, RendererCreateInfo2& createInfo2)
-	: RendererBase(createInfo, createInfo2.ebo)
+IndexedRenderer::IndexedRenderer(RendererCreateInfo2& createInfo2, LogicDevice* logicDevice, VkRenderPass renderPass, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
+	: RendererBase(logicDevice, createInfo2.ebo, graphicsInfo)
 {
-	pipelineLayouts_.push_back(createInfo.graphicsInfo->layout);
-	pipelineLayouts_.push_back(createInfo.globalRenderData->getLayout());
+	pipelineLayouts_.push_back(graphicsInfo->layout);
+	pipelineLayouts_.push_back(grd->getLayout());
 
-	createPipeline<Vertex>(createInfo.logicDevice, createInfo.renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
-		pipelineLayouts_.data(), createInfo2.pcRangesCount, createInfo2.pcRanges), createInfo2.shaderStages, createInfo2.pipelineCreateInfo, RendererPipeline::PrimitiveType::kQuads);
+	createPipeline(logicDevice, renderPass, RendererPipeline::makeLayoutInfo(static_cast<uint32_t>(pipelineLayouts_.size()),
+		pipelineLayouts_.data(), createInfo2.pcRangesCount, createInfo2.pcRanges), createInfo2.shaderStages, createInfo2.pipelineCreateInfo, createInfo2.tessellationPrims, createInfo2.vertexTypes);
 }
 
 void IndexedRenderer::recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind)
