@@ -30,38 +30,6 @@ namespace QZL
 			RendererPipeline::PrimitiveType tessellationPrims = RendererPipeline::PrimitiveType::kQuads;
 		};
 
-		/*struct RendererCreateInfo {
-			LogicDevice* logicDevice;
-			Descriptor* descriptor;
-			GlobalRenderData* globalRenderData;
-			SceneGraphicsInfo* graphicsInfo;
-			VkRenderPass renderPass;
-			uint32_t subpassIndex;
-			VkExtent2D extent;
-			uint32_t maxDrawnEntities;
-			size_t swapChainImageCount;
-			uint32_t colourAttachmentCount;
-			VkCullModeFlagBits cullMode = VK_CULL_MODE_BACK_BIT;
-			std::vector<VkBool32> colourBlendEnables;
-			VkPrimitiveTopology prims;
-			std::string vertexShader;
-			std::string fragmentShader;
-			std::string geometryShader;
-			std::string tessControlShader;
-			std::string tessEvalShader;
-
-			void updateRendererSpecific(uint32_t subpassIdx, uint32_t maxEntities, std::string vert, std::string frag, 
-				std::string geom = "", std::string tesc = "", std::string tese = "") {
-				subpassIndex = subpassIdx;
-				maxDrawnEntities = maxEntities;
-				vertexShader = vert;
-				fragmentShader = frag;
-				geometryShader = geom;
-				tessControlShader = tesc;
-				tessEvalShader = tese;
-			}
-		};*/
-
 		struct DescriptorOffsets {
 			uint32_t mvp;
 			uint32_t params;
@@ -127,6 +95,17 @@ namespace QZL
 
 			static const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stage, VkDeviceSize size, VkDeviceSize offset);
 
+			template<typename T, typename... Args>
+			static const VkSpecializationInfo setupSpecConstantRanges(std::vector<VkSpecializationMapEntry>& entries, const T* constants, const Args... dataEntries);
+			template<typename T, typename... Args>
+			static void buildSpecMapEntries(std::vector<VkSpecializationMapEntry>& entries, const uint32_t id, const size_t offset, const T& current, const Args&... next);
+			template<typename T>
+			static void buildSpecMapEntries(std::vector<VkSpecializationMapEntry>& entries, const uint32_t id, const size_t offset, const T& current);
+
+			template<typename... SpecConstants>
+			static void createRenderer(const std::string vert, const std::string tesc, const std::string tese, const std::string geom, PipelineCreateInfo pci, 
+				std::vector<VkPushConstantRange> pushConstants, const std::string frag, const SpecConstants... specConstants);
+
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages);
 
@@ -153,6 +132,31 @@ namespace QZL
 			std::vector<PushConstantInfo> pushConstantInfos_;
 			uint32_t pushConstantOffset_;
 		};
+
+		template<typename T, typename... Args>
+		inline const VkSpecializationInfo RendererBase::setupSpecConstantRanges(std::vector<VkSpecializationMapEntry>& entries, const T* constants, const Args... dataEntries)
+		{
+			buildSpecMapEntries(entries, 0, 0, dataEntries...);
+			return setupSpecConstants(entries.size(), entries.data(), sizeof(T), &constants);
+		}
+
+		template<typename T, typename... Args>
+		inline void RendererBase::buildSpecMapEntries(std::vector<VkSpecializationMapEntry>& entries, const uint32_t id, const size_t offset, const T& current, const Args&... next)
+		{
+			entries.push_back(makeSpecConstantEntry(id, offset, sizeof(current)));
+			buildSpecMapEntries(entries, id + 1, offset + sizeof(current), next...);
+		}
+
+		template<typename T>
+		inline void RendererBase::buildSpecMapEntries(std::vector<VkSpecializationMapEntry>& entries, const uint32_t id, const size_t offset, const T& current)
+		{
+			entries.push_back(makeSpecConstantEntry(id, offset, sizeof(current)));
+		}
+
+		template<typename... SpecConstants>
+		inline void RendererBase::createRenderer(const std::string vert, const std::string tesc, const std::string tese, const std::string geom, PipelineCreateInfo pci, std::vector<VkPushConstantRange> pushConstants, const std::string frag, const SpecConstants ...specConstants)
+		{
+		}
 
 		template<typename PC>
 		inline const VkPushConstantRange RendererBase::setupPushConstantRange(VkShaderStageFlagBits stages)

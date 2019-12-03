@@ -105,11 +105,8 @@ void CombinePass::createRenderers()
 	};
 
 	uint32_t offsets[1] = { graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kAtmosphere] };
-
-	std::vector<VkSpecializationMapEntry> specEntries2 = {
-		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t))
-	};
-	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(1, specEntries2.data(), sizeof(uint32_t), &offsets);
+	std::vector<VkSpecializationMapEntry> entries;
+	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstantRanges(entries, offsets, offsets[0]);
 
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back("AtmosphereVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
@@ -151,15 +148,9 @@ void CombinePass::createRenderers()
 	specConstantValues.specularIdx = specularIdx_;
 	specConstantValues.albedoIdx = albedoIdx_;
 	specConstantValues.ambientIdx = ambientIdx_;
-
-	std::vector<VkSpecializationMapEntry> specEntries = {
-		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t))
-	};
-
-	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
+	entries.clear();
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstantRanges(entries, &specConstantValues, 
+		specConstantValues.diffuseIdx, specConstantValues.specularIdx, specConstantValues.albedoIdx, specConstantValues.ambientIdx);
 	std::vector<ShaderStageInfo> stageInfos2;
 	stageInfos2.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
 	stageInfos2.emplace_back("DeferredLightingCombineFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
