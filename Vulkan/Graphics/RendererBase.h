@@ -102,9 +102,9 @@ namespace QZL
 			template<typename T>
 			static void buildSpecMapEntries(std::vector<VkSpecializationMapEntry>& entries, const uint32_t id, const size_t offset, const T& current);
 
-			template<typename... SpecConstants>
-			static void createRenderer(const std::string vert, const std::string tesc, const std::string tese, const std::string geom, PipelineCreateInfo pci, 
-				std::vector<VkPushConstantRange> pushConstants, const std::string frag, const SpecConstants... specConstants);
+			static RendererBase* createRenderer(LogicDevice* logicDevice, VkRenderPass renderPass, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo, 
+				const std::string vert, const std::string tesc, const std::string tese, const std::string geom, const std::string frag, PipelineCreateInfo pci,
+				std::vector<VkPushConstantRange> pushConstants, std::vector<VkSpecializationInfo*> specConstants);
 
 			template<typename PC>
 			const VkPushConstantRange setupPushConstantRange(VkShaderStageFlagBits stages);
@@ -137,7 +137,7 @@ namespace QZL
 		inline const VkSpecializationInfo RendererBase::setupSpecConstantRanges(std::vector<VkSpecializationMapEntry>& entries, const T* constants, const Args... dataEntries)
 		{
 			buildSpecMapEntries(entries, 0, 0, dataEntries...);
-			return setupSpecConstants(entries.size(), entries.data(), sizeof(T), &constants);
+			return setupSpecConstants(entries.size(), entries.data(), sizeof(T), constants);
 		}
 
 		template<typename T, typename... Args>
@@ -153,9 +153,25 @@ namespace QZL
 			entries.push_back(makeSpecConstantEntry(id, offset, sizeof(current)));
 		}
 
-		template<typename... SpecConstants>
-		inline void RendererBase::createRenderer(const std::string vert, const std::string tesc, const std::string tese, const std::string geom, PipelineCreateInfo pci, std::vector<VkPushConstantRange> pushConstants, const std::string frag, const SpecConstants ...specConstants)
+		inline RendererBase* RendererBase::createRenderer(LogicDevice* logicDevice, VkRenderPass renderPass, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo,
+			const std::string vert, const std::string tesc, const std::string tese, const std::string geom, const std::string frag, PipelineCreateInfo pci,
+			std::vector<VkPushConstantRange> pushConstants, std::vector<VkSpecializationInfo*> specConstants)
 		{
+			size_t specIdx = 0;
+			std::vector<ShaderStageInfo> stageInfos;
+			stageInfos.emplace_back(vert, VK_SHADER_STAGE_VERTEX_BIT, specConstants[specIdx++]);
+			if (tesc != "") stageInfos.emplace_back(tesc, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, specConstants[specIdx++]);
+			if (tese != "") stageInfos.emplace_back(tese, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, specConstants[specIdx++]);
+			if (geom != "") stageInfos.emplace_back(geom, VK_SHADER_STAGE_GEOMETRY_BIT, specConstants[specIdx++]);
+			if (frag != "") stageInfos.emplace_back(frag, VK_SHADER_STAGE_FRAGMENT_BIT, specConstants[specIdx++]);
+
+			RendererCreateInfo2 createInfo2;
+			createInfo2.shaderStages = stageInfos;
+			createInfo2.pipelineCreateInfo = pci;
+			createInfo2.pcRangesCount = pushConstants.size();
+			createInfo2.pcRanges = pushConstants.data();
+
+			return new FullscreenRenderer(createInfo2, logicDevice, renderPass, grd, graphicsInfo);
 		}
 
 		template<typename PC>

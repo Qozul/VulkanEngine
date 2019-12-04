@@ -149,8 +149,11 @@ void CombinePass::createRenderers()
 	specConstantValues.albedoIdx = albedoIdx_;
 	specConstantValues.ambientIdx = ambientIdx_;
 	entries.clear();
-	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstantRanges(entries, &specConstantValues, 
-		specConstantValues.diffuseIdx, specConstantValues.specularIdx, specConstantValues.albedoIdx, specConstantValues.ambientIdx);
+	entries.push_back(RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)));
+	entries.push_back(RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)));
+	entries.push_back(RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)));
+	entries.push_back(RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t)));
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(4, entries.data(), sizeof(Vals), &specConstantValues);
 	std::vector<ShaderStageInfo> stageInfos2;
 	stageInfos2.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
 	stageInfos2.emplace_back("DeferredLightingCombineFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
