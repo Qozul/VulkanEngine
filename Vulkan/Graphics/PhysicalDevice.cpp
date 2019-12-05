@@ -49,14 +49,14 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 	deviceCreateInfo.queueCreateInfoCount = 1;
 	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 	deviceCreateInfo.enabledLayerCount = enabledLayerCount;
-	deviceCreateInfo.ppEnabledLayerNames = enabledLayerCount ==  0 ? nullptr : ppEnabledLayerNames;
+	deviceCreateInfo.ppEnabledLayerNames =0;
 	deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions_.size());
 	deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions_.data();
 	deviceCreateInfo.pNext = nullptr;
 	deviceCreateInfo.flags = 0;
 
+	VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures = {};
 	if (optionalExtensionsEnabled_[OptionalExtensions::kDescriptorIndexing]) {
-		VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingFeatures = {};
 		descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
 		descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
 		descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
@@ -68,7 +68,7 @@ LogicDevice* PhysicalDevice::createLogicDevice(const GraphicsSystemDetails& sysD
 	}
 
 	VkDevice logicDevice;
-	CHECK_VKRESULT(vkCreateDevice(device_, &deviceCreateInfo, nullptr, &logicDevice));
+	vkCreateDevice(device_, &deviceCreateInfo, nullptr, &logicDevice);
 
 	queueHandles_[static_cast<size_t>(QueueFamilyType::kGraphicsQueue)] = createQueueHandles(logicDevice, QueueFamilyType::kGraphicsQueue);
 	queueHandles_[static_cast<size_t>(QueueFamilyType::kPresentationQueue)] = createQueueHandles(logicDevice, QueueFamilyType::kPresentationQueue);
