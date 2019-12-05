@@ -8,7 +8,7 @@ namespace QZL
 	namespace Graphics {
 		class FullscreenRenderer : public RendererBase {
 		public:
-			FullscreenRenderer(RendererCreateInfo& createInfo, RendererCreateInfo2& createInfo2);
+			FullscreenRenderer(RendererCreateInfo2& createInfo2, LogicDevice* logicDevice, VkRenderPass renderPass, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo);
 			~FullscreenRenderer() = default;
 			void recordFrame(const uint32_t frameIdx, VkCommandBuffer cmdBuffer, std::vector<VkDrawIndexedIndirectCommand>* commandList, bool ignoreEboBind = false) override;
 		};

@@ -1,9 +1,8 @@
-#include "DeferredPass.h"
+#include "GeometryPass.h"
 #include "GraphicsMaster.h"
 #include "SwapChainDetails.h"
 #include "IndexedRenderer.h"
 #include "ParticleRenderer.h"
-#include "AtmosphereRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
 #include "SceneDescriptorInfo.h"
@@ -96,11 +95,11 @@ void DeferredPass::doFrame(FrameInfo& frameInfo)
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport;
-	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = frameInfo.viewportWidth;
+	viewport.height = float(swapChainDetails_.extent.height);
+	viewport.width = float(frameInfo.viewportWidth);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	viewport.x = frameInfo.viewportX;
+	viewport.x = float(frameInfo.viewportX);
 	viewport.y = 0;
 	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
 
@@ -112,9 +111,9 @@ void DeferredPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
@@ -135,41 +134,21 @@ void DeferredPass::doFrame(FrameInfo& frameInfo)
 
 void DeferredPass::createRenderers()
 {
-	RendererCreateInfo createInfo = {};
-	createInfo.logicDevice = logicDevice_;
-	createInfo.descriptor = descriptor_;
-	createInfo.extent = swapChainDetails_.extent;
-	createInfo.renderPass = renderPass_;
-	createInfo.globalRenderData = globalRenderData_;
-	createInfo.swapChainImageCount = swapChainDetails_.images.size();
-	createInfo.graphicsInfo = graphicsInfo_;
-	createInfo.subpassIndex = 0;
-	createInfo.colourAttachmentCount = 3;
-	createInfo.colourBlendEnables = { VK_FALSE, VK_FALSE, VK_FALSE };
-	createInfo.updateRendererSpecific(0, 1, "StaticVert", "StaticDeferredFrag");
-
 	VkPushConstantRange pushConstants[2] = {
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
 	};
 
-	struct Vals {
-		uint32_t mvpOffset;
-		uint32_t paramsOffset;
-		uint32_t matOffset;
-	} specConstantValues;
-	specConstantValues.mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic];
-	specConstantValues.paramsOffset = graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic];
-	specConstantValues.matOffset = graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic];
+	uint32_t specConstantValues[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic], 
+		graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] };
 
 	std::vector<VkSpecializationMapEntry> specEntries = {
 		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
 		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
 		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
 	};
-
-	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, &specConstantValues.mvpOffset);
-	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, &specConstantValues.paramsOffset);
+	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, specConstantValues);
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, &specConstantValues[1]);
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back("StaticVert", VK_SHADER_STAGE_VERTEX_BIT, &specializationInfo);
 	stageInfos.emplace_back("StaticDeferredFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
@@ -178,10 +157,10 @@ void DeferredPass::createRenderers()
 	pci.debugName = "Statics";
 	pci.enableDepthTest = VK_TRUE;
 	pci.enableDepthWrite = VK_TRUE;
-	pci.extent = createInfo.extent;
+	pci.extent = swapChainDetails_.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	pci.subpassIndex = createInfo.subpassIndex;
+	pci.subpassIndex = 0;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
 	pci.colourBlendEnables = { VK_FALSE, VK_FALSE, VK_TRUE };
@@ -192,11 +171,10 @@ void DeferredPass::createRenderers()
 	createInfo2.pipelineCreateInfo = pci;
 	createInfo2.pcRangesCount = 2;
 	createInfo2.pcRanges = pushConstants;
-	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.ebo = new ElementBufferObject(logicDevice_->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.vertexTypes = VertexTypes::VERTEX;
 
-	staticRenderer_ = new IndexedRenderer(createInfo, createInfo2);
-
-
+	staticRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
 	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] };
 	std::vector<VkSpecializationMapEntry> mapEntryTerrain = {
@@ -220,9 +198,9 @@ void DeferredPass::createRenderers()
 	pci.debugName = "Terrain";
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
 	createInfo2.pipelineCreateInfo = pci;
-	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.ebo = new ElementBufferObject(logicDevice_->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
 	createInfo2.shaderStages = stageInfosTerrain;
-	terrainRenderer_ = new IndexedRenderer(createInfo, createInfo2);
+	terrainRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
 
 
@@ -245,9 +223,9 @@ void DeferredPass::createRenderers()
 
 	pci.debugName = "Water";
 	createInfo2.pipelineCreateInfo = pci;
-	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.ebo = new ElementBufferObject(logicDevice_->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
 	createInfo2.shaderStages = stageInfosWater;
-	waterRenderer_ = new IndexedRenderer(createInfo, createInfo2);
+	waterRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
 	graphicsMaster_->setRenderer(RendererTypes::kStatic, staticRenderer_);
 	graphicsMaster_->setRenderer(RendererTypes::kParticle, nullptr);

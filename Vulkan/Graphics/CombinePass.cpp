@@ -1,10 +1,9 @@
 // Author: Ralph Ridley
 // Date: 01/11/19
-#include "GeneralPass.h"
+#include "CombinePass.h"
 #include "GraphicsMaster.h"
 #include "SwapChainDetails.h"
 #include "FullscreenRenderer.h"
-#include "AtmosphereRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
 #include "SceneDescriptorInfo.h"
@@ -68,8 +67,8 @@ void CombinePass::doFrame(FrameInfo& frameInfo)
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport;
-	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = swapChainDetails_.extent.width;
+	viewport.height = float(swapChainDetails_.extent.height);
+	viewport.width = float(swapChainDetails_.extent.width);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	viewport.x = 0;
@@ -84,9 +83,9 @@ void CombinePass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
@@ -100,71 +99,59 @@ void CombinePass::doFrame(FrameInfo& frameInfo)
 
 void CombinePass::createRenderers()
 {
-	RendererCreateInfo createInfo = {};
-	createInfo.logicDevice = logicDevice_;
-	createInfo.descriptor = descriptor_;
-	createInfo.extent = swapChainDetails_.extent;
-	createInfo.renderPass = renderPass_;
-	createInfo.globalRenderData = globalRenderData_;
-	createInfo.swapChainImageCount = swapChainDetails_.images.size();
-	createInfo.graphicsInfo = graphicsInfo_;
-	createInfo.subpassIndex = 0;
-	createInfo.colourAttachmentCount = 1;
-	createInfo.colourBlendEnables = { VK_TRUE };
-
-	createInfo.updateRendererSpecific(0, 1, "AtmosphereVert", "AtmosphereFrag");
-	atmosphereRenderer_ = new AtmosphereRenderer(createInfo);
-
-	createInfo.updateRendererSpecific(0, 1, "AtmosphereVert", "EnvironmentFrag");
-	environmentRenderer_ = new AtmosphereRenderer(createInfo);
-
 	VkPushConstantRange pushConstants[2] = {
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
 	};
 
-	struct Vals {
-		uint32_t diffuseIdx;
-		uint32_t specularIdx;
-		uint32_t albedoIdx;
-		uint32_t ambientIdx;
-	} specConstantValues;
-	specConstantValues.diffuseIdx = diffuseIdx_;
-	specConstantValues.specularIdx = specularIdx_;
-	specConstantValues.albedoIdx = albedoIdx_;
-	specConstantValues.ambientIdx = ambientIdx_;
-
-	std::vector<VkSpecializationMapEntry> specEntries = {
-		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)),
-		RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t))
-	};
-
-	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(4, specEntries.data(), sizeof(Vals), &specConstantValues);
-	std::vector<ShaderStageInfo> stageInfos;
-	stageInfos.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
-	stageInfos.emplace_back("DeferredLightingCombineFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
+	uint32_t offsets[1] = { graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kAtmosphere] };
+	std::vector<VkSpecializationMapEntry> entries;
+	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstantRanges(entries, offsets, offsets[0]);
 
 	PipelineCreateInfo pci = {};
-	pci.debugName = "Combine";
+	pci.debugName = "Atmosphere";
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
-	pci.extent = createInfo.extent;
+	pci.extent = swapChainDetails_.extent;
 	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	pci.subpassIndex = createInfo.subpassIndex;
+	pci.subpassIndex = 0;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
+
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back("AtmosphereVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("AtmosphereFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
 
 	RendererCreateInfo2 createInfo2;
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
 	createInfo2.pcRangesCount = 2;
 	createInfo2.pcRanges = pushConstants;
+	atmosphereRenderer_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
-	createInfo.updateRendererSpecific(0, 1, "FullscreenVert", "DeferredLightingCombineFrag");
-	combineRenderer_ = new FullscreenRenderer(createInfo, createInfo2);
+	stageInfos.clear();
+	stageInfos.emplace_back("AtmosphereVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("EnvironmentFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo);
+	createInfo2.shaderStages = stageInfos;
+
+	environmentRenderer_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
+
+	uint32_t specTuple[4] = { diffuseIdx_, specularIdx_, albedoIdx_, ambientIdx_ };
+	entries.clear();
+	entries.push_back(RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)));
+	entries.push_back(RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)));
+	entries.push_back(RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t)));
+	entries.push_back(RendererBase::makeSpecConstantEntry(3, sizeof(uint32_t) * 3, sizeof(uint32_t)));
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(4, entries.data(), sizeof(uint32_t) * 4, &specTuple);
+	std::vector<ShaderStageInfo> stageInfos2;
+	stageInfos2.emplace_back("FullscreenVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos2.emplace_back("DeferredLightingCombineFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
+
+	pci.debugName = "Combine";
+	createInfo2.shaderStages = stageInfos2;
+	createInfo2.pipelineCreateInfo = pci;
+	combineRenderer_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
 	graphicsMaster_->setRenderer(RendererTypes::kAtmosphere, atmosphereRenderer_);
 }

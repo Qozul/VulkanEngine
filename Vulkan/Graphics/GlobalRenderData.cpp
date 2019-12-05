@@ -27,8 +27,8 @@ void GlobalRenderData::updateCameraData(LogicalCamera& mainCamera, float screenX
 	CameraInfo* camInfo = (CameraInfo*)cameraInfoUbo_->bindRange();
 	camInfo->projMatrix = mainCamera.projectionMatrix;
 	camInfo->inverseViewProj = glm::inverse(mainCamera.viewProjection);
-	camInfo->nearPlaneZ = 0.1;
-	camInfo->farPlaneZ = 25000.0;
+	camInfo->nearPlaneZ = 0.1f;
+	camInfo->farPlaneZ = 25000.0f;
 	camInfo->position = mainCamera.position;
 	camInfo->viewMatrix = mainCamera.viewMatrix;
 	camInfo->screenX = screenX;

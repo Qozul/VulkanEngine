@@ -4,7 +4,6 @@
 #include "IndexedRenderer.h"
 #include "FullscreenRenderer.h"
 #include "ParticleRenderer.h"
-#include "AtmosphereRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
 #include "SceneDescriptorInfo.h"
@@ -92,15 +91,15 @@ void LightingPass::doFrame(FrameInfo& frameInfo)
 	vpc.shadowMatrix = frameInfo.cameras[1].viewProjection;
 
 	FragmentPushConstants fpc;
-	fpc.screenWidth = swapChainDetails_.extent.width;
-	fpc.screenHeight = swapChainDetails_.extent.height;
-	fpc.screenX = frameInfo.viewportX / (float)swapChainDetails_.extent.width;
+	fpc.screenWidth = float(swapChainDetails_.extent.width);
+	fpc.screenHeight = float(swapChainDetails_.extent.height);
+	fpc.screenX = float(frameInfo.viewportX) / float(swapChainDetails_.extent.width);
 	fpc.screenY = 0;
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
@@ -111,11 +110,11 @@ void LightingPass::doFrame(FrameInfo& frameInfo)
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport;
-	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = frameInfo.viewportWidth;
+	viewport.height = float(swapChainDetails_.extent.height);
+	viewport.width = float(frameInfo.viewportWidth);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	viewport.x = frameInfo.viewportX;
+	viewport.x = float(frameInfo.viewportX);
 	viewport.y = 0;
 	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
 
@@ -137,18 +136,6 @@ void LightingPass::doFrame(FrameInfo& frameInfo)
 
 void LightingPass::createRenderers()
 {
-	RendererCreateInfo createInfo = {};
-	createInfo.logicDevice = logicDevice_;
-	createInfo.descriptor = descriptor_;
-	createInfo.extent = swapChainDetails_.extent;
-	createInfo.renderPass = renderPass_;
-	createInfo.globalRenderData = globalRenderData_;
-	createInfo.swapChainImageCount = swapChainDetails_.images.size();
-	createInfo.graphicsInfo = graphicsInfo_;
-	createInfo.subpassIndex = 0;
-	createInfo.colourAttachmentCount = 3;
-	createInfo.colourBlendEnables = { VK_TRUE, VK_TRUE, VK_FALSE };
-
 	VkPushConstantRange pushConstants[2] = {
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(VertexPushConstants), 0),
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
@@ -184,7 +171,7 @@ void LightingPass::createRenderers()
 	pci.debugName = "Lighting";
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
-	pci.extent = createInfo.extent;
+	pci.extent = swapChainDetails_.extent;
 	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	pci.subpassIndex = 0;
@@ -201,15 +188,16 @@ void LightingPass::createRenderers()
 	createInfo2.pipelineCreateInfo = pci;
 	createInfo2.pcRangesCount = 2;
 	createInfo2.pcRanges = pushConstants;
-	createInfo2.ebo = new ElementBufferObject(createInfo.logicDevice->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.ebo = new ElementBufferObject(logicDevice_->getDeviceMemory(), sizeof(Vertex), sizeof(uint16_t));
+	createInfo2.vertexTypes = VertexTypes::VERTEX;
 
-	lightingRenderer_ = new IndexedRenderer(createInfo, createInfo2);
+	lightingRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 	graphicsMaster_->setRenderer(RendererTypes::kLight, lightingRenderer_);
 
 	pci.cullFace = VK_CULL_MODE_FRONT_BIT;
 	createInfo2.ebo = nullptr;
 	createInfo2.pipelineCreateInfo = pci;
-	lightingInsideRenderer_ = new IndexedRenderer(createInfo, createInfo2);
+	lightingInsideRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
 	std::uniform_real_distribution<float> rand(0.0f, 1.0f);
 	std::default_random_engine rng;
@@ -248,7 +236,7 @@ void LightingPass::createRenderers()
 	createInfo2.shaderStages = stageInfosSSAO;
 	createInfo2.pipelineCreateInfo = pci;
 	createInfo2.ebo = nullptr;
-	ssaoRenderer_ = new FullscreenRenderer(createInfo, createInfo2);
+	ssaoRenderer_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 }
 
 void LightingPass::initRenderPassDependency(std::vector<Image*> dependencyAttachment)

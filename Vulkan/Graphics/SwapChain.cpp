@@ -2,8 +2,8 @@
 // Date: 04/11/19
 #include "SwapChain.h"
 #include "LogicDevice.h"
-#include "GeneralPass.h"
-#include "DeferredPass.h"
+#include "CombinePass.h"
+#include "GeometryPass.h"
 #include "PostProcessPass.h"
 #include "ShadowPass.h"
 #include "LightingPass.h"
@@ -34,7 +34,7 @@ void SwapChain::loop()
 
 	auto commandLists = activeScene_->update(frameInfo_.cameras, NUM_CAMERAS, System::deltaTimeSeconds, imgIdx, globalRenderData_);
 
-	globalRenderData_->updateCameraData(frameInfo_.cameras[0], details_.extent.width, details_.extent.height);
+	globalRenderData_->updateCameraData(frameInfo_.cameras[0], float(details_.extent.width), float(details_.extent.height));
 
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores_[currentFrame_] };
 
@@ -105,7 +105,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 
 	frameInfo_.cameras[0] = {};
 	frameInfo_.cameras[0].viewMatrix = glm::mat4(glm::lookAt(glm::vec3(0.0f, 100.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-	frameInfo_.cameras[0].projectionMatrix = glm::perspective(glm::radians(45.0f), (float)details_.extent.width / (float)details_.extent.height, 0.1f, 2500.0f);
+	frameInfo_.cameras[0].projectionMatrix = glm::perspective(glm::radians(45.0f), float(details_.extent.width) / float(details_.extent.height), 0.1f, 2500.0f);
 	frameInfo_.cameras[0].projectionMatrix[1][1] *= -1.0f;
 	frameInfo_.cameras[0].position = glm::vec3(200.0f, 100.0f, 200.0f);
 	frameInfo_.cameras[0].lookPoint = glm::vec3(0.0f, 0.0f, 10.0f);
@@ -116,7 +116,7 @@ SwapChain::SwapChain(GraphicsMaster* master, GLFWwindow* window, VkSurfaceKHR su
 	frameInfo_.cameras[1].projectionMatrix = glm::ortho(-700.0f, 700.0f, -700.0f, 700.0f, 500.0f, 1500.0f);
 	frameInfo_.cameras[1].projectionMatrix[1][1] *= -1.0f;
 
-	globalRenderData_->updatePostData(details_.extent.width, details_.extent.height, frameInfo_.cameras[1].viewProjection);
+	globalRenderData_->updatePostData(float(details_.extent.width), float(details_.extent.height), frameInfo_.cameras[1].viewProjection);
 }
 
 SwapChain::~SwapChain()

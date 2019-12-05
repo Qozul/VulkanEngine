@@ -10,24 +10,50 @@ namespace QZL {
 	namespace Graphics {
 		class GraphicsComponent;
 		class GlobalRenderData;
+		class LogicDevice;
+		class DescriptorBuffer;
 		struct LogicalCamera;
 	}
+
 	struct SceneHeirarchyNode {
-		SceneHeirarchyNode* parentNode;
-		Entity* entity;
+		SceneHeirarchyNode* parentNode = nullptr;
+		Entity* entity = nullptr;
 		std::vector<SceneHeirarchyNode*> childNodes;
 	};
+
 	struct GraphicsWriteInfo {
-		char* mvpPtr;
-		char* paramsPtr;
-		char* materialPtr;
-		VkDeviceSize offsets[(size_t)Graphics::RendererTypes::kNone];
+		char* mvpPtr = nullptr;
+		char* paramsPtr = nullptr;
+		char* materialPtr = nullptr;
+		VkDeviceSize offsets[(size_t)Graphics::RendererTypes::kNone] = {};
 		std::vector<char> graphicsMVPData[NUM_CAMERAS];
 		std::vector<char> graphicsParamsData;
 		std::vector<char> graphicsMaterialData;
 		std::vector<float> distances[(size_t)Graphics::RendererTypes::kNone];
 		std::vector<Graphics::Light> lightData;
 	};
+
+	struct DescriptorData {
+		int id = 0;
+		VkDeviceSize size = 0;
+		size_t count = 0;
+	};
+
+	struct DynamicDescriptorInput {
+		VkDeviceSize sizeMultiplier = 0; // i.e. frameImageCount
+		VkDeviceSize deviceOffsetAlignment = 0;
+		uint32_t binding = 0;
+		std::string name;
+		VkShaderStageFlags stages = 0;
+		std::vector<DescriptorData> data;
+	};
+
+	struct DynamicDescriptorInfo {
+		Graphics::DescriptorBuffer* buffer = nullptr;
+		VkDeviceSize dynamicOffset = 0;
+		std::vector<std::pair<size_t, uint32_t>> dataOffsets;
+	};
+
 	// Encompasses a game scene, defining entities in a tree heirarchy with pointers to both parent and children.
 	class Scene {
 		friend std::ostream& operator<<(std::ostream& os, Scene* scene);
@@ -59,7 +85,7 @@ namespace QZL {
 		SceneHeirarchyNode* findEntityNode(Entity* entity);
 
 		void findDescriptorRequirements(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount);
-		Graphics::SceneGraphicsInfo* createDescriptors(size_t numFrameImages, const VkPhysicalDeviceLimits& limits); // , std::set<Graphics::MaterialJob>& materials
+		Graphics::SceneGraphicsInfo* createDescriptors(uint32_t numFrameImages, const VkPhysicalDeviceLimits& limits);
 
 	private:
 		// Auxilliary recursive lookup
@@ -71,6 +97,9 @@ namespace QZL {
 		void startRecursively(SceneHeirarchyNode* node);
 
 		void findDescriptorRequirementsRecursively(std::unordered_map<Graphics::RendererTypes, uint32_t>& instancesCount, SceneHeirarchyNode* node);
+		DynamicDescriptorInfo makeDynamicDescriptor(DynamicDescriptorInput info, const Graphics::LogicDevice* logicDevice);
+		void addDynamicDescriptor(Graphics::DescriptorBuffer*& buffer, size_t& range, uint32_t offsets[(size_t)Graphics::RendererTypes::kNone], std::vector<DescriptorData> data,
+			uint32_t numFrameImages, VkDeviceSize alignment, uint32_t bindingIdx, std::string name, VkShaderStageFlags flags, const Graphics::LogicDevice* logicDevice);
 		void addToCommandList(Graphics::GraphicsComponent* component, Graphics::LogicalCamera& mainCamera);
 		void writeGraphicsData(Graphics::GraphicsComponent* component, Graphics::LogicalCamera* cameras, size_t cameraCount, glm::mat4& ctm, const uint32_t& frameIdx);
 		void sort(Graphics::RendererTypes rtype);

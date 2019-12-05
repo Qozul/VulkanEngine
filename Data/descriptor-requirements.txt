@@ -21,50 +21,15 @@
 
 # -------------- Renderers --------------
 
-# Render Pass global lighting info
-6 1 1
+# Global render data: lighting ubo, environment map, 
+# camera info ubo, post process info ubo, descriptor indexing textures
+6 3 1
+1 2 0
 
-# Atmosphere Renderer: 2 combined image samplers for colour and depth buffer
-1 2 1
+# Common descriptors for geometry: mvp storage, params storage, material storage
+9 3 1
 
-# Terrain Renderer: 6 combined image samplers, 6 storage buffers, and 3 uniform buffers
-1 6 3
-7 6 0
-6 3 0
-
-# Static Renderer: 6 storage buffers
-7 9 3
-
-9 6 2
-
-# Particle Renderer: 1 uniform buffer
-6 3 3
-7 3 0
-
-# Post Process Renderer: 5 combined image samplers, 2 storage images, and a uniform buffer
-#1 5 2
-#3 2 0
-#6 1 0
-
-
-# --------------- Assets ----------------
-
-# Atmosphere: 5 storage images, 4 combined samplers, and a uniform buyffer, 1 set for precompute and 1 for material
-3 5 2
+# Temporary ubo and samplers for atmosphere precompute
+3 5 1
 1 4 0
 6 1 0
-
-# --------------- Materials -------------
-# ExampleTerrain
-1 2 1
-# ExampleStatic
-1 2 1
-# Fire
-1 1 1
-# Sun
-1 1 1
-# Atmosphere
-1 1 1
-# Aerial Perspective
-3 2 1
-3 1 0

@@ -3,7 +3,7 @@
 #include "ShadowPass.h"
 #include "GraphicsMaster.h"
 #include "SwapChainDetails.h"
-#include "ShadowRenderer.h"
+#include "IndexedRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
 #include "SceneDescriptorInfo.h"
@@ -81,9 +81,9 @@ void ShadowPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
@@ -94,34 +94,58 @@ void ShadowPass::doFrame(FrameInfo& frameInfo)
 	uint32_t mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic];
 	vkCmdPushConstants(frameInfo.cmdBuffer, shadowRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
 	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kStatic]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
-	shadowRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic]);
+	shadowRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kStatic], true);
 
+	vkCmdSetDepthBias(frameInfo.cmdBuffer, 3.0f, 0.0f, 4.0f);
 	mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain];
 	vkCmdPushConstants(frameInfo.cmdBuffer, shadowTerrainRenderer_->getPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uint32_t), &mvpOffset);
 	graphicsInfo_->shadowCastingEBOs[(size_t)RendererTypes::kTerrain]->bind(frameInfo.cmdBuffer, frameInfo.frameIdx);
-	shadowTerrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain]);
+	shadowTerrainRenderer_->recordFrame(frameInfo.frameIdx, frameInfo.cmdBuffer, &frameInfo.commandLists[(size_t)RendererTypes::kTerrain], true);
 	vkCmdEndRenderPass(frameInfo.cmdBuffer);
 }
 
 void ShadowPass::createRenderers()
 {
-	RendererCreateInfo createInfo = {};
-	createInfo.logicDevice = logicDevice_;
-	createInfo.descriptor = descriptor_;
-	createInfo.extent = { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS };
-	createInfo.renderPass = renderPass_;
-	createInfo.globalRenderData = globalRenderData_;
-	createInfo.swapChainImageCount = swapChainDetails_.images.size();
-	createInfo.graphicsInfo = graphicsInfo_;
-	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	createInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
-	createInfo.updateRendererSpecific(0, 1, "ShadowVert",  "");
-	shadowRenderer_ = new ShadowRenderer(createInfo);
+	VkPushConstantRange pushConstants[1] = {
+		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT, sizeof(uint32_t), 0),
+	};
 
-	createInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
-	createInfo.updateRendererSpecific(0, 1, "ShadowTerrainVert", "", "", "ShadowTerrainTESC", "ShadowTerrainTESE");
-	createInfo.prims = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
-	shadowTerrainRenderer_ = new ShadowRenderer(createInfo);
+	PipelineCreateInfo pci = {};
+	pci.debugName = "Shadow";
+	pci.enableDepthTest = VK_TRUE;
+	pci.enableDepthWrite = VK_TRUE;
+	pci.extent = { SHADOW_DIMENSIONS, SHADOW_DIMENSIONS };;
+	pci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pci.cullFace = VK_CULL_MODE_FRONT_BIT;
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pci.subpassIndex = 0;
+	pci.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+	pci.depthBiasEnable = VK_TRUE;
+	pci.colourAttachmentCount = 0;
+	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+
+	std::vector<ShaderStageInfo> stageInfos;
+	stageInfos.emplace_back("ShadowVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+
+	RendererCreateInfo2 createInfo2;
+	createInfo2.shaderStages = stageInfos;
+	createInfo2.pipelineCreateInfo = pci;
+	createInfo2.pcRangesCount = 1;
+	createInfo2.pcRanges = pushConstants;
+	createInfo2.ebo = nullptr;
+	createInfo2.vertexTypes = VertexTypes::VERTEX;
+
+	shadowRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
+
+	stageInfos.clear();
+	stageInfos.emplace_back("ShadowTerrainVert", VK_SHADER_STAGE_VERTEX_BIT, nullptr);
+	stageInfos.emplace_back("ShadowTerrainTESC", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, nullptr);
+	stageInfos.emplace_back("ShadowTerrainTESE", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, nullptr);
+	createInfo2.shaderStages = stageInfos;
+
+	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+	createInfo2.pipelineCreateInfo = pci;
+	shadowTerrainRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
 	graphicsMaster_->setRenderer(RendererTypes::kShadow, shadowRenderer_);
 }

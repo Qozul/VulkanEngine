@@ -15,7 +15,7 @@ TerrainScript::TerrainScript(const SystemMasters& initialiser)
 
 void TerrainScript::update(float dt, const glm::mat4& viewProjection, const glm::mat4& parentMatrix)
 {
-	const float kSnowAccumulationRate = 0.00001;
+	const float kSnowAccumulationRate = 0.00001f;
 	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->heights.w -= kSnowAccumulationRate;
 	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->distanceFarMinusClose = 200.0f;
 	static_cast<TerrainShaderParams*>(owningEntity_->getGraphicsComponent()->getShaderParams())->closeDistance = 60.0f;

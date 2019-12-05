@@ -21,18 +21,21 @@ QZL::Game::Camera::Camera(const SystemMasters& initialiser)
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_X }, std::bind(&Camera::increaseSpeed, this), 0.2f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_Z }, std::bind(&Camera::decreaseSpeed, this), 0.2f });
 	inputProfile_.profileBindings.push_back({ { GLFW_KEY_L }, std::bind(&Camera::logPosition, this), 0.2f });
-	inputProfile_.profileBindings.push_back({ { GLFW_KEY_T }, [this]() { isOnTrack_ = false; }, 0.2f });
+	inputProfile_.profileBindings.push_back({ { GLFW_KEY_T }, [this]() { 
+		isOnTrack_ = !isOnTrack_;
+		currentNode_ = 0;
+		trackAmount_ = 0.0f;
+	}, 0.2f });
 	inputManager_->addProfile("camera", &inputProfile_);
 	mainCamera_->lookPoint = { 0.0f, 0.0f, 0.0f };
 
 	trackNodes_ = std::vector<TrackNode>({ 
-		{{97, 167, 9}, 232.5f, -20}, {{97, 167, 9}, 294, 88.5f}, {{138, 174, 22}, 263.5f, 243}, {{261.8f, 174.5f, 79.7f}, 216, 295},
-		{{375, 124, 103}, 271.5f, -141} , { {441, 112, 91}, 257.5f, -143.5f},
+		{{97, 167, 9}, 232.5f, -20}, {{97, 167, 9}, 290, 88.5f}, {{138, 174, 22}, 263.5f, 243},  {{441, 112, 91}, 257.5f, -143.5f},
 		{{618, 101, 229}, 264.0f, -142.0f}, {{708, 109, 346}, 291.0f, -126.5f}, {{796, 114, 403}, 256.5f, -258.5},
-		{{751, 118, 419}, 256, -79.5f}, {{751, 118, 419}, 256, -79.5f}, {{809, 110, 383}, 264.5f, -333.0f}, 
-		{{809, 110, 383}, 264.5f, -333.0f}
+		{{770, 117, 413}, 263, -74}, {{552, 116, 135}, 242, 11},
+		{{192, 200, 122}, 253, -137}, {{192, 200, 122}, 253, -137}
 	});
-	maxNode_ = trackNodes_.size() - 1;
+	maxNode_ = int(trackNodes_.size()) - 1;
 }
 
 Camera::~Camera()

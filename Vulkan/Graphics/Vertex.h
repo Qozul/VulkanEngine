@@ -6,6 +6,10 @@
 namespace QZL
 {
 	namespace Graphics {
+		enum class VertexTypes {
+			VERTEX, VERTEX_ONLY_POS, PARTICLE_VERTEX
+		};
+
 		inline VkVertexInputBindingDescription makeVertexBindingDescription(uint32_t binding, uint32_t sizeOfVertex, VkVertexInputRate inputRate) {
 			VkVertexInputBindingDescription desc = {};
 			desc.binding = binding;
@@ -70,5 +74,31 @@ namespace QZL
 				};
 			}
 		};
+
+		inline std::vector<std::pair<uint32_t, VkFormat>> makeVertexAttribInfo(VertexTypes type) {
+			switch (type) {
+			case VertexTypes::VERTEX:
+				return Vertex::makeAttribInfo();
+			case VertexTypes::VERTEX_ONLY_POS:
+				return VertexOnlyPosition::makeAttribInfo();
+			case VertexTypes::PARTICLE_VERTEX:
+				return ParticleVertex::makeAttribInfo();
+			default:
+				ASSERT(false);
+			}
+		}
+
+		inline constexpr size_t getVertexSize(VertexTypes type) {
+			switch (type) {
+			case VertexTypes::VERTEX:
+				return sizeof(Vertex);
+			case VertexTypes::VERTEX_ONLY_POS:
+				return sizeof(VertexOnlyPosition);
+			case VertexTypes::PARTICLE_VERTEX:
+				return sizeof(ParticleVertex);
+			default:
+				ASSERT(false);
+			}
+		}
 	}
 }

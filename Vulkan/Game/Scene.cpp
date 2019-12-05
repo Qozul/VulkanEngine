@@ -16,7 +16,7 @@ using namespace QZL;
 using namespace Graphics;
 
 Scene::Scene(const SystemMasters* masters)
-	: masters_(masters)
+	: masters_(masters), graphicsInfo_({})
 {
 	rootNode_ = new SceneHeirarchyNode();
 	rootNode_->parentNode = nullptr;
@@ -42,7 +42,7 @@ void Scene::sort(RendererTypes rtype)
 	auto& cmds = graphicsCommandLists_[(size_t)rtype];
 	SortKey key;
 	int64_t j;
-	for (int64_t i = 1; i < distances.size(); ++i)
+	for (int64_t i = 1; i < int64_t(distances.size()); ++i)
 	{
 		key.key = distances[i];
 		key.cmd = cmds[i];
@@ -91,8 +91,8 @@ std::vector<VkDrawIndexedIndirectCommand>* Scene::update(LogicalCamera* cameras,
 	// Write frame's data to the gpu buffers
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->bindRange();
 	for (size_t i = 0; i < NUM_CAMERAS; ++i) {
-		std::memcpy(graphicsWriteInfo_.mvpPtr + frameIdx * graphicsInfo_.mvpRange + graphicsInfo_.numFrameIndices * graphicsInfo_.mvpRange * i, 
-			graphicsWriteInfo_.graphicsMVPData[i].data(), graphicsInfo_.mvpRange);
+		size_t offset = frameIdx * graphicsInfo_.mvpRange + size_t(graphicsInfo_.numFrameIndices) * graphicsInfo_.mvpRange * i;
+		std::memcpy(graphicsWriteInfo_.mvpPtr + offset, graphicsWriteInfo_.graphicsMVPData[i].data(), graphicsInfo_.mvpRange);
 	}
 	graphicsWriteInfo_.paramsPtr = (char*)graphicsInfo_.paramsBuffer->bindRange();
 	graphicsWriteInfo_.mvpPtr = (char*)graphicsInfo_.mvpBuffer->unbindRange();
@@ -178,33 +178,12 @@ void Scene::findDescriptorRequirements(std::unordered_map<Graphics::RendererType
 	}
 }
 
-struct DescriptorData {
-	int id;
-	VkDeviceSize size;
-	size_t count;
-};
-
-struct DynamicDescriptorInput {
-	VkDeviceSize sizeMultiplier; // i.e. frameImageCount
-	VkDeviceSize deviceOffsetAlignment;
-	uint32_t binding;
-	std::string name;
-	VkShaderStageFlags stages;
-	std::vector<DescriptorData> data;
-};
-
-struct DynamicDescriptorInfo {
-	DescriptorBuffer* buffer;
-	VkDeviceSize dynamicOffset;
-	std::vector<std::pair<size_t, VkDeviceSize>> dataOffsets;
-};
-
 bool compareFunc(DescriptorData& a, DescriptorData& b)
 {
 	return a.size > b.size;
 }
 
-DynamicDescriptorInfo makeDynamicDescriptor(DynamicDescriptorInput info, const LogicDevice* logicDevice) 
+DynamicDescriptorInfo Scene::makeDynamicDescriptor(DynamicDescriptorInput info, const LogicDevice* logicDevice) 
 {
 	ASSERT_DEBUG(info.data.size() > 0);
 	std::sort(info.data.begin(), info.data.end(), compareFunc);
@@ -212,8 +191,8 @@ DynamicDescriptorInfo makeDynamicDescriptor(DynamicDescriptorInput info, const L
 	result.dataOffsets.resize(info.data.size());
 	VkDeviceSize totalSize = info.data[0].size * info.data[0].count;
 	result.dataOffsets[0] = std::make_pair(info.data[0].id, 0);
-	for (int64_t i = 1; i < info.data.size(); ++i) {
-		int padding = totalSize % info.data[i].size == 0 ? 0 : info.data[i].size * (totalSize / info.data[i].size + 1) - totalSize;
+	for (int64_t i = 1; i < int64_t(info.data.size()); ++i) {
+		int padding = totalSize % info.data[i].size == 0 ? 0 : int(info.data[i].size * (totalSize / info.data[i].size + 1) - totalSize);
 		totalSize += padding;
 		result.dataOffsets[i] = std::make_pair(info.data[i].id, totalSize / info.data[i].size);
 		totalSize += info.data[i].size * info.data[i].count;
@@ -229,8 +208,8 @@ DynamicDescriptorInfo makeDynamicDescriptor(DynamicDescriptorInput info, const L
 	return result;
 }
 
-void addDynamicDescriptor(DescriptorBuffer*& buffer, VkDeviceSize& range, VkDeviceSize offsets[(size_t)RendererTypes::kNone], std::vector<DescriptorData> data,
-	size_t numFrameImages, VkDeviceSize alignment, uint32_t bindingIdx, std::string name, VkShaderStageFlags flags, const LogicDevice* logicDevice) 
+void Scene::addDynamicDescriptor(DescriptorBuffer*& buffer, size_t& range, uint32_t offsets[(size_t)RendererTypes::kNone], std::vector<DescriptorData> data,
+	uint32_t numFrameImages, VkDeviceSize alignment, uint32_t bindingIdx, std::string name, VkShaderStageFlags flags, const LogicDevice* logicDevice) 
 {
 	auto result = makeDynamicDescriptor({ numFrameImages, alignment, bindingIdx, name, flags, data }, logicDevice);
 	buffer = result.buffer;
@@ -240,7 +219,7 @@ void addDynamicDescriptor(DescriptorBuffer*& buffer, VkDeviceSize& range, VkDevi
 	}
 }
 
-Graphics::SceneGraphicsInfo* Scene::createDescriptors(size_t numFrameImages, const VkPhysicalDeviceLimits& limits)
+Graphics::SceneGraphicsInfo* Scene::createDescriptors(uint32_t numFrameImages, const VkPhysicalDeviceLimits& limits)
 {
 	const LogicDevice* logicDevice = masters_->getLogicDevice();
 	Descriptor* descriptor = masters_->getLogicDevice()->getPrimaryDescriptor();

@@ -6,7 +6,6 @@
 #include "GraphicsMaster.h"
 #include "SwapChainDetails.h"
 #include "TextureSampler.h"
-#include "PostProcessRenderer.h"
 #include "FullscreenRenderer.h"
 #include "Image.h"
 #include "LogicDevice.h"
@@ -19,7 +18,9 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
-	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile()), doFXAA_(true), doDoF_(true)
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile()), doFXAA_(true), doDoF_(true), colourBuffer1_(nullptr), colourBufferIdx_(0),
+	depthOfFieldH_(nullptr), depthOfFieldV_(nullptr), fxaa_(nullptr), geometryColourBuf_(nullptr), geometryDepthBuf_(nullptr), gpColourBuffer_(0), gpDepthBuffer_(0), presentRenderer_(nullptr),
+	renderPass2_(nullptr), renderPassPresent_(nullptr)
 {
 	input_->profileBindings.push_back({ { GLFW_KEY_M }, [this]() {doFXAA_ = !doFXAA_; }, 0.2f });
 	input_->profileBindings.push_back({ { GLFW_KEY_N }, [this]() {doDoF_ = !doDoF_; }, 0.2f });
@@ -47,8 +48,8 @@ PostProcessPass::~PostProcessPass()
 void PostProcessPass::doFrame(FrameInfo& frameInfo)
 {
 	VkViewport viewport; 
-	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = swapChainDetails_.extent.width;
+	viewport.height = float(swapChainDetails_.extent.height);
+	viewport.width = float(swapChainDetails_.extent.width);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	viewport.x = 0;
@@ -68,14 +69,14 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	vpc.shadowDepthIdx = 0;
 	vpc.farZ = 2500.0f;
 	vpc.nearZ = 0.1f;
-	vpc.screenX = swapChainDetails_.extent.width;
-	vpc.screenY = swapChainDetails_.extent.height;
+	vpc.screenX = float(swapChainDetails_.extent.width);
+	vpc.screenY = float(swapChainDetails_.extent.height);
 	vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
@@ -155,23 +156,13 @@ void PostProcessPass::createRenderers()
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PostPushConstants), 0)
 	};
 
-	RendererCreateInfo createInfo = {};
-	createInfo.logicDevice = logicDevice_;
-	createInfo.descriptor = descriptor_;
-	createInfo.extent = swapChainDetails_.extent;
-	createInfo.renderPass = renderPassPresent_;
-	createInfo.globalRenderData = globalRenderData_;
-	createInfo.swapChainImageCount = swapChainDetails_.images.size();
-	createInfo.graphicsInfo = graphicsInfo_;
-	createInfo.updateRendererSpecific(0, 1, "FullscreenVert", "PassThroughFrag");
-
 	PipelineCreateInfo pci = {};
 	pci.cullFace = VK_CULL_MODE_BACK_BIT;
 	pci.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pci.primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
 	pci.enableDepthTest = VK_FALSE;
 	pci.enableDepthWrite = VK_FALSE;
-	pci.extent = createInfo.extent;
+	pci.extent = swapChainDetails_.extent;
 	pci.subpassIndex = 0;
 	pci.dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	pci.sampleCount = VK_SAMPLE_COUNT_1_BIT;
@@ -187,10 +178,8 @@ void PostProcessPass::createRenderers()
 	createInfo2.pcRangesCount = 1;
 	createInfo2.pcRanges = pushConstants;
 	createInfo2.ebo = nullptr;
-	presentRenderer_ = new FullscreenRenderer(createInfo, createInfo2);
+	presentRenderer_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass2_, globalRenderData_, graphicsInfo_);
 	graphicsMaster_->setRenderer(RendererTypes::kPostProcess, presentRenderer_);
-
-	createInfo.renderPass = renderPass_;
 
 	struct Vals {
 		float invScreenX;
@@ -210,7 +199,7 @@ void PostProcessPass::createRenderers()
 	pci.debugName = "FXAA";
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
-	fxaa_ = new FullscreenRenderer(createInfo, createInfo2);
+	fxaa_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 
 	pci.debugName = "DoFV";
 	stageInfos.clear();
@@ -218,7 +207,7 @@ void PostProcessPass::createRenderers()
 	stageInfos.emplace_back("DoFHorizontal", VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
-	depthOfFieldV_ = new FullscreenRenderer(createInfo, createInfo2);
+	depthOfFieldV_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass2_, globalRenderData_, graphicsInfo_);
 
 	pci.debugName = "DoFH";
 	stageInfos.clear();
@@ -226,7 +215,7 @@ void PostProcessPass::createRenderers()
 	stageInfos.emplace_back("DoFVertical", VK_SHADER_STAGE_FRAGMENT_BIT, nullptr);
 	createInfo2.shaderStages = stageInfos;
 	createInfo2.pipelineCreateInfo = pci;
-	depthOfFieldH_ = new FullscreenRenderer(createInfo, createInfo2);
+	depthOfFieldH_ = new FullscreenRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
 }
 
 void PostProcessPass::createColourBuffer(LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails)
