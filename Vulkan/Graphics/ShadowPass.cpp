@@ -81,9 +81,9 @@ void ShadowPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };

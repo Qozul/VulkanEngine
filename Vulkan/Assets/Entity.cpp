@@ -47,12 +47,12 @@ void Entity::setGraphicsComponent(Graphics::RendererTypes rtype, Graphics::Shade
 
 bool Entity::isStatic() const
 {
-	return rigidBody_ == nullptr && gameScript_ == nullptr;
+	return gameScript_ == nullptr;
 }
 
 Entity::Entity(const std::string name)
-	: graphicsComponent_(nullptr), rigidBody_(nullptr), gameScript_(nullptr), transform_(new Transform()), 
-	  collisionVolume_(nullptr), sceneNode_(nullptr), preserveChildrenOnDelete_(true), name_(name), updateFunc_(nullptr)
+	: graphicsComponent_(nullptr), gameScript_(nullptr), transform_(new Transform()), 
+	  sceneNode_(nullptr), preserveChildrenOnDelete_(true), name_(name), updateFunc_(nullptr)
 {
 }
 
@@ -60,7 +60,5 @@ Entity::~Entity()
 {
 	delete transform_;
 	SAFE_DELETE(graphicsComponent_);
-	SAFE_DELETE(rigidBody_);
 	SAFE_DELETE(gameScript_);
-	SAFE_DELETE(collisionVolume_);
 }

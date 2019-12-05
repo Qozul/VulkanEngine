@@ -59,7 +59,7 @@ VkSpecializationInfo RendererBase::setupSpecConstants(uint32_t entryCount, VkSpe
 	return { entryCount, entryPtr, dataSize, data };
 }
 
-const VkPushConstantRange RendererBase::setupPushConstantRange(VkShaderStageFlagBits stage, VkDeviceSize size, VkDeviceSize offset)
+const VkPushConstantRange RendererBase::setupPushConstantRange(VkShaderStageFlagBits stage, uint32_t size, uint32_t offset)
 {
 	VkPushConstantRange range = {};
 	range.size = size;
@@ -89,7 +89,7 @@ void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass r
 void RendererBase::createPipeline(const LogicDevice* logicDevice, VkRenderPass renderPass, VkPipelineLayoutCreateInfo layoutInfo, std::vector<ShaderStageInfo>& stages,
 	PipelineCreateInfo pipelineCreateInfo, RendererPipeline::PrimitiveType patchVertexCount, VertexTypes vertexType)
 {
-	auto bindingDesc = makeVertexBindingDescription(0, getVertexSize(vertexType), VK_VERTEX_INPUT_RATE_VERTEX);
+	auto bindingDesc = makeVertexBindingDescription(0, uint32_t(getVertexSize(vertexType)), VK_VERTEX_INPUT_RATE_VERTEX);
 	auto attribDesc = makeVertexAttribDescriptions(0, makeVertexAttribInfo(vertexType));
 	pipelineCreateInfo.vertexInputInfo = RendererPipeline::makeVertexInputInfo(bindingDesc, attribDesc);
 	pipeline_ = new RendererPipeline(logicDevice, renderPass, layoutInfo, stages, pipelineCreateInfo, patchVertexCount);

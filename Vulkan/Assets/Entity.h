@@ -41,14 +41,8 @@ namespace QZL {
 		Graphics::GraphicsComponent* getGraphicsComponent() {
 			return graphicsComponent_;
 		}
-		Physics::RigidBody* getRigidBody() {
-			return rigidBody_;
-		}
 		Game::GameScript* getGameScript() {
 			return gameScript_;
-		}
-		Physics::CollisionVolume* getCollisionVolume() {
-			return collisionVolume_;
 		}
 		Transform* getTransform() {
 			return transform_;
@@ -76,8 +70,6 @@ namespace QZL {
 		virtual ~Entity();
 	protected:
 		SimpleUpdateFunction updateFunc_;
-		Physics::CollisionVolume* collisionVolume_;
-		Physics::RigidBody* rigidBody_;
 		Game::GameScript* gameScript_;
 		Graphics::GraphicsComponent* graphicsComponent_;
 		Transform* transform_;

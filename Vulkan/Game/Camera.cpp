@@ -35,7 +35,7 @@ QZL::Game::Camera::Camera(const SystemMasters& initialiser)
 		{{770, 117, 413}, 263, -74}, {{552, 116, 135}, 242, 11},
 		{{192, 200, 122}, 253, -137}, {{192, 200, 122}, 253, -137}
 	});
-	maxNode_ = trackNodes_.size() - 1;
+	maxNode_ = int(trackNodes_.size()) - 1;
 }
 
 Camera::~Camera()

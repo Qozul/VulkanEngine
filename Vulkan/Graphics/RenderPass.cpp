@@ -215,8 +215,8 @@ VkSubpassDependency2KHR RenderPass::makeSubpassDependency2(uint32_t srcIdx, uint
 void RenderPass::updateViewportAndScissor(VkCommandBuffer cmdBuffer, VkExtent2D extent, int32_t offsetX, int32_t offsetY)
 {
 	VkViewport viewport;
-	viewport.height = extent.height;
-	viewport.width = extent.width;
+	viewport.height = float(extent.height);
+	viewport.width = float(extent.width);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	viewport.x = (float)offsetX;

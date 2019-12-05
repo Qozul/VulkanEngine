@@ -21,12 +21,12 @@ namespace QZL
 			std::string debugName = "";
 			VkExtent2D extent;
 			VkPipelineVertexInputStateCreateInfo vertexInputInfo;
-			VkPrimitiveTopology primitiveTopology;
-			VkFrontFace frontFace;
-			VkBool32 enableDepthTest;
-			VkBool32 enableDepthWrite;
+			VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+			VkBool32 enableDepthTest = VK_TRUE;
+			VkBool32 enableDepthWrite = VK_TRUE;
 			VkCompareOp depthCompareOp = VK_COMPARE_OP_LESS;
-			uint32_t subpassIndex;
+			uint32_t subpassIndex = 0;
 			uint32_t colourAttachmentCount = 1;
 			VkCullModeFlagBits cullFace = VK_CULL_MODE_BACK_BIT;
 			VkBool32 depthBiasEnable = VK_FALSE;

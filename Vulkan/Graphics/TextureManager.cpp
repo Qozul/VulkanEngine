@@ -131,7 +131,7 @@ Material* TextureManager::requestMaterial(const RendererTypes type, const std::s
 		mat->data = &materialData_[materialCount_];
 		mat->size = Materials::materialSizeLUT[(size_t)type];
 
-		materialCount_ += mat->size;
+		materialCount_ += uint32_t(mat->size);
 		materials_[name] = mat;
 	}
 	return materials_[name];

@@ -24,8 +24,8 @@ AtmosphereScript::AtmosphereScript(const GameScriptInitialiser& initialiser, Sun
 	logicDevice_ = initialiser.system->getMasters().graphicsMaster->getLogicDevice();
 
 	params_.betaRay = calculateBetaRayeligh(1.0003, 2.545e25, { 6.5e-7, 5.1e-7, 4.75e-7 });// glm::vec3(6.55e-6f, 1.73e-5f, 2.30e-5f);
-	params_.betaMie = 2e-6;
-	params_.betaMieExt = params_.betaMie / 0.9;
+	params_.betaMie = 2e-6f;
+	params_.betaMieExt = params_.betaMie / 0.9f;
 	params_.planetRadius = 6371e3;
 	params_.Hatm = 80000.0;
 	params_.mieScaleHeight = 1200.0;

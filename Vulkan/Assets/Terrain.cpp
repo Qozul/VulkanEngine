@@ -28,19 +28,19 @@ void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vec
 		for (int z = 0; z < numSubGrids; ++z) {
 			int expandedX = x * subGridSize;
 			int expandedZ = z * subGridSize;
-			float vx = static_cast<float>(expandedX);
-			float vz = static_cast<float>(expandedZ);
+			float vx = float(expandedX);
+			float vz = float(expandedZ);
 			unsigned char rawHeight = heightmap[expandedX + expandedZ * 1024];
 			float vy = ((float)rawHeight / 256.0f) * 200.0f;
-			float u = x;
-			float v = z;
+			float u = float(x);
+			float v = float(z);
 
 			expandedX = expandedX == 0 ? 1 : expandedX == 1024 ? 1023 : expandedX;
 			expandedZ = expandedZ == 0 ? 1 : expandedZ == 1024 ? 1023 : expandedZ;
-			float hu = ((float)heightmap[expandedX + (expandedZ + 1) * 1024] / 256.0f) * 200.0f;
-			float hd = ((float)heightmap[expandedX + (expandedZ - 1) * 1024] / 256.0f) * 200.0f;
-			float hl = ((float)heightmap[expandedX - 1 + expandedZ * 1024] / 256.0f) * 200.0f;
-			float hr = ((float)heightmap[expandedX + 1 + expandedZ * 1024] / 256.0f) * 200.0f;
+			float hu = (float(heightmap[expandedX + (expandedZ + 1) * 1024]) / 256.0f) * 200.0f;
+			float hd = (float(heightmap[expandedX + (expandedZ - 1) * 1024]) / 256.0f) * 200.0f;
+			float hl = (float(heightmap[expandedX - 1 + expandedZ * 1024]) / 256.0f) * 200.0f;
+			float hr = (float(heightmap[expandedX + 1 + expandedZ * 1024]) / 256.0f) * 200.0f;
 
 			glm::vec3 normal = glm::vec3(hl - hr, 2.0f, hd - hu);
 			normal = glm::normalize(normal);
@@ -59,7 +59,7 @@ void Terrain::loadFunction(uint32_t& count, std::vector<char>& indices, std::vec
 		}
 	}
 	TextureLoader::freeCPUImage(heightmap);
-	count = static_cast<uint32_t>(inds.size());
+	count = uint32_t(inds.size());
 	indices.resize(inds.size() * sizeof(uint16_t));
 	vertices.resize(verts.size() * sizeof(Graphics::Vertex));
 	memcpy(indices.data(), inds.data(), inds.size() * sizeof(uint16_t));

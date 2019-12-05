@@ -3,6 +3,7 @@
 /// Date: 11/10/18
 #pragma once
 
+#pragma warning (disable : 4244)
 #include <iostream>
 #include <stdexcept>
 
@@ -31,8 +32,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#pragma warning (default : 4244)
 #include "PerfMeasurer.h"
-#pragma warning (disable : 4244)
 //#define OVERRIDE_DEBUG
 
 using uint = uint64_t;

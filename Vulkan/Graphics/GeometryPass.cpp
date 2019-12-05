@@ -95,11 +95,11 @@ void DeferredPass::doFrame(FrameInfo& frameInfo)
 	vkCmdBeginRenderPass(frameInfo.cmdBuffer, &bi, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport;
-	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = frameInfo.viewportWidth;
+	viewport.height = float(swapChainDetails_.extent.height);
+	viewport.width = float(frameInfo.viewportWidth);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	viewport.x = frameInfo.viewportX;
+	viewport.x = float(frameInfo.viewportX);
 	viewport.y = 0;
 	vkCmdSetViewport(frameInfo.cmdBuffer, 0, 1, &viewport);
 
@@ -111,9 +111,9 @@ void DeferredPass::doFrame(FrameInfo& frameInfo)
 	vkCmdSetScissor(frameInfo.cmdBuffer, 0, 1, &scissor);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * (frameInfo.frameIdx + (graphicsInfo_->numFrameIndices * frameInfo.mainCameraIdx)),
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };

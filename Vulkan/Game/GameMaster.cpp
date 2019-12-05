@@ -109,7 +109,7 @@ void GameMaster::loadStatics(Scene* scene)
 		auto baseNode = scene->addEntity(lampPost);
 		auto radius = rand() % 200 + 20;
 		Entity* light = new LightSource("lampLight", glm::normalize(pos * glm::vec3((float)(rand() % 100), (float)(rand() % 100), (float)(rand() % 100))), 
-			radius, 1500.0f, &lampPost->getTransform()->position);
+			float(radius), 1500.0f, &lampPost->getTransform()->position);
 		light->getTransform()->position = pos;
 		light->getTransform()->setScale(1500.0f);
 		scene->addEntity(light);

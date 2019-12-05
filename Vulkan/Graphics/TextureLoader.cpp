@@ -89,7 +89,7 @@ Image* TextureLoader::loadTexture(const std::string& fileName, VkShaderStageFlag
 	}
 	deviceMemory_->unmapMemory(stagingBuffer.id);
 
-	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), bufferCopyRegions.data(), bufferCopyRegions.size());
+	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), bufferCopyRegions.data(), uint32_t(bufferCopyRegions.size()));
 
 
 
@@ -142,7 +142,7 @@ Image* Graphics::TextureLoader::loadCubeTexture(const std::array<std::string, 6U
 		VkBufferImageCopy bufferCopyRegion = {};
 		bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		bufferCopyRegion.imageSubresource.mipLevel = 0;
-		bufferCopyRegion.imageSubresource.baseArrayLayer = face;
+		bufferCopyRegion.imageSubresource.baseArrayLayer = uint32_t(face);
 		bufferCopyRegion.imageSubresource.layerCount = 1;
 		bufferCopyRegion.imageExtent.width = image[0].get_width();
 		bufferCopyRegion.imageExtent.height = image[0].get_height();
@@ -153,7 +153,7 @@ Image* Graphics::TextureLoader::loadCubeTexture(const std::array<std::string, 6U
 	}
 	deviceMemory_->unmapMemory(stagingBuffer.id);
 
-	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), bufferCopyRegions.data(), bufferCopyRegions.size());
+	deviceMemory_->transferMemory(stagingBuffer.buffer, texture->getImage(), bufferCopyRegions.data(), uint32_t(bufferCopyRegions.size()));
 
 	texture->changeLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, stages);
 	deviceMemory_->deleteAllocation(stagingBuffer.id, stagingBuffer.buffer);

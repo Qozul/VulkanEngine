@@ -18,7 +18,9 @@ using namespace QZL;
 using namespace QZL::Graphics;
 
 PostProcessPass::PostProcessPass(GraphicsMaster* master, LogicDevice* logicDevice, const SwapChainDetails& swapChainDetails, GlobalRenderData* grd, SceneGraphicsInfo* graphicsInfo)
-	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile()), doFXAA_(true), doDoF_(true)
+	: RenderPass(master, logicDevice, swapChainDetails, grd, graphicsInfo), input_(new InputProfile()), doFXAA_(true), doDoF_(true), colourBuffer1_(nullptr), colourBufferIdx_(0),
+	depthOfFieldH_(nullptr), depthOfFieldV_(nullptr), fxaa_(nullptr), geometryColourBuf_(nullptr), geometryDepthBuf_(nullptr), gpColourBuffer_(0), gpDepthBuffer_(0), presentRenderer_(nullptr),
+	renderPass2_(nullptr), renderPassPresent_(nullptr)
 {
 	input_->profileBindings.push_back({ { GLFW_KEY_M }, [this]() {doFXAA_ = !doFXAA_; }, 0.2f });
 	input_->profileBindings.push_back({ { GLFW_KEY_N }, [this]() {doDoF_ = !doDoF_; }, 0.2f });
@@ -46,8 +48,8 @@ PostProcessPass::~PostProcessPass()
 void PostProcessPass::doFrame(FrameInfo& frameInfo)
 {
 	VkViewport viewport; 
-	viewport.height = swapChainDetails_.extent.height;
-	viewport.width = swapChainDetails_.extent.width;
+	viewport.height = float(swapChainDetails_.extent.height);
+	viewport.width = float(swapChainDetails_.extent.width);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	viewport.x = 0;
@@ -67,14 +69,14 @@ void PostProcessPass::doFrame(FrameInfo& frameInfo)
 	vpc.shadowDepthIdx = 0;
 	vpc.farZ = 2500.0f;
 	vpc.nearZ = 0.1f;
-	vpc.screenX = swapChainDetails_.extent.width;
-	vpc.screenY = swapChainDetails_.extent.height;
+	vpc.screenX = float(swapChainDetails_.extent.width);
+	vpc.screenY = float(swapChainDetails_.extent.height);
 	vkCmdPushConstants(frameInfo.cmdBuffer, presentRenderer_->getPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(vpc), &vpc);
 
 	const uint32_t dynamicOffsets[3] = {
-		graphicsInfo_->mvpRange * (frameInfo.frameIdx),
-		graphicsInfo_->paramsRange * frameInfo.frameIdx,
-		graphicsInfo_->materialRange * frameInfo.frameIdx
+		uint32_t(graphicsInfo_->mvpRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->paramsRange) * frameInfo.frameIdx,
+		uint32_t(graphicsInfo_->materialRange) * frameInfo.frameIdx
 	};
 
 	VkDescriptorSet sets[2] = { graphicsInfo_->set, globalRenderData_->getSet() };
