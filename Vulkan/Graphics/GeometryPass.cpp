@@ -139,23 +139,16 @@ void DeferredPass::createRenderers()
 		RendererBase::setupPushConstantRange(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(FragmentPushConstants), sizeof(VertexPushConstants))
 	};
 
-	struct Vals {
-		uint32_t mvpOffset;
-		uint32_t paramsOffset;
-		uint32_t matOffset;
-	} specConstantValues;
-	specConstantValues.mvpOffset = graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic];
-	specConstantValues.paramsOffset = graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic];
-	specConstantValues.matOffset = graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic];
+	uint32_t specConstantValues[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kStatic], 
+		graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kStatic], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kStatic] };
 
 	std::vector<VkSpecializationMapEntry> specEntries = {
 		RendererBase::makeSpecConstantEntry(0, 0, sizeof(uint32_t)),
 		RendererBase::makeSpecConstantEntry(1, sizeof(uint32_t), sizeof(uint32_t)),
 		RendererBase::makeSpecConstantEntry(2, sizeof(uint32_t) * 2, sizeof(uint32_t))
 	};
-
-	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, &specConstantValues.mvpOffset);
-	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, &specConstantValues.paramsOffset);
+	VkSpecializationInfo specializationInfo = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, specConstantValues);
+	VkSpecializationInfo specializationInfo2 = RendererBase::setupSpecConstants(2, specEntries.data(), sizeof(uint32_t) * 2, &specConstantValues[1]);
 	std::vector<ShaderStageInfo> stageInfos;
 	stageInfos.emplace_back("StaticVert", VK_SHADER_STAGE_VERTEX_BIT, &specializationInfo);
 	stageInfos.emplace_back("StaticDeferredFrag", VK_SHADER_STAGE_FRAGMENT_BIT, &specializationInfo2);
@@ -182,8 +175,6 @@ void DeferredPass::createRenderers()
 	createInfo2.vertexTypes = VertexTypes::VERTEX;
 
 	staticRenderer_ = new IndexedRenderer(createInfo2, logicDevice_, renderPass_, globalRenderData_, graphicsInfo_);
-
-
 
 	uint32_t offsets[3] = { graphicsInfo_->mvpOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->paramsOffsetSizes[(size_t)RendererTypes::kTerrain], graphicsInfo_->materialOffsetSizes[(size_t)RendererTypes::kTerrain] };
 	std::vector<VkSpecializationMapEntry> mapEntryTerrain = {
