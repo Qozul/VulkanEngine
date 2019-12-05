@@ -7,7 +7,7 @@ namespace QZL
 {
 	namespace Graphics {
 #define CHECK_VKRESULT(result) if (result != VK_SUCCESS) { auto str = "Check VK error code " + std::to_string(static_cast<int>(result)) \
-+ " in file " + __FILE__ + " at line " + std::to_string(__LINE__); DEBUG_LOG(str); throw std::runtime_error(str); };
++ " in file " + __FILE__ + " at line " + std::to_string(__LINE__); std::cout << str << std::endl; throw std::runtime_error(str); };
 #define NOTHROW_CHECK_VKRESULT(result) if (result != VK_SUCCESS) std::cout << "Check VK error code " << std::to_string(static_cast<int>(result)) \
 	<< " in file" << __FILE__ << " at line " << __LINE__ << std::endl;
 
